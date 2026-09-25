@@ -105,7 +105,7 @@ def draw_caption(arr, T):
     region = arr[max(0, y_top): y_bot, 90: G.W - 90, :3]
     bright = float(region.mean()) / 255 if region.size else 0.0
     surf = G.canvas_of(arr)
-    if bright > 0.28:
+    if bright > 0.18:
         with surf as c:
             wmax = max(G.text_width(ln, f) for ln in lines)
             c.drawRoundRect(skia.Rect.MakeLTRB(G.CX - wmax / 2 - 34, y_top - 6, G.CX + wmax / 2 + 34, y_bot + 12), 22, 22,
