@@ -333,9 +333,7 @@ def build_dawn():
     nt.links.new(sep.outputs["Z"], cr.inputs["Fac"])
     nt.links.new(cr.outputs["Color"], nt.nodes["Background"].inputs["Color"])
     nt.nodes["Background"].inputs["Strength"].default_value = 1.0
-    stonem = mat("stone", (0.05, 0.035, 0.03), 0.9)
-    for k in range(9):
-        rock(f"butte{k}", (-90 + k * 24, 160, -14 + (k % 3) * 3), 12 + (k % 4) * 5, stonem, seed=k + 10)
+    bpy.context.scene.render.film_transparent = True   # the photographic dawn plate goes behind in 2D
     wood = mat("wood", (0.33, 0.22, 0.13), 0.8)
     tool = box("tool", (0, 9, 3), (3.0, 0.24, 0.16), wood)
     bpy.ops.object.modifier_add(type="BEVEL")

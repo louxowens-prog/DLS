@@ -4,3 +4,6 @@ out/_voice/
 __pycache__/
 out/_2001/sb/*.png
 out/_2001/sb/info.json
+out/_2001/frames/
+out/_2001/render.log
+out/preview/
