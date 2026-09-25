@@ -373,7 +373,7 @@ def kazu(x, y, col, t, r=KR, face=1.0, squash=0.0, mood="normal"):
     fdir = 1 if face >= 0 else -1
     rx, ry = r * (1 + squash) * fx, r * (1 - squash)
     for i in (3, 2, 1):
-        rr = r + 8 + i * 12 + 5 * math.sin(t * 12 + i * 2)
+        rr = r + (8 + i * 12 + 5 * math.sin(t * 12 + i * 2)) * r / KR
         d.ellipse([x - rr * (1 + squash), y - rr * (1 - squash), x + rr * (1 + squash), y + rr * (1 - squash)],
                   outline=mix(col, BLACK, 0.2 + 0.22 * i), width=5)
     # headband tails flutter behind
@@ -811,18 +811,25 @@ def synth_audio(path):
 
 # ---------------------------------------------------------------- main
 
-def main():
+def main(out_name="the_plus_minus_arc.mp4", scenes=None):
+    """Render `scenes` (default: this episode) to out/<out_name>. Other episodes import this module
+    and call main() with their own scene list."""
+    global SCENES, TOTAL
+    if scenes is not None:
+        SCENES = scenes
+        TOTAL = sum(d for d, _ in SCENES)
     os.makedirs(OUT_DIR, exist_ok=True)
+    stem = os.path.splitext(out_name)[0]
     if len(sys.argv) > 1 and sys.argv[1] == "--preview":
-        pdir = os.path.join(OUT_DIR, "preview")
+        pdir = os.path.join(OUT_DIR, "preview", stem)
         os.makedirs(pdir, exist_ok=True)
         for s in sys.argv[2:]:
             arr = render_frame(int(float(s) * FPS))
             Image.fromarray(arr).resize((W // 2, H // 2)).save(os.path.join(pdir, f"t{float(s):06.2f}.png"))
         return
-    silent = os.path.join(OUT_DIR, "_video.mp4")
-    audio = os.path.join(OUT_DIR, "_audio.wav")
-    final = os.path.join(OUT_DIR, "the_plus_minus_arc.mp4")
+    silent = os.path.join(OUT_DIR, f"_{stem}_video.mp4")
+    audio = os.path.join(OUT_DIR, f"_{stem}_audio.wav")
+    final = os.path.join(OUT_DIR, out_name)
     nframes = int(round(TOTAL * FPS))
     enc = subprocess.Popen([FFMPEG, "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
                             "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "medium",
