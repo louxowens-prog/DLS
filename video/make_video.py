@@ -662,6 +662,8 @@ _vd = np.sqrt(((_xx - W / 2) / (W * 0.62)) ** 2 + ((_yy - H / 2) / (H * 0.62)) *
 VIGNETTE = (256 * np.clip(1.15 - 0.55 * _vd ** 2, 0.45, 1.0)).astype(np.uint16)[:, :, None]
 del _yy, _xx, _vd
 WHITE_IMG = Image.new("RGB", (W, H), WHITE)
+SCENE_CUT_FLASH = True   # anime-style white flash + whoosh on every cut
+POST_FX = None           # optional fn(arr, fi, t, scene_idx, t_local) -> arr, applied last
 
 
 def render_frame(fi):
@@ -674,7 +676,7 @@ def render_frame(fi):
     G.fi, G.t0, G.shake, G.flash, G.invert = fi, start, 0.0, 0.0, False
     tl = t - start
     fn(tl)
-    if idx > 0:
+    if idx > 0 and SCENE_CUT_FLASH:
         cue("whoosh", 0.0)
         if tl < 0.1:
             G.flash = max(G.flash, 0.8 * (1 - tl / 0.1))
@@ -693,6 +695,8 @@ def render_frame(fi):
     if G.flash > 0.01:
         img = Image.blend(img, WHITE_IMG, min(1.0, G.flash))
     arr = (np.asarray(img).astype(np.uint16) * VIGNETTE >> 8).astype(np.uint8)
+    if POST_FX is not None:
+        arr = POST_FX(arr, fi, t, idx, tl)
     return arr
 
 

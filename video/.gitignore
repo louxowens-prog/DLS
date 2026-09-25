@@ -1,2 +1,4 @@
 out/preview/
+out/_voice/
+.models/
 __pycache__/
