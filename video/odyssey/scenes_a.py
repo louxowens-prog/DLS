@@ -545,8 +545,9 @@ def s_corridor(arr, t, d, T):
                 a1, b1 = proj(0.45, 1.05, za + 0.3)
                 a2, b2 = proj(0.8, 1.4, za + 0.5)
                 c.drawRoundRect(skia.Rect.MakeLTRB(a1, b1, a2, b2), 8, 8, G.paint((200, 20, 30), sh))
-        G.text(c, "ARTIFICIAL LIGHT = REAL LIGHT", CX, 330, G.font("michroma-400", 24), color=G.AMBER,
-               a=ease(ramp(t, 0.3, 0.6)), track=4)
+        ka = ease(ramp(t, 0.3, 0.6))
+        c.drawRect(skia.Rect.MakeXYWH(0, 280, W, 76), G.paint((0, 0, 0), 0.75 * ka))
+        G.text(c, "ARTIFICIAL LIGHT = REAL LIGHT", CX, 330, G.font("michroma-400", 24), color=G.AMBER, a=ka, track=4)
 
 
 def s_heart(arr, t, d, T):

@@ -85,8 +85,10 @@ def s_dallas(arr, t, d, T):
     fs = G.font("michroma-400", 18)
     with s as c:
         panel(c, 60, 430, 960, 860, code="ATT", color=G.CYAN)
+        G.text(c, "PROMPT: “the capital of the state", CX, 520, G.font("jost-400", 36), color=G.GREY)
+        G.text(c, "containing Dallas is ___”", CX, 566, G.font("jost-400", 36), color=G.GREY)
         toks = [("capital", "capital", 190), ("state", "state", 430), ("containing", "containing", 650), ("Dallas", "Dallas", 890)]
-        ybot, ymid, ytop = 1150, 900, 640
+        ybot, ymid, ytop = 1170, 950, 720
         node = {}
         for nm, kw, x in toks:
             a = ease(ramp(T, TL.word("dallas", kw) - 0.05, TL.word("dallas", kw) + 0.2))
@@ -225,7 +227,8 @@ def s_starchild(arr, t, d, T):
     erg = once("earth_sc", lambda: G.sphere(760, kind="earth", light=(0.45, 0.55, 0.7), lon0=5.2, lat_tilt=0.4))
     rgb, al, glow, off = erg
     G.over(arr, rgb, al, int(CX - off), int(2150 - off + 60 * (1 - ease(t / d))))
-    cx, cy, R = CX, 760, 230
+    kz = ease(t / d)
+    cx, cy, R = CX, 760 + 20 * kz, 230 * (1 + 0.18 * kz)
     orb = G.radial(cx, cy, R * 0.95, (120, 170, 255), 0.35, 3.0) + G.radial(cx, cy, R * 1.6, (80, 120, 255), 0.18, 1.5)
     G.add_light(arr, orb)
     s = G.canvas_of(arr)
@@ -233,6 +236,10 @@ def s_starchild(arr, t, d, T):
         c.drawCircle(cx, cy, R, G.paint((190, 215, 255), 0.35, stroke=3))
         c.drawCircle(cx, cy, R - 2, G.paint((170, 200, 255), 0.10))
         # the curled figure in profile: head up and right, back curved, knees tucked
+        c.save()
+        c.translate(cx, cy)
+        c.scale(R / 230, R / 230)
+        c.translate(-cx, -cy)
         fig = skia.Path()
         fig.addCircle(cx + 35, cy - 75, 78)
         body = skia.Path()
@@ -250,6 +257,7 @@ def s_starchild(arr, t, d, T):
                                                [skia.Color4f(0, 0, 0, 0), skia.Color4f(0.15, 0.1, 0.25, 0.45)])
         c.drawPath(fig, G.paint(shader=shade, blur=6))
         c.drawOval(skia.Rect.MakeXYWH(cx + 70, cy - 88, 30, 18), G.paint((70, 80, 120), 0.6, blur=2.5))
+        c.restore()
 
 
 SOURCES = ["Legg & Hutter 2007 · NIST CSRC glossary · OpenAI Help Center",

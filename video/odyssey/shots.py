@@ -100,7 +100,17 @@ def draw_caption(arr, T):
         return
     f = G.font("jost-500", 60)
     lines = G.wrap(s, f, 860)
+    # on bright backgrounds, lay a soft dark plate behind the caption
+    y_top = int(G.CAP_Y - (len(lines) - 1) * 36 - 62)
+    y_bot = int(G.CAP_Y + 22)
+    region = arr[max(0, y_top): y_bot, 90: G.W - 90, :3]
+    bright = float(region.mean()) / 255 if region.size else 0.0
     surf = G.canvas_of(arr)
+    if bright > 0.28:
+        with surf as c:
+            wmax = max(G.text_width(ln, f) for ln in lines)
+            c.drawRoundRect(skia.Rect.MakeLTRB(G.CX - wmax / 2 - 34, y_top - 6, G.CX + wmax / 2 + 34, y_bot + 12), 22, 22,
+                            G.paint((0, 0, 0), min(0.7, 0.35 + bright * 0.5), blur=4))
     # dark soft shadow, then crisp white
     with surf as c:
         y = G.CAP_Y - (len(lines) - 1) * 36
