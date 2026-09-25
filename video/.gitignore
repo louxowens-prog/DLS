@@ -2,3 +2,5 @@ out/preview/
 out/_voice/
 .models/
 __pycache__/
+out/_2001/sb/*.png
+out/_2001/sb/info.json
