@@ -249,7 +249,7 @@ def s_starchild(arr, t, d, T):
     G.stars(arr, dy=-12 * t, a=0.85)
     erg = once("earth_sc", lambda: G.sphere(760, kind="earth", light=(0.45, 0.55, 0.7), lon0=5.2, lat_tilt=0.4))
     rgb, al, glow, off = erg
-    G.over(arr, rgb, al, int(CX - off), int(2150 - off + 60 * (1 - ease(t / d))))
+    G.over(arr, rgb, al, int(CX - off), int(2330 - off + 50 * (1 - ease(t / d))))
     kz = ease(t / d)
     cx, cy, R = CX, 760 + 20 * kz, 230 * (1 + 0.18 * kz)
     orb = G.radial(cx, cy, R * 0.95, (120, 170, 255), 0.35, 3.0) + G.radial(cx, cy, R * 1.6, (80, 120, 255), 0.18, 1.5)
@@ -264,7 +264,7 @@ def s_starchild(arr, t, d, T):
     h, w = fig.shape[:2]
     im = Image.fromarray((np.clip(fig, 0, 1) * 255).astype(np.uint8), "RGBA").resize((int(w * sc), int(h * sc)), Image.LANCZOS)
     f2 = np.asarray(im).astype(np.float32) / 255
-    G.over(arr, f2[..., :3], f2[..., 3] * 0.92, int(cx - im.size[0] / 2), int(cy - im.size[1] / 2 + 10 * sc))
+    G.over(arr, f2[..., :3], f2[..., 3] * 0.9, int(cx - im.size[0] / 2), int(cy - im.size[1] / 2 + 10 * sc))
 
 
 def _star_child():
@@ -273,8 +273,9 @@ def _star_child():
     yy, xx = np.mgrid[0:n, 0:n].astype(np.float32)
     x = xx - n / 2
     y = yy - n / 2 + 20
-    blobs = [(0, -72, 30, 94), (0, 30, -10, 70), (0, 80, -6, 72), (-38, 104, 34, 44), (38, 104, 34, 44),
-             (-40, 18, 36, 30), (40, 18, 36, 30), (0, -18, 40, 40)]
+    # three-quarter view: head turned down and to the right (toward the Earth), body curled up behind it
+    blobs = [(22, -40, 40, 92), (-48, 30, -30, 70), (-40, 88, -20, 64), (8, 106, 24, 40), (40, 92, 30, 34),
+             (30, 20, 50, 26), (52, 6, 58, 20), (0, -8, 34, 40)]
     k = 0.022
     acc = np.zeros_like(x)
     for bx, by, bz, r in blobs:
@@ -286,7 +287,7 @@ def _star_child():
     mask = np.clip((hmap + 40) / 16, 0, 1)
     hs = np.where(mask > 0, hmap, 0)
     from scipy import ndimage
-    hs = ndimage.gaussian_filter(hs, 2.0)
+    hs = ndimage.gaussian_filter(hs, 4.5)
     gy, gx = np.gradient(hs)
     nx, ny, nz = -gx, -gy, np.ones_like(gx) * 1.3
     nn = np.sqrt(nx ** 2 + ny ** 2 + nz ** 2)
@@ -297,17 +298,17 @@ def _star_child():
     col = skin * (0.22 + 0.62 * key[..., None]) + np.array([0.55, 0.7, 1.0]) * rim[..., None] * 0.5
     col += np.array([1.0, 0.5, 0.4]) * 0.06                       # warm, translucent fill
     # eyes: large and dark, looking out; a hint of lids and a small mouth
-    for ex in (-30, 30):
-        e = np.exp(-(((x - ex) / 17) ** 2 + ((y + 80) / 12) ** 2))
+    for ex, ey, sx, sy in ((62, -44, 24, 15), (14, -50, 17, 12)):
+        e = np.exp(-(((x - ex) / sx) ** 2 + ((y - ey) / sy) ** 2))
         col = col * (1 - 0.92 * e[..., None]) + np.array([0.05, 0.07, 0.16]) * 0.85 * e[..., None]
-        glint = np.exp(-(((x - ex - 4) / 3.0) ** 2 + ((y + 84) / 3.0) ** 2))
-        col += glint[..., None] * 0.6
-        lid = np.exp(-(((x - ex) / 20) ** 2 + ((y + 93) / 4) ** 2))
+        glint = np.exp(-(((x - ex - 4) / 3.0) ** 2 + ((y - ey + 4) / 3.0) ** 2))
+        col += glint[..., None] * 0.55
+        lid = np.exp(-(((x - ex) / (sx + 4)) ** 2 + ((y - ey + 12) / 4) ** 2))
         col *= 1 - 0.25 * lid[..., None]
-    mouth = np.exp(-((x / 12) ** 2 + ((y + 34) / 2.5) ** 2))
+    mouth = np.exp(-(((x - 62) / 10) ** 2 + ((y + 2) / 2.5) ** 2))
     col *= 1 - 0.3 * mouth[..., None]
     col = ndimage.gaussian_filter(col, (2.2, 2.2, 0))
-    alpha = ndimage.gaussian_filter(mask, 3.0) * 0.8
+    alpha = ndimage.gaussian_filter(mask, 3.0) * 0.66
     glow = ndimage.gaussian_filter(mask, 18) * 0.22
     col = col + glow[..., None] * np.array([1.0, 0.85, 0.8])
     alpha = np.clip(alpha + glow * 0.6, 0, 1)

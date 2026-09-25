@@ -135,37 +135,41 @@ def draw_monolith(c, cx, cy, w, h, persp=0.0, side=0.0, rim=0.25, a=1.0):
 
 def s_open(arr, t, d, T):
     k = 0.8 + 0.2 * ease(ramp(t, 0.0, 0.5))
-    R = 340 + 30 * t / d
+    R = 330 + 30 * t / d
     img, al = hal_eye(int(R), glow=k, pulse=math.sin(t * 3))
-    G.over(arr, img, al, int(CX - R), int(800 - R))
-    G.add_light(arr, G.radial(CX, 800, R * 0.9, (255, 40, 10), 0.35, 2.0))
+    G.over(arr, img, al, int(CX - R), int(760 - R))
+    G.add_light(arr, G.radial(CX, 760, R * 0.9, (255, 40, 10), 0.35, 2.0))
     s = G.canvas_of(arr)
     with s as c:
-        G.text(c, "HAL 9000", CX, 1250, G.font("michroma-400", 40), color=G.WHITE, track=10)
-        G.text(c, "2001: A SPACE ODYSSEY · 1968", CX, 1302, G.font("jost-500", 30), color=G.GREY, track=4)
-        label(c, t - 0.6, ["AI ADVISER: MARVIN MINSKY"])
+        G.text(c, "HAL 9000", CX, 1175, G.font("michroma-400", 40), color=G.WHITE, track=10)
+        G.text(c, "2001: A SPACE ODYSSEY · 1968", CX, 1228, G.font("jost-500", 30), color=G.GREY, track=4)
+        label(c, t - 0.3, ["AI ADVISER: MARVIN MINSKY"])
 
 
-CHAT = [("> Why do we have seasons?", G.GREY),
-        ("Earth's axis is tilted about 23°,", G.WHITE),
-        ("so each half of the planet takes", G.WHITE),
-        ("turns leaning toward the Sun.", G.WHITE)]
+STREAM = ["the mitochondria is the powerhouse of the cell", "def parse(tokens): return tree(tokens)",
+          "It was the best of times, it was the worst of times", "E = mc²  ·  F = ma  ·  PV = nRT",
+          "Article 1. All human beings are born free and equal", "SELECT name FROM users WHERE id = 7;",
+          "To be, or not to be, that is the question", "Photosynthesis converts light into chemical energy",
+          "The Treaty of Westphalia was signed in 1648", "for i in range(10): print(i ** 2)",
+          "Call me Ishmael.", "The derivative of sin x is cos x", "Paris is the capital of France",
+          "In the beginning was the Word", "The quick brown fox jumps over the lazy dog"]
 
 
 def s_chat(arr, t, d, T):
     s = G.canvas_of(arr)
-    f = G.font("jost-400", 44)
+    f = G.font("jost-400", 34)
     with s as c:
-        panel(c, 70, 560, 940, 520, code="COM", color=G.CYAN)
-        n = int(max(0, t) * 110)
-        y, used = 680, 0
-        for ln, col in CHAT:
-            m = max(0, min(len(ln), n - used))
-            used += len(ln) + (10 if ln.startswith(">") else 0)
-            if m:
-                G.text(c, ln[:m], 120, y, f, color=col, align="left")
-            y += 100 if ln.startswith(">") else 70
-        label(c, t, ["NOW: MACHINES TALK BACK"])
+        panel(c, 70, 440, 940, 820, code="MEM", color=G.CYAN)
+        c.save()
+        c.clipRect(skia.Rect.MakeXYWH(80, 470, 920, 780))
+        off = t * 900
+        for i in range(-2, 22):
+            idx = int(off // 44) + i
+            y = 490 + i * 44 - (off % 44)
+            a = 0.35 + 0.65 * math.exp(-((y - 850) / 260) ** 2)
+            G.text(c, STREAM[idx % len(STREAM)], 110, y, f, color=G.WHITE if idx % 3 else G.CYAN, a=a, align="left")
+        c.restore()
+        label(c, t, ["TRAINED ON TRILLIONS OF WORDS"])
 
 
 # ------------------------------------------------------------------ 1. the alignment (opening fanfare)
@@ -216,12 +220,12 @@ def s_int1(arr, t, d, T):
 
 def s_defs(arr, t, d, T):
     s = G.canvas_of(arr)
-    n_on = int(ramp(T, TL.s("defs") + 0.1, TL.word("defs", "definitions") + 0.2) * 72)
+    n_on = int(ramp(T, TL.s("defs") + 0.05, TL.word("defs", "seventy") + 0.05) * 72)
     rng = np.random.default_rng(3)
     with s as c:
         cols, rows = 8, 9
-        cw, ch = 112, 88
-        x0, y0 = CX - cols * cw / 2, 430
+        cw, ch = 112, 78
+        x0, y0 = CX - cols * cw / 2, 420
         f = G.font("michroma-400", 15)
         fb = G.font("jost-500", 30)
         for i in range(72):
@@ -231,11 +235,11 @@ def s_defs(arr, t, d, T):
             c.drawRect(skia.Rect.MakeXYWH(cx_ + 6, cy_ + 6, cw - 12, ch - 12), G.paint(col, 0.18 if on else 0.08))
             c.drawRect(skia.Rect.MakeXYWH(cx_ + 6, cy_ + 6, cw - 12, ch - 12), G.paint(col, 0.9 if on else 0.3, stroke=1.2))
             if on:
-                G.text(c, f"DEF {i + 1:02d}", cx_ + cw / 2, cy_ + 36, f, color=G.WHITE, a=0.9, track=1)
+                G.text(c, f"DEF {i + 1:02d}", cx_ + cw / 2, cy_ + 34, f, color=G.WHITE, a=0.9, track=1)
                 wl = int(rng.integers(20, 70))
-                c.drawLine(cx_ + 18, cy_ + 56, cx_ + 18 + wl, cy_ + 56, G.paint(G.CYAN, 0.8, stroke=3))
+                c.drawLine(cx_ + 18, cy_ + 52, cx_ + 18 + wl, cy_ + 52, G.paint(G.CYAN, 0.8, stroke=3))
         cnt = min(70, int(n_on * 70 / 72)) if n_on < 72 else 70
-        G.text(c, f"{cnt}{'+' if n_on >= 72 else ''}", CX, 1300, G.font("jost-300", 150), color=G.WHITE, track=4)
+        G.text(c, f"{cnt}{'+' if n_on >= 72 else ''}", CX, 1255, G.font("jost-300", 110), color=G.WHITE, track=4)
         label(c, t, ["70+ DEFINITIONS", "LEGG & HUTTER, 2007"])
 
 
@@ -265,8 +269,7 @@ def s_knowledge(arr, t, d, T):
     with s as c:
         kt = TL.word("knowledge", "knowledge") - TL.s("knowledge")
         a = ease(ramp(t, kt - 0.1, kt + 0.15))
-        c.drawRect(skia.Rect.MakeXYWH(0, 0, W, H), G.paint((0, 0, 0), 0.55 * a))
-        c.drawRect(skia.Rect.MakeXYWH(0, 900, W, 220), G.paint((0, 0, 0), 0.92 * a))
+        c.drawRect(skia.Rect.MakeXYWH(0, 0, W, H), G.paint((0, 0, 0), 0.9 * a))
         G.text(c, "KNOWLEDGE", CX, 1005, G.font("jost-500", 96), color=G.HAL, a=a, track=14, glow=18, glow_color=G.HAL)
         G.text(c, "NOT ON THE LIST", CX, 1080, G.font("michroma-400", 26), color=G.WHITE, a=a * 0.9, track=8)
 
@@ -359,6 +362,8 @@ def dawn(arr, t, props=True, lever=0.0, child=0.0, plank_in=1.0, label_a=1.0):
     arr[y0:, :, :3] = (np.clip(np.where(mask, sub + gt[: H - y0, :, None] * np.array([1.0, 0.6, 0.4]), sub), 0, 1) * 255).astype(np.uint8)
     s = G.canvas_of(arr)
     with s as c:
+        if props:
+            draw_monolith(c, 150, HORIZON - 169, 150, 338, side=0.0, rim=0.25)
         # the lever: log fulcrum and plank; far end goes down as the child pushes
         fx, py = 470, HORIZON - 64
         ang = 0.17 - 0.34 * lever
@@ -388,20 +393,20 @@ def dawn(arr, t, props=True, lever=0.0, child=0.0, plank_in=1.0, label_a=1.0):
         if props:
             for i in range(3):
                 c.save()
-                c.translate(560 + i * 30, HORIZON)
+                c.translate(550 + i * 30, HORIZON)
                 c.rotate(-8 + i * 5)
                 c.drawRoundRect(skia.Rect.MakeXYWH(-11, -330, 22, 330), 4, 4, G.paint(PROP))
                 c.restore()
             for r_, w_ in ((52, 12), (34, 10), (18, 8)):
-                c.drawOval(skia.Rect.MakeXYWH(730 - r_ * 1.3, HORIZON - 30 - r_ * 0.55, 2.6 * r_, 1.1 * r_), G.paint(PROP, stroke=w_))
+                c.drawOval(skia.Rect.MakeXYWH(700 - r_ * 1.3, HORIZON - 30 - r_ * 0.55, 2.6 * r_, 1.1 * r_), G.paint(PROP, stroke=w_))
             pul = skia.Path()
-            pul.addArc(skia.Rect.MakeXYWH(800, HORIZON - 300, 110, 110), 35, 250)
+            pul.addArc(skia.Rect.MakeXYWH(770, HORIZON - 300, 110, 110), 35, 250)
             c.drawPath(pul, G.paint(PROP, stroke=18, cap_round=False))
-            c.drawCircle(855, HORIZON - 245, 13, G.paint(PROP))
-            c.drawLine(855, HORIZON - 245, 885, HORIZON - 170, G.paint(PROP, stroke=10))
-            c.drawLine(855, HORIZON - 230, 855, HORIZON, G.paint(PROP, stroke=16))
+            c.drawCircle(825, HORIZON - 245, 13, G.paint(PROP))
+            c.drawLine(825, HORIZON - 245, 855, HORIZON - 170, G.paint(PROP, stroke=10))
+            c.drawLine(825, HORIZON - 230, 825, HORIZON, G.paint(PROP, stroke=16))
             fl = G.font("jost-500", 28)
-            for x, yy, s_ in ((250, 70, "ROCK"), (585, 70, "3 PLANKS"), (730, 118, "ROPE"), (835, 70, "BROKEN PULLEY")):
+            for x, yy, s_ in ((250, 70, "ROCK"), (570, 70, "3 PLANKS"), (700, 118, "ROPE"), (830, 70, "BROKEN PULLEY")):
                 G.text(c, s_, x, HORIZON + yy, fl, color=(255, 205, 160), a=0.95 * label_a, track=3)
 
 
@@ -432,7 +437,6 @@ def s_rock(arr, t, d, T):
     dawn(arr, t, props=True, plank_in=0.0)
     s = G.canvas_of(arr)
     with s as c:
-        draw_monolith(c, 1000, HORIZON - 169, 150, 338, side=0.0, rim=0.25)
         label(c, t, ["TASK: LIFT THE ROCK"], color=(255, 220, 170))
 
 
@@ -441,7 +445,6 @@ def s_nothing(arr, t, d, T):
     s = G.canvas_of(arr)
     with s as c:
         c.drawRect(skia.Rect.MakeXYWH(0, 0, W, H), G.paint((0, 0, 0), 0.35))
-        draw_monolith(c, 1000, HORIZON - 169, 150, 338, side=0.0, rim=0.25)
         G.text(c, "NO OUTPUT", CX, 560, G.font("michroma-400", 30), color=(255, 225, 190), a=ease(ramp(t, 0.5, 0.8)), track=10)
 
 
@@ -505,34 +508,41 @@ def s_bone(arr, t, d, T):
 
 
 def satellite(c, x, y, ang, scale=1.0, a=1.0):
+    """The orbiting satellite of the match cut: a long hull lit hard by the Sun from one side."""
     c.save()
     c.translate(x, y)
     c.rotate(ang)
     c.scale(scale, scale)
-    body = skia.GradientShader.MakeLinear([skia.Point(0, -30), skia.Point(0, 30)],
-                                          [skia.Color4f(0.92, 0.93, 0.95, a), skia.Color4f(0.62, 0.63, 0.67, a),
-                                           skia.Color4f(0.16, 0.16, 0.18, a)])
-    bp = G.paint(shader=body)
-    # long main hull with a tapered nose
+    lit = skia.GradientShader.MakeLinear([skia.Point(0, -34), skia.Point(0, 34)],
+                                         [skia.Color4f(1.0, 1.0, 0.98, a), skia.Color4f(0.86, 0.87, 0.9, a),
+                                          skia.Color4f(0.30, 0.31, 0.34, a), skia.Color4f(0.06, 0.06, 0.07, a)],
+                                         [0.0, 0.35, 0.55, 1.0])
+    bp = G.paint(shader=lit)
     hull = skia.Path()
     hull.moveTo(-330, -22)
     hull.lineTo(250, -22)
-    hull.lineTo(330, -8)
-    hull.lineTo(330, 8)
+    hull.lineTo(335, -7)
+    hull.lineTo(335, 7)
     hull.lineTo(250, 22)
     hull.lineTo(-330, 22)
     hull.close()
     c.drawPath(hull, bp)
-    # segmented service modules, radiator fins, a sensor boom
+    for px in range(-320, 250, 22):
+        c.drawLine(px, -22, px, 22, G.paint((40, 42, 48), a * 0.45, stroke=1))
     for px, w_, h_ in ((-320, 90, 34), (-180, 60, 30), (-40, 120, 38), (140, 50, 30)):
         c.drawRect(skia.Rect.MakeXYWH(px, -h_, w_, 2 * h_), bp)
-        for k in range(1, int(w_ / 14)):
-            c.drawLine(px + k * 14, -h_, px + k * 14, h_, G.paint((70, 72, 78), a * 0.8, stroke=1.2))
-    for fx in range(-150, 120, 40):
-        c.drawRect(skia.Rect.MakeXYWH(fx, 38, 14, 46), G.paint((150, 152, 160), a))
-    c.drawLine(-360, 0, -430, -40, G.paint((170, 172, 180), a, stroke=4))
-    c.drawCircle(-432, -42, 9, G.paint((200, 202, 210), a))
-    c.drawRect(skia.Rect.MakeXYWH(40, -70, 10, 36), G.paint((170, 172, 180), a))
+        c.drawRect(skia.Rect.MakeXYWH(px, -h_, w_, 2 * h_), G.paint((20, 20, 24), a * 0.7, stroke=1.4))
+        for k in range(1, int(w_ / 12)):
+            c.drawLine(px + k * 12, -h_, px + k * 12, h_, G.paint((60, 62, 70), a * 0.6, stroke=1))
+        for k in range(3):
+            c.drawRect(skia.Rect.MakeXYWH(px + 6 + k * (w_ / 3), -h_ - 9, w_ / 4, 9), G.paint((210, 212, 218), a))
+    for fx in range(-150, 120, 36):
+        c.drawRect(skia.Rect.MakeXYWH(fx, 40, 12, 52), G.paint((70, 72, 80), a))
+        c.drawRect(skia.Rect.MakeXYWH(fx, 40, 4, 52), G.paint((225, 226, 230), a))
+    c.drawLine(-360, 0, -440, -46, G.paint((200, 202, 210), a, stroke=4))
+    c.drawCircle(-444, -48, 10, G.paint((235, 236, 240), a))
+    c.drawRect(skia.Rect.MakeXYWH(40, -76, 10, 40), G.paint((200, 202, 210), a))
+    c.drawCircle(45, -80, 14, G.paint((230, 232, 236), a, stroke=3))
     c.restore()
 
 
@@ -569,53 +579,48 @@ def s_artif(arr, t, d, T):
 
 
 def s_corridor(arr, t, d, T):
-    """Discovery's centrifuge, looking down its axis: a turning ring of white panels and light strips."""
+    """Space Station V lobby: white curved room, a floor of glowing panels, red Djinn chairs."""
     s = G.canvas_of(arr)
-    cx, cy = CX, 860
-    Rf, Rb = 700, 250
-    rot = t * 0.22
-    N = 28
+    vx, vy = CX, 660
+    drift = t * 18
     with s as c:
-        c.drawRect(skia.Rect.MakeXYWH(0, 0, W, H), G.paint((8, 8, 10)))
-        for i in range(N):
-            a0 = rot + i * 2 * math.pi / N
-            a1 = a0 + 2 * math.pi / N
+        wall = skia.GradientShader.MakeLinear([skia.Point(0, 0), skia.Point(0, vy + 60)],
+                                              [skia.Color4f(0.62, 0.63, 0.66, 1), skia.Color4f(0.9, 0.91, 0.93, 1)])
+        c.drawRect(skia.Rect.MakeXYWH(0, 0, W, vy + 60), G.paint(shader=wall))
+        for i in range(-8, 9):
+            x = vx + i * 150
+            c.drawLine(x, 0, vx + i * 60, vy + 60, G.paint((150, 152, 158), 0.5, stroke=2))
+        # the floor rises away from us (the station's curve): rows of lit panels in perspective
+        for row in range(26, -1, -1):
+            z0, z1 = 1 + row * 0.55 + (drift % 0.55), 1 + (row + 1) * 0.55 + (drift % 0.55)
+            y0, y1 = vy + 60 + 1000 / z0, vy + 60 + 1000 / z1
+            curve = -35 * (row / 26) ** 2
+            for col in range(-4, 4):
+                xa0, xa1 = vx + col * 330 / z0, vx + (col + 1) * 330 / z0
+                xb0, xb1 = vx + col * 330 / z1, vx + (col + 1) * 330 / z1
+                p = skia.Path()
+                gap = 0.06
+                p.moveTo(xa0 + (xa1 - xa0) * gap, y0 + curve)
+                p.lineTo(xa1 - (xa1 - xa0) * gap, y0 + curve)
+                p.lineTo(xb1 - (xb1 - xb0) * gap, y1 + curve + 3)
+                p.lineTo(xb0 + (xb1 - xb0) * gap, y1 + curve + 3)
+                p.close()
+                glow = 0.85 + 0.15 * math.sin(row * 1.3 + col * 2.1)
+                c.drawPath(p, G.paint((255, 252, 244), min(1.0, glow)))
+            c.drawLine(0, y1 + curve, W, y1 + curve, G.paint((170, 170, 176), 0.9, stroke=max(1.0, 8 / z1)))
+
+        def djinn(x, y, sc_):
             p = skia.Path()
-            p.moveTo(cx + Rf * math.cos(a0), cy + Rf * math.sin(a0))
-            p.lineTo(cx + Rf * math.cos(a1), cy + Rf * math.sin(a1))
-            p.lineTo(cx + Rb * math.cos(a1), cy + Rb * math.sin(a1))
-            p.lineTo(cx + Rb * math.cos(a0), cy + Rb * math.sin(a0))
+            p.moveTo(x - 70 * sc_, y)
+            p.cubicTo(x - 80 * sc_, y - 50 * sc_, x - 40 * sc_, y - 60 * sc_, x - 10 * sc_, y - 45 * sc_)
+            p.cubicTo(x + 30 * sc_, y - 30 * sc_, x + 40 * sc_, y - 110 * sc_, x + 75 * sc_, y - 100 * sc_)
+            p.cubicTo(x + 95 * sc_, y - 90 * sc_, x + 90 * sc_, y - 10 * sc_, x + 70 * sc_, y)
             p.close()
-            am = (a0 + a1) / 2
-            lit = 0.55 + 0.35 * max(0.0, -math.sin(am)) + 0.1 * math.cos(am)
-            base = 205 if i % 2 == 0 else 180
-            col = tuple(int(min(255, base * lit)) for _ in range(3))
-            c.drawPath(p, G.paint(col))
-            c.drawPath(p, G.paint((40, 40, 46), 0.8, stroke=2))
-            if i % 2 == 0:
-                # recessed light strip across the panel
-                q = skia.Path()
-                for f0, f1 in ((0.42, 0.58),):
-                    b0, b1 = a0 + (a1 - a0) * 0.15, a0 + (a1 - a0) * 0.85
-                    r0, r1 = Rb + (Rf - Rb) * f0, Rb + (Rf - Rb) * f1
-                    q.moveTo(cx + r0 * math.cos(b0), cy + r0 * math.sin(b0))
-                    q.lineTo(cx + r0 * math.cos(b1), cy + r0 * math.sin(b1))
-                    q.lineTo(cx + r1 * math.cos(b1), cy + r1 * math.sin(b1))
-                    q.lineTo(cx + r1 * math.cos(b0), cy + r1 * math.sin(b0))
-                    q.close()
-                c.drawPath(q, G.paint((255, 252, 240)))
-            if i % 7 == 3:
-                # a hibernaculum pod set into the floor panel
-                r_ = Rb + (Rf - Rb) * 0.8
-                c.drawCircle(cx + r_ * math.cos(am), cy + r_ * math.sin(am), 34, G.paint((60, 62, 70)))
-                c.drawCircle(cx + r_ * math.cos(am), cy + r_ * math.sin(am), 20, G.paint((140, 200, 255), 0.8))
-        c.drawCircle(cx, cy, Rb, G.paint((14, 14, 18)))
-        c.drawCircle(cx, cy, Rb, G.paint((120, 122, 130), stroke=6))
-        c.drawCircle(cx, cy, 90, G.paint((60, 62, 70)))
-        for i in range(6):
-            a0 = -rot * 0.5 + i * math.pi / 3
-            c.drawLine(cx + 90 * math.cos(a0), cy + 90 * math.sin(a0), cx + Rb * math.cos(a0), cy + Rb * math.sin(a0),
-                       G.paint((90, 92, 100), stroke=5))
+            c.drawPath(p, G.paint((0, 0, 0), 0.25, blur=10 * sc_))
+            c.drawPath(p, G.paint((205, 18, 32)))
+            c.drawPath(p, G.paint((255, 90, 100), 0.5, stroke=2.5 * sc_))
+        for x, y, sc_ in ((250, 1000, 1.0), (560, 940, 0.75), (810, 1010, 1.05), (380, 860, 0.55), (700, 850, 0.5)):
+            djinn(x, y, sc_)
         ka = ease(ramp(t, 0.2, 0.5))
         c.drawRect(skia.Rect.MakeXYWH(0, 262, W, 76), G.paint((0, 0, 0), 0.8 * ka))
         label(c, t - 0.1, ["ARTIFICIAL LIGHT = REAL LIGHT"])
@@ -649,34 +654,42 @@ def s_heart(arr, t, d, T):
         c.drawPath(path, G.paint(G.GREEN, 0.35, stroke=9, blur=6))
         c.drawPath(path, G.paint(G.GREEN, 1.0, stroke=3.2))
         c.drawCircle(x1, yb, 7, G.paint(G.WHITE))
-        G.text(c, "PULSE 77", 950, 1100, G.font("michroma-400", 26), color=G.GREEN, align="right", track=4)
+        G.text(c, "PULSE 77", 880, 1100, G.font("michroma-400", 26), color=G.GREEN, align="right", track=4)
         G.text(c, "FLOW 5.1 L/MIN", 150, 1100, G.font("michroma-400", 26), color=G.GREEN, align="left", track=4)
         label(c, t, ["REALLY PUMPS BLOOD"], color=G.GREEN)
 
 
 def _wheel(c, cx, cy, rx, ry, rot, full=True, a=1.0):
-    """One ring of Space Station V: a thick rim with lit windows, four spokes, seen at an angle."""
+    """One ring of Space Station V: a thick shaded rim with two rows of lit windows and four spokes."""
     rng = (0, 360) if full else (180, 170)
-    for dy, col, wdt in ((14, (60, 62, 70), 60), (0, (222, 225, 232), 44), (-10, (245, 247, 250), 14)):
+    shade = skia.GradientShader.MakeLinear([skia.Point(cx - rx, cy), skia.Point(cx + rx, cy)],
+                                           [skia.Color4f(1.0, 1.0, 1.0, a), skia.Color4f(0.78, 0.8, 0.84, a),
+                                            skia.Color4f(0.36, 0.37, 0.42, a)])
+    for dy, wdt, pnt in ((16, 64, G.paint((40, 42, 48), a, stroke=64, cap_round=False)),
+                         (0, 48, G.paint(stroke=48, cap_round=False, shader=shade))):
         p = skia.Path()
         p.addArc(skia.Rect.MakeXYWH(cx - rx, cy - ry + dy, 2 * rx, 2 * ry), rng[0], rng[1])
-        c.drawPath(p, G.paint(col, a, stroke=wdt, cap_round=False))
-    for i in range(72):
-        ang = rot + i * 2 * math.pi / 72
+        c.drawPath(p, pnt)
+    for i in range(96):
+        ang = rot + i * 2 * math.pi / 96
         deg = math.degrees(ang) % 360
         if not full and not (180 <= deg <= 350):
             continue
         x, y = cx + rx * math.cos(ang), cy + ry * math.sin(ang)
-        if math.sin(ang) > -0.3:
-            c.drawRect(skia.Rect.MakeXYWH(x - 4, y - 3, 8, 6), G.paint((255, 236, 180), 0.9 * a))
+        if math.sin(ang) > -0.35:
+            for row in (-9, 7):
+                c.drawRect(skia.Rect.MakeXYWH(x - 3, y + row - 2, 6, 4), G.paint((255, 236, 170), 0.95 * a))
     for i in range(4):
         ang = rot + i * math.pi / 2
         x, y = cx + rx * 0.95 * math.cos(ang), cy + ry * 0.95 * math.sin(ang)
         if not full and math.sin(ang) > 0:
             c.drawLine(cx, cy, cx + (x - cx) * 0.5, cy + (y - cy) * 0.5, G.paint((150, 152, 160), a, stroke=6))
             continue
-        c.drawLine(cx, cy + 4, x, y + 4, G.paint((70, 72, 80), a, stroke=16, cap_round=False))
-        c.drawLine(cx, cy, x, y, G.paint((205, 208, 215), a, stroke=12, cap_round=False))
+        c.drawLine(cx, cy + 5, x, y + 5, G.paint((50, 52, 60), a, stroke=18, cap_round=False))
+        c.drawLine(cx, cy, x, y, G.paint((215, 218, 225), a, stroke=12, cap_round=False))
+        for k in range(1, 6):
+            px, py = cx + (x - cx) * k / 6, cy + (y - cy) * k / 6
+            c.drawRect(skia.Rect.MakeXYWH(px - 2, py - 2, 4, 4), G.paint((255, 236, 170), 0.8 * a))
 
 
 def s_station(arr, t, d, T):
@@ -691,8 +704,11 @@ def s_station(arr, t, d, T):
         _wheel(c, CX + 30, 600, 390, 150, rot, full=False, a=0.9)
         c.drawRect(skia.Rect.MakeXYWH(CX - 16, 600, 40, 230), G.paint((170, 172, 180)))
         _wheel(c, CX, 830, 430, 165, rot, full=True)
-        c.drawOval(skia.Rect.MakeXYWH(CX - 80, 800, 160, 64), G.paint((230, 232, 238)))
-        c.drawOval(skia.Rect.MakeXYWH(CX - 40, 815, 80, 32), G.paint((40, 42, 50)))
+        c.drawOval(skia.Rect.MakeXYWH(CX - 90, 796, 180, 70), G.paint((236, 238, 242)))
+        c.drawOval(skia.Rect.MakeXYWH(CX - 90, 796, 180, 70), G.paint((120, 122, 130), stroke=2))
+        # the docking-bay slot, lit from inside
+        c.drawRect(skia.Rect.MakeXYWH(CX - 48, 820, 96, 22), G.paint((20, 20, 24)))
+        c.drawRect(skia.Rect.MakeXYWH(CX - 42, 824, 84, 14), G.paint((255, 240, 200), 0.9))
         label(c, t, ["SPACE STATION V", "BUILT, NOT BORN"])
 
 

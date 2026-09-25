@@ -12,10 +12,10 @@ SPEED = 1.24
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 # Seconds of music/visual-only time inserted before a line.
-TITLE_HOLD = 1.75           # tutti chord + title card between "open" and "defs"
-PRE = {"open": 0.3, "defs": 0.35 + TITLE_HOLD, "artif": 2.3, "myth": 0.35, "token": 0.35,
+TITLE_HOLD = 0.85           # tutti chord + title card between "open" and "defs"
+PRE = {"open": 0.25, "defs": 2.45 + TITLE_HOLD, "nothing": 1.3, "artif": 2.3, "myth": 0.35, "token": 0.35,
        "llama": 2.3, "just": 0.3, "close1": 0.3}
-TAIL = 3.9                  # the final tutti + end card after the last line
+TAIL = 5.6                  # the final tutti + end card after the last line
 
 
 class Timeline:

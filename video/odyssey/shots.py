@@ -54,7 +54,7 @@ SHOTS = [
     (C["ch4"], _s("earth"), "s_tokens", {}),
     (_s("earth"), _s("tilt"), "s_predict", {}),
     (_s("tilt"), C["stargate"], "s_tilt", {}),
-    (C["stargate"], C["stargate_end"], "s_stargate", {"finish": {"bloom": 0.3, "grain": 0.008}}),
+    (C["stargate"], C["stargate_end"], "s_stargate", {"finish": {"bloom": 0.3, "grain": 0.008}, "plate": True}),
     (C["stargate_end"], _s("surprise") - 0.1, "s_childdata", {}),
     (_s("surprise") - 0.1, _s("glass"), "s_earth", {}),
     (_s("glass"), C["ch5"], "s_glass", {}),
@@ -65,7 +65,7 @@ SHOTS = [
     (_s("rhyme"), _s("philo"), "s_rhyme", {}),
     (_s("philo"), _s("jagged"), "s_tma", {}),
     (_s("jagged"), C["close"], "s_jagged", {}),
-    (C["close"], C["end_title"], "s_starchild", {"finish": {"bloom": 0.35}}),
+    (C["close"], C["end_title"], "s_starchild", {"finish": {"bloom": 0.35}, "plate": True}),
     (C["end_title"], C["end"] + 1.0, "s_endcard", {}),
 ]
 
@@ -93,7 +93,7 @@ def caption_at(T):
     return None
 
 
-def draw_caption(arr, T):
+def draw_caption(arr, T, force_plate=False):
     s = caption_at(T)
     if not s:
         return
@@ -105,11 +105,11 @@ def draw_caption(arr, T):
     region = arr[max(0, y_top): y_bot, 90: G.W - 90, :3]
     bright = float(region.mean()) / 255 if region.size else 0.0
     surf = G.canvas_of(arr)
-    if bright > 0.18:
+    if bright > 0.18 or force_plate:
         with surf as c:
             wmax = max(G.text_width(ln, f) for ln in lines)
             c.drawRoundRect(skia.Rect.MakeLTRB(G.CX - wmax / 2 - 34, y_top - 6, G.CX + wmax / 2 + 34, y_bot + 12), 22, 22,
-                            G.paint((0, 0, 0), min(0.7, 0.35 + bright * 0.5), blur=4))
+                            G.paint((0, 0, 0), 0.72 if force_plate else min(0.7, 0.35 + bright * 0.5), blur=4))
     # dark soft shadow, then crisp white
     with surf as c:
         y = G.CAP_Y - (len(lines) - 1) * 36
@@ -140,6 +140,7 @@ def render_frame(T, idx=None, captions=True):
     arr = G.new()
     arr[..., :3] = 0
     fin = {}
+    plate = False
     for a, b, fn, opt in SHOTS:
         if a <= T < b:
             f = _resolve(fn)
@@ -148,9 +149,10 @@ def render_frame(T, idx=None, captions=True):
                 if f.__name__ not in NO_PUSH:
                     push_in(arr, G.ease((T - a) / (b - a)) * 0.6 + (T - a) / (b - a) * 0.4)
             fin = opt.get("finish", {})
+            plate = opt.get("plate", False)
             break
     A.chapter_overlay(arr, T)
     G.finish(arr, idx if idx is not None else int(T * FPS), **fin)
     if captions:
-        draw_caption(arr, T)
+        draw_caption(arr, T, plate)
     return arr

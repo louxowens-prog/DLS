@@ -257,6 +257,11 @@ def shatter(dur=1.8, seed=7):
         f = rng.uniform(3000, 9000)
         out[i:] += rng.uniform(0.05, 0.25) * np.sin(2 * np.pi * f * tt) * np.exp(-tt / 0.02)
     out += _lp(rng.normal(0, 1, n), 300) * np.exp(-t / 0.03) * 0.8
+    # broadband smash: a hard noise transient across the whole spectrum, then a gritty debris tail
+    smash = rng.normal(0, 1, n) * (np.exp(-t / 0.018) * 2.2 + np.exp(-t / 0.12) * 0.5)
+    out += _hp(smash, 180)
+    grit = _bp(rng.normal(0, 1, n), 2500, 11000) * np.exp(-t / 0.5) * 0.35 * (1 + 0.6 * np.sin(2 * np.pi * 23 * t))
+    out += grit
     return out / (np.max(np.abs(out)) + 1e-9)
 
 

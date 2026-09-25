@@ -71,6 +71,26 @@ def fanfare(bus, t0, scale=1.0, full=True):
         bus.add(S.timpani(S.midi(36), dur=2.0, seed=60 + i), tut + i * 0.07, 0.3 * g * (1 - i / 7))
 
 
+def fanfare_short(bus, tut, g=1.0):
+    """The same gesture compressed into 2.4 s so it fits between the hook and the first chapter."""
+    t0 = tut - 2.4
+    bus.add(S.brass(S.midi(60), 0.45, players=4, seed=101), t0, 0.6 * g)
+    bus.add(S.brass(S.midi(67), 0.45, players=4, seed=102), t0 + 0.4, 0.65 * g)
+    bus.add(S.brass(S.midi(72), 0.7, players=4, seed=103, rel=0.25), t0 + 0.8, 0.72 * g)
+    for m, s_ in ((48, 104), (55, 105), (60, 106), (76, 107)):
+        bus.add(S.brass(S.midi(m), 0.32, players=3, horn=m < 70, seed=s_), t0 + 1.4, 0.45 * g)
+    for m, s_ in ((48, 108), (55, 109), (60, 110), (75, 111)):
+        bus.add(S.brass(S.midi(m), 0.4, players=3, horn=m < 70, seed=s_, rel=0.2), t0 + 1.7, 0.5 * g)
+    for i in range(6):
+        bus.add(S.timpani(S.midi(36 if i % 2 == 0 else 43), dur=2.0, seed=120 + i), t0 + 1.8 + i * 0.1,
+                (0.4 + 0.08 * i) * g)
+    for m, s_ in ((36, 130), (48, 131), (55, 132), (60, 133), (64, 134), (67, 135), (72, 136), (76, 137), (79, 138)):
+        bus.add(S.brass(S.midi(m), 2.0, players=3, horn=m < 62, seed=s_, rel=1.1), tut, (0.42 if m >= 60 else 0.5) * g)
+    bus.add(S.organ([24, 36, 43, 48, 55, 60, 64, 67, 72], 3.0, a=0.05, r=1.8), tut, 0.42 * g)
+    for i in range(5):
+        bus.add(S.timpani(S.midi(36), dur=2.0, seed=140 + i), tut + i * 0.07, 0.3 * g * (1 - i / 6))
+
+
 def pedal(bus, t0, dur, gain=0.5):
     """Organ pedal C + bass-drum rumble that opens the fanfare. Upper ranks (C3-G4) keep it audible on phones."""
     t = S.t_axis(dur)
@@ -87,8 +107,8 @@ def build():
     T = TL.total
 
     # ---------------------------------------------------------------- opening
-    pedal(music, 0.0, C["title"] + 0.4, 0.55)
-    fanfare(music, C["fanfare"])
+    pedal(music, 0.0, C["title"] + 0.4, 0.5)
+    fanfare_short(music, C["title"])
 
     # ---------------------------------------------------------------- I. the dawn of mind
     wstart = C["ch1"] + 0.3
@@ -101,9 +121,16 @@ def build():
     req = S.cluster(C["silence"] - C["monolith"] + 0.4, 62, 86, voices=40, vowels=("ah", "eh", "ee"),
                     seed=12, entry=0.35, drift=45, vib=18, air=0.25)
     req *= np.clip(np.linspace(0, 1, req.shape[1]), 0.08, 1)[None] ** 1.3
+    # keep the choir well under the narration, then let it swell for the last 0.7 s before the cut
+    env = np.ones(req.shape[1])
+    r0 = int((TL.s("rock") - C["monolith"]) * SR)
+    r1 = int((TL.e("rock") - C["monolith"]) * SR)
+    env[r0:r1] = db(-7)
+    env[r1:] = np.linspace(db(-7), 2.2, max(1, req.shape[1] - r1))
+    req *= env[None]
     low = S.cluster(req.shape[1] / SR, 40, 58, voices=18, vowels=("oo", "ah"), seed=13, entry=0.2, drift=30, vib=10, air=0.1)
     k = min(req.shape[1], low.shape[1])
-    music.add(req[:, :k] * 0.8 + low[:, :k] * 0.5, C["monolith"], db(-9))
+    music.add(req[:, :k] * 0.8 + low[:, :k] * 0.5, C["monolith"], db(3))
     # the tool moment: the fanfare motif returns while the child solves it
     sfx.add(S.wind(C["cut"] - C["child"], seed=14), C["child"], db(-22))
     fanfare(music, C["figure"] - 0.2, scale=0.75, full=False)
@@ -157,11 +184,16 @@ def build():
     atm = S.cluster(sg, 55, 100, voices=48, strings=True, seed=17, entry=0.04, drift=60, vib=22, air=0.2,
                     fades=(0.15, 0.7))
     atm *= np.clip(np.arange(atm.shape[1]) / SR / 0.25, 0, 1)[None]
-    music.add(atm, C["stargate"], db(7))
+    under = np.ones(atm.shape[1])
+    i0 = int((TL.s("llama") - 0.25 - C["stargate"]) * SR)
+    i1 = int((TL.s("llama") + 0.05 - C["stargate"]) * SR)
+    under[i0:i1] = np.linspace(1, db(-13), max(1, i1 - i0))
+    under[i1:] = db(-13)
+    music.add(atm * under[None], C["stargate"], db(7))
     earthc = S.cluster(TL.e("surprise") - TL.s("surprise") + 0.8, 60, 79, voices=22, vowels=("oo",),
                        seed=18, entry=0.3, drift=20, vib=5, air=0.08)
     music.add(earthc, TL.s("surprise") - 0.3, db(-17))
-    sfx.add(S.shatter(), C["shatter"], db(-6))
+    sfx.add(S.shatter(), C["shatter"], db(9))
     sfx.add(S.beep(1568, 0.4) + S.beep(2093, 0.4), TL.s("tilt2"), db(-26))
 
     # ---------------------------------------------------------------- V. beyond the next word
@@ -180,8 +212,8 @@ def build():
     music.add(req2, TL.s("philo") - 0.3, db(-13))
 
     # ---------------------------------------------------------------- the close
-    pedal(music, min(C["close"], C["fanfare2"]) - 0.5, C["end_title"] - min(C["close"], C["fanfare2"]) + 0.9, 0.5)
-    fanfare(music, C["fanfare2"])
+    pedal(music, C["close"] - 0.3, C["end_title"] - C["close"] + 0.7, 0.5)
+    fanfare_short(music, C["end_title"])
 
     # ---------------------------------------------------------------- mix
     mus = S.reverb(music.x, wet=0.32, rt60=2.8)[:, :N]

@@ -135,7 +135,7 @@ def s_vectors(arr, t, d, T):
                 for s_ in (-1, 1):
                     c.drawLine(ex, ey, ex - 22 * math.cos(ang + s_ * 0.45), ey - 22 * math.sin(ang + s_ * 0.45),
                                G.paint(col, 0.95 * k, stroke=4 if hl else 2.5))
-        label(c, t, ["WORD VECTORS · MIKOLOV, 2013", "SAME ARROW = SAME RELATION"])
+        label(c, t, ["SAME ARROW = SAME RELATION", "MIKOLOV 2013 · HERNANDEZ 2024"])
 
 
 def _galaxy_pts():
@@ -189,12 +189,12 @@ def s_galaxy(arr, t, d, T):
 
 
 def s_ae35(arr, t, d, T):
-    img, al = once("hal_small", lambda: hal_eye(210, glow=1.0))
-    G.over(arr, img, al, int(CX - 210), 330)
-    G.add_light(arr, G.radial(CX, 540, 200, (255, 40, 10), 0.3, 2))
+    img, al = once("hal_small", lambda: hal_eye(185, glow=1.0))
+    G.over(arr, img, al, int(CX - 185), 420)
+    G.add_light(arr, G.radial(CX, 605, 180, (255, 40, 10), 0.3, 2))
     s = G.canvas_of(arr)
     with s as c:
-        panel(c, 110, 830, 860, 420, code="COM", color=G.HAL)
+        panel(c, 110, 840, 860, 410, code="COM", color=G.HAL)
         f = G.font("michroma-400", 24)
         G.text(c, "AE-35 ANTENNA UNIT", CX, 925, G.font("michroma-400", 30), track=4)
         k1 = ease(ramp(t, 0.3, 0.6))
@@ -299,9 +299,9 @@ def s_tilt(arr, t, d, T):
     G.add_light(arr, G.radial(sx, sy, 34, (255, 250, 235), 2.0, 2) + G.radial(sx, sy, 160, (255, 220, 170), 0.4, 1.3))
     s = G.canvas_of(arr)
     with s as c:
-        c.drawOval(skia.Rect.MakeXYWH(sx - 360, sy - 140, 720, 280), G.paint((120, 130, 150), 0.7, stroke=2))
+        c.drawOval(skia.Rect.MakeXYWH(sx - 320, sy - 130, 640, 260), G.paint((120, 130, 150), 0.7, stroke=2))
     tilt = math.radians(23.4)
-    for ex, name in ((sx - 360, "NORTHERN SUMMER"), (sx + 360, "NORTHERN WINTER")):
+    for ex, name in ((sx - 320, "NORTHERN SUMMER"), (sx + 320, "NORTHERN WINTER")):
         dirx = (sx - ex) / abs(sx - ex)
         rgb, al, glow, off = once(f"tiltE{int(ex)}", lambda dirx=dirx: G.sphere(62, kind="earth", light=(dirx * 0.95, 0.0, 0.3),
                                                                              lon0=1.0, lat_tilt=0.0))
@@ -312,7 +312,7 @@ def s_tilt(arr, t, d, T):
             c.drawLine(ex - ax, sy - ay, ex + ax, sy + ay, G.paint(G.WHITE, 0.9, stroke=3))
             G.text(c, "N", ex + ax * 1.18, sy + ay * 1.18 - 4, G.font("michroma-400", 22), color=G.AMBER)
             k = ease(ramp(T, TL.s("tilt2"), TL.s("tilt2") + 0.3))
-            G.text(c, name.replace("NORTHERN ", "NORTH: "), ex, sy + 175, G.font("jost-500", 30), color=G.AMBER if "SUMMER" in name else G.CYAN,
+            G.text(c, name.split()[1], ex, sy + 175, G.font("jost-500", 32), color=G.AMBER if "SUMMER" in name else G.CYAN,
                    a=k, track=2)
     s = G.canvas_of(arr)
     with s as c:
@@ -371,25 +371,32 @@ def s_stargate(arr, t, d, T):
         label(c, T - TL.s("llama") + 0.3, ["META · LLAMA 3 · 2024"])
 
 
+def _dots100k():
+    """100,000 points in a 400 x 250 grid: the model's training words; one point is a child's."""
+    light = np.zeros((H, W, 3), np.float32)
+    xs = np.linspace(90, W - 90, 400)
+    ys = np.linspace(420, 1230, 250)
+    gx, gy = np.meshgrid(xs, ys)
+    xi, yi = gx.astype(int).ravel(), gy.astype(int).ravel()
+    np.add.at(light, (yi, xi), np.array([0.45, 0.85, 1.0], np.float32) * 1.4)
+    return light
+
+
 def s_childdata(arr, t, d, T):
+    field = once("dots100k", _dots100k)
+    reveal = ease(ramp(t, 0.0, 0.8))
+    G.add_light(arr, field * reveal)
     s = G.canvas_of(arr)
+    kc = ease(ramp(T, TL.word("childdata", "hundred") - 0.2, TL.word("childdata", "hundred") + 0.2))
     with s as c:
-        cols, rows = 25, 40
-        x0, y0, sp = CX - (cols - 1) * 18, 440, 22
-        n_lit = int(ramp(t, 0.0, 1.0) * cols * rows)
-        for i in range(cols * rows):
-            x = x0 + (i % cols) * 36
-            y = y0 + (i // cols) * sp
-            on = i < n_lit
-            c.drawCircle(x, y, 6, G.paint(G.CYAN, 0.75 if on else 0.12))
-        kc = ease(ramp(T, TL.word("childdata", "thousand") - 0.2, TL.word("childdata", "thousand") + 0.2))
-        G.text(c, "A MODEL", CX, 425, G.font("jost-500", 40), color=G.CYAN, a=(1 - kc) * ease(ramp(t, 0.1, 0.4)), track=4)
-        # the child's whole budget: one dot out of a thousand
-        c.drawRect(skia.Rect.MakeXYWH(0, y0 - 20, W, rows * sp + 20), G.paint((0, 0, 0), 0.72 * kc))
-        c.drawCircle(x0 + 12 * 36, y0 + 20 * sp, 11, G.paint(G.AMBER, kc))
-        c.drawCircle(x0 + 12 * 36, y0 + 20 * sp, 26, G.paint(G.AMBER, 0.5 * kc, blur=10))
-        G.text(c, "A CHILD", x0 + 12 * 36, y0 + 20 * sp - 44, G.font("jost-500", 40), color=G.AMBER, a=kc, track=4)
-        label(c, t, ["WORDS HEARD VS. TRAINED ON", "FRANK, 2023"])
+        c.drawRect(skia.Rect.MakeXYWH(0, 400, W, 850), G.paint((0, 0, 0), 0.8 * kc))
+        x, y = CX + 3, 826
+        c.drawCircle(x, y, 26, G.paint(G.AMBER, 0.55 * kc, blur=10))
+        c.drawCircle(x, y, 5, G.paint(G.AMBER, kc))
+        G.text(c, "A CHILD", x, y - 52, G.font("jost-500", 40), color=G.AMBER, a=kc, track=4)
+        G.text(c, "100,000 DOTS: ONE MODEL'S TRAINING TEXT", CX, 1300 - 40, G.font("jost-500", 30), color=G.CYAN,
+               a=(1 - kc) * reveal, track=2)
+        label(c, t, ["1 DOT = A CHILD'S WORDS", "FRANK, 2023 · META, 2024"])
 
 
 def s_earth(arr, t, d, T):
@@ -409,23 +416,12 @@ def s_glass(arr, t, d, T):
     ws = TL.lines["glass"]["words"]
     tsh = C["shatter"]
     with s as c:
-        line1 = " ".join(words[:3])
-        line2 = " ".join(words[3:])
-        shown = sum(1 for w, a, b in ws if T >= a - 0.05)
-        l1 = " ".join(words[:min(3, shown)])
-        l2 = " ".join(words[3:max(3, shown)])
-        G.text(c, l1, CX, 700, f)
-        G.text(c, l2, CX, 790, f)
-        k = ease(ramp(T, TL.s("glass2") - 0.05, TL.s("glass2") + 0.2))
-        G.text(c, "shattered.", CX, 930, G.font("jost-500", 84), color=G.AMBER, a=k, track=4)
-        G.text(c, "YOU PREDICTED IT TOO", CX, 1040, G.font("jost-500", 36), color=G.GREY, a=k, track=4)
         if T >= tsh:
             e = T - tsh
             rng = np.random.default_rng(5)
             ix, iy = CX + 60, 760
-            fl = max(0.0, 1 - e / 0.12)
-            if fl > 0:
-                c.drawRect(skia.Rect.MakeXYWH(0, 0, W, H), G.paint((255, 255, 255), 0.5 * fl))
+            c.save()
+            c.clipRect(skia.Rect.MakeXYWH(0, 0, W, 1270))
             grow = ease(min(1.0, e / 0.08))
             for i in range(26):
                 ang = rng.uniform(0, 2 * math.pi)
@@ -433,12 +429,24 @@ def s_glass(arr, t, d, T):
                 path = skia.Path()
                 path.moveTo(ix, iy)
                 x, y = ix, iy
-                segs = 5
-                for j in range(segs):
+                for j in range(5):
                     ang += rng.normal(0, 0.18)
-                    x += math.cos(ang) * L / segs
-                    y += math.sin(ang) * L / segs
+                    x += math.cos(ang) * L / 5
+                    y += math.sin(ang) * L / 5
                     path.lineTo(x, y)
-                c.drawPath(path, G.paint((230, 240, 255), 0.85, stroke=rng.uniform(1.2, 3.2)))
+                c.drawPath(path, G.paint((200, 210, 230), 0.55, stroke=rng.uniform(1.0, 2.6)))
             for r_ in (60, 140, 260):
-                c.drawCircle(ix, iy, r_ * grow, G.paint((220, 230, 255), 0.35, stroke=1.4))
+                c.drawCircle(ix, iy, r_ * grow, G.paint((220, 230, 255), 0.25, stroke=1.2))
+            c.restore()
+            fl = max(0.0, 1 - e / 0.12)
+            if fl > 0:
+                c.drawRect(skia.Rect.MakeXYWH(0, 0, W, H), G.paint((255, 255, 255), 0.5 * fl))
+        shown = sum(1 for w, a_, b_ in ws if T >= a_ - 0.05)
+        l1 = " ".join(words[:min(3, shown)])
+        l2 = " ".join(words[3:max(3, shown)])
+        c.drawRect(skia.Rect.MakeXYWH(0, 620, W, 470), G.paint((0, 0, 0), 0.55 if T >= tsh else 0.0, blur=20))
+        G.text(c, l1, CX, 700, f, glow=10, glow_color=(0, 0, 0))
+        G.text(c, l2, CX, 790, f, glow=10, glow_color=(0, 0, 0))
+        k = ease(ramp(T, TL.s("glass2") - 0.05, TL.s("glass2") + 0.2))
+        G.text(c, "shattered.", CX, 930, G.font("jost-500", 84), color=G.AMBER, a=k, track=4, glow=10, glow_color=(0, 0, 0))
+        G.text(c, "YOU PREDICTED IT TOO", CX, 1040, G.font("jost-500", 36), color=G.GREY, a=k, track=4)

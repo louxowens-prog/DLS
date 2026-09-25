@@ -25,7 +25,8 @@ def work(k, a, b, scale, out):
     from timeline import FPS
     w, h = int(G.W * scale) // 2 * 2, int(G.H * scale) // 2 * 2
     cmd = ["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{w}x{h}", "-r", str(FPS),
-           "-i", "-", "-c:v", "libx264", "-preset", "fast", "-crf", "10", "-pix_fmt", "yuv420p", out]
+           "-i", "-", "-c:v", "libx264", "-preset", "fast", "-crf", "10", "-pix_fmt", "yuv420p",
+           "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv", out]
     p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     t0 = time.time()
     for i in range(a, b):
@@ -83,6 +84,7 @@ def main():
     af = "loudnorm=I=-14:TP=-1.5:LRA=11"
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", video, "-ss", str(args.start), "-i", audio, "-map", "0:v", "-map", "1:a",
                     "-c:v", "libx264", "-preset", "slow", "-crf", "17", "-profile:v", "high", "-pix_fmt", "yuv420p",
+                    "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
                     "-r", str(FPS), "-af", af, "-ar", "48000", "-c:a", "aac", "-b:a", "256k", "-shortest",
                     "-movflags", "+faststart", master], check=True)
     print("wrote", master, os.path.getsize(master) / 1e6, "MB", flush=True)

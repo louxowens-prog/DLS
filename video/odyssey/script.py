@@ -3,7 +3,7 @@
 Numbers are spelled the way the voice should say them; captions show them the way a viewer reads them.
 """
 LINES = [
-    ("open", "In nineteen sixty-eight, this was science fiction. Now machines talk back. So what is intelligence, actually?", "In 1968, this was science fiction. Now machines talk back. So what is intelligence, actually?", 0.0),
+    ("open", "It has read more than any human ever could. Is that intelligence?", None, 0.0),
     # ---- I. THE DAWN OF MIND
     ("defs", "Researchers have collected over seventy definitions.", "Researchers have collected over 70 definitions.", 0.15),
     ("useful", "A useful one: the ability to model the world, learn, infer, adapt, and plan.", None, 0.16),
@@ -16,7 +16,7 @@ LINES = [
     ("artif", "Artificial doesn't mean fake. It means made with skill.", "“Artificial” doesn’t mean fake. It means “made with skill.”", 0.15),
     ("light", "Artificial light is real light. An artificial heart really pumps blood.", None, 0.16),
     ("built", "So A.I. is intelligence that's built, not born.", "So AI is intelligence that’s built, not born.", 0.16),
-    ("nist", "NIST's definitions cover machines that perceive, plan, learn, or communicate.", "NIST’s definitions cover machines that perceive, plan, learn, or communicate.", 0.16),
+    ("nist", "The U.S. standards agency, NIST, counts machines that perceive, plan, learn, or communicate.", None, 0.16),
     ("chess", "So Deep Blue, in nineteen ninety-seven, was A.I. So was AlphaGo, in twenty sixteen.", "So Deep Blue, in 1997, was AI. So was AlphaGo, in 2016.", 0.16),
     ("question", "The real question isn't, do we have A.I.? It's, how general is it?", "The real question isn’t “do we have AI?” It’s “how general is it?”", 0.2),
     # ---- III. INSIDE THE MACHINE
@@ -31,16 +31,16 @@ LINES = [
     ("ocean", "Ocean? Wrong.", "“Ocean”? Wrong.", 0.2),
     ("nudge", "Each miss nudges the numbers. Eventually: Sun.", "Each miss nudges the numbers. Eventually: “Sun.”", 0.2),
     ("tilt", "Harder: Earth's axis is tilted, so the north gets summer when...", "Harder: “Earth’s axis is tilted, so the north gets summer when…”", 0.1),
-    ("tilt2", "it leans toward the Sun. To guess that, it has to model the solar system.", "“…it leans toward the Sun.” To guess that, it has to model the solar system.", 0.16),
+    ("tilt2", "it leans toward the Sun. The easiest way to guess that? Model the solar system.", "“…it leans toward the Sun.” The easiest way to guess that? Model the solar system.", 0.16),
     ("llama", "Meta's Llama 3 trained on over fifteen trillion tokens. Over two hundred thousand years of reading.", "Meta’s Llama 3 trained on over 15 trillion tokens. Over 200,000 years of reading.", 0.16),
-    ("childdata", "A child learns language from at least a thousand times fewer words.", None, 0.16),
+    ("childdata", "A child learns language from roughly a hundred thousand times fewer words.", "A child learns language from roughly 100,000 times fewer words.", 0.16),
     ("surprise", "The surprise: to predict text well, a model must learn about the world behind it.", None, 0.2),
     ("glass", "The glass hit the concrete, and...", "“The glass hit the concrete, and…”", 0.75),
     ("glass2", "shattered. Predicting that means knowing glass breaks.", "…shattered. Predicting that means knowing glass breaks.", 0.16),
     # ---- V. BEYOND THE NEXT WORD
     ("just", "Just predicting the next word? True. And misleading.", "“Just predicting the next word”? True. And misleading.", 0.16),
     ("shakes", "Shakespeare was just neurons firing. True. Not very explanatory.", "Shakespeare was “just neurons firing.” True. Not very explanatory.", 0.16),
-    ("train", "To predict the answer to a train word problem, it has to set up the equation, then solve it.", None, 0.16),
+    ("train", "To predict the answer to a train word problem, the reliable way is to set up the equation and solve it.", None, 0.16),
     ("dallas", "Look inside: asked for the capital of the state containing Dallas, Claude steps through Texas to reach Austin.", None, 0.16),
     ("rhyme", "Writing a rhyme, it picks the last word first.", None, 0.16),
     ("philo", "Real reasoning? Philosophers still argue.", None, 0.2),
