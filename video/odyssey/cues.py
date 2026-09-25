@@ -2,29 +2,34 @@
 from timeline import TL
 
 C = {}
-C["fanfare"] = TL.e("open") + 0.15            # trumpets: C - G - C
-C["title"] = C["fanfare"] + 4.35              # tutti C major: title card
-C["int1"] = C["fanfare"] + 5.45               # "THE DAWN OF MIND"
+C["chat"] = TL.word("open", "Now")               # HAL -> a modern chat exchange
+C["align"] = TL.word("open", "So")               # the Moon-Earth-Sun alignment
+C["title"] = TL.e("open") + 0.35                  # tutti C major: title card
+C["fanfare"] = C["title"] - 4.35                  # trumpets C - G - C start under the voice
+C["ch1"] = TL.s("defs") - 0.1
 C["monolith"] = TL.s("drive") - 0.1
-C["silence"] = TL.s("nothing") - 0.03          # choir cut off dead, as in the film
+C["silence"] = TL.s("nothing") - 0.03            # choir cut off dead, as in the film
 C["child"] = TL.s("child") - 0.25
-C["figure"] = TL.word("child", "figures")     # the tool moment: the fanfare motif returns
-C["bone"] = TL.e("child") + 0.12
-C["cut"] = C["bone"] + 1.55                   # match cut: bone -> orbiting spacecraft, into silence
-C["int2"] = TL.s("artif") - 0.55
+C["figure"] = TL.word("child", "figures")        # the tool moment: the fanfare motif returns
+C["bone"] = TL.e("child") + 0.1
+C["cut"] = C["bone"] + 1.3                       # match cut: bone -> orbiting satellite, into silence
+C["ch2"] = TL.s("artif") + 0.1
 C["heart"] = TL.word("light", "An")
 C["alphago"] = TL.word("chess", "AlphaGo")
-C["int3"] = TL.s("myth") - 1.0
-C["int4"] = TL.s("token") - 1.0
+C["ch3"] = TL.s("myth") - 0.3
+C["ch4"] = TL.s("token") - 0.3
 C["sun"] = TL.word("nudge", "Sun")
-C["stargate"] = TL.s("llama") - 0.25
-C["stargate_end"] = TL.e("llama") + 0.15
-C["shatter"] = TL.e("glass") + 0.18
-C["int5"] = TL.s("just") - 1.0
+C["stargate"] = TL.e("tilt2") + 0.12
+C["stargate_end"] = TL.e("llama") + 0.12
+C["shatter"] = TL.e("glass") + 0.15
+C["ch5"] = TL.s("just") - 0.25
 C["texas"] = TL.word("dallas", "Texas")
 C["austin"] = TL.word("dallas", "Austin")
 C["dallas"] = TL.word("dallas", "Dallas")
-C["close"] = TL.s("close1") - 0.5
-C["fanfare2"] = TL.e("close2") + 0.25
-C["end_title"] = C["fanfare2"] + 4.35
+C["close"] = TL.s("close1") - 0.3
+C["end_title"] = TL.e("close2") + 0.3            # final tutti + end card
+C["fanfare2"] = C["end_title"] - 4.35
 C["end"] = TL.total
+CHAPTERS = [("THE DAWN OF MIND", "I", C["ch1"]), ("BUILT, NOT BORN", "II", C["ch2"]),
+            ("INSIDE THE MACHINE", "III", C["ch3"]), ("THE PREDICTION MISSION", "IV", C["ch4"]),
+            ("BEYOND THE NEXT WORD", "V", C["ch5"])]

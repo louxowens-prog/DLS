@@ -8,14 +8,14 @@ from voice import SR, speak, word_times
 
 FPS = 24
 VOICE = "af_heart"
-SPEED = 1.12
+SPEED = 1.24
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 # Seconds of music/visual-only time inserted before a line.
-FANFARE_OPEN = 6.3          # trumpets start right after "open"; "defs" starts this long after
-PRE = {"open": 0.45, "defs": 0.15 + FANFARE_OPEN, "artif": 3.4, "myth": 1.0, "token": 1.0,
-       "just": 1.0, "close1": 0.5}
-TAIL = 7.2                  # closing fanfare + end card after the last line
+TITLE_HOLD = 1.75           # tutti chord + title card between "open" and "defs"
+PRE = {"open": 0.3, "defs": 0.35 + TITLE_HOLD, "artif": 2.3, "myth": 0.35, "token": 0.35,
+       "llama": 2.3, "just": 0.3, "close1": 0.3}
+TAIL = 3.9                  # the final tutti + end card after the last line
 
 
 class Timeline:

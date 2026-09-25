@@ -24,9 +24,9 @@ def s_db(arr, t, d, T):
     s = G.canvas_of(arr)
     f = G.font("michroma-400", 21)
     with s as c:
-        panel(c, 90, 430, 900, 900, code="MEM", color=G.CYAN)
+        panel(c, 90, 430, 900, 820, code="MEM", color=G.CYAN)
         c.save()
-        c.clipRect(skia.Rect.MakeXYWH(90, 470, 900, 850))
+        c.clipRect(skia.Rect.MakeXYWH(90, 470, 900, 770))
         off = (t * 420) % 52
         for i in range(-1, 18):
             y = 520 + i * 52 - off
@@ -36,11 +36,11 @@ def s_db(arr, t, d, T):
         c.restore()
         k = ease(ramp(T, TL.word("myth", "not") - 0.05, TL.word("myth", "not") + 0.25))
         if k > 0:
-            c.drawRect(skia.Rect.MakeXYWH(90, 430, 900, 900), G.paint((0, 0, 0), 0.55 * k))
-            c.drawLine(140, 1280, 940, 480, G.paint(G.HAL, k, stroke=10))
-            G.text(c, "NOT A DATABASE", CX, 900, G.font("jost-500", 84), color=G.HAL, a=k, track=8,
+            c.drawRect(skia.Rect.MakeXYWH(90, 430, 900, 820), G.paint((0, 0, 0), 0.55 * k))
+            c.drawLine(140, 1210, 940, 480, G.paint(G.HAL, k, stroke=10))
+            G.text(c, "NOT A DATABASE", CX, 870, G.font("jost-500", 84), color=G.HAL, a=k, track=8,
                    glow=14 * k, glow_color=G.HAL)
-        label(c, t, ["OPENAI: ITS MODELS DON'T STORE", "COPIES OF THEIR TRAINING DATA"])
+        label(c, t, ["OPENAI: NO STORED COPIES", "(SOME TEXT CAN BE MEMORIZED)"])
 
 
 def s_memory(arr, t, d, T):
@@ -90,7 +90,7 @@ def s_memory(arr, t, d, T):
         c.drawRect(skia.Rect.MakeXYWH(0, 700, W, 250), G.paint((0, 0, 0), 0.55 * k))
         G.text(c, "175,000,000,000", CX, 830, G.font("jost-300", 104), a=k, track=4)
         G.text(c, "ADJUSTABLE NUMBERS · “PARAMETERS”", CX, 900, G.font("michroma-400", 22), color=(255, 180, 160), a=k, track=4)
-        label(c, t, ["GPT-3 (2020) HAD 175 BILLION", "TODAY'S LARGEST: FAR MORE"], color=(255, 150, 120))
+        label(c, t, ["GPT-3 · 2020"], color=(255, 150, 120))
 
 
 VEC = [("CHINA", "BEIJING"), ("JAPAN", "TOKYO"), ("FRANCE", "PARIS"), ("ITALY", "ROME"), ("GERMANY", "BERLIN"),
@@ -99,31 +99,31 @@ VEC = [("CHINA", "BEIJING"), ("JAPAN", "TOKYO"), ("FRANCE", "PARIS"), ("ITALY", 
 
 def s_vectors(arr, t, d, T):
     s = G.canvas_of(arr)
-    f = G.font("michroma-400", 22)
+    f = G.font("jost-500", 32)
     with s as c:
-        panel(c, 70, 430, 940, 880, code="VEC", color=G.CYAN)
-        x0, y0, w, h = 110, 520, 860, 740
+        panel(c, 70, 430, 940, 820, code="VEC", color=G.CYAN)
+        x0, y0, w, h = 110, 500, 860, 720
         for gx in range(9):
             c.drawLine(x0 + gx * w / 8, y0, x0 + gx * w / 8, y0 + h, G.paint((30, 60, 90), 0.6, stroke=1))
         for gy in range(9):
             c.drawLine(x0, y0 + gy * h / 8, x0 + w, y0 + gy * h / 8, G.paint((30, 60, 90), 0.6, stroke=1))
-        t_yet = TL.word("capitals", "Yet")
-        rule_a = ease(ramp(t, 0.1, 0.4)) * (1 - ease(ramp(T, t_yet - 0.3, t_yet)))
+        t_yet = TL.word("capitals", "inside")
+        rule_a = ease(ramp(t, 0.05, 0.3)) * (1 - ease(ramp(T, t_yet - 0.2, t_yet + 0.1)))
         if rule_a > 0:
-            c.drawRect(skia.Rect.MakeXYWH(170, 780, 740, 170), G.paint((0, 0, 0), 0.85 * rule_a))
-            G.text(c, "RULE: CAPITALS BELONG TO COUNTRIES", CX, 860, G.font("michroma-400", 22), a=rule_a, track=2)
-            G.text(c, "NEVER PROGRAMMED", CX, 910, G.font("michroma-400", 22), color=G.HAL, a=rule_a, track=6)
+            c.drawRect(skia.Rect.MakeXYWH(150, 760, 780, 190), G.paint((0, 0, 0), 0.9 * rule_a))
+            G.text(c, "NO RULE ABOUT CAPITALS", CX, 845, G.font("jost-500", 46), a=rule_a, track=4)
+            G.text(c, "WAS EVER PROGRAMMED", CX, 905, G.font("jost-500", 46), color=G.HAL, a=rule_a, track=4)
         pts_a = ease(ramp(T, t_yet - 0.1, t_yet + 0.4))
         when = {"FRANCE": TL.word("capitals", "Paris"), "JAPAN": TL.word("capitals", "Tokyo")}
         rest = TL.word("capitals", "Japan") + 0.3
         for i, (co, ca) in enumerate(VEC):
-            yc = y0 + 70 + i * 118 + (i % 2) * 14
-            xc = x0 + 150 + (i % 3) * 14
-            xk, yk = xc + 470, yc - 50
-            c.drawCircle(xc, yc, 9, G.paint(G.CYAN, pts_a))
+            yc = y0 + 80 + i * 112 + (i % 2) * 12
+            xc = x0 + 190 + (i % 3) * 12
+            xk, yk = xc + 400, yc - 46
+            c.drawCircle(xc, yc, 10, G.paint(G.CYAN, pts_a))
             c.drawCircle(xk, yk, 9, G.paint(G.AMBER, pts_a))
-            G.text(c, co, xc - 20, yc + 8, f, color=G.CYAN, a=pts_a, align="right", track=1)
-            G.text(c, ca, xk + 20, yk + 8, f, color=G.AMBER, a=pts_a, align="left", track=1)
+            G.text(c, co.title(), xc - 20, yc + 11, f, color=G.CYAN, a=pts_a, align="right")
+            G.text(c, ca.title(), xk + 20, yk + 11, f, color=G.AMBER, a=pts_a, align="left")
             ta = when.get(co, rest + 0.12 * i)
             k = ease(ramp(T, ta, ta + 0.45))
             if k > 0:
@@ -135,13 +135,13 @@ def s_vectors(arr, t, d, T):
                 for s_ in (-1, 1):
                     c.drawLine(ex, ey, ex - 22 * math.cos(ang + s_ * 0.45), ey - 22 * math.sin(ang + s_ * 0.45),
                                G.paint(col, 0.95 * k, stroke=4 if hl else 2.5))
-        label(c, t, ["WORD VECTORS · MIKOLOV ET AL. 2013", "SAME DIRECTION = SAME RELATIONSHIP"])
+        label(c, t, ["WORD VECTORS · MIKOLOV, 2013", "SAME ARROW = SAME RELATION"])
 
 
 def _galaxy_pts():
     rng = np.random.default_rng(71)
     groups = []
-    centers = [(-0.9, -0.6, 0.2), (0.8, -0.4, -0.3), (-0.5, 0.7, 0.4), (0.6, 0.75, -0.2)]
+    centers = [(-0.75, -0.62, 0.0), (0.75, -0.62, 0.0), (-0.75, 0.62, 0.0), (0.75, 0.62, 0.0)]
     cols = [(0.75, 0.85, 1.0), (0.45, 1.0, 0.65), (1.0, 0.75, 0.35), (1.0, 0.35, 0.3)]
     P, Cl = [], []
     for (cx, cy, cz), col in zip(centers, cols):
@@ -157,7 +157,7 @@ def _galaxy_pts():
 
 def s_galaxy(arr, t, d, T):
     P, Cl, centers = once("gal", _galaxy_pts)
-    a = 0.25 + t * 0.12
+    a = 0.10 + t * 0.05
     ca, sa = math.cos(a), math.sin(a)
     x = P[:, 0] * ca + P[:, 2] * sa
     z = -P[:, 0] * sa + P[:, 2] * ca + 3.4 - t * 0.12
@@ -184,8 +184,8 @@ def s_galaxy(arr, t, d, T):
             zz = -cx * sa + cz * ca + 3.4 - t * 0.12
             px, py = CX + xx / zz * f, 820 + cy / zz * f
             k = ease(ramp(T, TL.word("map", kw) - 0.05, TL.word("map", kw) + 0.25))
-            G.text(c, nm, px, py - 330 / zz, G.font("michroma-400", 26), a=k, track=5, glow=6, glow_color=(0, 0, 0))
-        label(c, t, ["A LEARNED MAP OF RELATIONSHIPS"])
+            G.text(c, nm, px, py - 400 / zz, G.font("jost-500", 40), a=k, track=5, glow=8, glow_color=(0, 0, 0))
+        label(c, t, ["A LEARNED MAP OF MEANING"])
 
 
 def s_ae35(arr, t, d, T):
@@ -198,13 +198,12 @@ def s_ae35(arr, t, d, T):
         f = G.font("michroma-400", 24)
         G.text(c, "AE-35 ANTENNA UNIT", CX, 925, G.font("michroma-400", 30), track=4)
         k1 = ease(ramp(t, 0.3, 0.6))
-        G.text(c, "FAULT PREDICTED:", CX, 1000, f, color=G.HAL, a=k1, track=3)
-        G.text(c, "100% FAILURE WITHIN 72 HOURS", CX, 1045, f, color=G.HAL, a=k1, track=3)
+        G.text(c, "FAULT PREDICTED:", CX, 1000, G.font("jost-500", 38), color=G.HAL, a=k1, track=3)
+        G.text(c, "100% FAILURE IN 72 HOURS", CX, 1050, G.font("jost-500", 38), color=G.HAL, a=k1, track=3)
         tr = TL.word("wrong", "rebuilds")
         k2 = ease(ramp(T, tr - 0.1, tr + 0.25))
-        G.text(c, "TESTED: NO FAULT FOUND", CX, 1150, G.font("michroma-400", 28), color=G.GREEN, a=k2, track=4)
-        G.text(c, "IN THE FILM, HAL WAS CONFIDENTLY WRONG TOO", CX, 1210, G.font("michroma-400", 17), color=G.GREY, a=k2, track=2)
-        label(c, t, ["FLUENT IS NOT THE SAME AS CORRECT"], y=300)
+        G.text(c, "TESTED: NO FAULT FOUND", CX, 1165, G.font("jost-500", 44), color=G.GREEN, a=k2, track=4)
+        label(c, t, ["HAL, IN THE FILM:", "CONFIDENTLY WRONG"])
 
 
 def s_int4(arr, t, d, T):
@@ -244,9 +243,9 @@ def s_tokens(arr, t, d, T):
         k0 = ease(ramp(t, 0.1, 0.4)) * (1 - ease(ramp(rv, -0.3, 0.0)))
         G.text(c, "NEXT TOKEN?", CX, 740, G.font("jost-500", 72), color=G.AMBER, a=k0, track=8)
         k = ease(ramp(T, TL.word("token", "part") - 0.1, TL.word("token", "part") + 0.2))
-        G.text(c, "LONG OR RARE WORDS SPLIT INTO PIECES:", CX, 790, G.font("michroma-400", 20), color=G.GREY, a=k, track=2)
+        G.text(c, "RARER WORDS SPLIT:", CX, 790, G.font("jost-500", 34), color=G.GREY, a=k, track=3)
         G.text(c, "TOKEN | IZATION", CX, 860, G.font("jost-400", 56), color=G.WHITE, a=k, track=6)
-        label(c, t, ["1 TOKEN: ABOUT 3/4 OF AN ENGLISH WORD"])
+        label(c, t, ["1 TOKEN ≈ 3/4 OF A WORD".replace("≈", "~")])
 
 
 CANDS0 = [("ocean", 0.31), ("moon", 0.22), ("corner", 0.12), ("sun", 0.07), ("clock", 0.05)]
@@ -270,7 +269,7 @@ def s_predict(arr, t, d, T):
             blank, bc = "Sun", G.AMBER
         _sentence(c, 5.0, y=560, blank=blank, blank_col=bc)
         f = G.font("jost-400", 40)
-        fs = G.font("michroma-400", 20)
+        fs = G.font("jost-500", 28)
         d0 = dict(CANDS0)
         d1 = dict(CANDS1)
         for i, (w_, _) in enumerate(CANDS0):
@@ -282,17 +281,16 @@ def s_predict(arr, t, d, T):
             G.text(c, f"{p * 100:.0f}%", 290 + 640 * p + 10, y + 12, fs, color=G.GREY, align="left")
         kw = ease(ramp(T, t_wr - 0.05, t_wr + 0.15)) * (1 - ease(ramp(T, t_nu, t_nu + 0.3)))
         if kw > 0:
-            G.text(c, "WRONG", CX, 1150, G.font("jost-500", 84), color=G.HAL, a=kw, track=12, glow=12, glow_color=G.HAL)
+            G.text(c, "WRONG", CX, 1190, G.font("jost-500", 84), color=G.HAL, a=kw, track=12, glow=12, glow_color=G.HAL)
         kd = ease(ramp(T, t_nu, t_nu + 0.3))
         if kd > 0:
             # a bank of dials, each nudged a little
-            for j in range(22):
-                cx_, cy_ = 110 + j * 41.5, 1150
+            for j in range(18):
+                cx_, cy_ = 190 + j * 41.0, 1170
                 ang = -math.pi / 2 + 0.6 * math.sin(j * 1.9 + morph * 3.0)
                 c.drawCircle(cx_, cy_, 17, G.paint(G.GREY, 0.6 * kd, stroke=2))
                 c.drawLine(cx_, cy_, cx_ + 14 * math.cos(ang), cy_ + 14 * math.sin(ang), G.paint(G.WHITE, kd, stroke=2.5))
-            G.text(c, "BACKPROPAGATION: EVERY PARAMETER NUDGED", CX, 1225, fs, color=G.GREY, a=kd, track=2)
-        label(c, t, ["TRAINING: GUESS, CHECK, ADJUST. REPEAT."])
+        label(c, t, ["GUESS · CHECK · ADJUST"])
 
 
 def s_tilt(arr, t, d, T):
@@ -313,15 +311,15 @@ def s_tilt(arr, t, d, T):
             ax, ay = math.sin(tilt) * 110, -math.cos(tilt) * 110
             c.drawLine(ex - ax, sy - ay, ex + ax, sy + ay, G.paint(G.WHITE, 0.9, stroke=3))
             G.text(c, "N", ex + ax * 1.18, sy + ay * 1.18 - 4, G.font("michroma-400", 22), color=G.AMBER)
-            k = ease(ramp(t, 1.5, 1.9))
-            G.text(c, name, ex, sy + 170, G.font("michroma-400", 18), color=G.AMBER if "SUMMER" in name else G.CYAN,
+            k = ease(ramp(T, TL.s("tilt2"), TL.s("tilt2") + 0.3))
+            G.text(c, name.replace("NORTHERN ", "NORTH: "), ex, sy + 175, G.font("jost-500", 30), color=G.AMBER if "SUMMER" in name else G.CYAN,
                    a=k, track=2)
     s = G.canvas_of(arr)
     with s as c:
         G.text(c, "…the north gets summer when", CX, 520, G.font("jost-400", 50), a=ease(ramp(t, 0, 0.3)))
-        G.text(c, "it tilts toward the Sun", CX, 590, G.font("jost-500", 50), color=G.AMBER,
-               a=ease(ramp(t, 1.4, 1.8)))
-        label(c, t, ["AXIAL TILT 23.4°"])
+        G.text(c, "it leans toward the Sun", CX, 590, G.font("jost-500", 50), color=G.AMBER,
+               a=ease(ramp(T, TL.s("tilt2") - 0.05, TL.s("tilt2") + 0.2)))
+        label(c, t, ["AXIAL TILT: 23.4°"])
 
 
 _SG = {}
@@ -360,17 +358,17 @@ def s_stargate(arr, t, d, T):
     arr[..., :3] = (np.clip(light * ramp_in, 0, 1) * 255).astype(np.uint8)
     s = G.canvas_of(arr)
     with s as c:
-        k = ease(ramp(t, 0.2, 0.6))
+        k = ease(ramp(T, TL.s("llama") - 0.3, TL.s("llama") + 0.1))
         c.drawRect(skia.Rect.MakeXYWH(0, 700, W, 300), G.paint((0, 0, 0), 0.7 * k))
         n = ramp(T, TL.s("llama"), TL.word("llama", "tokens"))
         val = int(15e12 * ease(n))
         G.text(c, f"{val:,}", CX, 840, G.font("jost-300", 84), a=k, track=2)
-        G.text(c, "TOKENS OF TRAINING TEXT", CX, 910, G.font("michroma-400", 22), color=G.AMBER, a=k, track=4)
-        k2 = ease(ramp(T, TL.word("llama", "Two") - 0.1, TL.word("llama", "Two") + 0.3))
+        G.text(c, "TOKENS OF TRAINING TEXT", CX, 912, G.font("jost-500", 32), color=G.AMBER, a=k, track=4)
+        k2 = ease(ramp(T, TL.word("llama", "Over", 1) - 0.1, TL.word("llama", "Over", 1) + 0.3))
         c.drawRect(skia.Rect.MakeXYWH(0, 1010, W, 150), G.paint((0, 0, 0), 0.7 * k2))
-        G.text(c, "ABOUT 200,000 YEARS OF READING", CX, 1080, G.font("jost-400", 50), a=k2, track=3)
-        G.text(c, "8 HOURS A DAY · 250 WORDS A MINUTE", CX, 1130, G.font("michroma-400", 18), color=G.GREY, a=k2, track=3)
-        label(c, t, ["META · LLAMA 3 · 2024"], y=330)
+        G.text(c, "200,000+ YEARS OF READING", CX, 1080, G.font("jost-400", 48), a=k2, track=3)
+        G.text(c, "AT 8 HOURS A DAY", CX, 1132, G.font("jost-500", 30), color=G.GREY, a=k2, track=4)
+        label(c, T - TL.s("llama") + 0.3, ["META · LLAMA 3 · 2024"])
 
 
 def s_childdata(arr, t, d, T):
@@ -385,12 +383,13 @@ def s_childdata(arr, t, d, T):
             on = i < n_lit
             c.drawCircle(x, y, 6, G.paint(G.CYAN, 0.75 if on else 0.12))
         kc = ease(ramp(T, TL.word("childdata", "thousand") - 0.2, TL.word("childdata", "thousand") + 0.2))
+        G.text(c, "A MODEL", CX, 425, G.font("jost-500", 40), color=G.CYAN, a=(1 - kc) * ease(ramp(t, 0.1, 0.4)), track=4)
         # the child's whole budget: one dot out of a thousand
         c.drawRect(skia.Rect.MakeXYWH(0, y0 - 20, W, rows * sp + 20), G.paint((0, 0, 0), 0.72 * kc))
         c.drawCircle(x0 + 12 * 36, y0 + 20 * sp, 11, G.paint(G.AMBER, kc))
         c.drawCircle(x0 + 12 * 36, y0 + 20 * sp, 26, G.paint(G.AMBER, 0.5 * kc, blur=10))
-        G.text(c, "CHILD", x0 + 12 * 36, y0 + 20 * sp - 44, G.font("michroma-400", 24), color=G.AMBER, a=kc, track=4)
-        label(c, t, ["CHILD: ~10–100 MILLION WORDS BY AGE 10", "LLMs: TRILLIONS · FRANK, 2023"])
+        G.text(c, "A CHILD", x0 + 12 * 36, y0 + 20 * sp - 44, G.font("jost-500", 40), color=G.AMBER, a=kc, track=4)
+        label(c, t, ["WORDS HEARD VS. TRAINED ON", "FRANK, 2023"])
 
 
 def s_earth(arr, t, d, T):
@@ -400,7 +399,7 @@ def s_earth(arr, t, d, T):
     G.put_sphere(arr, CX, 830, R, kind="earth", light=(-0.55, 0.35, 0.76), lon0=lon, lat_tilt=0.35, cloud_shift=t * 0.004)
     s = G.canvas_of(arr)
     with s as c:
-        label(c, t, ["TO PREDICT THE TEXT,", "MODEL THE WORLD THAT WROTE IT"], y=300)
+        label(c, t, ["PREDICT THE TEXT,", "LEARN THE WORLD"])
 
 
 def s_glass(arr, t, d, T):
@@ -417,9 +416,9 @@ def s_glass(arr, t, d, T):
         l2 = " ".join(words[3:max(3, shown)])
         G.text(c, l1, CX, 700, f)
         G.text(c, l2, CX, 790, f)
-        k = ease(ramp(T, tsh + 0.25, tsh + 0.5))
+        k = ease(ramp(T, TL.s("glass2") - 0.05, TL.s("glass2") + 0.2))
         G.text(c, "shattered.", CX, 930, G.font("jost-500", 84), color=G.AMBER, a=k, track=4)
-        G.text(c, "YOUR BRAIN PREDICTED IT TOO", CX, 1030, G.font("michroma-400", 22), color=G.GREY, a=k, track=4)
+        G.text(c, "YOU PREDICTED IT TOO", CX, 1040, G.font("jost-500", 36), color=G.GREY, a=k, track=4)
         if T >= tsh:
             e = T - tsh
             rng = np.random.default_rng(5)

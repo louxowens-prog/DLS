@@ -52,27 +52,34 @@ def _bp(x, lo, hi, order=2):
 
 
 def brass(f, dur, amp=1.0, players=4, horn=False, seed=0, rel=0.25):
-    """Ensemble brass note. Spectral slope follows the loudness envelope (brighter when loud)."""
+    """Ensemble brass note. Spectral slope follows loudness (brighter when loud); players differ slightly in
+    onset, tuning and drift, and the sustained tone swells, so the section does not sound like one oscillator."""
     rng = np.random.default_rng(seed)
     t = t_axis(dur)
     n = len(t)
     out = np.zeros(n)
-    env = adsr(n, a=0.07 if not horn else 0.12, d=0.25, s=0.82, r=rel)
     for p in range(players):
-        det = 2 ** (rng.normal(0, 4) / 1200)
-        scoop = 2 ** ((-28 * np.exp(-t / 0.045)) / 1200)
-        vib = 1 + 0.0025 * np.sin(2 * np.pi * rng.uniform(4.8, 5.6) * t + rng.uniform(0, 6)) * np.clip((t - 0.45) / 0.5, 0, 1)
-        freq = f * det * scoop * vib
+        lag = rng.uniform(0, 0.03)
+        tt = np.clip(t - lag, 0, None)
+        env = adsr(n, a=(0.05 if not horn else 0.11), d=0.18, s=0.78, r=rel)
+        env = np.concatenate([np.zeros(int(lag * SR)), env])[:n]
+        swell = 1 + 0.22 * np.clip((tt - 0.25) / max(0.3, dur - 0.5), 0, 1)
+        pe = np.clip(env * swell * (0.85 + 0.15 * rng.random()), 0, 1.15)
+        det = 2 ** (rng.normal(0, 5) / 1200)
+        drift = 2 ** ((6 * np.sin(2 * np.pi * rng.uniform(0.2, 0.5) * t + rng.uniform(0, 6))) / 1200)
+        scoop = 2 ** ((-35 * np.exp(-tt / 0.04)) / 1200)
+        vib = 1 + 0.0028 * np.sin(2 * np.pi * rng.uniform(4.8, 5.6) * t + rng.uniform(0, 6)) * np.clip((tt - 0.45) / 0.5, 0, 1)
+        freq = f * det * drift * scoop * vib
         ph = 2 * np.pi * np.cumsum(freq) / SR + rng.uniform(0, 6)
-        pe = np.clip(env * (0.85 + 0.15 * rng.random()), 0, 1)
-        slope = (2.6 if horn else 2.2) - (1.25 if horn else 1.55) * pe
-        kmax = int(min(9000 if not horn else 5000, SR / 2 - 500) / f)
+        slope = (2.5 if horn else 2.0) - (1.2 if horn else 1.6) * np.clip(pe, 0, 1)
+        kmax = int(min(12500 if not horn else 6000, SR / 2 - 500) / f)
         v = np.zeros(n)
         for k in range(1, kmax + 1):
-            form = 1 + (1.6 if not horn else 0.8) * np.exp(-((k * f - (1300 if not horn else 700)) / 700) ** 2)
-            v += (k ** (-slope)) * form * np.sin(k * ph)
-        blat = _bp(rng.normal(0, 1, n), 800, 4000) * np.exp(-t / 0.03) * 0.25
-        out += (v + blat) * pe
+            form = 1 + (1.8 if not horn else 0.8) * np.exp(-((k * f - (1350 if not horn else 700)) / 750) ** 2)
+            v += (k ** (-slope)) * form * np.sin(k * ph + rng.uniform(0, 0.4))
+        blat = _bp(rng.normal(0, 1, n), 1200, 7000) * np.exp(-tt / 0.035) * (0.5 if not horn else 0.25) * (tt > 0)
+        breath_ = _bp(rng.normal(0, 1, n), 1500, 6000) * 0.02 * pe
+        out += (v + blat + breath_) * pe
     out /= players
     return amp * out / (np.max(np.abs(out)) + 1e-9)
 
@@ -128,7 +135,7 @@ def _voice_table(f0, vowel, strings=False, size=4096):
 
 
 def cluster(dur, lo, hi, voices=32, vowels=("ah", "oo"), strings=False, seed=1, entry=0.45,
-            drift=35.0, vib=12.0, air=0.15):
+            drift=35.0, vib=12.0, air=0.15, fades=(1.5, 4.0)):
     """Ligeti-style micropolyphony: many voices on microtonally dense pitches, entering one by one,
     each slowly gliding; the texture is a shimmering, dissonant block with no melody."""
     rng = np.random.default_rng(seed)
@@ -150,7 +157,7 @@ def cluster(dur, lo, hi, voices=32, vowels=("ah", "oo"), strings=False, seed=1, 
         fr = ph - i0
         x = tab[i0] * (1 - fr) + tab[(i0 + 1) % len(tab)] * fr
         t_in = rng.uniform(0, entry) * dur
-        fade = rng.uniform(1.5, 4.0)
+        fade = rng.uniform(*fades)
         e = np.clip((t - t_in) / fade, 0, 1) ** 2
         e *= 1 + 0.18 * np.sin(2 * np.pi * rng.uniform(0.05, 0.3) * t + rng.uniform(0, 6))
         pan = rng.uniform(0.15, 0.85)

@@ -26,10 +26,10 @@ def _get(mod, name):
 
 
 SHOTS = [
-    (0.0, C["fanfare"], A.s_open, {}),
-    (C["fanfare"], C["int1"], A.s_sunrise, {"finish": {"bloom": 0.3}}),
-    (C["int1"], _s("defs") + 0.1, A.s_int1, {}),
-    (_s("defs") + 0.1, _s("useful"), A.s_defs, {}),
+    (0.0, C["chat"], A.s_open, {}),
+    (C["chat"], C["align"], A.s_chat, {}),
+    (C["align"], C["ch1"], A.s_sunrise, {"finish": {"bloom": 0.3}}),
+    (C["ch1"], _s("useful"), A.s_defs, {}),
     (_s("useful"), _s("knowledge"), A.s_useful, {}),
     (_s("knowledge"), C["monolith"], A.s_knowledge, {}),
     (C["monolith"], _s("rock") - 0.05, A.s_drive, {}),
@@ -37,32 +37,30 @@ SHOTS = [
     (C["silence"], C["child"], A.s_nothing, {}),
     (C["child"], C["bone"], A.s_child, {}),
     (C["bone"], C["cut"], A.s_bone, {}),
-    (C["cut"], C["int2"], A.s_sat, {}),
-    (C["int2"], _s("artif") + 0.4, A.s_int2, {}),
-    (_s("artif") + 0.4, _s("light"), A.s_artif, {}),
+    (C["cut"], _s("artif") + 1.2, A.s_sat, {}),
+    (_s("artif") + 1.2, _s("light"), A.s_artif, {}),
     (_s("light"), C["heart"], A.s_corridor, {"finish": {"bloom": 0.35}}),
     (C["heart"], _s("built"), A.s_heart, {}),
-    (_s("built"), _s("chess"), A.s_station, {}),
+    (_s("built"), _s("nist"), A.s_station, {}),
+    (_s("nist"), _s("chess"), A.s_nist, {}),
     (_s("chess"), C["alphago"], A.s_chess, {}),
     (C["alphago"], _s("question"), A.s_go, {}),
-    (_s("question"), C["int3"], A.s_jupiter, {}),
-    (C["int3"], _s("myth") + 0.1, "s_int3", {}),
-    (_s("myth") + 0.1, _s("params") - 0.6, "s_db", {}),
-    (_s("params") - 0.6, _s("capitals"), "s_memory", {"finish": {"bloom": 0.35}}),
+    (_s("question"), C["ch3"], A.s_jupiter, {}),
+    (C["ch3"], _s("params") - 0.5, "s_db", {}),
+    (_s("params") - 0.5, _s("capitals"), "s_memory", {"finish": {"bloom": 0.35}}),
     (_s("capitals"), _s("map"), "s_vectors", {}),
     (_s("map"), _s("wrong"), "s_galaxy", {"finish": {"bloom": 0.3}}),
-    (_s("wrong"), C["int4"], "s_ae35", {}),
-    (C["int4"], _s("token") + 0.1, "s_int4", {}),
-    (_s("token") + 0.1, _s("earth"), "s_tokens", {}),
+    (_s("wrong"), C["ch4"], "s_ae35", {}),
+    (C["ch4"], _s("earth"), "s_tokens", {}),
     (_s("earth"), _s("tilt"), "s_predict", {}),
     (_s("tilt"), C["stargate"], "s_tilt", {}),
     (C["stargate"], C["stargate_end"], "s_stargate", {"finish": {"bloom": 0.3, "grain": 0.008}}),
     (C["stargate_end"], _s("surprise") - 0.1, "s_childdata", {}),
     (_s("surprise") - 0.1, _s("glass"), "s_earth", {}),
-    (_s("glass"), C["int5"], "s_glass", {}),
-    (C["int5"], _s("just") + 0.1, "s_int5", {}),
-    (_s("just") + 0.1, _s("shakes"), "s_gen", {}),
-    (_s("shakes"), _s("dallas"), "s_neurons", {"finish": {"bloom": 0.35}}),
+    (_s("glass"), C["ch5"], "s_glass", {}),
+    (C["ch5"], _s("shakes"), "s_just", {}),
+    (_s("shakes"), _s("train"), "s_neurons", {"finish": {"bloom": 0.35}}),
+    (_s("train"), _s("dallas"), "s_gen", {}),
     (_s("dallas"), _s("rhyme"), "s_dallas", {}),
     (_s("rhyme"), _s("philo"), "s_rhyme", {}),
     (_s("philo"), _s("jagged"), "s_tma", {}),
@@ -82,7 +80,8 @@ def _resolve(fn):
     return None
 
 
-CAPS = TL.captions()
+# the glass line is typed on screen by its own shot, so it gets no caption
+CAPS = [c for c in TL.captions() if not (TL.s("glass") - 0.1 <= c[0] < TL.e("glass") + 0.1)]
 # no captions over intertitles or the title card
 _NOCAP = []
 
@@ -120,8 +119,8 @@ def draw_caption(arr, T):
             y += 72
 
 
-NO_PUSH = {"s_sunrise", "s_int1", "s_int2", "s_int3", "s_int4", "s_int5", "s_corridor", "s_memory",
-           "s_stargate", "s_galaxy", "s_bone", "s_endcard", "s_glass"}
+NO_PUSH = {"s_sunrise", "s_corridor", "s_memory", "s_stargate", "s_galaxy", "s_bone", "s_endcard", "s_glass",
+           "s_starchild"}
 
 
 def push_in(arr, k, amount=0.045, cy=860):
@@ -150,6 +149,7 @@ def render_frame(T, idx=None, captions=True):
                     push_in(arr, G.ease((T - a) / (b - a)) * 0.6 + (T - a) / (b - a) * 0.4)
             fin = opt.get("finish", {})
             break
+    A.chapter_overlay(arr, T)
     G.finish(arr, idx if idx is not None else int(T * FPS), **fin)
     if captions:
         draw_caption(arr, T)

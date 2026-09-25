@@ -72,10 +72,11 @@ def fanfare(bus, t0, scale=1.0, full=True):
 
 
 def pedal(bus, t0, dur, gain=0.5):
-    """Organ pedal C + bass-drum rumble that opens the fanfare."""
+    """Organ pedal C + bass-drum rumble that opens the fanfare. Upper ranks (C3-G4) keep it audible on phones."""
     t = S.t_axis(dur)
     sw = np.clip(t / (dur * 0.85), 0, 1) ** 1.6
     x = S.organ([24, 36], dur, a=0.01, r=0.4) * (0.35 + 0.65 * sw)
+    x = x + 0.45 * S.organ([48, 55, 60], dur, a=0.3, r=0.4) * (0.5 + 0.5 * sw)
     rum = S._lp(np.random.default_rng(9).normal(0, 1, len(t)), 90) * (0.4 + 0.6 * sw)
     rum /= np.max(np.abs(rum)) + 1e-9
     bus.add(x * 0.8 + rum * 0.6, t0, gain)
@@ -86,11 +87,11 @@ def build():
     T = TL.total
 
     # ---------------------------------------------------------------- opening
-    pedal(music, 0.0, C["fanfare"] + 0.6, 0.55)
+    pedal(music, 0.0, C["title"] + 0.4, 0.55)
     fanfare(music, C["fanfare"])
 
     # ---------------------------------------------------------------- I. the dawn of mind
-    wstart = C["int1"] + 0.3
+    wstart = C["ch1"] + 0.3
     sfx.add(S.wind(C["silence"] - wstart + 0.1, seed=11), wstart, db(-20))
     for i, w in enumerate(("model", "learn", "infer", "adapt", "plan")):
         sfx.add(S.beep(2200 + 180 * i, 0.07), TL.word("useful", w), db(-24))
@@ -121,6 +122,8 @@ def build():
         sfx.add(S.tick(seed=30 + k), TL.s("chess") + 0.35 + 0.55 * k, db(-20))
     for k in range(8):
         sfx.add(S.tick(seed=40 + k), C["alphago"] + 0.1 + 0.18 * k, db(-22))
+    for w in ("perceive", "plan", "learn", "communicate"):
+        sfx.add(S.beep(2000, 0.07), TL.word("nist", w[:5]), db(-24))
     lux = S.cluster(TL.e("question") - TL.s("question") + 2.2, 67, 84, voices=26, vowels=("oo", "ah"),
                     seed=15, entry=0.3, drift=25, vib=6, air=0.12)
     music.add(lux, TL.s("question") - 0.2, db(-15))
@@ -129,7 +132,7 @@ def build():
     for k in range(18):
         sfx.add(S.beep(1800 + 300 * (k % 5), 0.035), TL.s("myth") + 0.2 * k, db(-30))
     br0 = TL.s("params") - 0.6
-    br1 = TL.word("capitals", "Yet")
+    br1 = TL.word("capitals", "inside")
     sfx.add(S.breath(br1 - br0, rate=3.6), br0, db(-14))
     sfx.add(S.hiss(br1 - br0), br0, db(-30))
     sfx.add(S.hum(br1 - br0), br0, db(-26))
@@ -151,19 +154,23 @@ def build():
     sfx.add(S.beep(1568, 0.5) + S.beep(2093, 0.5), C["sun"], db(-22))
     # the Star Gate: an Atmospheres-like orchestral cluster at full stretch, then nothing
     sg = C["stargate_end"] - C["stargate"]
-    atm = S.cluster(sg, 55, 100, voices=48, strings=True, seed=17, entry=0.25, drift=60, vib=22, air=0.2)
-    atm *= np.clip(np.arange(atm.shape[1]) / SR / 1.2, 0, 1)[None]
-    music.add(atm, C["stargate"], db(-10))
+    atm = S.cluster(sg, 55, 100, voices=48, strings=True, seed=17, entry=0.04, drift=60, vib=22, air=0.2,
+                    fades=(0.15, 0.7))
+    atm *= np.clip(np.arange(atm.shape[1]) / SR / 0.25, 0, 1)[None]
+    music.add(atm, C["stargate"], db(7))
     earthc = S.cluster(TL.e("surprise") - TL.s("surprise") + 0.8, 60, 79, voices=22, vowels=("oo",),
                        seed=18, entry=0.3, drift=20, vib=5, air=0.08)
     music.add(earthc, TL.s("surprise") - 0.3, db(-17))
     sfx.add(S.shatter(), C["shatter"], db(-6))
+    sfx.add(S.beep(1568, 0.4) + S.beep(2093, 0.4), TL.s("tilt2"), db(-26))
 
     # ---------------------------------------------------------------- V. beyond the next word
     for k in range(10):
         sfx.add(S.tick(seed=70 + k), TL.s("just") + 0.15 + 0.14 * k, db(-24))
     for k in range(12):
         sfx.add(S.beep(3000 + 500 * (k % 3), 0.03), TL.s("shakes") + 0.3 * k + 0.1, db(-32))
+    for k in range(14):
+        sfx.add(S.tick(seed=90 + k), TL.s("train") + 0.1 + 0.15 * k, db(-26))
     for tt, f in ((C["dallas"], 1760), (C["texas"], 1976), (C["austin"], 2349)):
         sfx.add(S.beep(f, 0.12), tt, db(-20))
     sfx.add(S.beep(2637, 0.1), TL.word("rhyme", "last"), db(-22))
@@ -173,7 +180,7 @@ def build():
     music.add(req2, TL.s("philo") - 0.3, db(-13))
 
     # ---------------------------------------------------------------- the close
-    pedal(music, C["close"], C["fanfare2"] - C["close"] + 0.6, 0.5)
+    pedal(music, min(C["close"], C["fanfare2"]) - 0.5, C["end_title"] - min(C["close"], C["fanfare2"]) + 0.9, 0.5)
     fanfare(music, C["fanfare2"])
 
     # ---------------------------------------------------------------- mix
@@ -201,7 +208,7 @@ def build():
 
     # true silences: the choir cut, the space after the match cut, the beat before the shatter
     gate = np.ones(N)
-    for a, b in ((C["silence"], C["child"] - 0.15), (C["cut"], C["int2"] + 0.2),
+    for a, b in ((C["silence"], C["child"] - 0.15), (C["cut"], TL.s("artif") - 0.02),
                  (TL.e("glass") + 0.05, C["shatter"] - 0.01)):
         gate[int(a * SR): int(b * SR)] = 0.0
     fade = int(0.004 * SR)
@@ -213,7 +220,7 @@ def build():
     tut = mus[:, int(C["title"] * SR): int((C["title"] + 1.5) * SR)]
     g_mu = db(-13.0) / (np.sqrt((tut ** 2).mean()) + 1e-12)
     mix = (mus * duck_m * g_mu + fx * duck_f * g_mu) * gate + vo_st * g_vo
-    mix = limit(mix, db(-1.2))
+    mix = limit(mix, db(-2.0))
     # end: let the final chord ring out, then fade
     tail = int(1.2 * SR)
     mix[:, -tail:] *= np.linspace(1, 0, tail) ** 2

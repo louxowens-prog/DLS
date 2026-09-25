@@ -80,7 +80,7 @@ def main():
     audio = os.path.join(BUILD, "audio.wav")
     tag = "" if args.scale == 1.0 else "_proof"
     master = os.path.join(BUILD, f"final{tag}.mp4")
-    af = "loudnorm=I=-14:TP=-1.0:LRA=11"
+    af = "loudnorm=I=-14:TP=-1.5:LRA=11"
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", video, "-ss", str(args.start), "-i", audio, "-map", "0:v", "-map", "1:a",
                     "-c:v", "libx264", "-preset", "slow", "-crf", "17", "-profile:v", "high", "-pix_fmt", "yuv420p",
                     "-r", str(FPS), "-af", af, "-ar", "48000", "-c:a", "aac", "-b:a", "256k", "-shortest",

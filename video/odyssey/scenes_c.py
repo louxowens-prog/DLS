@@ -25,8 +25,8 @@ def s_gen(arr, t, d, T):
     f = G.font("jost-400", 44)
     fm = G.font("michroma-400", 18)
     with s as c:
-        panel(c, 60, 430, 960, 860, code="GEN", color=G.CYAN)
-        chars = int(max(0, t - 0.1) * 70)
+        panel(c, 60, 430, 960, 820, code="GEN", color=G.CYAN)
+        chars = int(max(0, t - 0.1) * 75)
         y = 530
         used = 0
         for ln, col in GEN:
@@ -41,8 +41,31 @@ def s_gen(arr, t, d, T):
                     xw = G.text_width(ln[:n], f)
                     c.drawRect(skia.Rect.MakeXYWH(116 + xw, y - 38, 22, 44), G.paint(G.CYAN, 0.9))
             y += 84
-        G.text(c, "EVERY SYMBOL ABOVE: ONE NEXT-TOKEN PREDICTION", CX, 1250, fm, color=G.CYAN, track=2)
-        label(c, t, ["TRUE — AND MISLEADING"])
+        label(c, t, ["EACH SYMBOL: ONE PREDICTION"])
+
+
+CANDS = ["word", "token", "step", "thought", "move", "idea"]
+
+
+def s_just(arr, t, d, T):
+    s = G.canvas_of(arr)
+    f = G.font("jost-400", 70)
+    with s as c:
+        G.text(c, "just predicting", CX, 760, f)
+        G.text(c, "the next", CX - 90, 860, f)
+        w = G.text_width("the next", f)
+        bx = CX - 90 + w / 2 + 24
+        c.drawRoundRect(skia.Rect.MakeXYWH(bx, 800, 230, 80), 10, 10, G.paint(G.AMBER, 0.9, stroke=3))
+        tt = T - TL.word("just", "True")
+        if tt < 0:
+            wd = CANDS[int(t * 7) % len(CANDS)]
+            G.text(c, wd, bx + 115, 860, G.font("jost-500", 56), color=G.AMBER)
+        else:
+            G.text(c, "word", bx + 115, 860, G.font("jost-500", 56), color=G.AMBER)
+            km = ease(ramp(T, TL.word("just", "misleading") - 0.1, TL.word("just", "misleading") + 0.2))
+            G.text(c, "TRUE — BUT MISLEADING", CX, 1030, G.font("jost-500", 44), color=G.WHITE,
+                   a=ease(ramp(tt, 0, 0.2)), track=4)
+            c.drawLine(CX - 330, 1060, CX + 330 * (2 * km - 1), 1060, G.paint(G.HAL, km, stroke=4)) if km > 0 else None
 
 
 def _neurons():
@@ -76,19 +99,19 @@ def s_neurons(arr, t, d, T):
             fl = 0.5 + 0.5 * math.sin(t * 4 + i * 1.3)
             c.drawCircle(x, y, 7, G.paint((140, 190, 255), 0.35 + 0.4 * fl, blur=4))
             c.drawCircle(x, y, 4, G.paint((210, 230, 255), 0.9))
-        label(c, t, ["HUMAN BRAIN: ~86 BILLION NEURONS"])
+        label(c, t, ["~86 BILLION NEURONS"])
 
 
 def s_dallas(arr, t, d, T):
     s = G.canvas_of(arr)
-    f = G.font("jost-500", 44)
-    fs = G.font("michroma-400", 18)
+    f = G.font("jost-500", 42)
+    fs = G.font("jost-500", 24)
     with s as c:
-        panel(c, 60, 430, 960, 860, code="ATT", color=G.CYAN)
+        panel(c, 60, 430, 960, 820, code="ATT", color=G.CYAN)
         G.text(c, "PROMPT: “the capital of the state", CX, 520, G.font("jost-400", 36), color=G.GREY)
         G.text(c, "containing Dallas is ___”", CX, 566, G.font("jost-400", 36), color=G.GREY)
-        toks = [("capital", "capital", 190), ("state", "state", 430), ("containing", "containing", 650), ("Dallas", "Dallas", 890)]
-        ybot, ymid, ytop = 1170, 950, 720
+        toks = [("capital", "capital", 200), ("state", "state", 400), ("containing", "containing", 610), ("Dallas", "Dallas", 830)]
+        ybot, ymid, ytop = 1160, 950, 730
         node = {}
         for nm, kw, x in toks:
             a = ease(ramp(T, TL.word("dallas", kw) - 0.05, TL.word("dallas", kw) + 0.2))
@@ -110,19 +133,19 @@ def s_dallas(arr, t, d, T):
             c.drawLine(x0, y0, ex, ey, G.paint(col, 0.9, stroke=4))
 
         a_cap = ease(ramp(T, mid["say a capital"][2], mid["say a capital"][2] + 0.3))
-        edge(190, ybot - 40, 300, ymid + 30, a_cap, G.CYAN)
+        edge(200, ybot - 40, 300, ymid + 30, a_cap, G.CYAN)
         box(300, ymid, "say a capital", a_cap, G.CYAN)
         a_tx = ease(ramp(T, C["texas"] - 0.25, C["texas"] + 0.1))
-        edge(890, ybot - 40, 760, ymid + 30, a_tx, G.AMBER)
+        edge(830, ybot - 40, 760, ymid + 30, a_tx, G.AMBER)
         box(760, ymid, "Texas", a_tx, G.AMBER)
         a_au = ease(ramp(T, top_t - 0.2, top_t + 0.15))
         edge(300, ymid - 44, CX - 40, ytop + 30, a_au, G.CYAN)
         edge(760, ymid - 44, CX + 40, ytop + 30, a_au, G.AMBER)
         box(CX, ytop, "Austin", a_au, G.GREEN)
-        G.text(c, "INPUT", 110, ybot + 80, fs, color=G.GREY, align="left", track=3)
+        G.text(c, "INPUT", 110, ybot + 58, fs, color=G.GREY, align="left", track=3)
         G.text(c, "INTERNAL STEP", 110, ymid + 90, fs, color=G.GREY, align="left", track=3, a=max(a_cap, a_tx))
         G.text(c, "ANSWER", 110, ytop - 70, fs, color=G.GREY, align="left", track=3, a=a_au)
-        label(c, t, ["ANTHROPIC INTERPRETABILITY · 2025", "CLAUDE 3.5 HAIKU"])
+        label(c, t, ["INSIDE CLAUDE", "ANTHROPIC · 2025"])
 
 
 def s_rhyme(arr, t, d, T):
@@ -146,7 +169,7 @@ def s_rhyme(arr, t, d, T):
         if n > len(l1) + 1:
             G.text(c, l2[: n - len(l1) - 1], 470, 960, f)
         c.drawLine(270, 780, 810, 780, G.paint(G.GREY, 0.3, stroke=1))
-        label(c, t, ["SAME STUDY: IT PLANS AHEAD"])
+        label(c, t, ["IT PLANS AHEAD", "ANTHROPIC · 2025"])
 
 
 def _lunar_ground():
@@ -184,18 +207,18 @@ def s_tma(arr, t, d, T):
     with s as c:
         c.drawRect(skia.Rect.MakeXYWH(0, 1180, W, 3), G.paint((190, 190, 195), 0.5))
         draw_monolith(c, CX, 1180 - 280, 250, 562, persp=0.1, side=0.0, rim=0.6)
-        label(c, t, ["REAL REASONING?", "STILL AN OPEN QUESTION"])
+        label(c, t, ["AN OPEN QUESTION"])
 
 
 def s_jagged(arr, t, d, T):
     s = G.canvas_of(arr)
     fs = G.font("michroma-400", 18)
     with s as c:
-        panel(c, 50, 430, 980, 900, code="EVL", color=G.CYAN)
+        panel(c, 50, 430, 980, 820, code="EVL", color=G.CYAN)
         x0, x1 = 100, 980
-        yh = 900                     # typical human level
+        yh = 860                     # typical human level
         c.drawLine(x0, yh, x1, yh, G.paint(G.GREY, 0.6, stroke=2))
-        G.text(c, "TYPICAL PERSON", x1, yh - 14, fs, color=G.GREY, align="right", track=2)
+        G.text(c, "TYPICAL PERSON", x0 + 4, yh + 40, G.font("jost-500", 26), color=G.GREY, align="left", track=2)
         pts = [(0.00, 0.1), (0.07, -0.4), (0.14, 0.2), (0.22, 0.95), (0.30, 0.1), (0.38, 0.5), (0.47, -0.3),
                (0.55, 0.3), (0.63, 0.7), (0.71, -0.2), (0.79, -0.95), (0.87, 0.25), (1.00, 0.45)]
         prog = ease(ramp(t, 0.2, d * 0.55))
@@ -203,22 +226,22 @@ def s_jagged(arr, t, d, T):
         for i, (u, v) in enumerate(pts):
             if u > prog + 1e-6:
                 break
-            x, y = x0 + u * (x1 - x0), yh - v * 330
+            x, y = x0 + u * (x1 - x0), yh - v * 300
             path.moveTo(x, y) if i == 0 else path.lineTo(x, y)
         c.drawPath(path, G.paint(G.CYAN, 0.35, stroke=10, blur=6))
         c.drawPath(path, G.paint(G.WHITE, 1.0, stroke=4))
-        ta = TL.word("jagged", "Olympiad")
+        ta = TL.word("jagged", "gold")
         ka = ease(ramp(T, ta - 0.1, ta + 0.25))
-        px, py = x0 + 0.22 * (x1 - x0), yh - 0.95 * 330
+        px, py = x0 + 0.22 * (x1 - x0), yh - 0.95 * 300
         c.drawCircle(px, py, 12, G.paint(G.AMBER, ka))
-        G.text(c, "MATH OLYMPIAD", px + 20, py - 50, G.font("michroma-400", 20), color=G.AMBER, a=ka, align="left", track=2)
-        G.text(c, "GOLD-MEDAL LEVEL · 2025", px + 20, py - 22, fs, color=G.WHITE, a=ka, align="left", track=2)
+        G.text(c, "MATH OLYMPIAD", px + 24, py - 54, G.font("jost-500", 34), color=G.AMBER, a=ka, align="left", track=2)
+        G.text(c, "GOLD-MEDAL SCORES · 2025", px + 24, py - 18, G.font("jost-500", 28), color=G.WHITE, a=ka, align="left", track=2)
         tb = TL.word("jagged", "under")
         kb = ease(ramp(T, tb - 0.1, tb + 0.25))
-        qx, qy = x0 + 0.79 * (x1 - x0), yh + 0.95 * 330
+        qx, qy = x0 + 0.79 * (x1 - x0), yh + 0.95 * 300
         c.drawCircle(qx, qy, 12, G.paint(G.HAL, kb))
-        G.text(c, "NEW PUZZLE GAMES", qx - 20, qy + 48, G.font("michroma-400", 20), color=G.HAL, a=kb, align="right", track=2)
-        G.text(c, "UNDER 1% · ARC-AGI-3 LAUNCH, 2026", qx - 20, qy + 76, fs, color=G.WHITE, a=kb, align="right", track=1)
+        G.text(c, "NEW PUZZLE GAMES", qx - 24, qy + 8, G.font("jost-500", 34), color=G.HAL, a=kb, align="right", track=2)
+        G.text(c, "UNDER 1% AT LAUNCH · MAR 2026", qx - 24, qy + 44, G.font("jost-500", 26), color=G.WHITE, a=kb, align="right", track=1)
         label(c, t, ["THE JAGGED FRONTIER"])
 
 
@@ -235,29 +258,60 @@ def s_starchild(arr, t, d, T):
     with s as c:
         c.drawCircle(cx, cy, R, G.paint((190, 215, 255), 0.35, stroke=3))
         c.drawCircle(cx, cy, R - 2, G.paint((170, 200, 255), 0.10))
-        # the curled figure in profile: head up and right, back curved, knees tucked
-        c.save()
-        c.translate(cx, cy)
-        c.scale(R / 230, R / 230)
-        c.translate(-cx, -cy)
-        fig = skia.Path()
-        fig.addCircle(cx + 35, cy - 75, 78)
-        body = skia.Path()
-        body.moveTo(cx - 35, cy - 95)
-        body.cubicTo(cx - 105, cy - 30, cx - 100, cy + 90, cx - 20, cy + 140)
-        body.cubicTo(cx + 40, cy + 170, cx + 110, cy + 140, cx + 105, cy + 85)
-        body.cubicTo(cx + 100, cy + 40, cx + 60, cy + 30, cx + 70, cy - 5)
-        body.cubicTo(cx + 40, cy - 20, cx + 10, cy - 60, cx - 35, cy - 95)
-        fig = skia.Op(fig, body, skia.PathOp.kUnion_PathOp) or fig
-        grad = skia.GradientShader.MakeRadial(skia.Point(cx + 20, cy - 20), 200,
-                                              [skia.Color4f(1.0, 0.90, 0.84, 0.85), skia.Color4f(0.95, 0.75, 0.70, 0.35)])
-        c.drawPath(fig, G.paint((255, 225, 210), 0.30, blur=18))
-        c.drawPath(fig, G.paint(shader=grad, blur=3, a=0.75))
-        shade = skia.GradientShader.MakeLinear([skia.Point(cx + 80, cy - 120), skia.Point(cx - 80, cy + 140)],
-                                               [skia.Color4f(0, 0, 0, 0), skia.Color4f(0.15, 0.1, 0.25, 0.45)])
-        c.drawPath(fig, G.paint(shader=shade, blur=6))
-        c.drawOval(skia.Rect.MakeXYWH(cx + 70, cy - 88, 30, 18), G.paint((70, 80, 120), 0.6, blur=2.5))
-        c.restore()
+    fig = once("starchild_fig", _star_child)
+    sc = R / 230
+    from PIL import Image
+    h, w = fig.shape[:2]
+    im = Image.fromarray((np.clip(fig, 0, 1) * 255).astype(np.uint8), "RGBA").resize((int(w * sc), int(h * sc)), Image.LANCZOS)
+    f2 = np.asarray(im).astype(np.float32) / 255
+    G.over(arr, f2[..., :3], f2[..., 3] * 0.92, int(cx - im.size[0] / 2), int(cy - im.size[1] / 2 + 10 * sc))
+
+
+def _star_child():
+    """A soft, lit 3-D form built from blended spheres: large head, curled body, knees, folded arms."""
+    n = 440
+    yy, xx = np.mgrid[0:n, 0:n].astype(np.float32)
+    x = xx - n / 2
+    y = yy - n / 2 + 20
+    blobs = [(0, -72, 30, 94), (0, 30, -10, 70), (0, 80, -6, 72), (-38, 104, 34, 44), (38, 104, 34, 44),
+             (-40, 18, 36, 30), (40, 18, 36, 30), (0, -18, 40, 40)]
+    k = 0.022
+    acc = np.zeros_like(x)
+    for bx, by, bz, r in blobs:
+        d2 = (x - bx) ** 2 + (y - by) ** 2
+        dd = np.sqrt(d2)
+        hgt = np.where(d2 < r * r, bz + np.sqrt(np.clip(r * r - d2, 0, None)), bz - (dd - r) * 10.0)
+        acc += np.exp(k * np.clip(hgt, -200, 400))
+    hmap = np.log(acc + 1e-9) / k
+    mask = np.clip((hmap + 40) / 16, 0, 1)
+    hs = np.where(mask > 0, hmap, 0)
+    from scipy import ndimage
+    hs = ndimage.gaussian_filter(hs, 2.0)
+    gy, gx = np.gradient(hs)
+    nx, ny, nz = -gx, -gy, np.ones_like(gx) * 1.3
+    nn = np.sqrt(nx ** 2 + ny ** 2 + nz ** 2)
+    nx, ny, nz = nx / nn, ny / nn, nz / nn
+    key = np.clip(nx * -0.45 + ny * -0.55 + nz * 0.70, 0, 1)
+    rim = np.clip(1 - nz, 0, 1) ** 2.2
+    skin = np.array([1.0, 0.80, 0.72], np.float32)
+    col = skin * (0.22 + 0.62 * key[..., None]) + np.array([0.55, 0.7, 1.0]) * rim[..., None] * 0.5
+    col += np.array([1.0, 0.5, 0.4]) * 0.06                       # warm, translucent fill
+    # eyes: large and dark, looking out; a hint of lids and a small mouth
+    for ex in (-30, 30):
+        e = np.exp(-(((x - ex) / 17) ** 2 + ((y + 80) / 12) ** 2))
+        col = col * (1 - 0.92 * e[..., None]) + np.array([0.05, 0.07, 0.16]) * 0.85 * e[..., None]
+        glint = np.exp(-(((x - ex - 4) / 3.0) ** 2 + ((y + 84) / 3.0) ** 2))
+        col += glint[..., None] * 0.6
+        lid = np.exp(-(((x - ex) / 20) ** 2 + ((y + 93) / 4) ** 2))
+        col *= 1 - 0.25 * lid[..., None]
+    mouth = np.exp(-((x / 12) ** 2 + ((y + 34) / 2.5) ** 2))
+    col *= 1 - 0.3 * mouth[..., None]
+    col = ndimage.gaussian_filter(col, (2.2, 2.2, 0))
+    alpha = ndimage.gaussian_filter(mask, 3.0) * 0.8
+    glow = ndimage.gaussian_filter(mask, 18) * 0.22
+    col = col + glow[..., None] * np.array([1.0, 0.85, 0.8])
+    alpha = np.clip(alpha + glow * 0.6, 0, 1)
+    return np.dstack([np.clip(col, 0, 1), alpha]).astype(np.float32)
 
 
 SOURCES = ["Legg & Hutter 2007 · NIST CSRC glossary · OpenAI Help Center",
