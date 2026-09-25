@@ -842,7 +842,7 @@ def main(out_name="the_plus_minus_arc.mp4", scenes=None, music_fn=None, extra_sf
     nframes = int(round(TOTAL * FPS))
     enc = subprocess.Popen([FFMPEG, "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
                             "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "medium",
-                            "-crf", "23", "-pix_fmt", "yuv420p", silent], stdin=subprocess.PIPE)
+                            "-crf", os.environ.get("VIDEO_CRF", "23"), "-pix_fmt", "yuv420p", silent], stdin=subprocess.PIPE)
     for fi in range(nframes):
         enc.stdin.write(render_frame(fi).tobytes())
         if fi % 150 == 0:
