@@ -156,20 +156,30 @@ STREAM = ["the mitochondria is the powerhouse of the cell", "def parse(tokens): 
 
 
 def s_chat(arr, t, d, T):
+    """Text arriving as tokens: rows of token chips sliding in from the right, faster than anyone could read."""
     s = G.canvas_of(arr)
-    f = G.font("jost-400", 34)
+    f = G.font("jost-500", 30)
+    rng = np.random.default_rng(12)
     with s as c:
-        panel(c, 70, 440, 940, 820, code="MEM", color=G.CYAN)
-        c.save()
-        c.clipRect(skia.Rect.MakeXYWH(80, 470, 920, 780))
-        off = t * 900
-        for i in range(-2, 22):
-            idx = int(off // 44) + i
-            y = 490 + i * 44 - (off % 44)
-            a = 0.35 + 0.65 * math.exp(-((y - 850) / 260) ** 2)
-            G.text(c, STREAM[idx % len(STREAM)], 110, y, f, color=G.WHITE if idx % 3 else G.CYAN, a=a, align="left")
-        c.restore()
-        label(c, t, ["TRAINED ON TRILLIONS OF WORDS"])
+        for r in range(15):
+            y = 470 + r * 54
+            words = STREAM[r % len(STREAM)].split() + STREAM[(r + 5) % len(STREAM)].split() + \
+                STREAM[(r + 9) % len(STREAM)].split()
+            widths = [G.text_width(w, f) + 30 for w in words]
+            L = sum(widths)
+            speed = 420 + 160 * rng.random()
+            x = -((t * speed + rng.uniform(0, L)) % L)
+            for w in words * 3:
+                wd = G.text_width(w, f) + 22
+                if x > W + 40:
+                    break
+                if -wd < x:
+                    col = G.CYAN if (hash(w) % 3) else G.AMBER
+                    c.drawRoundRect(skia.Rect.MakeXYWH(x, y - 32, wd, 44), 7, 7, G.paint(col, 0.14))
+                    c.drawRoundRect(skia.Rect.MakeXYWH(x, y - 32, wd, 44), 7, 7, G.paint(col, 0.75, stroke=1.6))
+                    G.text(c, w, x + wd / 2, y, f, color=G.WHITE, a=0.9)
+                x += wd + 8
+        label(c, t, ["TRAINED ON TRILLIONS OF TOKENS"])
 
 
 # ------------------------------------------------------------------ 1. the alignment (opening fanfare)
@@ -274,30 +284,40 @@ def s_knowledge(arr, t, d, T):
         G.text(c, "NOT ON THE LIST", CX, 1080, G.font("michroma-400", 26), color=G.WHITE, a=a * 0.9, track=8)
 
 
+def data_vault(c, cx, cy, w, h, t):
+    """A sealed archive: a tall block of glowing memory slots (in the style of HAL's memory modules)."""
+    c.drawRect(skia.Rect.MakeXYWH(cx - w / 2 - 10, cy - h / 2 - 10, w + 20, h + 20), G.paint((50, 54, 62)))
+    c.drawRect(skia.Rect.MakeXYWH(cx - w / 2, cy - h / 2, w, h), G.paint((8, 10, 16)))
+    rows = int(h / 26)
+    for i in range(rows):
+        y = cy - h / 2 + 14 + i * 26
+        for j in range(3):
+            x = cx - w / 2 + 16 + j * (w - 32) / 3
+            ww = (w - 32) / 3 - 10
+            lit = 0.35 + 0.35 * (0.5 + 0.5 * math.sin(i * 1.7 + j * 2.3 + t * 1.5))
+            c.drawRect(skia.Rect.MakeXYWH(x, y, ww, 12), G.paint((120, 190, 255), lit))
+
+
 def s_drive(arr, t, d, T):
     k = t / d
     G.stars(arr, dx=20 * k, a=0.8)
     s = G.canvas_of(arr)
-    words = ["ENCYCLOPEDIAS", "SCIENTIFIC PAPERS", "NOVELS", "PHOTOGRAPHS", "HISTORY", "MUSIC", "SOFTWARE", "LAW",
-             "MAPS", "RECIPES", "POETRY", "PATENTS", "LETTERS", "FILMS", "MATHEMATICS", "MEDICINE"]
+    words = ["ENCYCLOPEDIAS", "PAPERS", "NOVELS", "PHOTOGRAPHS", "HISTORY", "MUSIC", "SOFTWARE", "LAW",
+             "MAPS", "POETRY", "PATENTS", "LETTERS", "FILMS", "MATHEMATICS", "MEDICINE", "RECIPES"]
     rng = np.random.default_rng(8)
     with s as c:
-        f = G.font("michroma-400", 20)
-        for i in range(34):
-            wd = words[i % len(words)]
-            ang = rng.uniform(0, 2 * math.pi)
-            sp = rng.uniform(0.5, 1.0)
-            ph = (rng.uniform(0, 1) + k * sp * 1.6) % 1.0
-            rad = 950 * (1 - ph) + 160
-            x = CX + math.cos(ang) * rad * 0.8
-            y = 860 + math.sin(ang) * rad
-            if 420 < y < 1260:
-                G.text(c, wd, x, y, f, color=(170, 190, 230), a=0.7 * ph * (1 - ph) * 4 * 0.6, track=2)
-        pass
-    G.add_light(arr, G.radial(CX, 860, 330, (120, 160, 255), 0.55, 1.6) + G.radial(CX, 860, 120, (200, 220, 255), 0.35, 2))
-    s = G.canvas_of(arr)
-    with s as c:
-        draw_monolith(c, CX, 860, 250 * (1 + 0.05 * k), 562 * (1 + 0.05 * k), persp=0.0, side=0.35, rim=0.9)
+        f = G.font("jost-500", 26)
+        for i in range(16):
+            wd = words[i]
+            ang = (i / 16) * 2 * math.pi + rng.uniform(-0.15, 0.15)
+            ph = (i / 16 + k * 0.9) % 1.0
+            rad = 620 * (1 - ph) + 190
+            x = CX + math.cos(ang) * rad * 0.62
+            y = 860 + math.sin(ang) * rad * 0.95
+            tw = G.text_width(wd, f)
+            if 430 < y < 1260 and 60 + tw / 2 < x < W - 100 - tw / 2:
+                G.text(c, wd, x, y, f, color=(170, 200, 240), a=min(1.0, 3 * ph) * (1 - ph) * 0.9, track=3)
+        data_vault(c, CX, 860, 300 * (1 + 0.04 * k), 600 * (1 + 0.04 * k), t)
         label(c, t, ["EVERY BOOK, SONG, PROGRAM"])
 
 
@@ -339,7 +359,7 @@ def _ground_tex():
 PROP = (12, 6, 4)
 
 
-def dawn(arr, t, props=True, lever=0.0, child=0.0, plank_in=1.0, label_a=1.0):
+def dawn(arr, t, props=True, lever=0.0, child=0.0, plank_in=1.0, label_a=1.0, monolith=0.0):
     sky = once("dawnsky", _dawn_sky)
     arr[..., :3] = (sky * 255).astype(np.uint8)
     G.add_light(arr, G.radial(690, HORIZON - 40, 80, (255, 248, 220), 1.0, 2) +
@@ -363,7 +383,10 @@ def dawn(arr, t, props=True, lever=0.0, child=0.0, plank_in=1.0, label_a=1.0):
     s = G.canvas_of(arr)
     with s as c:
         if props:
-            draw_monolith(c, 150, HORIZON - 169, 150, 338, side=0.0, rim=0.25)
+            data_vault(c, 120, HORIZON - 170, 130, 340, t)
+        if monolith > 0:
+            # the monolith stands behind the moment of insight, as in the Dawn of Man
+            draw_monolith(c, 105, HORIZON - 169, 150, 338, side=0.0, rim=0.35, a=monolith)
         # the lever: log fulcrum and plank; far end goes down as the child pushes
         fx, py = 470, HORIZON - 64
         ang = 0.17 - 0.34 * lever
@@ -452,9 +475,10 @@ def s_child(arr, t, d, T):
     tf = C["figure"] - C["child"]
     plank = ease(ramp(t, 0.1, tf))
     lev = ease(ramp(t, tf + 0.2, d - 0.3))
-    dawn(arr, t, props=False, lever=lev, child=ease(ramp(t, 0.0, 0.5)), plank_in=plank)
+    dawn(arr, t, props=False, lever=lev, child=ease(ramp(t, 0.0, 0.5)), plank_in=plank, monolith=ease(ramp(t, 0.1, 0.7)))
     s = G.canvas_of(arr)
     with s as c:
+        pass
         G.text(c, "GENERALIZATION", CX, 560, G.font("michroma-400", 30), color=(255, 225, 190),
                a=ease(ramp(T, TL.word("child", "generalization") - 0.1, TL.word("child", "generalization") + 0.3)), track=10)
         label(c, t, ["NEVER SEEN BEFORE. SOLVED."], color=(255, 220, 170))
@@ -503,6 +527,13 @@ def s_bone(arr, t, d, T):
         sh = skia.GradientShader.MakeLinear([skia.Point(0, -60), skia.Point(0, 50)],
                                             [skia.Color4f(0.97, 0.94, 0.86, 1), skia.Color4f(0.82, 0.76, 0.64, 1),
                                              skia.Color4f(0.52, 0.46, 0.37, 1)])
+        for trail in (3, 2, 1):
+            c.save()
+            c.rotate(-7 * trail)
+            c.saveLayerAlpha(None, int(55 / trail))
+            draw_femur(c, sh)
+            c.restore()
+            c.restore()
         draw_femur(c, sh)
         c.restore()
 
@@ -582,7 +613,7 @@ def s_corridor(arr, t, d, T):
     """Space Station V lobby: white curved room, a floor of glowing panels, red Djinn chairs."""
     s = G.canvas_of(arr)
     vx, vy = CX, 660
-    drift = t * 18
+    drift = 0.0
     with s as c:
         wall = skia.GradientShader.MakeLinear([skia.Point(0, 0), skia.Point(0, vy + 60)],
                                               [skia.Color4f(0.62, 0.63, 0.66, 1), skia.Color4f(0.9, 0.91, 0.93, 1)])
@@ -591,7 +622,7 @@ def s_corridor(arr, t, d, T):
             x = vx + i * 150
             c.drawLine(x, 0, vx + i * 60, vy + 60, G.paint((150, 152, 158), 0.5, stroke=2))
         # the floor rises away from us (the station's curve): rows of lit panels in perspective
-        for row in range(26, -1, -1):
+        for row in range(26, -3, -1):
             z0, z1 = 1 + row * 0.55 + (drift % 0.55), 1 + (row + 1) * 0.55 + (drift % 0.55)
             y0, y1 = vy + 60 + 1000 / z0, vy + 60 + 1000 / z1
             curve = -35 * (row / 26) ** 2
@@ -728,29 +759,37 @@ def s_nist(arr, t, d, T):
         label(c, t, ["NIST GLOSSARY", "HUMAN-LIKE TASKS"])
 
 
-PIECES = {  # a middlegame, drawn from white's side
-    (0, 0): "♜", (0, 4): "♜", (0, 6): "♚", (1, 0): "♟", (1, 1): "♟", (1, 5): "♟", (1, 6): "♟", (1, 7): "♟",
-    (2, 2): "♞", (2, 3): "♟", (3, 4): "♝", (4, 3): "♙", (4, 4): "♛", (5, 2): "♘", (5, 5): "♗",
-    (6, 0): "♙", (6, 1): "♙", (6, 5): "♙", (6, 6): "♙", (6, 7): "♙", (7, 0): "♖", (7, 3): "♕", (7, 5): "♖", (7, 6): "♔",
-}
+START = {}
+for q_, pc in enumerate("♜♞♝♛♚♝♞♜"):
+    START[(0, q_)] = pc
+    START[(1, q_)] = "♟"
+    START[(6, q_)] = "♙"
+    START[(7, q_)] = "♖♘♗♕♔♗♘♖"[q_]
+MOVES = [((6, 4), (4, 4)), ((1, 4), (3, 4)), ((7, 6), (5, 5))]     # 1. e4 e5 2. Nf3
 
 
 def s_chess(arr, t, d, T):
     s = G.canvas_of(arr)
     with s as c:
-        panel(c, 120, 470, 840, 840, code="CHS", color=G.CYAN)
-        S0, x0, y0 = 94, 164, 520
+        panel(c, 120, 470, 840, 800, code="CHS", color=G.CYAN)
+        S0, x0, y0 = 92, 172, 510
         for r in range(8):
             for q in range(8):
                 col = (185, 190, 200) if (r + q) % 2 == 0 else (60, 66, 80)
                 c.drawRect(skia.Rect.MakeXYWH(x0 + q * S0, y0 + r * S0, S0, S0), G.paint(col))
         f = skia.Font(skia.Typeface.MakeFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"), 78)
-        mv = ease(ramp(t, 0.8, 1.6))
-        for (r, q), pc in PIECES.items():
-            if (r, q) == (5, 5):
-                rr, qq = 5 - 3 * mv, 5 - 3 * mv   # bishop sweeps up the diagonal
-            else:
-                rr, qq = r, q
+        board = dict(START)
+        pos = {}
+        for i, (a_, b_) in enumerate(MOVES):
+            k = ease(ramp(t, 0.3 + i * 0.7, 0.8 + i * 0.7))
+            if k <= 0:
+                break
+            pc = board.pop(a_)
+            if k < 1:
+                pos[b_] = (a_[0] + (b_[0] - a_[0]) * k, a_[1] + (b_[1] - a_[1]) * k)
+            board[b_] = pc
+        for (r, q), pc in board.items():
+            rr, qq = pos.get((r, q), (r, q))
             white = pc in "♔♕♖♗♘♙"
             col = (255, 255, 255) if white else (10, 10, 14)
             G.text(c, pc, x0 + qq * S0 + S0 / 2, y0 + rr * S0 + S0 * 0.8, f, color=col, a=1.0,
@@ -762,18 +801,23 @@ def s_go(arr, t, d, T):
     s = G.canvas_of(arr)
     rng = np.random.default_rng(19)
     with s as c:
-        panel(c, 120, 470, 840, 840, code="GO", color=G.AMBER, fill=(170, 130, 70))
-        S0, x0, y0 = 44, 144, 494
+        panel(c, 120, 470, 840, 800, code="GO", color=G.AMBER, fill=(170, 130, 70))
+        S0, x0, y0 = 42, 162, 498
         for i in range(19):
             c.drawLine(x0 + i * S0, y0, x0 + i * S0, y0 + 18 * S0, G.paint((30, 20, 10), stroke=1.6))
             c.drawLine(x0, y0 + i * S0, x0 + 18 * S0, y0 + i * S0, G.paint((30, 20, 10), stroke=1.6))
         for a_ in (3, 9, 15):
             for b_ in (3, 9, 15):
                 c.drawCircle(x0 + a_ * S0, y0 + b_ * S0, 5, G.paint((30, 20, 10)))
-        n = int(ramp(t, 0.0, d * 0.85) * 60) + 20
-        cells = rng.permutation(19 * 19)
-        for k in range(n):
-            q, r = cells[k] % 19, cells[k] // 19
+        n = int(ramp(t, 0.0, d * 0.85) * 44) + 12
+        pts = [(3, 3), (15, 15), (15, 3), (3, 15), (2, 5), (16, 13), (5, 2), (13, 16), (9, 3), (9, 15), (3, 9),
+               (15, 9), (2, 13), (16, 5), (13, 2), (5, 16), (6, 3), (12, 15), (3, 12), (15, 6), (4, 4), (14, 14),
+               (14, 4), (4, 14), (2, 3), (16, 15), (10, 2), (8, 16), (2, 9), (16, 9), (6, 5), (12, 13), (5, 12),
+               (13, 6), (9, 9), (7, 7), (11, 11), (7, 11), (11, 7), (3, 6), (15, 12), (6, 15), (12, 3), (8, 4),
+               (10, 14), (4, 10), (14, 8), (5, 7), (13, 11), (7, 13), (11, 5), (4, 7), (14, 11), (1, 4), (17, 14),
+               (4, 1)]
+        for k in range(min(n, len(pts))):
+            q, r = pts[k]
             col = (15, 15, 18) if k % 2 == 0 else (240, 240, 235)
             c.drawCircle(x0 + q * S0, y0 + r * S0, 20, G.paint(col))
         label(c, t, ["ALPHAGO BEATS LEE SEDOL 4–1", "DEEPMIND · 2016"])

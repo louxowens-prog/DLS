@@ -107,7 +107,7 @@ def organ(notes, dur, amp=1.0, a=1.2, r=1.5):
     for m in notes:
         f = midi(m)
         for mult, g in ((0.5, 0.9), (1, 1.0), (2, 0.55), (3, 0.18), (4, 0.3), (6, 0.08), (8, 0.1)):
-            if f * mult < 12000:
+            if f * mult < 12000 and f * mult >= 30:
                 out += g * np.sin(2 * np.pi * f * mult * t + mult)
     out *= adsr(len(t), a=a, d=0.2, s=1.0, r=r)
     return amp * out / (np.max(np.abs(out)) + 1e-9)

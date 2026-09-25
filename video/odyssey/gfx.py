@@ -240,6 +240,8 @@ def earth_tex():
     lat = np.abs(np.linspace(-1, 1, h))[:, None]
     band = 0.10 * np.cos(lat * np.pi * 3) + 0.02
     clouds = np.clip((cl * 0.7 + cl2 * 0.3 + band - 0.56) * 3.6, 0, 1) ** 1.3 * 0.92
+    polar = np.clip(np.cos(np.linspace(-np.pi / 2, np.pi / 2, h)) * 2.2, 0, 1)[:, None]
+    clouds = clouds * polar                     # no pinched streaks at the poles
     _tex["earth"] = (col.astype(np.float32), clouds.astype(np.float32))
     return _tex["earth"]
 

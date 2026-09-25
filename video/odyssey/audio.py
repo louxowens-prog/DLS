@@ -125,10 +125,12 @@ def build():
     env = np.ones(req.shape[1])
     r0 = int((TL.s("rock") - C["monolith"]) * SR)
     r1 = int((TL.e("rock") - C["monolith"]) * SR)
-    env[r0:r1] = db(-7)
-    env[r1:] = np.linspace(db(-7), 2.2, max(1, req.shape[1] - r1))
+    env[r0:r1] = db(-13)
+    env[r1:] = np.linspace(db(-13), 2.2, max(1, req.shape[1] - r1))
     req *= env[None]
     low = S.cluster(req.shape[1] / SR, 40, 58, voices=18, vowels=("oo", "ah"), seed=13, entry=0.2, drift=30, vib=10, air=0.1)
+    kk = min(low.shape[1], env.shape[0])
+    low = low[:, :kk] * env[None, :kk]
     k = min(req.shape[1], low.shape[1])
     music.add(req[:, :k] * 0.8 + low[:, :k] * 0.5, C["monolith"], db(3))
     # the tool moment: the fanfare motif returns while the child solves it
@@ -205,7 +207,6 @@ def build():
         sfx.add(S.tick(seed=90 + k), TL.s("train") + 0.1 + 0.15 * k, db(-26))
     for tt, f in ((C["dallas"], 1760), (C["texas"], 1976), (C["austin"], 2349)):
         sfx.add(S.beep(f, 0.12), tt, db(-20))
-    sfx.add(S.beep(2637, 0.1), TL.word("rhyme", "last"), db(-22))
     req2 = S.cluster(TL.e("jagged") - TL.s("philo") + 0.6, 64, 88, voices=34, vowels=("ah", "eh"),
                      seed=19, entry=0.4, drift=40, vib=14, air=0.2)
     req2 *= np.clip(np.linspace(0, 1, req2.shape[1]), 0.1, 1)[None]
@@ -217,6 +218,7 @@ def build():
 
     # ---------------------------------------------------------------- mix
     mus = S.reverb(music.x, wet=0.32, rt60=2.8)[:, :N]
+    mus = np.stack([S._hp(mus[ch], 40) for ch in range(2)])
     fx = S.reverb(sfx.x, wet=0.18, rt60=1.2)[:, :N]
 
     vo = np.zeros(N)
@@ -248,10 +250,19 @@ def build():
 
     # levels: speech sits at a steady -19 dBFS RMS; the fanfare tutti peaks around -14 dBFS RMS
     speech = np.concatenate([vo[int(TL.s(k) * SR): int(TL.e(k) * SR)] for k in TL.order])
-    g_vo = db(-17) / (np.sqrt((speech ** 2).mean()) + 1e-12)
+    g_vo = db(-18) / (np.sqrt((speech ** 2).mean()) + 1e-12)
     tut = mus[:, int(C["title"] * SR): int((C["title"] + 1.5) * SR)]
-    g_mu = db(-13.0) / (np.sqrt((tut ** 2).mean()) + 1e-12)
-    mix = (mus * duck_m * g_mu + fx * duck_f * g_mu) * gate + vo_st * g_vo
+    g_mu = db(-11.5) / (np.sqrt((tut ** 2).mean()) + 1e-12)
+    mgate = np.ones(N)
+    mgate[int(C["cut"] * SR): int((TL.s("question") - 0.3) * SR)] = 0.0
+    k0 = int((TL.s("defs") - 0.25) * SR)
+    k1 = int((TL.s("defs") + 0.05) * SR)
+    mgate[k0:k1] *= np.linspace(1, db(-12), k1 - k0)
+    mgate[k1: int((TL.s("defs") + 3.0) * SR)] *= db(-12)
+    c0, c1 = int((TL.s("close1") - 0.2) * SR), int((TL.e("close2") + 0.1) * SR)
+    mgate[c0:c1] *= db(-7)
+    mgate = np.convolve(mgate, np.ones(int(0.02 * SR)) / int(0.02 * SR), mode="same")
+    mix = (mus * duck_m * g_mu * mgate + fx * duck_f * g_mu) * gate + vo_st * g_vo
     mix = limit(mix, db(-2.0))
     # end: let the final chord ring out, then fade
     tail = int(1.2 * SR)

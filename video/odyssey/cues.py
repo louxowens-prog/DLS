@@ -3,7 +3,7 @@ from timeline import TL
 
 C = {}
 C["chat"] = TL.word("open", "any")               # HAL -> a model streaming text
-C["title"] = TL.e("open") + 2.45                  # tutti C major: title card
+C["title"] = TL.e("open") + 2.15                  # tutti C major: title card
 C["fanfare"] = C["title"] - 2.4                   # compressed fanfare starts as the voice ends
 C["align"] = C["fanfare"]                         # the Moon-Earth-Sun alignment rises with the trumpets
 C["ch1"] = TL.s("defs") - 0.1
@@ -27,7 +27,7 @@ C["texas"] = TL.word("dallas", "Texas")
 C["austin"] = TL.word("dallas", "Austin")
 C["dallas"] = TL.word("dallas", "Dallas")
 C["close"] = TL.s("close1") - 0.3
-C["end_title"] = TL.e("close2") + 2.45           # final tutti + end card, after a short fanfare
+C["end_title"] = TL.e("close2") + 2.2            # final tutti + end card, after a short fanfare
 C["fanfare2"] = C["end_title"] - 2.4
 C["end"] = TL.total
 CHAPTERS = [("THE DAWN OF MIND", "I", C["ch1"]), ("BUILT, NOT BORN", "II", C["ch2"]),

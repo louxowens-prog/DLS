@@ -143,7 +143,7 @@ def s_dallas(arr, t, d, T):
         edge(760, ymid - 44, CX + 40, ytop + 30, a_au, G.AMBER)
         box(CX, ytop, "Austin", a_au, G.GREEN)
         G.text(c, "INPUT", 110, ybot + 58, fs, color=G.GREY, align="left", track=3)
-        G.text(c, "INTERNAL STEP", 110, ymid + 90, fs, color=G.GREY, align="left", track=3, a=max(a_cap, a_tx))
+        G.text(c, "INTERNAL STEP", CX, ymid + 95, fs, color=G.GREY, track=3, a=max(a_cap, a_tx))
         G.text(c, "ANSWER", 110, ytop - 70, fs, color=G.GREY, align="left", track=3, a=a_au)
         label(c, t, ["INSIDE CLAUDE", "ANTHROPIC · 2025"])
 
@@ -298,11 +298,15 @@ def _star_child():
     col = skin * (0.22 + 0.62 * key[..., None]) + np.array([0.55, 0.7, 1.0]) * rim[..., None] * 0.5
     col += np.array([1.0, 0.5, 0.4]) * 0.06                       # warm, translucent fill
     # eyes: large and dark, looking out; a hint of lids and a small mouth
-    for ex, ey, sx, sy in ((62, -44, 24, 15), (14, -50, 17, 12)):
-        e = np.exp(-(((x - ex) / sx) ** 2 + ((y - ey) / sy) ** 2))
-        col = col * (1 - 0.92 * e[..., None]) + np.array([0.05, 0.07, 0.16]) * 0.85 * e[..., None]
-        glint = np.exp(-(((x - ex - 4) / 3.0) ** 2 + ((y - ey + 4) / 3.0) ** 2))
-        col += glint[..., None] * 0.55
+    for ex, ey, sx, sy in ((62, -44, 26, 17), (12, -50, 19, 14)):
+        e = np.exp(-((((x - ex) / sx) ** 2 + ((y - ey) / sy) ** 2)) ** 2)            # almond-shaped opening
+        col = col * (1 - 0.9 * e[..., None]) + np.array([0.82, 0.84, 0.9]) * 0.9 * e[..., None]
+        iris = np.exp(-((((x - ex + 3) / (sy * 0.95)) ** 2 + ((y - ey) / (sy * 0.95)) ** 2)) ** 2)
+        col = col * (1 - 0.95 * iris[..., None]) + np.array([0.10, 0.16, 0.32]) * 0.95 * iris[..., None]
+        pupil = np.exp(-(((x - ex + 3) / (sy * 0.4)) ** 2 + ((y - ey) / (sy * 0.4)) ** 2))
+        col *= 1 - 0.8 * pupil[..., None]
+        glint = np.exp(-(((x - ex + 1) / 3.2) ** 2 + ((y - ey + 5) / 3.2) ** 2))
+        col += glint[..., None] * 0.8
         lid = np.exp(-(((x - ex) / (sx + 4)) ** 2 + ((y - ey + 12) / 4) ** 2))
         col *= 1 - 0.25 * lid[..., None]
     mouth = np.exp(-(((x - 62) / 10) ** 2 + ((y + 2) / 2.5) ** 2))
@@ -332,6 +336,6 @@ def s_endcard(arr, t, d, T):
         G.text(c, "SOURCES", CX, 1010, G.font("michroma-400", 20), color=G.AMBER, a=a2, track=6)
         for i, ln in enumerate(SOURCES):
             G.text(c, ln, CX, 1060 + i * 40, G.font("jost-400", 26), color=G.GREY, a=a2)
-        G.text(c, "Fanfare after R. Strauss (1896) and choral clusters after G. Ligeti, re-synthesized",
-               CX, 1260, G.font("jost-400", 22), color=G.DIM, a=a2)
-        G.text(c, "Narration: synthetic voice", CX, 1295, G.font("jost-400", 22), color=G.DIM, a=a2)
+        G.text(c, "Fanfare after R. Strauss (1896), clusters after G. Ligeti, re-synthesized",
+               CX, 1265, G.font("jost-400", 26), color=G.GREY, a=a2)
+        G.text(c, "Narration: synthetic voice", CX, 1305, G.font("jost-400", 26), color=G.GREY, a=a2)

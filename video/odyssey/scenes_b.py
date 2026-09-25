@@ -282,7 +282,7 @@ def s_predict(arr, t, d, T):
         kw = ease(ramp(T, t_wr - 0.05, t_wr + 0.15)) * (1 - ease(ramp(T, t_nu, t_nu + 0.3)))
         if kw > 0:
             G.text(c, "WRONG", CX, 1190, G.font("jost-500", 84), color=G.HAL, a=kw, track=12, glow=12, glow_color=G.HAL)
-        kd = ease(ramp(T, t_nu, t_nu + 0.3))
+        kd = ease(ramp(T, t_nu + 0.3, t_nu + 0.6))
         if kd > 0:
             # a bank of dials, each nudged a little
             for j in range(18):

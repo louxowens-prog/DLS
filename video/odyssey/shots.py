@@ -61,8 +61,7 @@ SHOTS = [
     (C["ch5"], _s("shakes"), "s_just", {}),
     (_s("shakes"), _s("train"), "s_neurons", {"finish": {"bloom": 0.35}}),
     (_s("train"), _s("dallas"), "s_gen", {}),
-    (_s("dallas"), _s("rhyme"), "s_dallas", {}),
-    (_s("rhyme"), _s("philo"), "s_rhyme", {}),
+    (_s("dallas"), _s("philo"), "s_dallas", {}),
     (_s("philo"), _s("jagged"), "s_tma", {}),
     (_s("jagged"), C["close"], "s_jagged", {}),
     (C["close"], C["end_title"], "s_starchild", {"finish": {"bloom": 0.35}, "plate": True}),
@@ -93,15 +92,31 @@ def caption_at(T):
     return None
 
 
+def balanced(s, f, maxw):
+    """One line if it fits; otherwise two lines of similar width, never leaving a lone short word."""
+    if G.text_width(s, f) <= maxw:
+        return [s]
+    words = s.split()
+    best, bi = None, 1
+    for i in range(1, len(words)):
+        a, b = " ".join(words[:i]), " ".join(words[i:])
+        wa, wb = G.text_width(a, f), G.text_width(b, f)
+        cost = max(wa, wb) + (400 if max(wa, wb) > maxw else 0)
+        if best is None or cost < best:
+            best, bi = cost, i
+    return [" ".join(words[:bi]), " ".join(words[bi:])]
+
+
 def draw_caption(arr, T, force_plate=False):
     s = caption_at(T)
     if not s:
         return
     f = G.font("jost-500", 60)
-    lines = G.wrap(s, f, 860)
+    lines = balanced(s, f, 860)
     # on bright backgrounds, lay a soft dark plate behind the caption
-    y_top = int(G.CAP_Y - (len(lines) - 1) * 36 - 62)
-    y_bot = int(G.CAP_Y + 22)
+    y0 = G.CAP_Y - (len(lines) - 1) * 12
+    y_top = int(y0 - 62)
+    y_bot = int(y0 + (len(lines) - 1) * 70 + 22)
     region = arr[max(0, y_top): y_bot, 90: G.W - 90, :3]
     bright = float(region.mean()) / 255 if region.size else 0.0
     surf = G.canvas_of(arr)
@@ -112,14 +127,14 @@ def draw_caption(arr, T, force_plate=False):
                             G.paint((0, 0, 0), 0.72 if force_plate else min(0.7, 0.35 + bright * 0.5), blur=4))
     # dark soft shadow, then crisp white
     with surf as c:
-        y = G.CAP_Y - (len(lines) - 1) * 36
+        y = y0
         for ln in lines:
             G.text(c, ln, G.CX, y + 2, f, color=(0, 0, 0), a=0.9, glow=9, glow_color=(0, 0, 0), track=0.5)
             G.text(c, ln, G.CX, y, f, color=(255, 255, 255), a=1.0, track=0.5)
-            y += 72
+            y += 70
 
 
-NO_PUSH = {"s_sunrise", "s_corridor", "s_memory", "s_stargate", "s_galaxy", "s_bone", "s_endcard", "s_glass",
+NO_PUSH = {"s_sunrise", "s_memory", "s_stargate", "s_galaxy", "s_bone", "s_endcard", "s_glass",
            "s_starchild"}
 
 
@@ -151,7 +166,6 @@ def render_frame(T, idx=None, captions=True):
             fin = opt.get("finish", {})
             plate = opt.get("plate", False)
             break
-    A.chapter_overlay(arr, T)
     G.finish(arr, idx if idx is not None else int(T * FPS), **fin)
     if captions:
         draw_caption(arr, T, plate)
