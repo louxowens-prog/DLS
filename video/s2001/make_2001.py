@@ -155,7 +155,7 @@ def readout_wall(panels, t):
 
 
 def panel(lines, title=None, fg=BLUE, accent=ORNG, bg=(3, 8, 20), size=(620, 772), big=False):
-    img = comp.display(lines, size[0], size[1], bg=bg, fg=fg, accent=accent, title=title) if not big else None
+    img = comp.display(lines, size[0], size[1], bg=bg, fg=fg, accent=accent, title=title, fs=70) if not big else None
     if big:
         img = Image.new("RGBA", size, bg + (255,))
         d = ImageDraw.Draw(img)
@@ -328,7 +328,13 @@ def sc_station(t):
     a1, a2 = ls("station", 1), ls("station", 2)
     s = shot("station")
     if t < a1 - 0.2:
-        return comp.over_stars(s.frame(t).convert("RGBA")) if s.ok else Image.new("RGB", (BW, BH))
+        if not s.ok:
+            return Image.new("RGB", (BW, BH))
+        from PIL import ImageEnhance
+        f = s.frame(t).convert("RGBA")
+        rgb = ImageEnhance.Brightness(ImageEnhance.Color(f.convert("RGB")).enhance(0.45)).enhance(0.8)
+        f = Image.merge("RGBA", (*rgb.split(), f.split()[3]))
+        return comp.over_stars(f)
     if t < a2:
         caps = ["PERCEPTION", "LEARNING", "PLANNING", "REASONING", "COMMUNICATION", "DECISIONS"]
         ts = phrases("station", 1, ["perception", "learning", "planning", "reasoning", "communication", "decision"])
@@ -339,10 +345,10 @@ def sc_station(t):
         return readout_wall([p1, p2, p3], t)
     items = [("CHESS", "chess"), ("ALPHAGO", "AlphaGo"), ("SELF-DRIVING", "self-driving"), ("LANGUAGE", "language")]
     ts = phrases("station", 2, [p for _, p in items])
-    lit = [f"{c}  = AI" for (c, _), a in zip(items, ts) if t >= a]
+    lit = [c for (c, _), a in zip(items, ts) if t >= a]
     q = phrases("station", 2, ["how general"])[0]
     p3 = panel([("HOW", WHITE), ("GENERAL?", ORNG)], None, big=True) if t >= q else bars(t, seed=2)
-    return readout_wall([panel(lit[:2] or ["..."], "CLASSIFIED AS"), panel(lit[2:] or ["..."], "CLASSIFIED AS"), p3], t)
+    return readout_wall([panel(lit[:2] or ["..."], "= AI"), panel(lit[2:] or ["..."], "= AI"), p3], t)
 
 
 def sc_memory(t):

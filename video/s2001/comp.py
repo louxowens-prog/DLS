@@ -81,27 +81,28 @@ def warp_into(band, panel, quad):
     band.paste(warped, (0, 0), warped)
 
 
-def display(lines, w=640, h=420, bg=(4, 10, 24), fg=(120, 200, 255), accent=(255, 140, 40), title=None):
+def display(lines, w=640, h=420, bg=(4, 10, 24), fg=(120, 200, 255), accent=(255, 140, 40), title=None, fs=40):
     """A 1968 flight-deck readout: flat panels, bold sans, block graphics."""
     img = Image.new("RGBA", (w, h), bg + (255,))
     d = ImageDraw.Draw(img)
     d.rectangle([0, 0, w - 1, h - 1], outline=fg, width=4)
     y = 30
     if title:
-        d.rectangle([0, 0, w, 64], fill=accent)
-        d.text((24, 32), title, font=jost("600SemiBold", 36), fill=(10, 10, 16), anchor="lm")
-        y = 100
+        th = int(fs * 1.6)
+        d.rectangle([0, 0, w, th], fill=accent)
+        d.text((24, th / 2), title, font=jost("600SemiBold", int(fs * 0.9)), fill=(10, 10, 16), anchor="lm")
+        y = th + fs
     for ln in lines:
         x = 28
         parts = ln.split("->")          # Jost has no arrow glyph: draw arrows as vector strokes
         for i, part in enumerate(parts):
-            d.text((x, y), part.strip(), font=jost("500Medium", 40), fill=fg, anchor="lm")
-            x += jost("500Medium", 40).getlength(part.strip()) + 20
+            d.text((x, y), part.strip(), font=jost("500Medium", fs), fill=fg, anchor="lm")
+            x += jost("500Medium", fs).getlength(part.strip()) + 20
             if i < len(parts) - 1:
                 d.line([(x, y), (x + 60, y)], fill=accent, width=6)
                 d.polygon([(x + 72, y), (x + 54, y - 12), (x + 54, y + 12)], fill=accent)
                 x += 96
-        y += 58
+        y += int(fs * 1.45)
     return img
 
 
