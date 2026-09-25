@@ -701,7 +701,8 @@ def render_frame(fi):
 SR = 44100
 
 
-def synth_audio(path):
+def synth_audio(path, music_fn=None, extra_sfx=None):
+    """music_fn(n_samples) -> np.ndarray replaces the default score; extra_sfx(SR) -> {kind: (signal, gain)}."""
     n = int((TOTAL + 1.5) * SR)
     music, sfx = np.zeros(n), np.zeros(n)
     rng = np.random.default_rng(3)
@@ -793,6 +794,10 @@ def synth_audio(path):
     flip = np.sin(2 * np.pi * np.cumsum(600 + 2400 * (x / 0.18) ** 2) / SR) * np.sin(np.pi * x / 0.18)
     bank = {"boom": (boom, 0.55), "big": (big, 0.9), "whoosh": (whoosh, 0.3), "tick": (tick, 0.5),
             "ding": (ding + 0.4 * np.pad(boom, (0, len(ding) - len(boom))), 0.4), "pop": (popf, 0.35), "flip": (flip, 0.35)}
+    if extra_sfx is not None:
+        bank.update(extra_sfx(SR))
+    if music_fn is not None:
+        music = music_fn(n)
     for at, kind in sorted(CUES):
         sig, g = bank[kind]
         add(sfx, sig, at, g)
@@ -811,7 +816,7 @@ def synth_audio(path):
 
 # ---------------------------------------------------------------- main
 
-def main(out_name="the_plus_minus_arc.mp4", scenes=None):
+def main(out_name="the_plus_minus_arc.mp4", scenes=None, music_fn=None, extra_sfx=None):
     """Render `scenes` (default: this episode) to out/<out_name>. Other episodes import this module
     and call main() with their own scene list."""
     global SCENES, TOTAL
@@ -840,7 +845,7 @@ def main(out_name="the_plus_minus_arc.mp4", scenes=None):
             print(f"frame {fi}/{nframes}", flush=True)
     enc.stdin.close()
     enc.wait()
-    synth_audio(audio)
+    synth_audio(audio, music_fn, extra_sfx)
     subprocess.run([FFMPEG, "-y", "-loglevel", "error", "-i", silent, "-i", audio, "-c:v", "copy",
                     "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", final], check=True)
     os.remove(silent)
