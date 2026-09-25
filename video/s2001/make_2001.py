@@ -96,16 +96,24 @@ def shot(name):
 
 
 _plates = {}
+PICK = {"2001_plate1_dawn_plain": "2001_plate1_dawn_plain_v2", "2001_plate5_earth": "2001_plate5_earth_v2"}
+
+
+def raw_plate(stem):
+    f = os.path.join(ROOT, "plates", stem)
+    return Image.open(f).convert("RGB") if os.path.exists(f) else None
 
 
 def plate(stem):
     """Best available version of a plate (highest _vN wins), cropped to 2.20:1 at band size, or None."""
     if stem not in _plates:
-        files = sorted(glob.glob(os.path.join(ROOT, "plates", f"{stem}*.*")) +
-                       glob.glob(os.path.join(ROOT, f"{stem}*.*")))
+        files = sorted(glob.glob(os.path.join(ROOT, "plates", f"{stem}*")) +
+                       glob.glob(os.path.join(ROOT, f"{stem}*")))
         img = None
+        if stem in PICK and os.path.exists(os.path.join(ROOT, "plates", PICK[stem])):
+            files = [os.path.join(ROOT, "plates", PICK[stem])]
         if files:
-            pick = sorted(files, key=lambda f: (("_v" in f), f))[-1]
+            pick = files[0] if stem in PICK else sorted(files)[0]
             img = Image.open(pick).convert("RGB")
             w, h = img.size
             tw = min(w, int(h * BW / BH))
@@ -189,7 +197,32 @@ def orbit_diagram(t):
 
 # ---------------------------------------------------------------- scenes (each returns the band image)
 
+def sunrise(t, dur, start=0.0):
+    earth = raw_plate("2001_plate5_earth_v2")
+    if earth is None:
+        return None
+    k = ease(start + (1 - start) * t / dur)
+    b = comp.STARS.copy()
+    d = ImageDraw.Draw(b)
+    R = 250
+    ey = BH + 170 - 330 * k
+    e = earth.resize((2 * R + 40, 2 * R + 40), Image.LANCZOS)
+    m = Image.new("L", e.size, 0)
+    ImageDraw.Draw(m).ellipse([20, 20, 20 + 2 * R, 20 + 2 * R], fill=255)
+    b.paste(e, (BW // 2 - R - 20, int(ey - R - 20)), m)
+    d.ellipse([-900, BH - 70 + 60 * (1 - k), BW + 900, BH + 1900], fill=(6, 6, 7))     # the Moon's dark limb
+    d.arc([-900, BH - 70 + 60 * (1 - k), BW + 900, BH + 1900], 250, 290, fill=(90, 90, 95), width=2)
+    sk = ease((k - 0.45) / 0.55)
+    if sk > 0:
+        sy = ey - R * (0.9 + 0.25 * sk)
+        b = comp.glare(b, (BW / 2 + 40, sy), 1.3 * sk)
+    return b
+
+
 def sc_open(t):
+    b = sunrise(t, TL.dur["open"])
+    if b is not None:
+        return b
     s = shot("open")
     if not s.ok:
         return Image.new("RGB", (BW, BH))
@@ -200,6 +233,9 @@ def sc_open(t):
 
 
 def sc_close(t):
+    b = sunrise(t, TL.dur["close"] - 1.0, 0.3)
+    if b is not None:
+        return b
     s = shot("close")
     if not s.ok:
         return sc_open(t)
@@ -247,6 +283,12 @@ def sc_monolith(t):
             al = ease((t - a) / 0.6) * (1 - ease((t - ls("monolith", 2)) / 0.6))
             d.text((40, 40 + k * 34), it, font=comp.jost("300Light", 26), fill=tuple(int(210 * al) for _ in range(3)))
     q0, q3 = ls("monolith", 2), ls("monolith", 3)
+    rk = raw_plate("2001_plate2_dawn_sky")
+    if rk is not None and q0 + 1.6 <= t < q3 - 0.2:
+        w, h = rk.size
+        th = int(w * BH / BW)
+        b = kenburns(rk.crop((0, (h - th) // 2, w, (h - th) // 2 + th)), t - q0, q3 - q0, 1.0, 1.06)
+        d = ImageDraw.Draw(b)
     if q0 <= t < q3 + 3:
         msg = "3 PLANKS  ·  1 ROPE  ·  1 BROKEN PULLEY  ·  LIFT THE ROCK"
         n = int(len(msg) * min(1, (t - q0) / 2.5))
@@ -268,7 +310,12 @@ def sc_dawn(t):
     split = 3.2 if pl1 is not None else 0
     if t < split:
         return kenburns(pl1, t, split, 1.0, 1.06)
-    sky = plate("2001_plate2_dawn_sky") or sky_fallback()
+    tw = raw_plate("2001_plate1_dawn_plain")
+    if tw is not None:
+        w, h = tw.size
+        sky = tw.crop((0, 0, w, int(h * 0.5))).resize((BW, BH), Image.LANCZOS)
+    else:
+        sky = sky_fallback()
     b = kenburns(sky, t - split, 7, 1.0, 1.03)
     s = shot("dawn")
     if s.ok:
