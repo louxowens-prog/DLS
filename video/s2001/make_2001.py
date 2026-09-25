@@ -71,11 +71,12 @@ class Shot:
                                 os.path.join(self.seq, "%05d.png")], check=True)
                 open(os.path.join(self.seq, "done"), "w").close()
         self.n = len(glob.glob(os.path.join(self.seq, "*.png")))
+        self.base = 1 if self.seq != self.dir else 0      # ffmpeg numbers its output from 1, Blender from 0
         self.ratio = src_fps / FPS
 
     def frame(self, t):
         i = min(self.n - 1, max(0, int(t * FPS)))
-        return Image.open(os.path.join(self.seq, f"{i:05d}.png"))
+        return Image.open(os.path.join(self.seq, f"{i + self.base:05d}.png"))
 
     def screens(self, t):
         sc = self.meta["screens"]
