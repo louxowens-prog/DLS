@@ -5,7 +5,9 @@ C = {}
 C["half"] = TL.word("h2", "half")
 C["title"] = TL.word("h3", "jagged")
 C["stamps"] = [TL.word("l2", "Yes", 0), TL.word("l2", "Yes", 1), TL.word("l3", "Disputed"), TL.word("l3", "Not"),
-               TL.word("l4", "No", 0), TL.word("l4", "No", 1)]
+               TL.word("l4", "No.", 0), TL.word("l4", "evidence") - 0.25]
+C["clock"] = TL.word("h1", "clock")
+C["separate"] = TL.word("l4", "separate")
 C["wait"] = TL.s("g1")
 C["wait_stop"] = TL.s("g1") - 0.45
 C["notif"] = TL.word("g4", "A.G.I.")

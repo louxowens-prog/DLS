@@ -40,16 +40,25 @@ class Bus:
 def energy_curve():
     """Drum/bass energy over the whole piece (0 = silent, 1 = everything at once)."""
     pts = [
-        (0.0, 0.95), (0.3, 0.5), (TL.s("h2"), 0.3), (C["half"], 0.15), (TL.s("h3"), 0.5), (C["title"], 0.9),
-        (TL.s("a1") - 0.05, 0.9), (TL.s("a1") + 0.3, 0.4), (TL.s("a4"), 0.18), (TL.s("a5"), 0.35),
-        (TL.s("l1"), 0.2), (TL.e("l4"), 0.25), (C["wait_stop"] - 0.02, 0.4), (C["wait_stop"], 0.0), (C["wait"] + 0.6, 0.0),
-        (C["wait"] + 0.5, 0.38), (TL.s("g4"), 0.25), (C["water"], 0.45), (TL.s("g6"), 0.75), (TL.e("g6"), 0.8),
-        (TL.s("g7"), 0.55), (TL.e("g7"), 0.3), (C["silence"] - 0.01, 0.3), (C["silence"], 0.0),
-        (C["missing"] - 0.01, 0.0), (C["missing"], 0.7), (TL.s("m1"), 0.4), (TL.e("m6"), 0.45),
-        (C["finale"], 1.0), (C["final_silence"] - 0.01, 1.0), (C["final_silence"], 0.0), (C["end"], 0.0),
+        (0.0, 0.95), (0.3, 0.45), (C["clock"] - 0.3, 0.3), (TL.s("h2"), 0.25), (C["half"], 0.12), (TL.s("h3") - 0.4, 0.55),
+        (C["title"], 0.95), (TL.s("a1") - 0.05, 0.9), (TL.s("a1") + 0.3, 0.4), (TL.s("a4"), 0.2), (TL.s("a5"), 0.4),
+        (TL.s("l1"), 0.25), (TL.s("l4"), 0.35), (C["wait_stop"] - 0.02, 0.7), (C["wait_stop"], 0.0), (C["wait"] + 0.6, 0.0),
+        (C["wait"] + 0.5, 0.38), (TL.s("g4"), 0.25), (C["water"], 0.45), (TL.s("g6"), 0.7), (TL.e("g6"), 0.8),
+        (TL.s("g7"), 0.5), (C["silence"] - 1.5, 0.35), (C["silence"] - 0.01, 0.65), (C["silence"], 0.0),
+        (TL.s("c2") - 0.2, 0.0), (TL.s("c2"), 0.14), (TL.s("c3") - 0.35, 0.16), (TL.s("c3") - 0.3, 0.0),
+        (TL.s("c4") - 0.1, 0.0), (TL.s("c4"), 0.12), (TL.s("c5"), 0.16), (C["missing"] - 1.2, 0.3), (C["missing"] - 0.5, 0.45),
+        (C["missing"] - 0.45, 0.0), (C["missing"] - 0.01, 0.0), (C["missing"], 0.75), (TL.s("m1"), 0.4), (TL.s("m6"), 0.45),
+        (TL.e("m6"), 0.6), (C["finale"], 0.85), (TL.s("f1") - 0.5, 1.0), (C["final_silence"] - 0.01, 1.0),
+        (C["final_silence"], 0.0), (C["end"], 0.0),
     ]
     xs, ys = zip(*sorted(pts))
     return lambda t: float(np.interp(t, xs, ys))
+
+
+def dead_stops():
+    """Intervals where the whole band is cut dead."""
+    return [(C["wait_stop"], C["wait"] + 0.6), (C["silence"], TL.s("c2") - 0.15), (TL.s("c3") - 0.3, TL.s("c4") - 0.1),
+            (C["missing"] - 0.45, C["missing"] - 0.01), (C["final_silence"], C["end_card"] - 0.01)]
 
 
 def build():
@@ -68,7 +77,7 @@ def build():
     fx.add(J.crash(seed=2), 0.02, 0.6)
     band.add(J.cluster_stab(64, 6, seed=3), 0.02, 0.35)
     for k in range(8):
-        fx.add(J.tick(), TL.s("h2") + 0.25 + 0.5 * k, 0.25)
+        fx.add(J.tick(), C["clock"] - 0.1 + 0.5 * k, 0.25)
     fx.add(J.scratch(0.45, seed=4), C["half"] - 0.05, 0.5)
     fx.add(J.crash(seed=5), C["title"], 0.45)
     fx.add(J.kick(), C["title"], 1.0)
@@ -86,8 +95,8 @@ def build():
     fx.add(J.ping(), C["notif"], 0.45)
     fx.add(J.riser(TL.s("g6") - C["water"] + 0.2, seed=51), C["water"], 0.45)
     for i, t in enumerate(C["montage"]):
-        fx.add(J.crash(seed=60 + i) if i % 3 == 0 else J.snare(seed=60 + i), t - 0.04, 0.28)
-        fx.add(J.kick(seed=70 + i), t - 0.04, 0.6)
+        fx.add(J.crash(seed=60 + i) if i % 3 == 0 else J.snare(seed=60 + i), t - 0.04, 0.2)
+        fx.add(J.kick(seed=70 + i), t - 0.04, 0.45)
     band.add(J.sax(311, 1.6, squeal=1.3, seed=8), TL.s("g6") + 0.5, 0.16)
 
     # ---- consciousness: silence, one piano note at a time, the robot, the octopus
@@ -102,12 +111,23 @@ def build():
         fx.add(J.tom([196, 150, 118, 92, 150, 196][i], seed=110 + i), t - 0.08, 0.7)
         fx.add(J.bass_note(55 * 2 ** ((i * 3 % 12) / 12), 0.35, seed=120 + i), t - 0.08, 0.4)
 
-    # ---- finale: everything at once, then nothing
-    f0 = C["finale"]
-    for k in range(4):
-        band.add(J.cluster_stab(40 + 7 * k, 7, 1.2, seed=130 + k), f0 + 0.35 * k, 0.35)
+    # ---- finale: everything at once, building for seven seconds, then nothing
+    f0, f9 = C["finale"], C["final_silence"]
+    n = int((f9 - f0) / 0.55)
+    for k in range(n):
+        band.add(J.cluster_stab(40 + (7 * k) % 24, 7, 1.0, seed=130 + k), f0 + 0.55 * k, 0.22 + 0.2 * k / n)
+    for k, t in enumerate(np.arange(f0, f9 - 0.3, 1.1)):
+        fx.add(J.crash(seed=150 + k), t, 0.35)
+        fx.add(J.kick(seed=160 + k), t, 0.9)
     band.add(J.sax(262, 1.8, squeal=1.6, seed=9), f0 + 0.1, 0.2)
+    band.add(J.sax(349, 1.6, squeal=2.0, seed=10), f0 + 2.6, 0.2)
     fx.add(J.noise_hit(0.6, 200, 10000, seed=140), f0, 0.6)
+    fx.add(J.riser(f9 - f0, seed=143), f0, 0.4)
+    t, gap = f9 - 1.6, 0.16
+    while t < f9 - 0.04:                                    # snare roll that tightens into the cut
+        fx.add(J.snare(seed=int(t * 100), tight=1.3), t, 0.45)
+        t += gap
+        gap = max(0.045, gap * 0.85)
     fx.add(J.crash(seed=141), C["end_card"], 0.6)
     fx.add(J.kick(), C["end_card"], 1.0)
     band.add(J.cluster_stab(45, 9, 2.6, seed=142), C["end_card"], 0.4)
@@ -130,30 +150,43 @@ def build():
         j = min(N, i + len(up))
         vo[i:j] += up[: j - i]
     vo = S._hp(vo, 70)
+    vo[int(C["silence"] * SR): int((C["missing"] - 0.3) * SR)] *= db(-2)
     vo_st = S.reverb(vo, wet=0.06, rt60=0.7)[:, :N]
 
     env = np.convolve(np.abs(vo), np.ones(SR // 8) / (SR // 8), mode="same")
     env = np.clip(env / (np.percentile(env[env > 1e-4], 90) + 1e-9), 0, 1)
     env = np.convolve(env, np.ones(SR // 5) / (SR // 5), mode="same")
-    duck = 1 - 0.72 * env
+    duck = 1 - 0.8 * env
 
-    # hard silences: the music bus is cut dead (the voice carries on alone)
+    # the band swells in the gaps between lines and into each dead stop
+    talk = np.zeros(N)
+    for key in TL.order:
+        talk[int((TL.s(key) - 0.12) * SR): int((TL.e(key) + 0.15) * SR)] = 1.0
+    ramp_ = int(0.08 * SR)
+    swell = 1 + (db(3.5) - 1) * (1 - np.convolve(talk, np.ones(ramp_) / ramp_, mode="same"))
+    tsm = np.convolve(talk, np.ones(ramp_) / ramp_, mode="same")
+    for a_, b_ in dead_stops()[:4]:
+        i0, i1 = int((a_ - 2.0) * SR), int(a_ * SR)
+        k = np.linspace(0, 1, i1 - i0)
+        swell[i0:i1] *= 1 + (db(4) - 1) * k * (1 - tsm[i0:i1]) + (db(1.5) - 1) * k * tsm[i0:i1]
+    swell[int(C["finale"] * SR): int((TL.s("f1") - 0.1) * SR)] *= db(1.5)
+
     gate = np.ones(N)
-    for a_, b_ in ((C["wait_stop"], C["wait"] + 0.6), (C["silence"], C["missing"] - 0.01),
-                   (C["final_silence"], C["end_card"] - 0.01)):
+    for a_, b_ in dead_stops():
         gate[int(a_ * SR): int(b_ * SR)] = 0.0
     gate[int((TL.s("f1") - 0.1) * SR): int(C["final_silence"] * SR)] *= db(-6)
     gate[: int(TL.e("h2") * SR)] *= db(-4)                                   # the hook: voice first
-    gate[int((TL.s("h3") - 0.05) * SR): int(TL.e("h3") * SR)] *= db(-3)
+    gate[int((TL.s("h3") - 0.05) * SR): int(TL.e("h3") * SR)] *= db(-5)
+    gate[int((TL.s("l4") - 0.05) * SR): int(TL.e("l4") * SR)] *= db(-2)
+    gate[int(C["silence"] * SR): int(C["missing"] * SR)] *= db(-5)            # the consciousness band stays sparse and low
     gate = np.convolve(gate, np.ones(int(0.004 * SR)) / int(0.004 * SR), mode="same")
-    # the lone piano notes and bubbles live inside the consciousness silence, so they bypass that gate
     keep = np.zeros(N)
     keep[int(C["silence"] * SR): int((C["missing"] - 0.01) * SR)] = 1.0
 
     speech = np.concatenate([vo[int(TL.s(k) * SR): int(TL.e(k) * SR)] for k in TL.order])
     g_vo = db(-18) / (np.sqrt((speech ** 2).mean()) + 1e-12)
     loud = bandr[:, int(C["finale"] * SR): int(TL.s("f1") * SR)] + fxr[:, int(C["finale"] * SR): int(TL.s("f1") * SR)]
-    g_mu = db(-15) / (np.sqrt((loud ** 2).mean()) + 1e-12)
+    g_mu = db(-14) / (np.sqrt((loud ** 2).mean()) + 1e-12)
 
     pianos = Bus()
     for k, key in enumerate(("c1", "c2", "c3", "c4", "c5")):
@@ -161,11 +194,20 @@ def build():
     pianos.add(J.bubbles(1.4, seed=90), C["octopus"], 0.25)
     pianos_r = S.reverb(pianos.x, wet=0.3, rt60=2.0)[:, :N]
 
-    mix = (bandr + fxr) * duck * g_mu * gate + pianos_r * keep * g_mu * 1.4 + vo_st * g_vo
-    mix = limit(mix, db(-2.0))
+    mix = (bandr + fxr) * duck * swell * g_mu * gate + pianos_r * keep * g_mu * 1.4 + vo_st * g_vo
+    mix = loudness(mix, -14.0)
     tail = int(1.0 * SR)
     mix[:, -tail:] *= np.linspace(1, 0, tail) ** 2
     return mix, vo
+
+
+def loudness(x, target):
+    """Static gain to the target integrated loudness (no dynamic compression), then a peak limiter."""
+    import pyloudnorm as pyln
+    for _ in range(2):
+        lufs = pyln.Meter(SR).integrated_loudness(x.T)
+        x = limit(x * db(target - lufs), db(-2.6))
+    return x
 
 
 def limit(x, ceil, look=0.005, rel=0.12):

@@ -5,9 +5,10 @@ The narrator is Kokoro "af_heart"; the AI character ("Jag") gets its own process
 """
 LINES = [
     # ---- hook
-    ("h1", "Top A.I. can win gold at the Math Olympiad.", "Top AI can win gold at the Math Olympiad.", 0.15, {}),
-    ("h2", "Yet the best model reads a clock right... about half the time. Humans? Ninety percent.",
-     "Yet the best model reads a clock right… about half the time. Humans? 90%.", 0.2, {}),
+    ("h1", "Top A.I. can win gold at the Math Olympiad... and still can't reliably read a clock.",
+     "Top AI can win gold at the Math Olympiad… and still can’t reliably read a clock.", 0.15, {}),
+    ("h2", "The best model gets it right about half the time. Humans? Ninety percent.",
+     "The best model gets it right about half the time. Humans? 90%.", 0.2, {}),
     ("h3", "Welcome to jagged intelligence.", None, 0.5, {}),
     # ---- what actually happened
     ("a1", "Stanford's twenty twenty-six A.I. Index: on PhD-level science questions, top models score ninety-four percent. Experts? Sixty-five.",
@@ -15,13 +16,14 @@ LINES = [
     ("a2", "Computer-using agents jumped from twelve percent of real tasks to sixty-six. Still, one in three fails.",
      "Computer-using agents jumped from 12% of real tasks to 66%. Still, one in three fails.", 0.15, {}),
     ("a3", "Robots in real homes? About twelve percent.", "Robots in real homes? About 12%.", 0.2, {}),
-    ("a4", "No human is shaped like this. Nobody does Olympiad math, then can't tell the time.", None, 0.15, {}),
+    ("a4", "No human is shaped like this. Nobody does Olympiad math, then misreads a clock half the time.", None, 0.15, {}),
     ("a5", "That's why calling it A.G.I. is so hard.", "That’s why calling it AGI is so hard.", 0.3, {}),
     # ---- levels
     ("l1", "So think in levels.", None, 0.1, {}),
     ("l2", "Narrow A.I.? Yes. General-purpose A.I.? Yes.", "Narrow AI? Yes. General-purpose AI? Yes.", 0.1, {}),
     ("l3", "Human-level A.G.I.? Disputed. Autonomous A.G.I.? Not shown.", "Human-level AGI? Disputed. Autonomous AGI? Not shown.", 0.1, {}),
-    ("l4", "Conscious A.I.? No evidence. Superintelligence? No.", "Conscious AI? No evidence. Superintelligence? No.", 0.35, {}),
+    ("l4", "Superintelligence? No. And conscious A.I. is a separate question. No evidence.",
+     "Superintelligence? No. And conscious AI is a separate question: no evidence.", 0.35, {}),
     # ---- have we already built it?
     ("g1", "But wait. In February twenty twenty-six, four researchers argued in Nature that human-level A.I. is already here.",
      "But wait. In February 2026, four researchers argued in Nature that human-level AI is already here.", 0.15, {}),
