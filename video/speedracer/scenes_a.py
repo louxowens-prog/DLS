@@ -211,25 +211,25 @@ def s_chess(arr, t, d, T):
         off = (T * 900) % 300
         for i in range(-1, 6):
             x = i * 300 - off
-            I.chess_king(c, x, 1030, 2.1) if i % 2 else I.chess_knight(c, x, 1030, 2.1)
-    sr.streak(arr, 22, 700, 1150)
+            I.chess_king(c, x, 1000, 2.1) if i % 2 else I.chess_knight(c, x, 1000, 2.1)
+    sr.streak(arr, 22, 680, 1120)
     with s as c:
         for i in range(12):
             for j in range(3):
                 x = i * 100 - (T * 1800) % 200
-                c.drawRect(skia.Rect.MakeXYWH(x, 1180 + j * 50, 100, 50), paint(WHITE if (i + j) % 2 else INK))
-        cast.car_side(c, 480 + 200 * ease(ramp(T, S("d2"), W("d2", "Done"))), 1330, 0.95, T, speed=2, flames=True, **AI_CAR)
-    track.near_wall(arr, T, 1340, speed=1.0)
+                c.drawRect(skia.Rect.MakeXYWH(x, 1130 + j * 50, 100, 50), paint(WHITE if (i + j) % 2 else INK))
+        cast.car_side(c, 480 + 200 * ease(ramp(T, S("d2"), W("d2", "Done"))), 1280, 0.95, T, speed=2, flames=True, **AI_CAR)
+    track.near_wall(arr, T, 1290, speed=1.0)
     with s as c:
         sr.race_text(c, "CHESS", CX, 400, 130, fill=WHITE)
         sr.plain(c, "Finish line: beat the world champion", CX, 480, 42, color=WHITE, fname="rubik-800")
         k = pop(T, W("d2", "Nineteen") - 0.05, 0.25)
         if k:
             sr.race_text(c, "1997", 300, 900, 150, fill=LEMON, scale=k)
-        sr.badge(c, "DONE!", 780, 700, T, W("d2", "Done"), color=sr.LIME, size=80, rot=-7)
+        sr.badge(c, "DONE!", 790, 840, T, W("d2", "Done"), color=sr.LIME, size=90, rot=-7)
         if T > W("d2", "Done"):
-            sr.flare(c, 780, 660, 1.0, T, tint=LEMON)
-        sr.lower_third(c, T, S("d2") + 0.2, E("d2") + 0.2, "DEEP BLUE BEATS KASPAROV", "IBM, May 1997", color=sr.BLUE, y=600)
+            sr.flare(c, 790, 800, 1.0, T, tint=LEMON)
+        sr.lower_third(c, T, S("d2") + 0.2, W("d2", "Done") + 0.1, "DEEP BLUE BEATS KASPAROV", "IBM, May 1997", color=sr.BLUE, y=600)
 
 
 def s_imagenet(arr, t, d, T):
