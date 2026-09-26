@@ -31,7 +31,7 @@ INSERTS = [
     (Wd("a4", "then"), Wd("a4", "then") + 0.75, D.insert_face("jag", "swirl", "?!", Wd("a4", "then"))),
     (S("g1"), S("g1") + 1.2, D.insert_face("jag", "burst", "WAIT!", S("g1"))),
     (S("c3j") - 0.05, E("c3j") + 0.12, D.insert_talk("c3j")),
-    (Wd("m5", "touched") - 0.1, Wd("m5", "touched") + 0.75, D.insert_face("human", (255, 150, 120), "OW!", Wd("m5", "touched") - 0.1)),
+    (Wd("m5", "touched") - 0.1, Wd("m5", "touched") + 0.75, D.insert_face("human", (255, 150, 120), "OW!", Wd("m5", "touched") - 0.1, mouth="ow")),
     (S("m6"), S("m6") + 0.8, D.insert_face("human", (255, 214, 60), "HMM...", S("m6"), mouth="flat")),
 ]
 # Mind Game switches drawing method from scene to scene; every shot gets its own
@@ -73,7 +73,7 @@ def balanced(s, f, maxw):
 
 def draw_caption(arr, T):
     s = next((c[2] for c in CAPS if c[0] <= T < c[1]), None)
-    if not s or T >= C["end_card"]:
+    if not s or T >= C["end_card"] or C["finale"] <= T < TL.s("f1") - 0.1:
         return
     f = mg.font("rubik-900", 60)
     sp = f.measureText(" ") * GAP

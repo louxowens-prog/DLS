@@ -13,7 +13,7 @@ import photoface as PF
 from mg import INK, WHITE
 
 EYE_OPEN = {"normal": 1.0, "wide": 1.2, "closed": 0.0}
-MOUTH = {"smile": (0.0, 0.6), "open": (0.8, 0.0), "o": (0.55, -0.2), "frown": (0.0, -0.7), "flat": (0.0, 0.0)}
+MOUTH = {"smile": (0.0, 0.6), "open": (0.8, 0.0), "ow": (0.9, -0.9), "o": (0.55, -0.2), "frown": (0.0, -0.7), "flat": (0.0, 0.0)}
 
 
 def photo_features(c, T, cx, ey, my, R, eyes, gaze, mouth, talk, seed, ew=0.5, sep=0.33, iris=(96, 120, 70)):

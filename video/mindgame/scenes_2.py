@@ -30,8 +30,10 @@ def s_nature(arr, t, d, T):
     s = mg.surf(arr)
     with s as c:
         c.save()
+        z = 1.0 + 0.1 * ease(t / max(0.1, d))
         c.translate(CX, 900)
         c.rotate(-3 + 1.5 * math.sin(T))
+        c.scale(z, z)
         c.translate(-CX, -900)
         page = mg.rect_pts(90, 360, 900, 940)
         mg.fill(c, page, T, (250, 248, 240), 300, off=(12, 10))
@@ -49,6 +51,8 @@ def s_nature(arr, t, d, T):
                 y = 820 + i * 32
                 mg.stroke(c, [(col_x, y), (col_x + 380 - (i % 3) * 40, y)], T, 310 + i + col_x, width=4, color=(120, 120, 120))
         for i in range(4):
+            if mg.pop(T, Wd("g1", "four") + 0.12 * i, 0.2) <= 0:
+                continue
             hx = 220 + i * 210
             head = mg.circle_pts(hx, 1140, 50, 24)
             mg.fill(c, head, T, [(245, 205, 170), (210, 160, 120), (240, 190, 150), (180, 130, 100)][i], 320 + i, off=(3, 3))
@@ -115,7 +119,7 @@ def s_bars(arr, T):
                                                           ("GPT-5", 58, "GPT-5", "fifty-eight", mg.ORANGE))):
             y = 640 + i * 230
             t0 = Wd("g2", key)
-            g = ease(ramp(T, t0, Wd("g2", num) + 0.15))
+            g = ease(ramp(T, t0 - 0.05, t0 + 0.6))
             track = mg.rect_pts(120, y, 840, 120)
             mg.fill(c, track, T, WHITE, 341 + i, off=(6, 4))
             mg.stroke(c, track, T, 343 + i, width=8, closed=True)
@@ -192,7 +196,18 @@ def s_notif(arr, t, d, T):
     mg.paper(arr, (255, 150, 200), 12)
     s = mg.surf(arr)
     kx = ease(ramp(T, Wd("g4", "nine") + 0.4, Wd("g4", "nine") + 0.7))
+    kn0 = ramp(T, C["notif"] - 0.1, C["notif"] + 0.6)
     with s as c:
+        # Jag waits for the big announcement
+        CH.jag(c, 150, 1560, T, s=1.05, eyes="wide" if kn0 > 0 else "normal", gaze=(1, -0.4),
+               mouth="frown" if kx > 0 else ("open" if kn0 > 0 else "flat"), arms=(-10, -60), seed=379, tilt=10)
+        if 0 < kn0 < 1:                                                # the phone buzzes
+            bx, by = mg.shake(T, 6, 377)
+            c.translate(bx, by)
+            for side in (-1, 1):
+                for j in range(3):
+                    x0 = CX + side * (300 + 22 * j)
+                    mg.stroke(c, [(x0, 700 + 60 * j), (x0 + side * 30, 680 + 60 * j)], T, 378 + j, width=6)
         ph = mg.rect_pts(270, 380, 540, 900)
         mg.fill(c, ph, T, (30, 30, 40), 380, off=(10, 8))
         mg.stroke(c, ph, T, 381, width=12, closed=True)
@@ -223,19 +238,22 @@ LEFT = [("LONG-TERM PLANS", 300, 0.97), ("MEMORY", 620, 1.0), ("ROBOTICS", 880, 
 HALFWAY = [("SCIENCE", 110, 0.69), ("COMPUTERS", 975, 0.7)]
 
 
-def mountains(c, T, level, peaks, seed=0, base=1450, top=470):
+def mountains(c, T, level, peaks, seed=0, base=1450, top=470, lift=0, labels=True, rocks=True):
     for i, (name, x, hgt) in enumerate(peaks):
         yt = base - (base - top) * hgt
         m = np.array([(x - 150, H + 60), (x - 150, base), (x - 60, yt + 90), (x - 25, yt + 20), (x, yt), (x + 30, yt + 40), (x + 80, yt + 70),
                       (x + 150, base), (x + 150, H + 60)])
-        mg.fill(c, m, T, [(150, 120, 90), (130, 110, 90), (170, 140, 100)][i % 3], seed + i, off=(5, 4),
-                shader=mg.crayon_shader((140, 110, 80), seed=40 + i % 3, density=0.95))
-        mg.stroke(c, m, T, seed + 20 + i, width=7)
+        if rocks:
+            mg.fill(c, m, T, [(150, 120, 90), (130, 110, 90), (170, 140, 100)][i % 3], seed + i, off=(5, 4),
+                    shader=mg.crayon_shader((140, 110, 80), seed=40 + i % 3, density=0.95))
+            mg.stroke(c, m, T, seed + 20 + i, width=7)
+        if not labels:
+            continue
         under = yt > level
         size = 34 if len(name) > 8 else 40
         tw = mg.text_w(name, size, "bangers-400")
         lx = min(max(x, tw / 2 + 64), W - tw / 2 - 64)
-        ly = yt - 24 - 46 * (i % 3)
+        ly = yt - 24 - 46 * (i % 3) - lift
         mg.stroke(c, [(x, yt - 6), (lx, ly + 8)], T, seed + 60 + i, width=3, color=INK, double=False)
         mg.letters(c, name, lx, ly, T, size=size, fname="bangers-400",
                    color=(170, 200, 240) if under else INK, outline=WHITE if not under else None, ow=6, seed=seed + 40 + i)
@@ -328,7 +346,7 @@ def s_montage(arr, t, d, T):
     s = mg.surf(arr)
     local = T - (times[i] - 0.05)
     partial = name in ("SCIENCE", "COMPUTERS")
-    lvl = 1700 - (880 if partial else 1250) * ease(ramp(local, 0.05, 0.45))
+    lvl = 1700 - (700 if partial else 1250) * ease(ramp(local, 0.05, 0.45))
     with s as c:
         dx, dy = mg.shake(T, 12, 600 + i)
         c.save()
@@ -347,9 +365,11 @@ def s_water2(arr, t, d, T):
     s = mg.surf(arr)
     lvl = 1450 - (1450 - 470) * 0.62
     with s as c:
-        mountains(c, T, lvl, HALFWAY, seed=640)
-        mountains(c, T, lvl, LEFT, seed=650)
+        mountains(c, T, lvl, HALFWAY, seed=640, labels=False)
+        mountains(c, T, lvl, LEFT, seed=650, labels=False)
         water(c, T, lvl, seed=680)
+        mountains(c, T, lvl, HALFWAY, seed=640, rocks=False)
+        mountains(c, T, lvl, LEFT, seed=650, rocks=False)
         raft = mg.rect_pts(330, lvl + 150, 420, 46)
         mg.fill(c, raft, T, (170, 120, 70), 690, off=(4, 3))
         mg.stroke(c, raft, T, 691, width=7, closed=True)
@@ -424,7 +444,6 @@ def s_c2(arr, t, d, T):
             mg.letters(c, big, 0, 0, T, size=84, fname="bangers-400", color=col, ow=8, seed=725 + i, spacing=3)
             mg.note(c, small, 0, 70, size=44, color=INK)
             c.restore()
-        mg.label(c, T, S("c2") + 0.2, ["HUBBLE DEEP FIELD · NASA"])
 
 
 def s_c3(arr, t, d, T):
@@ -485,7 +504,7 @@ def s_c5(arr, t, d, T):
     inds = ["recurrent processing", "global workspace", "higher-order theories", "predictive processing",
             "attention schema", "agency & embodiment"]
     with s as c:
-        mg.letters(c, "CONSCIOUSNESS CHECKLIST", CX, 450, T, size=70, fname="permanent-marker-400", color=CHALK, outline=None, seed=770, jig=1)
+        mg.letters(c, "CONSCIOUSNESS CHECKLIST", CX, 450, T, size=60, fname="permanent-marker-400", color=CHALK, outline=None, seed=770, jig=1)
         for i, name in enumerate(inds):
             y = 540 + i * 90
             k = ease(ramp(T, S("c5") + 0.15 * i, S("c5") + 0.15 * i + 0.2))

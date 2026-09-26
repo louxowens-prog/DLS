@@ -396,23 +396,32 @@ def s_levels(arr, t, d, T):
             mg.note(c, defi, p[0], p[1] + 36 * k, size=max(16, int(30 * k)), color=(30, 30, 50))
             if T >= st[i] - 0.02:
                 q, _ = cam.project((2.3, (i + 0.5) * RISE, -i * RUN + 0.02))
-                mg.stamp(c, verdict, q[0], q[1] + 18 * k, T, st[i], color=vcol, size=int(48 * k), rot=-6 + 4 * (i % 3))
+                mg.stamp(c, verdict, q[0], q[1] + 18 * k, T, st[i], color=vcol, size=int(48 * k), rot=-6 + 4 * (i % 3),
+                         bg=(255, 252, 240))
         # Jag climbs: a hop up one step at every verdict
         lvl = -1
-        for i, x in enumerate(st[:5]):
+        for i, x in enumerate(st[:2]):
             if T >= x - 0.25:
                 lvl = i
         hop = 0.0
-        for x in st[:5]:
+        for x in st[:2]:
             h = ramp(T, x - 0.25, x + 0.1)
             if 0 < h < 1:
                 hop = math.sin(h * math.pi)
-        yj = (lvl + 1) * RISE if lvl >= 0 else 0.0
-        zj = -(lvl + 0.55) * RUN if lvl >= 0 else 0.2
-        p, z = cam.project((-2.85, yj + 0.9 * hop, zj))
-        sj = 0.5 * 9.5 / z
+        h = ramp(T, st[2] - 0.3, st[2] + 0.35)            # a try at human-level... disputed, it slips back
+        if 0 < h < 1:
+            hop = 1.2 * math.sin(h * math.pi)
+        # Jag stands beside the staircase, level with the rung it has reached
+        i_at = max(0, lvl)
+        yj = i_at * RISE if lvl >= 0 else -0.05
+        zj = -i_at * RUN + 0.4
+        p, z = cam.project((-HALF + 0.4, yj + 0.75 * hop, zj))
+        sj = 0.26 * 9.5 / z
         CH.jag(c, p[0], p[1], T, s=sj, eyes="wide" if hop > 0 else "normal", mouth="open" if hop > 0 else "smile",
-               arms=(-150, 150) if hop > 0 else (-40, 60), seed=265, squash=-0.15 * hop, bob=hop == 0)
+               arms=(-150, 150) if hop > 0 else (-40, 60), seed=265, squash=-0.15 * hop, bob=hop == 0, gaze=(0.3, -1))
+        if T > st[2] + 0.35:
+            mg.letters(c, "?", p[0] + 60 * sj / 0.4, p[1] - 330 * sj, T, size=90 * sj / 0.4, fname="permanent-marker-400",
+                       color=mg.ORANGE, ow=6, seed=266)
         # consciousness: not a rung at all
         if sep > 0:
             c.save()
@@ -431,4 +440,4 @@ def s_levels(arr, t, d, T):
             mg.letters(c, "CONSCIOUS AI?", 0, 5, T, size=62, fname="bangers-400", color=mg.PURPLE, ow=6, seed=272)
             c.restore()
             if T >= st[5] - 0.02:
-                mg.stamp(c, "NO EVIDENCE", 800, 575, T, st[5], color=mg.PURPLE, size=56, rot=5)
+                mg.stamp(c, "NO EVIDENCE", 800, 575, T, st[5], color=mg.PURPLE, size=56, rot=5, bg=(255, 252, 240))

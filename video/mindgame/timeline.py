@@ -10,8 +10,8 @@ VOICE = "af_heart"
 SPEED = 1.2
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-PRE = {"h1": 0.35, "a1": 0.55, "l1": 0.15, "g1": 0.55, "g6": 0.05, "c1": 0.95, "m0": 0.45, "f1": 4.6, "f2": 0.65}
-TAIL = 4.9
+PRE = {"h1": 0.35, "a1": 0.55, "l1": 0.15, "g1": 1.3, "g6": 0.05, "c1": 0.95, "m0": 1.2, "f1": 4.6, "f2": 0.65}
+TAIL = 3.2
 
 
 class Timeline:

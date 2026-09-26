@@ -56,7 +56,7 @@ def s_m1(arr, t, d, T):
         # thought bubbles: memories vs blank
         mg.stroke(c, mg.circle_pts(290, 690, 170, 40, rx=190, ry=150), T, 852, width=8, closed=True)
         import scenes_2 as B
-        mg.photo_scrap(c, B.earth_scrap(130, 0.3), 230, 660, mg.rect_pts(170, 605, 120, 110), T, seed=853, border=4)
+        cup_scrap(c, T, 230, 665, 100, seed=853, rot=-8)
         mg.photo_scrap(c, B.earth_scrap(130, 2.4), 355, 690, mg.rect_pts(295, 635, 120, 110), T, seed=854, border=4)
         mg.note(c, "yesterday", 290, 790, size=40)
         mg.stroke(c, mg.circle_pts(790, 690, 170, 40, rx=190, ry=150), T, 855, width=8, closed=True)
@@ -225,7 +225,7 @@ def s_horizon(arr, T):
         mg.note(c, "2019", ox + 30, y0 + 44, size=34)
         mg.note(c, "2026", x1, y0 + 44, size=34)
         k = ease(ramp(T, Wd("m4", "length") - 0.1, Wd("m4", "months")))
-        l0, l1 = math.log10(2), math.log10(3 * 3600)
+        l0, l1 = math.log10(2), math.log10(14 * 3600)
         pts = [(ox + 30 + (x1 - ox - 30) * u * k, Y(l0 + (l1 - l0) * u * k)) for u in np.linspace(0, 1, 24)]
         mg.stroke(c, pts, T, 940, width=11, color=mg.ORANGE)
         if k > 0.02:
@@ -233,9 +233,9 @@ def s_horizon(arr, T):
         kd = mg.pop(T, Wd("m4", "doubles") - 0.1, 0.25)
         if kd > 0:
             c.save()
-            c.translate(560, 1000)
-            c.rotate(-27)
-            mg.note(c, "x2 every ~7 months", 0, 0, size=42 * kd, color=mg.ORANGE)
+            c.translate(560, 990)
+            c.rotate(-33)
+            mg.note(c, "x2 every 4-7 months", 0, 0, size=42 * kd, color=mg.ORANGE)
             c.restore()
         # the goal: ten years, way up the scale
         mg.stroke(c, [(x1 - 40, Y(8.5)), (x1 + 40, Y(8.5))], T, 941, width=8, color=mg.RED)
@@ -263,7 +263,11 @@ def s_m5(arr, t, d, T):
             x = 200 + k * 48
             h = 90 + 50 * rng.random()
             fl = np.array([(x - 22, 980), (x, 980 - h), (x + 22, 980)])
-            mg.fill(c, fl, T, mg.PSY[(k + mg.step(T)) % 4], 932 + k, off=(0, 0))
+            mg.fill(c, fl, T, [mg.RED, mg.ORANGE, mg.YELLOW][(k + mg.step(T)) % 3], 932 + k, off=(0, 0))
+        for k in range(4):
+            c.drawCircle(200 + k * 95, 1180, 18, mg.paint(WHITE))
+            mg.stroke(c, mg.circle_pts(200 + k * 95, 1180, 18, 12), T, 960 + k, width=4, closed=True)
+        mg.stroke(c, [(150, 985), (530, 985)], T, 965, width=10, color=(50, 50, 55))
         kt = ease(ramp(T, Wd("m5", "touched") - 0.2, Wd("m5", "touched")))
         CH.human(c, 520, 1360, T, s=0.6, mouth="open" if kt > 0.5 else "smile", eyes="wide" if kt > 0.5 else "normal",
                  seed=940, arms=(-40, -120 + 60 * kt))
@@ -441,7 +445,7 @@ def tunnel(arr, T, u):
             z = -(3.0 + i * 1.9)
             side = (-1, 1)[i % 2]
             quad = [(side * 2.2, -1.2, z - 0.8), (side * 2.2, -1.2, z + 0.8), (side * 2.2, 1.6, z + 0.8), (side * 2.2, 1.6, z - 0.8)]
-            if side > 0:
+            if side < 0:
                 quad = [quad[1], quad[0], quad[3], quad[2]]
             pr = [cam.project(p) for p in quad]
             if min(zz for _, zz in pr) < 0.3:
@@ -497,6 +501,15 @@ def s_finale(arr, t, d, T):
     fn, st = pool[order[blk % len(order)]]
     mg.set_style(["cel", "crayon", "pencil", "print"][blk % 4] if fn in FUTURES else st)
     fn(arr, T)
+    from PIL import Image
+    L0 = edges[-1]
+    u = (fr - L0 + (tt * 24 - fr)) / 6.0
+    z = 1.0 + 0.1 * min(1.0, u) + 0.03 * (blk % 2)
+    jx, jy = mg.shake(T, 8, blk)
+    w_, h_ = W / z, H / z
+    x0 = min(max(0.0, (W - w_) / 2 + jx), W - w_)
+    y0 = min(max(0.0, 880 - 880 / z + jy), H - h_)
+    arr[..., :3] = np.asarray(Image.fromarray(arr[..., :3]).resize((W, H), Image.BILINEAR, box=(x0, y0, x0 + w_, y0 + h_)))
     if blk % 3 == 2 and fn not in FUTURES:
         mg.fisheye(arr, 0.6)
     s = mg.surf(arr)
@@ -514,7 +527,7 @@ def s_final(arr, t, d, T):
     import scenes_2 as B
     with s as c:
         c.drawCircle(CX, 640, 150, mg.paint((255, 240, 200)))
-        B.mountains(c, T, lvl, B.LEFT, seed=970)
+        B.mountains(c, T, lvl, B.LEFT, seed=970, lift=140)
         B.water(c, T, lvl, seed=980, alpha=1.0)
         top = 1450 - (1450 - 470) * 1.0
         CH.human(c, 575, top + 8, T, s=0.34, mouth="smile", seed=990, bob=False)
@@ -589,6 +602,6 @@ def insert_talk(key):
                 if a <= T < b:
                     ph = (T - a) / max(0.05, b - a)
                     o = 0.25 + 0.7 * math.sin(ph * math.pi) * (0.7 + 0.3 * ((mg.step(T) % 2)))
-            CH.jag(c, CX, 1990, T, s=3.1, eyes="normal", gaze=(0, 0), mouth="flat", talk=o, arms=(-20, 20), seed=906, bob=False)
+            CH.jag(c, CX, 1990, T, s=3.1, eyes="wide", gaze=(0, 0), mouth="frown", talk=o, arms=(-20, 20), seed=906, bob=False)
     shot.__name__ = "insert_talk"
     return shot

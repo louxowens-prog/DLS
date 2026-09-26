@@ -528,7 +528,7 @@ def note(c, s, x, y, size=34, color=INK, fname="caveat-brush-400", a=1.0, align=
     return w
 
 
-def stamp(c, s, x, y, T, t0, color=RED, size=84, rot=-8.0, a=1.0, seed=0):
+def stamp(c, s, x, y, T, t0, color=RED, size=84, rot=-8.0, a=1.0, seed=0, bg=None):
     """A rubber stamp slammed onto the page."""
     k = pop(T, t0, 0.22)
     if k <= 0:
@@ -541,6 +541,8 @@ def stamp(c, s, x, y, T, t0, color=RED, size=84, rot=-8.0, a=1.0, seed=0):
     c.scale(k, k)
     pad = 22
     r = skia.Rect.MakeXYWH(-w / 2 - pad, -size * 0.95, w + 2 * pad, size * 1.25)
+    if bg is not None:
+        c.drawRoundRect(r, 14, 14, paint(bg, 0.95 * a))
     c.drawRoundRect(r, 14, 14, paint(color, 0.95 * a, stroke=8))
     c.drawString(s, -w / 2, 0, f, paint(color, a))
     c.restore()

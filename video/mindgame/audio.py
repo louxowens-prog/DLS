@@ -46,8 +46,8 @@ def energy_curve():
         (C["wait"] + 0.5, 0.38), (TL.s("g4"), 0.25), (C["water"], 0.45), (TL.s("g6"), 0.7), (TL.e("g6"), 0.8),
         (TL.s("g7"), 0.5), (C["silence"] - 1.5, 0.35), (C["silence"] - 0.01, 0.65), (C["silence"], 0.0),
         (TL.s("c2") - 0.2, 0.0), (TL.s("c2"), 0.14), (TL.s("c3") - 0.35, 0.16), (TL.s("c3") - 0.3, 0.0),
-        (TL.s("c4") - 0.1, 0.0), (TL.s("c4"), 0.12), (TL.s("c5"), 0.16), (C["missing"] - 1.2, 0.3), (C["missing"] - 0.5, 0.45),
-        (C["missing"] - 0.45, 0.0), (C["missing"] - 0.01, 0.0), (C["missing"], 0.75), (TL.s("m1"), 0.4), (TL.s("m6"), 0.45),
+        (TL.s("c4") - 0.1, 0.0), (TL.s("c4"), 0.12), (TL.s("c5"), 0.16), (C["missing"] - 2.2, 0.3), (C["missing"] - 1.05, 0.5),
+        (C["missing"] - 1.0, 0.0), (C["missing"] - 0.01, 0.0), (C["missing"], 0.75), (TL.s("m1"), 0.4), (TL.s("m6"), 0.45),
         (TL.e("m6"), 0.6), (C["finale"], 0.85), (TL.s("f1") - 0.5, 1.0), (C["final_silence"] - 0.01, 1.0),
         (C["final_silence"], 0.0), (C["end"], 0.0),
     ]
@@ -58,7 +58,7 @@ def energy_curve():
 def dead_stops():
     """Intervals where the whole band is cut dead."""
     return [(C["wait_stop"], C["wait"] + 0.6), (C["silence"], TL.s("c2") - 0.15), (TL.s("c3") - 0.3, TL.s("c4") - 0.1),
-            (C["missing"] - 0.45, C["missing"] - 0.01), (C["final_silence"], C["end_card"] - 0.01)]
+            (C["missing"] - 1.0, C["missing"] - 0.01), (C["final_silence"], C["end_card"] - 0.01)]
 
 
 def build():
@@ -130,7 +130,13 @@ def build():
         gap = max(0.045, gap * 0.85)
     fx.add(J.crash(seed=141), C["end_card"], 0.6)
     fx.add(J.kick(), C["end_card"], 1.0)
-    band.add(J.cluster_stab(45, 9, 2.6, seed=142), C["end_card"], 0.4)
+    band.add(J.cluster_stab(45, 9, 1.2, seed=142), C["end_card"], 0.3)
+    # the button: one hard hit to end on
+    b = C["end"] - 0.55
+    fx.add(J.kick(seed=144), b, 1.0)
+    fx.add(J.snare(seed=145, tight=1.4), b, 0.8)
+    fx.add(J.noise_hit(0.3, 300, 9000, seed=146), b, 0.5)
+    band.add(J.cluster_stab(52, 9, 0.5, seed=147), b, 0.35)
 
     # ---- mix
     bandr = S.reverb(band.x, wet=0.14, rt60=1.1)[:, :N]
@@ -151,6 +157,7 @@ def build():
         vo[i:j] += up[: j - i]
     vo = S._hp(vo, 70)
     vo[int(C["silence"] * SR): int((C["missing"] - 0.3) * SR)] *= db(-2)
+    vo[int((TL.s("g6") - 0.05) * SR): int((TL.e("g6") + 0.05) * SR)] *= db(3)       # the spoken list rides over the montage
     vo_st = S.reverb(vo, wet=0.06, rt60=0.7)[:, :N]
 
     env = np.convolve(np.abs(vo), np.ones(SR // 8) / (SR // 8), mode="same")
@@ -170,6 +177,7 @@ def build():
         k = np.linspace(0, 1, i1 - i0)
         swell[i0:i1] *= 1 + (db(4) - 1) * k * (1 - tsm[i0:i1]) + (db(1.5) - 1) * k * tsm[i0:i1]
     swell[int(C["finale"] * SR): int((TL.s("f1") - 0.1) * SR)] *= db(1.5)
+    swell[int((TL.s("g6") - 0.2) * SR): int((TL.e("g6") + 0.3) * SR)] *= db(1.5)
 
     gate = np.ones(N)
     for a_, b_ in dead_stops():
@@ -196,7 +204,7 @@ def build():
 
     mix = (bandr + fxr) * duck * swell * g_mu * gate + pianos_r * keep * g_mu * 1.4 + vo_st * g_vo
     mix = loudness(mix, -14.0)
-    tail = int(1.0 * SR)
+    tail = int(0.25 * SR)
     mix[:, -tail:] *= np.linspace(1, 0, tail) ** 2
     return mix, vo
 
