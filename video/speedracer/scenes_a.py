@@ -338,13 +338,26 @@ def s_frameworks(arr, t, d, T):
         sr.plain(c, "A DEFINITION OF AGI", CX, 520, 56, color=VIOLET, fname="bungee-400")
         sr.plain(c, "Hendrycks et al., 2025", CX, 580, 36, color=INK, fname="rubik-700")
         abil = ["KNOWLEDGE", "READING", "MATH", "REASONING", "WORKING MEM", "LONG-TERM MEM", "RECALL", "VISION", "HEARING", "SPEED"]
+        # flow the chips into centred rows so long labels never collide
+        f = sr.font("bungee-400", 22)
+        rows, cur = [], []
         for j, lab in enumerate(abil):
+            w = f.measureText(lab) + 20
+            if cur and sum(ww for _, _, ww in cur) + 12 * len(cur) + w > 820:
+                rows.append(cur)
+                cur = []
+            cur.append((j, lab, w))
+        rows.append(cur)
+        place = []
+        for r, row in enumerate(rows):
+            xx = CX - (sum(ww for _, _, ww in row) + 12 * (len(row) - 1)) / 2
+            for j, lab, w in row:
+                place.append((j, lab, w, xx + w / 2, 650 + r * 52))
+                xx += w + 12
+        for j, lab, w, cx_, cy_ in place:
             kj = pop(T, S("d7") + 0.12 * j, 0.2)
             if not kj:
                 continue
-            cx_, cy_ = 190 + (j % 5) * 175, 650 + (j // 5) * 56
-            f = sr.font("bungee-400", 22)
-            w = f.measureText(lab) + 20
             c.save()
             c.translate(cx_, cy_)
             c.scale(kj, kj)
@@ -353,7 +366,7 @@ def s_frameworks(arr, t, d, T):
             c.restore()
         # the scale: 100% = a well-educated adult; the real scores fill in as they're spoken
         x0, x1 = 170, 910
-        for j, (name, val, word, colr) in enumerate((("GPT-4", 0.27, "twenty-seven", sr.BLUE), ("GPT-5", 0.58, "fifty-eight", PINK))):
+        for j, (name, val, word, colr) in enumerate((("GPT-4", 0.27, "twenty-seven", sr.BLUE), ("GPT-5", 0.57, "fifty-seven", PINK))):
             y = 820 + j * 120
             sr.plain(c, name, x0, y - 12, 34, color=INK, fname="bungee-400", align="left")
             c.drawRoundRect(skia.Rect.MakeXYWH(x0, y, x1 - x0, 56), 28, 28, paint((230, 225, 245)))
@@ -390,27 +403,27 @@ def s_arc(arr, t, d, T):
                 c.drawRoundRect(skia.Rect.MakeXYWH(gx + i * cs + 3, gy + j * cs + 3, cs - 6, cs - 6), 8, 8, paint(colr))
         c.drawRoundRect(skia.Rect.MakeXYWH(gx + ax * cs, gy + ay * cs, cs, cs), 10, 10, paint(WHITE, stroke=8))
         c.drawRoundRect(skia.Rect.MakeXYWH(gx + ax * cs, gy + ay * cs, cs, cs), 10, 10, paint(WHITE, 0.4, blur=10))
-        kp = ease(ramp(T, W("d8", "People") - 0.1, W("d8", "People") + 0.3))
+        kp = ease(ramp(T, W("d8", "Human") - 0.1, W("d8", "Human") + 0.3))
         if kp < 0.5:
             sr.badge(c, "NO INSTRUCTIONS", 300, 1180, T, W("d8", "instructions") - 0.1, color=RED, size=44, rot=-5)
             sr.badge(c, "NO STATED GOALS", 780, 1180, T, W("d8", "stated") - 0.1, color=RED, size=44, rot=6)
-        if T > W("d8", "People") - 0.1:
+        if T > W("d8", "Human") - 0.1:
             k = kp
             ov = skia.Path()
-            ov.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(60, 500, sr.W - 120, 830), 30, 30))
+            ov.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(60, 485, sr.W - 120, 785), 30, 30))
             c.drawPath(ov, paint((24, 16, 60), k))
             c.drawPath(ov, paint(CYAN, k, stroke=6))
-            for side, (lab, val, colr, t0) in enumerate((("PEOPLE", 1.0, LIME, W("d8", "People")), ("TOP AI*", 0.006, RED, W("d8", "top")))):
+            for side, (lab, val, colr, t0) in enumerate((("HUMAN TESTERS", 1.0, LIME, W("d8", "Human")), ("TOP AI*", 0.006, RED, W("d8", "top")))):
                 kk = ease(ramp(T, t0, t0 + 0.6))
                 x = 300 + side * 480
-                sr.plain(c, lab, x, 620, 56, color=WHITE, fname="bungee-400")
-                c.drawRoundRect(skia.Rect.MakeXYWH(x - 70, 700, 140, 480), 20, 20, paint((60, 50, 90)))
-                hh = 480 * val * kk
+                sr.plain(c, lab, x, 595, 56 if len(lab) < 9 else 42, color=WHITE, fname="bungee-400")
+                c.drawRoundRect(skia.Rect.MakeXYWH(x - 70, 670, 140, 470), 20, 20, paint((60, 50, 90)))
+                hh = 470 * val * kk
                 if hh > 2:
                     bar = skia.Path()
-                    bar.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(x - 70, 1180 - hh, 140, hh), 20, 20))
+                    bar.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(x - 70, 1140 - hh, 140, hh), 20, 20))
                     sr.glossy(c, bar, colr, lw=4)
                 if kk > 0.5:
-                    sr.plain(c, "SOLVE ALL" if side == 0 else "UNDER 1%", x, 1250, 50, color=colr, fname="bungee-400")
+                    sr.plain(c, "SOLVED ALL" if side == 0 else "UNDER 1%", x, 1205, 50, color=colr, fname="bungee-400")
             if T > W("d8", "top") + 0.3:
-                sr.plain(c, "* frontier models, at launch", 780, 1295, 30, color=WHITE, fname="rubik-700")
+                sr.plain(c, "* frontier models, at launch", 780, 1248, 30, color=WHITE, fname="rubik-700")
