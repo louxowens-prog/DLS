@@ -43,7 +43,7 @@ def _clock_panel(st, P, T):
         c.drawRoundRect(skia.Rect.MakeLTRB(460, y, 960, y + 84), 20, 20, paint(INK, stroke=7))
         if k > 0.5:
             sv.label(c, f"{int(round(val))}%", 460 + 500 * val / 100 * k - 66, y + 60, 50, fname="bangers-400", color=INK, pen=P)
-    sv.label(c, "ClockBench · Stanford AI Index 2026", DW / 2, 690, 40, fname="comic-neue-700", color=WHITE, tag="credit", pen=P)
+    sv.label(c, "ClockBench · Stanford AI Index 2026", DW / 2, 655, 40, fname="comic-neue-700", color=WHITE, tag="credit", pen=P)
 
 
 def s_jagged(T, t, d):

@@ -435,7 +435,7 @@ def s_routes(T, t, d):
     pin(c, PIN_X, road_y(PIN_X) - 50, 1.0)
     P.restore()
     st.flush()
-    if T >= C["asi_road"] - 0.1 and T < S("x2") + 0.2:
+    if T >= C["asi_road"] - 0.1 and T < S("x2") - 0.1:
         sv.sfx(c, "WHOA!", 300, 360, 120, k=pop(T, C["asi_road"] - 0.1), rot=-8, fill=WHITE, fill2=CYAN, dots=MAG)
     # the four routes, pasted over the wall as a comic page
     tp = S("x2") - 0.1
