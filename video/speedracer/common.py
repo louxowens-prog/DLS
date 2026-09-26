@@ -5,7 +5,7 @@ from timeline import TL
 from voice import SR as VSR
 
 S, E, W = TL.s, TL.e, TL.word
-FPS = 24
+FPS = 30
 _env = {}
 
 

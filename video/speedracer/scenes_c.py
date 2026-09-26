@@ -28,7 +28,7 @@ def s_hood(arr, t, d, T):
         # hood lid swinging up
         c.save()
         c.translate(CX + 260, 1150)
-        c.rotate(-70 * k)
+        c.rotate(70 * k)                                                  # swings UP, clear of the captions
         hood = skia.Path()
         hood.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(-360, -30, 380, 40), 16, 16))
         sr.glossy(c, hood, CYAN, lw=5)
@@ -117,7 +117,7 @@ def s_memory(arr, t, d, T):
     s = sr.surf(arr)
     with s as c:
         sr.sparkles(c, T, n=10, seed=31, y0=250, y1=480)
-        cast.car_side(c, CX, 1300, 0.95, T, speed=0.1, **AI_CAR)
+        cast.car_side(c, CX, 1270, 0.95, T, speed=0.1, **AI_CAR)
         sr.race_text(c, "3 KINDS OF MEMORY", CX, 380, 84, fill=LEMON)
         for k, (name, desc, (word, nth), colr) in enumerate(MEMS):
             t0 = W("u3", word, nth)
@@ -138,8 +138,9 @@ def s_memory(arr, t, d, T):
                 I.book(c, 0, -60, 0.7, color=sr.BLUE, title="FACTS")
             else:
                 I.chip(c, 0, -60, 0.9, "HOW-TO", color=LEMON)
-            sr.plain(c, name, 0, 120, 40, color=WHITE, fname="bungee-400")
-            sr.plain(c, desc, 0, 180, 34, color=INK if lit > 0.5 else (200, 190, 230), fname="rubik-800")
+            sr.plain(c, name, 0, 120, min(40, 40 * 290 / sr.font("bungee-400", 40).measureText(name)), color=WHITE, fname="bungee-400")
+            sr.plain(c, desc, 0, 180, min(34, 34 * 280 / sr.font("rubik-800", 34).measureText(desc)),
+                     color=INK if lit > 0.5 else (200, 190, 230), fname="rubik-800")
             c.restore()
             if lit > 0:
                 c.drawPath(sr.path(sr.bez((x, 940), (x, 1060), (CX - 40 + k * 40, 1150)), closed=False),
@@ -152,11 +153,11 @@ def s_h2h(arr, t, d, T):
     s = sr.surf(arr)
     kg = pop(T, S("v1") + 0.1, 0.3)
     with s as c:
-        track.road_side(c, T, 1180, 1330, speed=0.9)
-    track.near_wall(arr, T, 1330, speed=0.9)
+        track.road_side(c, T, 1110, 1260, speed=0.9)
+    track.near_wall(arr, T, 1260, speed=0.9)
     with s as c:
-        cast.car_side(c, 330, 1260, 0.7, T, speed=2, **MEM_CAR)
-        cast.car_side(c, 760, 1340, 0.75, T, speed=2, flames=True, **AI_CAR)
+        cast.car_side(c, 330, 1190, 0.7, T, speed=2, **MEM_CAR)
+        cast.car_side(c, 760, 1265, 0.75, T, speed=2, flames=True, **AI_CAR)
         if T < S("v2"):
             if kg:
                 sr.race_text(c, "GENERAL-", 780, 900, 84, fill=LEMON, scale=kg)
@@ -175,7 +176,8 @@ def s_h2h(arr, t, d, T):
                 card = skia.Path()
                 card.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(x, 640, 460, 300), 26, 26))
                 sr.glossy(c, card, sr.darker(colr, 0.55), rim=sr.lighter(colr, 0.6), lw=5)
-                sr.plain(c, name, x + 230, 710, 40, color=LEMON, fname="bungee-400")
+                c.drawRoundRect(skia.Rect.MakeXYWH(x + 30, 668, 400, 58), 16, 16, paint(INK, 0.85))
+                sr.plain(c, name, x + 230, 712, 38, color=LEMON, fname="bungee-400")
                 sr.plain(c, l1, x + 230, 800, 36, color=WHITE, fname="rubik-800")
                 sr.plain(c, l2, x + 230, 880, 50, color=WHITE, fname="bungee-400")
         # layered depth: the rival's face looms in the foreground
@@ -195,7 +197,7 @@ def s_newtrack(arr, t, d, T):
         track.road_front(c, ts, speed=1.6, curve=0.9 * math.sin(ts * 0.9))
         # the memorizer
         if T < cr:
-            cast.car_front(c, CX - 220 + 60 * math.sin(T * 4), 1260, 0.6, T, body=VIOLET, number="99", driver="memorizer")
+            cast.car_front(c, CX - 220 + 60 * math.sin(T * 4), 1200, 0.6, T, body=VIOLET, number="99", driver="memorizer")
             c.save()
             c.translate(250, 560)
             c.rotate(-6)
@@ -222,7 +224,7 @@ def s_newtrack(arr, t, d, T):
             sr.badge(c, "CRASH!", 290, 960, T, cr, color=RED, size=90, rot=-8)
         # the learner reads the road
         lx = CX + 220 + 120 * math.sin(ts * 0.9)
-        cast.car_front(c, lx, 1330, 0.75, T, **FRONT)
+        cast.car_front(c, lx, 1255, 0.75, T, **FRONT)
         if T > W("v3", "notices") - 0.1:
             c.save()
             c.translate(560, 1100)
@@ -263,12 +265,12 @@ def s_chess2(arr, t, d, T):
         sr.race_text(c, "MEMORIZER", 250, 420, 64, fill=WHITE)
         sr.race_text(c, "LEARNER", 830, 420, 64, fill=WHITE)
         I.book(c, 250, 700, 1.4, color=VIOLET, title="EVERY\nCHESS\nGAME")
-        hexes = [(250 + dx, 1040 + dy) for dx, dy in ((0, 0), (80, 46), (-80, 46), (0, 92), (80, -46), (-80, -46), (0, -92))]
+        hexes = [(250 + dx, 1070 + dy) for dx, dy in ((0, 0), (70, 40), (-70, 40), (0, 80), (70, -40), (-70, -40), (0, -80))]
         for k, (hx, hy) in enumerate(hexes):
-            pts = [(hx + 46 * math.cos(i / 6 * 2 * math.pi), hy + 46 * math.sin(i / 6 * 2 * math.pi)) for i in range(6)]
+            pts = [(hx + 40 * math.cos(i / 6 * 2 * math.pi), hy + 40 * math.sin(i / 6 * 2 * math.pi)) for i in range(6)]
             c.drawPath(sr.path(pts), paint(CANDY[k % len(CANDY)]))
             c.drawPath(sr.path(pts), paint(INK, stroke=5))
-        sr.plain(c, "a NEW game", 250, 925, 36, color=WHITE, fname="rubik-800")
+        sr.plain(c, "a NEW game", 250, 912, 36, color=WHITE, fname="rubik-800")
         cast.face(c, "memorizer", 150, 1215, 0.6, T, look=(0.6, -0.4), expr="grin")
         sr.race_text(c, "?!", 400, 1150, 110, fill=LEMON)
         sr.badge(c, "NOT GENERAL", 260, 560, T, W("v4", "Not") - 0.05, color=RED, size=54, rot=-6)
@@ -295,10 +297,10 @@ def s_laps(arr, t, d, T):
     track.stadium(arr, T, speed=1.0, pal=2)
     s = sr.surf(arr)
     with s as c:
-        track.road_side(c, T, 1180, 1330, speed=1.0)
-    track.near_wall(arr, T, 1330, speed=1.0)
+        track.road_side(c, T, 1110, 1260, speed=1.0)
+    track.near_wall(arr, T, 1260, speed=1.0)
     with s as c:
-        cast.car_side(c, 420, 1330, 0.85, T, speed=2, flames=True, **AI_CAR)
+        cast.car_side(c, 420, 1262, 0.85, T, speed=2, flames=True, **AI_CAR)
         done = [lab for lab, w in LAPS if T >= W("w1", w) - 0.05]
         for k, lab in enumerate(done):
             y = 480 + k * 90
@@ -368,7 +370,7 @@ def s_final(arr, t, d, T):
             I.roller(c, 140 + 800 * kp, y + 45, 1.0)
             sr.race_text(c, "STEP 1:", CX, 420, 100, fill=WHITE)
             sr.race_text(c, "PAINT THE FINISH LINE", CX, 540, 70, fill=LEMON)
-            cast.car_front(c, CX, 1330, 0.6, T, **FRONT)
+            cast.car_front(c, CX, 1235, 0.6, T, **FRONT)
         else:
             u = T - tb
             for k in range(5):                                          # the road fans out into many tracks
@@ -385,8 +387,8 @@ def s_final(arr, t, d, T):
             sr.race_text(c, "RACE ANY TRACK", CX, 420, 96, fill=LEMON)
             for k in range(5):
                 I.firework(c, 200 + k * 180, 600 - 80 * (k % 2), 180, T, tb + 0.2 * k, color=CANDY[k])
-            z = 0.7 + 1.4 * ease(u / 1.2)
-            cast.car_front(c, CX, 1330 + 200 * (z - 0.7), z, T, **FRONT)
+            z = 0.7 + 0.75 * ease(u / 1.2)
+            cast.car_front(c, CX, 1225 + 50 * (z - 0.7), z, T, **FRONT)
             sr.speed_lines(c, CX, 900, T, n=60, color=WHITE, r0=380, seed=13)
             sr.flare(c, 820, 560, 1.1, T, tint=LEMON)
 
@@ -397,10 +399,17 @@ SOURCES = ["IBM Deep Blue vs Kasparov (1997)", "ImageNet: He et al., Microsoft (
 
 
 def s_end(arr, t, d, T):
-    sr.sky(arr, [(0, (20, 10, 50)), (1, (70, 30, 130))])
+    sr.sunburst(arr, T, cols=[(40, 18, 90), (22, 10, 55), (60, 25, 120)], cy=520, rays=26, spin=0.5)
     s = sr.surf(arr)
+    t0 = C["end_card"]
     with s as c:
-        sr.race_text(c, "THE FIRST STEP", CX, 520, 110, fill=LEMON)
+        sr.sparkles(c, T, n=18, seed=77, y0=240, y1=1500, a=0.7)
+        # a kart laps the card
+        u = ((T - t0) / 1.4) % 1.0
+        sr.hlines(c, T, 330, 420, n=8, a=0.4, seed=19)
+        cast.car_side(c, -220 + 1520 * u, 420, 0.55, T, speed=2, flames=True, **AI_CAR)
+        kt = 1 + 0.04 * math.sin((T - t0) * 6)
+        sr.race_text(c, "THE FIRST STEP", CX, 540, 110, fill=LEMON, scale=kt)
         sr.plain(c, "Define the finish line. Build a general learner.", CX, 610, 38, color=WHITE, fname="rubik-800")
         sr.plain(c, "SOURCES", CX, 760, 40, color=CYAN, fname="bungee-400")
         f = sr.font("rubik-500", 32)
@@ -409,3 +418,17 @@ def s_end(arr, t, d, T):
         f2 = sr.font("rubik-500", 27)
         for i, ln in enumerate(["A style homage to the Wachowskis' 2008 racing film", "All visuals, music and voices synthesized"]):
             c.drawString(ln, CX - f2.measureText(ln) / 2, 1180 + i * 40, f2, paint((170, 170, 190)))
+        # the question for the comments
+        kc = pop(T, t0 + 0.45, 0.3)
+        if kc:
+            pulse = 1 + 0.035 * math.sin((T - t0) * 9)
+            c.save()
+            c.translate(CX, 1370)
+            c.scale(kc * pulse, kc * pulse)
+            plate = skia.Path()
+            plate.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(-450, -110, 900, 215), 34, 34))
+            sr.glossy(c, plate, (150, 25, 110), top=(215, 60, 160), rim=LEMON, spec=0.12, lw=6)
+            sr.plain(c, "WHAT TRACK WOULD YOU", 0, -42, 46, color=WHITE, fname="bungee-400")
+            sr.plain(c, "TEST AN AI ON?", 0, 18, 46, color=LEMON, fname="bungee-400")
+            sr.plain(c, "Tell us in the comments", 0, 72, 32, color=WHITE, fname="rubik-800")
+            c.restore()

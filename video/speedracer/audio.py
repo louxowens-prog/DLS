@@ -62,6 +62,28 @@ def short(sig, dur):
     return out
 
 
+def stereo_crowd(dur, seed=0):
+    """A stadium on both sides: mostly independent roars in each ear, a little shared centre."""
+    l, r, m = B.crowd(dur, seed=seed), B.crowd(dur, seed=seed + 101), B.crowd(dur, seed=seed + 202)
+    return np.stack([0.8 * l + 0.45 * m, 0.8 * r + 0.45 * m]) * 0.9
+
+
+def widen(x, amt):
+    """Mid/side widener: the side is an all-pass-decorrelated copy of the mid, so the mono sum is untouched."""
+    mid = 0.5 * (x[0] + x[1])
+    side = 0.5 * (x[0] - x[1])
+    d = mid
+    for ms, g in ((3.1, 0.6), (4.7, -0.55), (7.9, 0.5), (11.3, -0.45)):
+        n = int(ms * SR / 1000)
+        b = np.zeros(n + 1)
+        a = np.zeros(n + 1)
+        b[0], b[n] = -g, 1.0
+        a[0], a[n] = 1.0, -g
+        d = signal.lfilter(b, a, d)
+    side = side + amt * S._hp(d, 180)                                     # keep the low end centred
+    return np.stack([mid + side, mid - side])
+
+
 def energy_curve():
     E = lambda k: TL.s(k)
     pts = [(0, 0.9), (1.0, 0.6), (C["go"] - 0.05, 0.75), (C["go"], 0.0), (C["go"] + 1.2, 0.0), (C["go"] + 1.22, 1.0), (E("h2"), 0.8), (E("d1"), 0.5),
@@ -147,7 +169,7 @@ def build():
     fx.add(J.kick(seed=3), 0.0, 1.0)
     for k, t in enumerate((0.9, 2.6)):
         fx.add(B.passby(1.3, seed=4 + k), t, 0.16)
-    crowd_bus.add(B.crowd(T, seed=4), 0.0, 1.0)
+    crowd_bus.add(stereo_crowd(T, seed=4), 0.0, 1.0)
     for k in range(8):                                                       # snare roll into the launch
         fx.add(J.snare(seed=200 + k, tight=0.6), C["go"] - 0.8 + k * 0.1, 0.07 + 0.03 * k)
     fx.add(B.chord_hit([58, 65, 70, 74, 77, 82], dur=0.9, seed=7), C["go"], 0.9)
@@ -165,11 +187,11 @@ def build():
     for i, (t, name, tr) in enumerate(EDIT[1:], 1):
         ch = chord_at(t)
         top = [m + 12 for m in ch[-4:]]
-        th = t - 0.3                                                          # the hit lands just before the next line
+        th = t                                                                # on the cut frame / the frame the wipe covers
         fx.add(B.chord_hit(top, dur=0.16, seed=300 + i, fall=3 if i % 5 == 0 else 0), th, 0.6)
         fx.add(J.kick(seed=i), th, 0.85)
         if tr.startswith("head") or tr == "iris":
-            fx.add(B.whoosh(WIPE, seed=i, up=i % 2 == 0), t - WIPE - 0.25, 0.55)
+            fx.add(B.whoosh(WIPE, seed=i, up=i % 2 == 0, rtl=tr.startswith("head")), t - WIPE / 2 - 0.06, 0.55)   # rides the face across
             fx.add(short(J.crash(seed=i), 0.3), th, 0.3)
         elif tr == "split":
             fx.add(J.snare(seed=i, tight=1.3), th, 0.7)
@@ -231,7 +253,7 @@ def build():
             (3.0, [74, 77, 81]), (3.5, [72, 76, 79]), (4.0, [70, 74, 77, 82])]
     for k, (beat, notes) in enumerate(riff):
         fx.add(B.chord_hit(notes, dur=0.3 if k < 7 else 0.9, seed=900 + k, doit=3 if k == 7 else 0), f0 + beat * B.BEAT * 1.0, 0.55 if f0 + beat * B.BEAT < TL.s("f1") - 0.1 else 0.14)
-    crowd_bus.add(B.crowd(4.0, seed=901), f0, 0.8)
+    crowd_bus.add(stereo_crowd(4.0, seed=901), f0, 0.8)
     fx.add(B.chord_hit([58, 65, 70, 74, 77, 82], dur=1.4, seed=910, doit=2), C["end_card"], 0.9)
     fx.add(J.crash(seed=911), C["end_card"], 0.7)
     fx.add(J.kick(seed=912), C["end_card"], 1.0)
@@ -297,7 +319,11 @@ def build():
         high = S._hp(x, 4000)
         mid = x - low - high
         return low * (1 - 0.5 * env) + mid * (1 - depth_mid * env) + high * (1 - 0.7 * env)
-    music = carve(bandr * swell * gate, 0.97) * db(-3.5) + carve(fxr * (0.7 + 0.3 * swell / db(7.0)), 0.9) * db(4.0)
+    def presence(x, gain_db):
+        """Give the horns their bite (2-5 kHz) only between lines, where nothing needs to be understood."""
+        return x + S._hp(S._lp(x, 5000), 2000) * (db(gain_db) - 1) * (1 - env)
+    music = carve(presence(widen(bandr, 0.7), 5.0) * swell * gate, 0.97) * db(-3.5) \
+        + carve(presence(widen(fxr, 0.45), 3.0) * (0.7 + 0.3 * swell / db(7.0)), 0.9) * db(4.0)
     mix = music * g_mu + crowd_bus.x * crowd_env * g_mu * 0.5 * duck + vo_st + an_st
     STEMS.update(band=music * g_mu, fx=np.zeros_like(music),
                  crowd=crowd_bus.x * crowd_env * g_mu * 0.5 * duck, vo=vo_st + an_st)

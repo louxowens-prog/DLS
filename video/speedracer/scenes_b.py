@@ -247,7 +247,7 @@ def s_skills(arr, t, d, T):
 
 def s_expedition(arr, t, d, T):
     """Next week, a new track: the same skills fly from the dinner panel to the expedition panel."""
-    sr.sky(arr, [(0, (120, 200, 255)), (0.6, (230, 245, 255)), (1, (255, 255, 255))])
+    sr.sky(arr, [(0, (120, 200, 255)), (0.4, (230, 245, 255)), (0.62, (255, 170, 225)), (0.8, (120, 60, 190)), (1, (40, 20, 90))])
     s = sr.surf(arr)
     with s as c:
         I.mountain(c, 280, 820, 1.2)
@@ -296,12 +296,12 @@ def s_transfer(arr, t, d, T):
         c.drawPath(canyon, paint(INK, stroke=5))
         sr.sparkles(c, T, n=6, seed=8, y0=1080, y1=1300)
         x = 150 + 800 * min(1.0, uu)
-        y = 1130 - 480 * math.sin(math.pi * min(1.0, uu))
+        y = 1130 - 330 * math.sin(math.pi * min(1.0, uu))                  # the arc stays under the title
         cast.car_side(c, x, y, 0.8, T, speed=2, flames=True, **AI_CAR)
         sr.plain(c, "DINNER", 220, 1000, 44, color=WHITE, fname="bungee-400")
         sr.plain(c, "EXPEDITION", 790, 1000, 44, color=WHITE, fname="bungee-400")
-        sr.race_text(c, "TRANSFER", CX, 460, 130, fill=LEMON)
-        sr.race_text(c, "= GENERALITY", CX, 590, 100, fill=CYAN)
+        sr.race_text(c, "TRANSFER", CX, 430, 130, fill=LEMON)
+        sr.race_text(c, "= GENERALITY", CX, 555, 100, fill=CYAN)
         if not slow:
             sr.hlines(c, T, 700, 1050, n=24, a=0.7, seed=5)
     if slow:

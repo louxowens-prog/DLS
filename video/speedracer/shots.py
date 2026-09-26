@@ -24,7 +24,7 @@ SHOT = {
     "chess2": Cc.s_chess2, "laps": Cc.s_laps, "joke": Cc.s_joke, "final": Cc.s_final, "end": Cc.s_end,
 }
 STARTS = [e[0] for e in EDIT]
-NOCAP_KEYS = {"d6", "t2"}
+NOCAP_KEYS = {"d6", "t2", "w2"}          # w2: the neon sign already shows the quote
 CAPS = [c for c in TL.captions() if c[3] not in NOCAP_KEYS]
 # the announcer's TV box for each of his lines: (x, y, w, h)
 PIP = {"a0": (600, 650, 420, 330), "a1": (40, 620, 440, 340), "a2": (600, 470, 440, 340)}
@@ -184,8 +184,17 @@ def draw_caption(arr, T):
     f = sr.font("rubik-900", 60)
     sp = f.measureText(" ") * GAP
     lines = balanced(s, f, 840)
+    # a soft dark backing, only as strong as the picture behind needs (white rays, snow, a white table)
+    y0 = sr.CAP_Y - (len(lines) - 1) * 10 - 58
+    y1 = y0 + 72 * len(lines) + 34
+    wmax = max(line_w(ln.replace("~", " "), f) for ln in lines)
+    x0, x1 = int(max(0, sr.CX - wmax / 2 - 40)), int(min(sr.W, sr.CX + wmax / 2 + 40))
+    lum = arr[int(y0):int(y1), x0:x1, :3].astype(np.float32).mean() if x1 > x0 else 0
+    a = float(np.clip((lum - 95) / 130, 0.0, 0.62))
     sf = sr.surf(arr)
     with sf as c:
+        if a > 0.02:
+            c.drawRoundRect(skia.Rect.MakeLTRB(x0, y0, x1, y1), 40, 40, sr.paint((20, 8, 40), a, blur=26))
         y = sr.CAP_Y - (len(lines) - 1) * 10
         for ln in lines:
             x = sr.CX - line_w(ln, f) / 2

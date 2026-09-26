@@ -5,7 +5,7 @@ import re
 from script import LINES
 from voice import SR, speak, word_times
 
-FPS = 24
+FPS = 30
 VOICE = "af_heart"
 SPEED = 1.2
 HERE = os.path.dirname(os.path.abspath(__file__))

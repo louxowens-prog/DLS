@@ -18,7 +18,7 @@ W, H = 1080, 1920
 CX, CY = W / 2, H / 2
 HERE = os.path.dirname(os.path.abspath(__file__))
 FONTS = os.path.join(HERE, "assets", "fonts")
-CAP_Y = 1400
+CAP_Y = 1436
 
 INK = (24, 12, 48)
 WHITE = (255, 255, 255)
@@ -366,6 +366,16 @@ def badge(c, s, x, y, T, t0, color=RED, size=64, rot=-6, fname="bungee-400", a=1
         return
     f = font(fname, size)
     w = f.measureText(s)
+    # keep the whole (rotated) plate at least 50 px inside the frame
+    bw, bh = w + 56, size * 1.3
+    th = math.radians(rot)
+    half = (abs(math.cos(th)) * bw + abs(math.sin(th)) * bh) / 2 + 50
+    if half * 2 > W:
+        size_k = W / (half * 2)
+        f = font(fname, size * size_k)
+        w, size = f.measureText(s), size * size_k
+        half = W / 2
+    x = min(max(x, half), W - half)
     c.save()
     c.translate(x, y)
     c.rotate(rot)

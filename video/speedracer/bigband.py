@@ -195,8 +195,8 @@ def smash(dur=1.4, amp=1.0, seed=0):
     return amp * np.tanh(x * 1.5) + amp * J.kick(seed=seed)[: len(t)] * 0.8 if False else amp * (np.tanh(x * 1.5) + np.pad(J.kick(seed=seed), (0, max(0, len(t) - int(0.5 * SR))))[: len(t)] * 0.8)
 
 
-def whoosh(dur=0.5, amp=1.0, up=True, seed=0):
-    """Filtered-noise sweep for wipes, panned across the stereo field."""
+def whoosh(dur=0.5, amp=1.0, up=True, seed=0, rtl=False):
+    """Filtered-noise sweep for wipes, panned across the stereo field (right to left with rtl, like the faces)."""
     rng = np.random.default_rng(seed)
     t = tx(dur)
     n = rng.normal(0, 1, len(t))
@@ -208,7 +208,7 @@ def whoosh(dur=0.5, amp=1.0, up=True, seed=0):
         out[i0:i1] += _bp(n[i0:i1], fc[k] * 0.6, fc[k] * 1.4)[: i1 - i0] * (1 if k < 11 else 0.5)
     env = np.sin(np.pi * np.clip(t / dur, 0, 1)) ** 1.5
     x = out * env
-    pan = t / dur
+    pan = 1 - t / dur if rtl else t / dur
     return amp * np.stack([x * np.sqrt(1 - pan), x * np.sqrt(pan)]) * 1.4
 
 

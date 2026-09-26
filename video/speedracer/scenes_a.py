@@ -44,11 +44,18 @@ def s_open(arr, t, d, T):
             f = sr.font("bungee-400", 200)
             c.drawString(lab, -f.measureText(lab) / 2, -300, f, paint(LEMON))
             c.restore()
-        for k, (dx, body, num, ph) in enumerate(((-280, PINK, "7", 0.0), (300, LEMON, "3", 1.7), (20, CYAN, "G", 3.1))):
+        for k, (dx, body, num, ph) in enumerate(((-380, PINK, "7", 0.0), (-80, LEMON, "3", 1.7), (120, CYAN, "G", 3.1))):
             bob = 30 * math.sin(T * 2.2 + ph)
             z = 1.0 + 0.18 * math.sin(T * 1.3 + ph)
-            cast.car_front(c, CX + dx * z + 90 * math.sin(T * 1.8 + ph), 1270 + 120 * (z - 1) + bob * 0.3, 0.74 * z, T, body=body, number=num)
+            cast.car_front(c, CX + dx * z + 60 * math.sin(T * 1.8 + ph), 1180 + 120 * (z - 1) + bob * 0.3, 0.8 * z, T, body=body, number=num)
         sr.speed_lines(c, CX, 820, T, n=50, color=WHITE, r0=420, a=0.6, seed=4)
+        # layered depth from frame one: the anchor pops up huge in the foreground, the race sharp behind her
+        kf = pop(T, 0.0, 0.3)
+        if kf > 0:
+            c.save()
+            c.translate(0, 260 * (1 - kf))
+            cast.face(c, "host", 905, 1050, 3.1 * kf, T, talk=talk(T), look=(-0.7, -0.15), facing=-1)
+            c.restore()
         sr.race_text(c, "THE RACE", CX, 330, 130, fill=LEMON)
         sr.race_text(c, "TO AGI", CX, 440, 110, fill=CYAN)
         if kb > 0.02:
@@ -116,14 +123,14 @@ def s_race(arr, t, d, T):
     s = sr.surf(arr)
     kq = pop(T, W("h2", "first") - 0.1, 0.3)
     with s as c:
-        track.road_side(c, T, 1180, 1330, speed=1.2)
-    track.near_wall(arr, T, 1330, speed=1.2)
+        track.road_side(c, T, 1070, 1240, speed=1.2)
+    track.near_wall(arr, T, 1240, speed=1.2)
     with s as c:
-        sr.hlines(c, T, 700, 1180, n=26, a=0.55, seed=2)
+        sr.hlines(c, T, 620, 1070, n=26, a=0.55, seed=2)
         rng_bob = lambda k: 4 * math.sin(T * 30 + k)
-        cast.car_side(c, 500 + 60 * math.sin(T * 1.3), 1250 + rng_bob(0), 0.62, T, body=PINK, number="7", speed=2)
-        cast.car_side(c, 860 - 90 * math.sin(T * 1.1), 1318 + rng_bob(1), 0.8, T, body=LEMON, number="3", speed=2)
-        cast.car_side(c, 640 + 140 * ease(t / d), 1420 + rng_bob(2), 1.0, T, speed=2, flames=True, **AI_CAR)
+        cast.car_side(c, 500 + 60 * math.sin(T * 1.3), 1140 + rng_bob(0), 0.62, T, body=PINK, number="7", speed=2)
+        cast.car_side(c, 860 - 90 * math.sin(T * 1.1), 1205 + rng_bob(1), 0.8, T, body=LEMON, number="3", speed=2)
+        cast.car_side(c, 640 + 140 * ease(t / d), 1300 + rng_bob(2), 0.95, T, speed=2, flames=True, **AI_CAR)
         # layered depth: the Generalist's driver, huge in the foreground, the race sharp behind
         cast.face(c, "ai", 250, 640, 3.3, T, talk=0.0, look=(0.9, 0.1), facing=1)
         if kq > 0:
@@ -191,7 +198,7 @@ def s_finish(arr, t, d, T):
         c.restore()
         cast.car_front(c, CX + 120 * math.sin(T * 1.6), 1330, 0.9, T, **{k: v for k, v in AI_CAR.items() if k != "stripe"})
         # layered depth: the anchor, huge, in the foreground
-        cast.face(c, "host", 190, 1030, 3.3, T, talk=talk(T), look=(0.8, -0.2), facing=1)
+        cast.face(c, "host", 165, 1125, 3.0, T, talk=talk(T), look=(0.8, -0.2), facing=1)
         sr.lower_third(c, T, S("d1") + 0.1, W("d1", "Without") - 0.1, "ANSWER 1 · SCIENCE", "Define what counts", color=PINK, y=560)
         sr.badge(c, "GOALPOSTS MOVE!", 700, 560, T, W("d1", "move"), color=RED, size=56, rot=5)
 
@@ -244,10 +251,12 @@ def s_imagenet(arr, t, d, T):
         board = skia.Path()
         board.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(90, 980, 900, 260), 24, 24))
         sr.glossy(c, board, (40, 20, 90), rim=CYAN, lw=6)
-        sr.plain(c, "ERROR RATE (IMAGENET)", CX, 1040, 38, color=CYAN, fname="bungee-400")
+        c.drawRoundRect(skia.Rect.MakeXYWH(250, 1003, 580, 52), 14, 14, paint(INK, 0.85))
+        sr.plain(c, "ERROR RATE (IMAGENET)", CX, 1042, 36, color=CYAN, fname="bungee-400")
         k = ease(ramp(T, S("d3") + 0.6, W("d3", "Twenty")))
-        sr.plain(c, "HUMANS  5.1%", 330, 1150, 50, color=WHITE, fname="bungee-400")
-        sr.plain(c, f"AI  {26 - (26 - 3.6) * k:.1f}%", 760, 1150, 50, color=LEMON, fname="bungee-400")
+        sr.plain(c, "HUMAN*  5.1%", 330, 1140, 50, color=WHITE, fname="bungee-400")
+        sr.plain(c, f"AI  {26 - (26 - 3.6) * k:.1f}%", 760, 1140, 50, color=LEMON, fname="bungee-400")
+        sr.plain(c, "* the human figure is one trained annotator's estimate", CX, 1205, 26, color=WHITE, fname="rubik-700")
         sr.badge(c, "2015 · DONE!", CX, 1300 - 30, T, W("d3", "Done"), color=sr.LIME, size=70, rot=4)
 
 
@@ -305,7 +314,9 @@ def s_dash(arr, t, d, T):
         c.drawPath(dash, paint(shader=sr.lin((0, 760), (0, H), [(60, 40, 110), (20, 10, 40)])))
         c.drawRect(skia.Rect.MakeXYWH(0, 752, sr.W, 16), paint(shader=sr.lin((0, 752), (0, 768), [WHITE, (150, 160, 190)])))
         sr.race_text(c, "THE AGI DASHBOARD", CX, 700, 70, fill=LEMON)
-        pos = [(128 + i * 244, 880) for i in range(4)] + [(128 + i * 244, 1080) for i in range(4)] + [(250 + i * 244, 1280) for i in range(3)]
+        # labels sit UNDER the dials, big, on a plate; the gauge being named pops and takes its colour
+        pos = [(135 + i * 270, 845) for i in range(4)] + [(135 + i * 270, 1050) for i in range(4)] + [(270 + i * 270, 1255) for i in range(3)]
+        cur = max([i for i, t0 in enumerate(C["gauges"]) if T >= t0 - 0.05], default=-1)
         for i, (lab, (gx, gy)) in enumerate(zip(GAUGES, pos)):
             t0 = C["gauges"][i]
             lit = ease(ramp(T, t0 - 0.05, t0 + 0.12))
@@ -313,12 +324,24 @@ def s_dash(arr, t, d, T):
             over = math.sin(sweep * math.pi) * 0.12 if sweep < 1 else 0
             val = 0.05 + (LEVELS[i] - 0.05) * ease(sweep) + over + 0.02 * math.sin(T * 11 + i) * lit
             colr = CANDY[i % len(CANDY)]
+            popk = 1 + 0.16 * math.sin(math.pi * min(1.0, max(0.0, (T - t0 + 0.05) / 0.3)))
+            c.save()
+            c.translate(gx, gy)
+            c.scale(popk, popk)
+            c.translate(-gx, -gy)
             if lit > 0:
-                c.drawCircle(gx, gy, 108, paint(colr, 0.4 * lit, blur=28))
-            I.gauge(c, gx, gy, 86, val, "", lit, T, color=colr)
-            f = sr.font("bungee-400", 21)
+                c.drawCircle(gx, gy, 90, paint(colr, (0.65 if i == cur else 0.3) * lit, blur=26))
+            I.gauge(c, gx, gy, 64, val, "", lit, T, color=colr)
+            c.restore()
+            f = sr.font("bungee-400", 26)
             w = f.measureText(lab)
-            c.drawString(lab, gx - w / 2, gy + 52, f, paint(WHITE if lit > 0.5 else (170, 165, 200)))
+            if w > 250:
+                f = sr.font("bungee-400", 26 * 250 / w)
+                w = f.measureText(lab)
+            ly = gy + 98
+            plate = colr if i == cur and lit > 0.5 else (30, 18, 60)
+            c.drawRoundRect(skia.Rect.MakeXYWH(gx - w / 2 - 12, ly - 28, w + 24, 38), 10, 10, paint(plate, 0.95))
+            c.drawString(lab, gx - w / 2, ly, f, paint(WHITE if lit > 0.5 else (175, 170, 205)))
         c.restore()
 
 
@@ -328,10 +351,19 @@ def s_frameworks(arr, t, d, T):
     """Broadcast studio card: one framework scores AI against a well-educated adult."""
     sr.sky(arr, [(0, (30, 20, 90)), (0.5, (90, 40, 170)), (1, (255, 90, 170))])
     s = sr.surf(arr)
+    t4, t5 = W("d7", "twenty-seven"), W("d7", "fifty-seven")
+    push = 1 + 0.045 * ease(ramp(T, t4 - 0.3, t4 + 0.1)) + 0.045 * ease(ramp(T, t5 - 0.3, t5 + 0.05))
+    shake = 7 * math.sin(T * 60) * max(0.0, 1 - abs(T - t5 - 0.05) / 0.25)
     with s as c:
         for k in range(14):
             x = (k * 90 + T * 200) % 1260 - 90
             c.drawRect(skia.Rect.MakeXYWH(x, 0, 30, H), paint(CANDY[k % len(CANDY)], 0.12))
+        if T > t4 - 0.3:
+            sr.speed_lines(c, CX, 900, T, n=60, color=WHITE, r0=560, a=0.35 + 0.3 * (T > t5 - 0.2), seed=17)
+        c.save()
+        c.translate(CX + shake, 900)
+        c.scale(push, push)
+        c.translate(-CX, -900)
         card = skia.Path()
         card.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(80, 420, 920, 760), 36, 36))
         sr.glossy(c, card, (250, 245, 255), top=WHITE, rim=CYAN, spec=0.4, lw=7)
@@ -379,9 +411,21 @@ def s_frameworks(arr, t, d, T):
             c.drawRoundRect(skia.Rect.MakeXYWH(x0, y, x1 - x0, 56), 28, 28, paint(INK, stroke=5))
         c.drawLine(x1, 770, x1, 1010, paint(RED, stroke=6))
         sr.plain(c, "100% = a well-educated adult", x1, 1070, 34, color=RED, fname="rubik-800", align="right")
-        kk = pop(T, W("d7", "well-educated") - 0.1, 0.25)
+        c.restore()
+        # layered depth: the anchor pops up huge in the corner, the scores sharp behind her
+        kk = pop(T, W("d7", "well-educated") - 0.1, 0.3)
         if kk:
-            cast.face(c, "host", 230, 1100, 0.45 * kk, T, talk=0, look=(0.6, 0), expr="smile")
+            c.save()
+            c.translate(-240 * (1 - kk), 0)
+            cast.face(c, "host", 150, 1215, 1.75, T, talk=talk(T), look=(0.8, -0.4), facing=1)
+            c.restore()
+        for word, txt, colr, x, y in (("twenty-seven", "27%", sr.BLUE, 640, 1300), ("fifty-seven", "57%", PINK, 700, 1300)):
+            tw_ = W("d7", word)
+            if tw_ + 0.1 <= T and (word == "fifty-seven" or T < t5 - 0.05):
+                ks = pop(T, tw_ + 0.1, 0.22)
+                sr.race_text(c, txt, x, y, 190, fill=colr, scale=ks * (1.25 - 0.25 * ease(ramp(T, tw_ + 0.1, tw_ + 0.4))))
+    if T > t5:
+        sr.snap_flash(arr, T - t5 - 0.05)
 
 
 def s_arc(arr, t, d, T):
@@ -427,3 +471,9 @@ def s_arc(arr, t, d, T):
                     sr.plain(c, "SOLVED ALL" if side == 0 else "UNDER 1%", x, 1205, 50, color=colr, fname="bungee-400")
             if T > W("d8", "top") + 0.3:
                 sr.plain(c, "* frontier models, at launch", 780, 1248, 30, color=WHITE, fname="rubik-700")
+            tu = W("d8", "under")
+            if T > tu:
+                ks = pop(T, tu, 0.22)
+                jit = 6 * math.sin(T * 70) * max(0.0, 1 - (T - tu) / 0.3)
+                sr.race_text(c, "<1%", 780 + jit, 960, 150, fill=RED, scale=ks * (1.3 - 0.3 * ease(ramp(T, tu, tu + 0.3))))
+    sr.snap_flash(arr, T - W("d8", "Human") + 0.05)

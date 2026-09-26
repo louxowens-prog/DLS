@@ -99,7 +99,10 @@ def face(c, who, x, y, s, T, talk=0.0, look=(0.4, 0.0), facing=1, blink_seed=0, 
         for bx, bw in ((-0.2 * R, 0.22 * R), (0.36 * R, 0.16 * R)):
             c.drawPath(path(sr.bez((bx - bw, brow_y + 0.03 * R), (bx, brow_y - 0.06 * R), (bx + bw, brow_y + 0.02 * R)), closed=False),
                        paint(INK if who == "announcer" else (60, 30, 90), stroke=0.07 * R))
-        c.drawPath(path(sr.bez((0.46 * R, 0.1 * R), (0.62 * R, 0.28 * R), (0.44 * R, 0.33 * R)), closed=False), paint(darker(SKIN, 0.7), stroke=0.05 * R))
+        # the nose: between the eyes, turned toward the facing side, with a soft shade and a glossy tip
+        c.drawOval(skia.Rect.MakeXYWH(0.07 * R, 0.14 * R, 0.2 * R, 0.2 * R), paint(darker(SKIN, 0.85), 0.5, blur=0.05 * R))
+        c.drawPath(path(sr.bez((0.12 * R, 0.1 * R), (0.3 * R, 0.3 * R), (0.1 * R, 0.33 * R)), closed=False), paint(darker(SKIN, 0.65), stroke=0.045 * R))
+        c.drawCircle(0.19 * R, 0.24 * R, 0.045 * R, paint(WHITE, 0.6, blur=0.015 * R))
         c.drawCircle(-0.35 * R, 0.3 * R, 0.13 * R, paint(PINK, 0.3, blur=0.06 * R))
         if who == "announcer":
             mo = sr.bez((0.0, 0.4 * R), (0.25 * R, 0.33 * R), (0.55 * R, 0.42 * R))
