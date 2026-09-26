@@ -72,6 +72,7 @@ def s_score(arr, t, d, T):
             mg.stroke(c, box, T, 353, width=8, closed=True, color=mg.RED, a=km)
             mg.letters(c, "LONG-TERM MEMORY: ~0", CX, 1360, T, size=72, fname="bangers-400", color=mg.RED, outline=None, seed=354,
                        a=km, scale=mg.pop(T, Wd("g2", "memory") - 0.1, 0.25) or 0.001)
+        mg.stamp(c, "NOT YET?", 540, 862, T, Wd("g2", "not"), color=mg.RED, size=66, rot=8)
         mg.label(c, T, S("g2") + 0.2, ["HENDRYCKS ET AL. 2025", "A DEFINITION OF AGI"])
 
 

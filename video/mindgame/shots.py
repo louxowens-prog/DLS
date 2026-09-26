@@ -25,7 +25,14 @@ SHOTS = [
     (C["finale"], C["final_silence"], D.s_finale), (C["final_silence"], C["end_card"], D.s_final),
     (C["end_card"], C["end"] + 1.0, D.s_end),
 ]
+# big-face cutaways inserted over the main shots (start, end, shot)
+INSERTS = [
+    (Wd("a4", "then"), Wd("a4", "then") + 0.75, D.insert_face("jag", "swirl", "?!", Wd("a4", "then"))),
+    (S("g1"), S("g1") + 0.85, D.insert_face("jag", "burst", "WAIT!", S("g1"))),
+    (S("m6"), S("m6") + 0.8, D.insert_face("human", (255, 214, 60), "HMM...", S("m6"))),
+]
 CALM = {B.s_c1, B.s_c2, B.s_c3, B.s_c5, D.s_final, D.s_end, D.s_finale}
+NO_DRIFT = {B.s_montage, D.s_finale, D.s_end, A.s_title, A.s_agiq}
 NOCAP_KEYS = {"g6", "c3j"}
 CAPS = [c for c in TL.captions() if c[3] not in NOCAP_KEYS]
 
@@ -73,11 +80,27 @@ def flash(arr, T, a):
         arr[..., :3] = (arr[..., :3] * 0.45 + col * 0.55).astype(np.uint8)
 
 
+def drift(arr, k, T):
+    """Slow push-in with a tiny hand-held wobble on twos."""
+    from PIL import Image
+    z = 1.0 + 0.05 * k
+    rng = np.random.default_rng(mg.step(T))
+    ox, oy = rng.normal(0, 1.5), rng.normal(0, 1.5)
+    w, h = mg.W / z, mg.H / z
+    x0 = mg.CX - w / 2 + ox
+    y0 = 880 - 880 / z + oy
+    img = Image.fromarray(arr[..., :3]).resize((mg.W, mg.H), Image.BILINEAR, box=(x0, y0, x0 + w, y0 + h))
+    arr[..., :3] = np.asarray(img)
+
+
 def render_frame(T, idx=None, captions=True):
     arr = mg.new((0, 0, 0))
-    for a, b, fn in SHOTS:
+    ins = next(((a, b, fn) for a, b, fn in INSERTS if a <= T < b), None)
+    for a, b, fn in ([ins] if ins else SHOTS):
         if a <= T < b:
             fn(arr, T - a, b - a, T)
+            if fn not in NO_DRIFT and not ins:
+                drift(arr, (T - a) / max(0.1, b - a), T)
             if fn not in CALM and a > 0:
                 flash(arr, T, a)
             break

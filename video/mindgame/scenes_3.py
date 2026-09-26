@@ -262,3 +262,31 @@ def s_end(arr, t, d, T):
         f2 = mg.font("rubik-500", 26)
         for i, ln in enumerate(["Style homage to Mind Game (2004, dir. Masaaki Yuasa)", "Music and voice synthesized"]):
             c.drawString(ln, CX - f2.measureText(ln) / 2, 1410 + i * 36, f2, mg.paint((170, 170, 180)))
+
+
+def insert_face(who, bg, text, t0):
+    """Returns a shot function: a huge, boiling close-up of a character with a shouted word."""
+    def shot(arr, t, dd, T):
+        if bg == "burst":
+            mg.burst(arr, CX, 800, T, spin=2.2)
+        elif bg == "swirl":
+            mg.swirl(arr, T * 1.5, scale=0.7)
+        else:
+            mg.paper(arr, bg, 25)
+        s = mg.surf(arr)
+        with s as c:
+            dx, dy = mg.shake(T, 14, 900)
+            c.save()
+            c.translate(dx, dy)
+            mg.speed_lines(c, CX, 820, T, n=40, color=WHITE, r0=520, seed=901)
+            if who == "jag":
+                CH.jag(c, CX, 2050, T, s=3.3, eyes="spiral" if text == "?!" else "wide", mouth="o" if text != "!!" else "open",
+                       arms=(-150, 150), seed=902)
+            else:
+                CH.human(c, CX, 2150, T, s=3.0, mouth="open", eyes="wide", seed=903, arms=(-160, 160))
+            c.restore()
+            if text:
+                mg.letters(c, text, CX, 470, T, size=220, fname="bangers-400", color=mg.YELLOW, ow=18, seed=904,
+                           scale=mg.pop(T, t0, 0.2) or 0.001)
+    shot.__name__ = f"insert_{who}"
+    return shot

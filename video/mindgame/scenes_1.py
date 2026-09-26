@@ -128,8 +128,8 @@ def s_gpqa(arr, t, d, T):
     with s as c:
         base, x1, x2, bw = 1230, 250, 620, 230
         mg.stroke(c, [(120, base), (960, base)], T, 80, width=9)
-        g = ease(ramp(T, Wd("a1", "ninety") - 0.4, Wd("a1", "ninety") + 0.3))
-        g2 = ease(ramp(T, Wd("a1", "Sixty") - 0.4, Wd("a1", "Sixty") + 0.3))
+        g = ease(ramp(T, Wd("a1", "science") - 0.2, Wd("a1", "ninety") + 0.2))
+        g2 = ease(ramp(T, Wd("a1", "Experts") - 0.1, Wd("a1", "Sixty") + 0.2))
         h1, h2 = 560 * 0.94 * g, 560 * 0.65 * g2
         for x, h, col, lab, pct, seed in ((x1, h1, mg.ORANGE, "TOP AI", "94%", 81), (x2, h2, mg.BLUE, "EXPERTS", "65%", 85)):
             if h > 4:
@@ -205,7 +205,7 @@ def s_robot(arr, t, d, T):
                 shard = np.array([(cx + dx, 1030 + dy), (cx + dx + 22, 1030 + dy + 10), (cx + dx + 5, 1030 + dy + 26)])
                 mg.stroke(c, shard, T, 150 + k, width=5, closed=True)
             mg.letters(c, "CRASH!", 760, 900, T, size=110, fname="bangers-400", color=mg.RED, ow=12, seed=160)
-        mg.stamp(c, "12% SUCCESS", CX, 1640 - 120, T, Wd("a3", "twelve"), color=mg.RED, size=100, rot=6)
+        mg.stamp(c, "12% SUCCESS", 700, 610, T, Wd("a3", "twelve"), color=mg.RED, size=90, rot=6)
         mg.label(c, T, S("a3") + 0.1, ["REAL HOUSEHOLD ROBOT TASKS", "AI INDEX 2026"])
 
 
