@@ -7,9 +7,10 @@ ANN = {"voice": "am_michael", "speed": 1.08}
 
 LINES = [
     # ---- hook
-    ("a0", "Ladies and gentlemen... the race to A.G.I. is on!", "Ladies and gentlemen… the race to AGI is ON!", 0.15, ANN),
-    ("h1", "Everyone's racing to build A.G.I. So what's the very first step?", "Everyone’s racing to build AGI. So what’s the very first step?", 0.15, {}),
-    ("h2", "There are two answers.", None, 0.25, {}),
+    ("h1", "Everyone's racing to build A.G.I. But nobody agrees where the finish line is.",
+     "Everyone’s racing to build AGI. But nobody agrees where the finish line is.", 0.1, {}),
+    ("a0", "The race to A.G.I. is on!", "The race to AGI is ON!", 0.25, ANN),
+    ("h2", "So what's the very first step? There are two answers.", "So what’s the very first step? There are two answers.", 0.25, {}),
     # ---- answer one: define the finish line
     ("d1", "Answer one is science: define what counts. Without a finish line, the goalposts can move forever.",
      "Answer one is science: define what counts. Without a finish line, the goalposts can move forever.", 0.15, {}),
@@ -21,10 +22,10 @@ LINES = [
     ("d5", "So a real test needs a full dashboard:", None, 0.05, {}),
     ("d6", "reasoning, memory, spatial sense, language, learning speed, planning, social reasoning, perception, transfer, new problems, long-term autonomy.",
      None, 0.2, {"speed": 1.3}),
-    ("d7", "Researchers are building exactly that: one framework scores A.I. against a well-educated adult.",
-     "Researchers are building exactly that: one framework scores AI against a well-educated adult.", 0.1, {}),
-    ("d8", "And the new ARC test drops A.I. into games with no instructions and no goals. People solve every one. At its March launch, top A.I. scored under one percent.",
-     "And the new ARC test drops AI into games with no instructions and no goals. People solve every one. At its March launch, top AI scored under 1%.", 0.3, {}),
+    ("d7", "Researchers are building exactly that. One framework scores A.I. against a well-educated adult: GPT-4 got twenty-seven percent, GPT-5, fifty-eight.",
+     "Researchers are building exactly that. One framework scores AI against a well-educated adult: GPT-4 got 27%, GPT-5, 58%.", 0.1, {}),
+    ("d8", "And the new ARC test drops A.I. into games with no instructions and no stated goals. People solve every one. At its March launch, top A.I. scored under one percent.",
+     "And the new ARC test drops AI into games with no instructions and no stated goals. People solve every one. At its March launch, top AI scored under 1%.", 0.3, {}),
     # ---- answer two: the engine
     ("e1", "Answer two is technology: build a truly general learner.", None, 0.1, {}),
     ("e2", "Drop it somewhere new. It learns how things work by trying, remembers, picks up skills nobody taught it, carries them elsewhere, and keeps improving, without humans rebuilding it.",

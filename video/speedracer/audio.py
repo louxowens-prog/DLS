@@ -54,9 +54,17 @@ class Bus:
         self.x[:, i:j] += gain * sig[:, : j - i]
 
 
+def short(sig, dur):
+    """Choke a cymbal: fade it out by dur seconds so its tail never sits under the next line."""
+    n = int(dur * SR)
+    out = sig[: n].copy()
+    out *= np.linspace(1, 0, len(out)) ** 1.5
+    return out
+
+
 def energy_curve():
     E = lambda k: TL.s(k)
-    pts = [(0, 0.0), (C["go"] - 0.05, 0.0), (C["go"] + 0.6, 0.0), (C["go"] + 0.62, 1.0), (E("h2"), 0.85), (E("d1"), 0.5),
+    pts = [(0, 0.0), (C["go"] - 0.05, 0.0), (C["go"] + 1.0, 0.0), (C["go"] + 1.02, 1.0), (E("h2"), 0.8), (E("d1"), 0.5),
            (E("d2"), 0.55), (E("d4"), 0.45), (E("d5"), 0.6), (E("d6"), 0.8), (E("d7"), 0.45), (E("e1"), 0.5), (E("e2"), 0.6),
            (E("a1"), 0.7), (E("t2"), 1.0), (E("t3"), 0.6), (E("t4"), 0.55), (E("t6"), 0.45), (E("u1"), 0.5), (E("u2"), 0.8),
            (E("u3"), 0.55), (E("a2"), 0.8), (E("v2"), 0.75), (C["crash"] - 0.02, 0.9), (C["crash"], 0.0), (C["crash"] + 0.7, 0.0),
@@ -136,8 +144,8 @@ def build():
     # ---- the grid: revs, lights, the launch in slow motion, then everyone goes
     rpm = lambda x: 1400 + 1300 * (0.5 + 0.5 * np.sin(x * 3.1)) ** 3 + 700 * max(0, x - 2.5)
     e = B.engine(C["go"] + 0.2, rpm, seed=1)
-    fx.add(e, 0.0, 0.13, pan=0.35)
-    fx.add(B.engine(C["go"] + 0.2, lambda x: rpm(x + 0.7) * 1.1, seed=2), 0.0, 0.1, pan=0.65)
+    fx.add(e, 0.0, 0.08, pan=0.35)
+    fx.add(B.engine(C["go"] + 0.2, lambda x: rpm(x + 0.7) * 1.1, seed=2), 0.0, 0.06, pan=0.65)
     crowd_bus.add(B.crowd(T, seed=4), 0.0, 1.0)
     for k, t in enumerate((C["go"] - 2.4, C["go"] - 1.6, C["go"] - 0.8)):
         fx.add(J.ping() if hasattr(J, "ping") else J.tick(), t, 0.35)
@@ -147,27 +155,29 @@ def build():
     fx.add(B.chord_hit([58, 65, 70, 74, 77, 82], dur=0.9, seed=7), C["go"], 0.9)
     fx.add(J.crash(seed=8), C["go"], 0.7)
     fx.add(J.kick(seed=9), C["go"], 1.0)
-    slow = B._lp(np.random.default_rng(10).normal(0, 1, int(0.6 * SR)), 300) * np.linspace(0.2, 1, int(0.6 * SR))
-    fx.add(slow * 0.6, C["go"] + 0.05, 0.6)                                  # the slow-motion 'breath'
-    fx.add(B.chord_hit([70, 74, 77, 82], dur=0.25, seed=11), C["go"] + 0.6, 0.8)
-    fx.add(J.crash(seed=12), C["go"] + 0.6, 0.6)
-    for k, t in enumerate((C["go"] + 0.7, TL.s("h1") + 0.9, TL.s("h1") + 2.6)):
-        fx.add(B.passby(1.6, seed=20 + k), t, 0.55 if k == 0 else 0.14)
+    slow = B._lp(np.random.default_rng(10).normal(0, 1, int(1.0 * SR)), 260) * np.linspace(0.2, 1, int(1.0 * SR))
+    fx.add(slow * 0.7, C["go"] + 0.05, 0.6)                                  # the slow-motion 'breath'
+    fx.add(B.whoosh(0.35, up=True, seed=13), C["go"] + 0.7, 0.6)
+    fx.add(B.chord_hit([70, 74, 77, 82], dur=0.25, seed=11), C["go"] + 1.0, 0.9)
+    fx.add(short(J.crash(seed=12), 0.7), C["go"] + 1.0, 0.7)
+    fx.add(J.kick(seed=14), C["go"] + 1.0, 1.0)
+    fx.add(B.passby(0.8, seed=20), C["go"] + 0.95, 0.4)
 
     # ---- every transition: a stab, drums, and a whoosh on wipes
     for i, (t, name, tr) in enumerate(EDIT[1:], 1):
         ch = chord_at(t)
         top = [m + 12 for m in ch[-4:]]
-        fx.add(B.chord_hit(top, dur=0.2, seed=300 + i, fall=3 if i % 5 == 0 else 0), t - 0.16, 0.55)
-        fx.add(J.kick(seed=i), t - 0.16, 0.8)
+        th = t - 0.3                                                          # the hit lands just before the next line
+        fx.add(B.chord_hit(top, dur=0.16, seed=300 + i, fall=3 if i % 5 == 0 else 0), th, 0.6)
+        fx.add(J.kick(seed=i), th, 0.85)
         if tr.startswith("head") or tr == "iris":
-            fx.add(B.whoosh(WIPE + 0.1, seed=i, up=i % 2 == 0), t - WIPE / 2 - 0.05, 0.55)
-            fx.add(J.crash(seed=i), t - 0.16, 0.3)
+            fx.add(B.whoosh(WIPE, seed=i, up=i % 2 == 0), t - WIPE - 0.25, 0.55)
+            fx.add(short(J.crash(seed=i), 0.3), th, 0.3)
         elif tr == "split":
-            fx.add(J.snare(seed=i, tight=1.2), t - 0.16, 0.7)
-            fx.add(J.noise_hit(0.2, 800, 9000, seed=i), t - 0.16, 0.3)
+            fx.add(J.snare(seed=i, tight=1.3), th, 0.7)
+            fx.add(J.noise_hit(0.15, 800, 9000, seed=i), th, 0.3)
         else:
-            fx.add(J.snare(seed=i, tight=1.0), t - 0.16, 0.5)
+            fx.add(J.snare(seed=i, tight=1.2), th, 0.55)
 
     # ---- the announcer: a fanfare in, the crowd swells under him
     for k, key in enumerate(("a0", "a1", "a2", "a3")):
@@ -177,7 +187,7 @@ def build():
     for key in ("d2", "d3"):
         t = TL.e(key) + 0.02                                              # right after "Done."
         fx.add(B.chord_hit([70, 74, 77, 82], dur=0.4, doit=2, seed=int(t)), t, 0.6)
-        fx.add(J.crash(seed=int(t)), t, 0.4)
+        fx.add(short(J.crash(seed=int(t)), 0.5), t, 0.4)
 
     # ---- the dashboard: a blip for every gauge
     for k, t in enumerate(C["gauges"]):
@@ -192,10 +202,11 @@ def build():
             fx.add(B.screech(0.45, seed=620 + k), t + 0.05, 0.22)
     tw = C["hazards"][7]                                                     # the wine: slow motion, then snap
     fx.add(B.riser(0.5, seed=630), tw - 0.5, 0.3)
-    fx.add(B.whoosh(0.9, up=False, seed=631), tw, 0.5)
-    fx.add(B.chord_hit([70, 74, 77, 82], dur=0.25, seed=632), tw + 0.85, 0.7)
-    fx.add(J.crash(seed=633), tw + 0.85, 0.5)
-    fx.add(B.passby(1.4, seed=634), TL.s("t5") - 0.9, 0.3)
+    fx.add(B.whoosh(1.0, up=False, seed=631), tw, 0.5)
+    fx.add(B.chord_hit([70, 74, 77, 82], dur=0.25, seed=632), tw + 1.0, 0.8)
+    fx.add(short(J.crash(seed=633), 0.5), tw + 1.0, 0.6)
+    fx.add(J.kick(seed=635), tw + 1.0, 0.9)
+    fx.add(B.passby(1.0, seed=634), TL.s("t5") - 1.2, 0.25)
 
     # ---- the loop: a climbing trumpet note at every checkpoint
     for k, t in enumerate(C["loop"]):
@@ -206,8 +217,8 @@ def build():
     fx.add(B.passby(1.8, seed=800), TL.s("v2") + 0.4, 0.18)
     fx.add(B.engine(2.0, lambda x: 2600 + 1800 * x, seed=801), C["crash"] - 2.0, 0.1)
     fx.add(B.screech(0.9, seed=802), C["crash"] - 0.8, 0.2)
-    fx.add(B.smash(1.0, seed=803), C["crash"], 0.5)
-    fx.add(J.crash(seed=804), C["crash"], 0.6)
+    fx.add(B.smash(0.6, seed=803), C["crash"], 0.32)
+    fx.add(short(J.crash(seed=804), 0.5), C["crash"], 0.5)
     fx.add(B.chord_hit([58, 65, 70, 74, 77], dur=0.3, seed=805), C["crash"] + 0.7, 0.8)
 
     # ---- the old joke: ba-dum-tss
@@ -218,7 +229,7 @@ def build():
     riff = [(0, [70, 74, 77]), (0.5, [72, 75, 79]), (1.0, [74, 77, 82]), (1.75, [70, 74, 77, 82]), (2.5, [75, 79, 82]),
             (3.0, [74, 77, 81]), (3.5, [72, 76, 79]), (4.0, [70, 74, 77, 82])]
     for k, (beat, notes) in enumerate(riff):
-        fx.add(B.chord_hit(notes, dur=0.3 if k < 7 else 0.9, seed=900 + k, doit=3 if k == 7 else 0), f0 + beat * B.BEAT * 1.0, 0.2)
+        fx.add(B.chord_hit(notes, dur=0.3 if k < 7 else 0.9, seed=900 + k, doit=3 if k == 7 else 0), f0 + beat * B.BEAT * 1.0, 0.12)
     crowd_bus.add(B.crowd(4.0, seed=901), f0, 0.8)
     fx.add(B.chord_hit([58, 65, 70, 74, 77, 82], dur=1.4, seed=910, doit=2), C["end_card"], 0.9)
     fx.add(J.crash(seed=911), C["end_card"], 0.7)
@@ -244,41 +255,50 @@ def build():
     speech = np.concatenate([vo[int(TL.s(k) * SR): int(TL.e(k) * SR)] for k in TL.order if TL.lines[k]["voice"] == "af_heart"])
     g_vo = db(-18) / (np.sqrt((speech ** 2).mean()) + 1e-12)
     aspeech = np.concatenate([ann[int(TL.s(k) * SR): int(TL.e(k) * SR)] for k in TL.order if TL.lines[k]["voice"] != "af_heart"])
-    g_an = db(-17) / (np.sqrt((aspeech ** 2).mean()) + 1e-12)
+    g_an = db(-15.5) / (np.sqrt((aspeech ** 2).mean()) + 1e-12)
     vo_st = S.reverb(vo * g_vo, wet=0.05, rt60=0.6)[:, :N]
-    an_st = S.reverb(ann * g_an, wet=0.12, rt60=1.6)[:, :N]
+    an_st = S.reverb(ann * g_an, wet=0.08, rt60=1.4)[:, :N]
 
     # ---- mix
     bandr = S.reverb(band.x, wet=0.12, rt60=1.2)[:, :N]
-    fxr = S.reverb(fx.x, wet=0.1, rt60=1.0)[:, :N]
+    fxr = S.reverb(fx.x, wet=0.04, rt60=0.7)[:, :N]
+    from scipy.ndimage import maximum_filter1d
     allv = np.abs(vo) + np.abs(ann)
-    env = np.convolve(allv, np.ones(SR // 8) / (SR // 8), mode="same")
-    env = np.clip(env / (np.percentile(env[env > 1e-5], 90) + 1e-9), 0, 1)
-    env = np.convolve(env, np.ones(SR // 5) / (SR // 5), mode="same")
+    raw = np.convolve(allv, np.ones(SR // 20) / (SR // 20), mode="same")
+    raw = np.clip(raw / (np.percentile(raw[raw > 1e-5], 80) + 1e-9), 0, 1)
+    # instant attack with 0.15 s look-ahead, held through short gaps, smooth release
+    env = maximum_filter1d(raw, size=int(0.45 * SR), origin=-int(0.12 * SR))
+    env = np.convolve(env, np.ones(SR // 12) / (SR // 12), mode="same")
     duck = 1 - 0.88 * env
     talk = np.zeros(N)
     for key in TL.order:
         talk[int((TL.s(key) - 0.12) * SR): int((TL.e(key) + 0.15) * SR)] = 1.0
     r = int(0.08 * SR)
-    swell = 1 + (db(4.5) - 1) * (1 - np.convolve(talk, np.ones(r) / r, mode="same"))
+    swell = 1 + (db(7.0) - 1) * (1 - np.convolve(talk, np.ones(r) / r, mode="same"))
     gate = np.ones(N)
     gate[int(C["crash"] * SR): int((C["crash"] + 0.7) * SR)] = 0.0                  # the slow-motion crash: band cut dead
-    gate[int(C["go"] * SR + 0.05 * SR): int((C["go"] + 0.6) * SR)] *= 0.15
+    gate[int(C["go"] * SR + 0.05 * SR): int((C["go"] + 1.0) * SR)] *= 0.1
     gate = np.convolve(gate, np.ones(int(0.004 * SR)) / int(0.004 * SR), mode="same")
     crowd_env = np.full(N, db(-22))
-    for key in ("a1", "a2", "a3"):
+    for key in ("a0", "a1", "a2", "a3"):
         i0, i1 = int((TL.s(key) - 0.4) * SR), int((TL.e(key) + 0.9) * SR)
         crowd_env[i0:i1] = db(-9)
-    crowd_env[: int(TL.s("a0") * SR)] = db(-4)
-    crowd_env[int(TL.s("a0") * SR): int(TL.s("h1") * SR)] = db(-10)
+    crowd_env[: int(TL.e("h1") * SR)] = db(-18)
+    crowd_env[int(C["go"] * SR): int((C["go"] + 2.0) * SR)] = db(-4)
     crowd_env[int(TL.e("f1") * SR):] = db(-8)
     crowd_env = np.convolve(crowd_env, np.ones(SR // 3) / (SR // 3), mode="same")
 
     loud = bandr[:, int(TL.s("t2") * SR): int(TL.e("t2") * SR)]
     g_mu = db(-19) / (np.sqrt((loud ** 2).mean()) + 1e-12)
-    mix = (bandr * duck * swell * gate + fxr * (0.1 + 0.9 * duck) * (0.7 + 0.3 * swell / db(4.5))) * g_mu \
-        + crowd_bus.x * crowd_env * g_mu * 0.5 * duck + vo_st + an_st
-    STEMS.update(band=bandr * duck * swell * gate * g_mu, fx=fxr * (0.1 + 0.9 * duck) * (0.7 + 0.3 * swell / db(4.5)) * g_mu,
+    def carve(x, depth_mid):
+        """Duck the speech band (300 Hz - 4 kHz) hard and the lows/highs gently."""
+        low = S._lp(x, 300)
+        high = S._hp(x, 4000)
+        mid = x - low - high
+        return low * (1 - 0.5 * env) + mid * (1 - depth_mid * env) + high * (1 - 0.7 * env)
+    music = carve(bandr * swell * gate, 0.97) * db(-3.5) + carve(fxr * (0.7 + 0.3 * swell / db(7.0)), 0.9) * db(4.0)
+    mix = music * g_mu + crowd_bus.x * crowd_env * g_mu * 0.5 * duck + vo_st + an_st
+    STEMS.update(band=music * g_mu, fx=np.zeros_like(music),
                  crowd=crowd_bus.x * crowd_env * g_mu * 0.5 * duck, vo=vo_st + an_st)
     mix = loudness(mix, -14.0)
     tail = int(0.2 * SR)

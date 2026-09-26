@@ -32,7 +32,7 @@ for k in TL.order:
     bb, vv = S._bp(bg, 300, 4000), S._bp(g * v, 300, 4000)
     res.append((round(10 * np.log10((vv ** 2).mean() / ((bb ** 2).mean() + 1e-12)), 1), k))
 res.sort()
-print("lowest voice/background (dB):", res[:6])
+print("lowest voice/background (dB):", res[:6]); print("all:", [(v, k) for v, k in res])
 
 
 def rms(a, b):

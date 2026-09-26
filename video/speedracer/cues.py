@@ -3,8 +3,7 @@ from timeline import TL
 
 C = {}
 W = TL.word
-C["flag"] = TL.s("a0") - 0.55                      # the start flag drops
-C["go"] = W("a0", "on!")
+C["go"] = W("a0", "on!")                          # green light: the launch
 C["two"] = W("h2", "two")
 C["chess_done"] = W("d2", "Done")
 C["img_done"] = W("d3", "Done")
