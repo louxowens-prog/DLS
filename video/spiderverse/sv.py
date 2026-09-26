@@ -411,8 +411,15 @@ def ink(c, pts, w=6.0, color=INK, taper=(0.15, 0.15), a=1.0):
     c.drawPath(brush(pts, w, taper), paint(color, a))
 
 
-def outline(c, pth, w=6.0, color=INK, a=1.0):
-    c.drawPath(pth, paint(color, a, stroke=w))
+def outline(c, pth, w=6.0, color=INK, a=1.0, weight=True):
+    """An ink contour with brush weight: a thin line all round, swelling on the shadow side (lower right)."""
+    c.drawPath(pth, paint(color, a, stroke=w * 0.8))
+    if weight:
+        c.save()
+        c.clipPath(pth, skia.ClipOp.kDifference, True)
+        c.translate(w * 0.55, w * 0.7)
+        c.drawPath(pth, paint(color, a, stroke=w * 1.3))
+        c.restore()
 
 
 def speed_lines(c, cx, cy, T, n=70, r0=380, r1=1500, color=INK, a=1.0, seed=3, w=10):
@@ -679,16 +686,22 @@ def label(c, s, x, y, size=40, fname="bangers-400", color=INK, bg=None, align="c
 
 # ------------------------------------------------------------------ comic devices
 
-def spidey(c, cx, cy, r, T, k=1.0, n=9, seed=0, spread=(200, 340)):
-    """'Spider-sense': squiggly lines radiating from around a head, inked with coloured cores, wobbling on twos."""
+def spidey(c, cx, cy, r, T, k=1.0, n=9, seed=0, spread=(200, 340), spreads=None, length=1.0):
+    """'Spider-sense': squiggly lines radiating from around a head, inked with coloured cores, wobbling on twos.
+    spreads: several angle ranges (degrees, 0 = right, 270 = up) to keep the lines off nearby lettering."""
     if k <= 0.01:
         return
     t2 = twos(T)
     rng = np.random.default_rng(seed)
     cols = [MAG, CYAN, YEL]
-    for i in range(n):
-        a0 = math.radians(spread[0] + (spread[1] - spread[0]) * (i + 0.5) / n + rng.uniform(-6, 6))
-        L = r * (0.45 + 0.25 * rng.uniform()) * k
+    ranges = spreads or [spread]
+    angles = []
+    per = max(2, n // len(ranges))
+    for a_, b_ in ranges:
+        angles += [a_ + (b_ - a_) * (i + 0.5) / per for i in range(per)]
+    for i, ang in enumerate(angles):
+        a0 = math.radians(ang + rng.uniform(-5, 5))
+        L = r * (0.45 + 0.25 * rng.uniform()) * k * length
         s = np.linspace(0, 1, 26)
         ph = rng.uniform(0, 6.28) + t2 * 9.0
         rr = r * 1.06 + L * s

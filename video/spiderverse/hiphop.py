@@ -50,8 +50,9 @@ def kick(amp=1.0, seed=0, boom=0.35):
     body = np.sin(ph) * np.exp(-t / boom)
     rng = np.random.default_rng(seed)
     click = _hp(rng.normal(0, 1, len(t)), 2500) * np.exp(-t / 0.004) * 0.5
-    x = np.tanh(2.2 * (body + click)) * 0.9
-    return amp * x
+    knock = np.sin(2 * np.pi * 180 * t) * np.exp(-t / 0.03) * 0.35      # the beater knock, for small speakers
+    x = np.tanh(2.2 * (body + click + knock)) * 0.9
+    return amp * _hp(x, 35)
 
 
 def snare(amp=1.0, seed=0, tight=1.0):
@@ -95,9 +96,10 @@ def bass808(f0, dur, amp=1.0, glide=0.0):
     ph = 2 * np.pi * np.cumsum(f) / SR
     env = np.exp(-t / 0.9) * np.clip(t / 0.004, 0, 1)
     env *= np.clip((dur + 0.05 - t) / 0.05, 0, 1)
-    x = np.sin(ph) * env
-    x = np.tanh(2.6 * x) / np.tanh(2.6)
-    return amp * x
+    # the fundamental plus 2nd/3rd harmonics (100-250 Hz) so the line still reads on a phone speaker
+    x = (np.sin(ph) + 0.45 * np.sin(2 * ph + 0.3) + 0.2 * np.sin(3 * ph)) * env
+    x = np.tanh(3.4 * x) / np.tanh(3.4)
+    return amp * _hp(x, 40, order=2)
 
 
 def epiano(notes, dur, amp=1.0, seed=0, bright=1.0):

@@ -32,7 +32,7 @@ def s_gold(T, t, d):
     arms_up = ((250, -40), (-70, 40))
     if tg <= T < tg + 3 / 24:
         return impact(T, YEL, lambda P: cast.bot(P, 540, 900, 2.3, T, medal=True, arms=arms_up, bounce=0),
-                      cx=540, cy=820, word="POW!", wx=280, wy=300)
+                      cx=540, cy=820, word="POW!", wx=300, wy=440)
     st = sv.Stage((255, 214, 90))
     bg.cartoon_stage(st, T)
     c = st.c
@@ -59,7 +59,7 @@ def s_gold(T, t, d):
     c.drawRect(skia.Rect.MakeLTRB(250, 150, 262, 250), paint(INK))
     c.drawRect(skia.Rect.MakeLTRB(818, 150, 830, 250), paint(INK))
     sv.label(c, "MATH OLYMPIAD", 540, 300, 64, fname="luckiest-guy-400", color=INK, bg=WHITE, edge=INK, tag="label", pad=22)
-    sv.sfx(c, "POW!", 250, 560, 200, k=pop(T, tg + 3 / 24), rot=-12)
+    sv.sfx(c, "POW!", 250, 600, 200, k=pop(T, tg + 3 / 24, amp=0.2), rot=-12)
     if T > tg:
         cast._sparkle(c, 572, 1134, 44 + 12 * math.sin(twos(T) * 20), WHITE)
     return st.arr
@@ -91,10 +91,11 @@ def clock_face(c, x, y, r, T, hands=(10 * 30 + 5, 60), wobble=0.0):
 
 
 def s_clock(T, t, d):
-    st = sv.Stage(PAPER)
+    st = sv.Stage()
+    bg.page(st)
     c = st.c
-    q1 = [(34, 70), (1046, 70), (1046, 700), (34, 780)]
-    q2 = [(34, 812), (1046, 732), (1046, 1890), (34, 1890)]
+    q1 = [(40, 236), (1040, 236), (1040, 800), (40, 870)]
+    q2 = [(40, 902), (1040, 832), (1040, 1880), (40, 1880)]
     # panel 1: the clock on a cyan dot field
     c.save()
     c.clipPath(path(q1), doAntiAlias=True)
@@ -106,9 +107,9 @@ def s_clock(T, t, d):
     c.clipPath(path(q1), doAntiAlias=True)
     k1 = pop(T, S("h2") - 0.05)
     c.save()
-    c.translate(540, 420)
+    c.translate(540, 540)
     c.scale(k1, k1)
-    clock_face(c, 0, 0, 280, T, wobble=0.25 * math.sin(twos(T) * 7) if T > C["thirteen"] else 0.0)
+    clock_face(c, 0, 0, 250, T, wobble=0.25 * math.sin(twos(T) * 7) if T > C["thirteen"] else 0.0)
     c.restore()
     c.restore()
     # panel 2: the bot, stumped
@@ -117,13 +118,15 @@ def s_clock(T, t, d):
         c.save()
         c.clipPath(path(q2), doAntiAlias=True)
         c.drawColor(sv.col((255, 214, 90)))
-        c.drawCircle(540, 1150, 520, paint((255, 238, 160)))
+        c.drawCircle(540, 1300, 560, paint((255, 238, 160)))
+        st.shade("mag").drawPath(path(q2), paint(shader=sv.lin((0, 1300), (0, 1880), [(255, 255, 255, 0.0), (255, 255, 255, 0.45)])))
+        st.flush()
         P = st.pen()
         wrong = T >= C["thirteen"] + 0.55
-        cast.bot(P, 330 + 200 * (1 - ease(k2)), 1060, 1.3, T, talk=talk(T, BOT), look=(0.6, -0.8),
+        cast.bot(P, 330 + 200 * (1 - ease(k2)), 1150, 1.2, T, talk=talk(T, BOT), look=(0.6, -0.8),
                  expr="confused" if not talk(T, BOT) > 0.1 else "happy", arms=((210, 60), (-110, -40)), eyes_x=wrong, bounce=0.4)
         for j in range(2):                                        # sweat drops, on twos
-            yy = 800 + ((twos(T) * 90 + j * 60) % 120)
+            yy = 900 + ((twos(T) * 90 + j * 60) % 120)
             c.drawPath(path([(520 + j * 44, yy - 26), (536 + j * 44, yy + 4), (504 + j * 44, yy + 4)]), paint((90, 200, 255)))
             c.drawCircle(520 + j * 44, yy + 4, 16, paint((90, 200, 255)))
             c.drawCircle(520 + j * 44, yy + 4, 16, paint(INK, stroke=4))
@@ -133,9 +136,9 @@ def s_clock(T, t, d):
     if k2 > 0:
         sv.panel_border(c, q2)
     if S("h3") - 0.1 <= T < E("h3") + 0.4:
-        sv.bubble(c, "Is it… 13 o’clock?", 790, 930, tail=(540, 1000), size=54, k=pop(T, S("h3") - 0.1), maxw=380)
+        sv.bubble(c, "Is it… 13 o’clock?", 790, 1010, tail=(560, 1060), size=54, k=pop(T, S("h3") - 0.1), maxw=380)
     if T >= C["thirteen"] + 0.55:
-        sv.sfx(c, "BZZT!", 790, 1190, 170, k=pop(T, C["thirteen"] + 0.55), rot=8, fill=RED, fill2=(150, 0, 40), dots=YEL)
+        sv.sfx(c, "BZZT!", 740, 1290, 170, k=pop(T, C["thirteen"] + 0.55), rot=8, fill=RED, fill2=(150, 0, 40), dots=YEL)
     return st.arr
 
 
@@ -370,13 +373,14 @@ def s_road(T, t, d):
         if k >= 1:
             ay = road_y(PIN_X) + 170
             c.drawPath(path([(PIN_X - 190, ay - 70), (PIN_X - 60, ay), (PIN_X - 190, ay + 70)]), paint(WHITE))
-    kp = pop(T, C["pin"], 0.3)
+    kp = pop(T, C["pin"], 0.3, amp=0.15)
     if T >= C["pin"]:
         pin(c, PIN_X, road_y(PIN_X) - 50, kp, s=1.0 / max(zoom, 0.5) ** 0.6, T=T)
     # the writer: walks the wall with the camera (legs on twos), sprays each station, stays behind when the camera flies on
     if not whip:
         hx = hero_wx(T)
-        moving = abs(hero_wx(T) - hero_wx(T - 1 / 12)) > 3
+        t2 = twos(T)
+        moving = abs(hero_wx(t2) - hero_wx(t2 - 1 / 12)) > 3
         painting = any(tw - 0.1 <= twos(T) < tw + 0.5 for tw in ts[:7])
         pose = "spray" if painting else ("point_up" if T >= C["pin"] else "idle")
         ph = twos(T) * 2 * math.pi * 1.7 if moving else 0.35
@@ -390,11 +394,12 @@ def s_road(T, t, d):
     if not whip and C["pin"] <= T < C["pin"] + 1.6:
         m = c.getTotalMatrix()
         hs = (hero_wx(T) - cwx) * zoom + 540, (HERO_HEAD - cwy) * zoom + 860
-        sv.spidey(c, hs[0] + 6 * zoom, hs[1] - 40 * zoom, 150 * zoom, T, k=ease(ramp(T, C["pin"], C["pin"] + 0.25)), seed=2)
+        sv.spidey(c, hs[0] + 6 * zoom, hs[1] - 40 * zoom, 150 * zoom, T, k=ease(ramp(T, C["pin"], C["pin"] + 0.25)), seed=2,
+                  spreads=[(165, 195), (-15, 15)], n=8)
     if whip:
         sv.motion_lines(c, 0, 200, sv.W, 1300, T, n=40, color=WHITE, w=10, seed=7)
     if C["pin"] <= T < C["pin"] + 0.45:
-        sv.sfx(c, "THWIP!", 820, 1110, 150, k=pop(T, C["pin"]), rot=-10, fill=WHITE, fill2=CYAN, dots=MAG)
+        sv.sfx(c, "THWIP!", 690, 1130, 150, k=pop(T, C["pin"], amp=0.2), rot=-10, fill=WHITE, fill2=CYAN, dots=MAG)
     if T > W("r5", "Way") + 0.3:
         sv.label(c, "WE CAME THIS FAR", 520, 1240, 70, fname="bangers-400", color=INK, bg=YEL, edge=INK, rot=-3,
                  a=ease(ramp(T, W("r5", "Way") + 0.3, W("r5", "Way") + 0.6)))
@@ -412,9 +417,10 @@ PLACED = {}
 LAST_PLACE = [(0.0, 0.0, 1.0)]
 
 
-def place(st, P, r, focus, fn, T, bg_col, dh=DH, shade=None):
+def place(st, P, r, focus, fn, T, bg_col, dh=DH, shade=None, ext=None):
     """Draw panel content fn(st, P, T) (design space DW x dh) into screen rect r: whole ('contain') while the panel
-    is big, cropped about a focus point ('cover') once it's squeezed into a strip."""
+    is big, cropped about a focus point ('cover') once it's squeezed into a strip. ext: the panel's colour field runs
+    on down to this y (under the narration box), while the drawing stays laid out in r."""
     x0, y0, x1, y1 = r
     w, h = x1 - x0, y1 - y0
     if h / dh >= 0.55:
@@ -426,16 +432,24 @@ def place(st, P, r, focus, fn, T, bg_col, dh=DH, shade=None):
         ty = y0 + h / 2 - focus[1] * s
         tx = min(x0, max(x1 - DW * s, tx))
         ty = min(y0, max(y1 - dh * s, ty))
-    q = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+    yb = y1 if ext is None else max(y1, ext)
+    q = [(x0, y0), (x1, y0), (x1, yb), (x0, yb)]
+    n0 = len(sv.TEXT)
     P.save()
     P.clip(path(q))
     P.c.drawColor(sv.col(bg_col))
     if shade is not None:
-        P.sh[shade[0]].drawRect(skia.Rect.MakeLTRB(x0, y0, x1, y1), paint(shader=sv.lin((0, y0), (0, y1), [(255, 255, 255, 0.0), (255, 255, 255, shade[1])])))
+        P.sh[shade[0]].drawRect(skia.Rect.MakeLTRB(x0, y0, x1, yb), paint(shader=sv.lin((0, y0), (0, yb), [(255, 255, 255, 0.0), (255, 255, 255, shade[1])])))
     P.translate(tx, ty)
     P.scale(s)
     fn(st, P, T)
     P.restore()
+    kept = []                                          # lettering cropped away by the panel edge isn't on screen
+    for b in sv.TEXT[n0:]:
+        bx0, by0, bx1, by1 = max(b[0], x0), max(b[1], y0), min(b[2], x1), min(b[3], yb)
+        if bx1 - bx0 > 4 and by1 - by0 > 4:
+            kept.append((bx0, by0, bx1, by1, b[4]))
+    sv.TEXT[n0:] = kept
     PLACED[id(fn) if not hasattr(fn, "__name__") else fn.__name__] = (tx, ty, s)
     LAST_PLACE[0] = (tx, ty, s)
     return q
@@ -447,9 +461,13 @@ def _speed_a(st, P, T):
     s = 1.25
     bx = -260 + 1600 * ramp(twos(T), S("s1") - 0.25, S("s1") + 1.3)
     by = 620
-    for j in (3, 2, 1):                                     # multiples: earlier drawings of the bot trail behind it
-        gx = bx - j * 150 * s
-        c.drawRoundRect(skia.Rect.MakeLTRB(gx - 110 * s, by - 180 * s, gx + 110 * s, by + 160 * s), 50 * s, 50 * s, paint(WHITE, 0.25 + 0.12 * (3 - j)))
+    for j in (3, 2, 1):                                     # multiples: earlier drawings of the bot, repeated behind it
+        gx = bx - j * 140 * s
+        c.saveLayerAlpha(None, int(255 * (0.3 + 0.18 * (3 - j))))
+        cast.bot(P, gx, by + 10 * (j % 2), s, T - j / 12, arms=((170 + 12 * j, -60), (10 - 10 * j, 60)), bounce=0.0, legs=True,
+                 hue=sv.lighter(cast.B_BODY, 0.25 + 0.15 * j))
+        c.restore()
+        sv.ink(c, [(gx - 150 * s, by - 60 * s + j * 40), (gx - 330 * s, by - 60 * s + j * 40)], 9, color=WHITE, taper=(0.1, 0.9))
     cast.bot(P, bx, by, s, T, arms=((170, -60), (10, 60)), bounce=0.0, legs=True)
     board = skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(bx - 140 * s, by + 262 * s, bx + 140 * s, by + 296 * s), 16, 16)
     c.drawRRect(board, paint(ORANGE))
@@ -462,11 +480,11 @@ def _speed_a(st, P, T):
 
 def _speed_b(st, P, T):
     c = P.c
-    sv.label(c, "HOW LONG A TASK AI AGENTS", DW / 2, 150, 62, fname="bangers-400", color=WHITE, pen=P)
-    sv.label(c, "CAN FINISH ALONE", DW / 2, 222, 62, fname="bangers-400", color=YEL, pen=P)
+    sv.label(c, "HOW LONG A TASK AI AGENTS", DW / 2, 120, 72, fname="bangers-400", color=WHITE, pen=P)
+    sv.label(c, "CAN FINISH ALONE", DW / 2, 200, 72, fname="bangers-400", color=YEL, pen=P)
     heights = [2 ** (i * 0.62) for i in range(9)]
     kb = ramp(T, S("s2") + 0.3, C["doubled"] + 0.4)
-    base, top = 1110, 560
+    base, top = 860, 390
     for i, hgt in enumerate(heights):
         ki = ease(min(1.0, max(0.0, kb * 9 - i)))
         if ki <= 0:
@@ -477,23 +495,23 @@ def _speed_b(st, P, T):
         c.drawRect(rr.makeOffset(8, 8), paint(INK))
         c.drawRect(rr, paint([CYAN, MAG, YEL][i % 3]))
         c.drawRect(rr, paint(INK, stroke=5))
-    sv.label(c, "SECONDS", 120, base + 60, 46, fname="bangers-400", color=WHITE, pen=P)
-    sv.label(c, "HOURS", 890, base + 60, 46, fname="bangers-400", color=WHITE, pen=P)
-    sv.label(c, "2019", 120, base + 106, 34, fname="comic-neue-700", color=(220, 210, 255), pen=P)
-    sv.label(c, "2025", 890, base + 106, 34, fname="comic-neue-700", color=(220, 210, 255), pen=P)
-    sv.label(c, "METR · tasks finished half the time", DW / 2, base + 160, 30, fname="comic-neue-700", color=(220, 210, 255), tag="credit", pen=P)
+    sv.label(c, "SECONDS", 120, base + 66, 54, fname="bangers-400", color=WHITE, pen=P)
+    sv.label(c, "HOURS", 880, base + 66, 54, fname="bangers-400", color=WHITE, pen=P)
+    sv.label(c, "2019", 120, base + 116, 40, fname="comic-neue-700", color=(220, 210, 255), pen=P)
+    sv.label(c, "2025", 880, base + 116, 40, fname="comic-neue-700", color=(220, 210, 255), pen=P)
+    sv.label(c, "METR · tasks AI finishes half the time", DW / 2, base + 176, 42, fname="comic-neue-700", color=WHITE, tag="credit", pen=P)
     if T > C["doubled"]:
-        sv.sfx(c, "x2 EVERY ~7 MONTHS", 420, 440, 84, k=pop(T, C["doubled"]), rot=-4, fill=YEL, fill2=ORANGE, dots=MAG, pen=P)
+        sv.sfx(c, "x2 EVERY ~7 MONTHS", 420, 330, 92, k=pop(T, C["doubled"], amp=0.2), rot=-4, fill=YEL, fill2=ORANGE, dots=MAG, pen=P)
 
 
 def _speed_c(st, P, T):
     c = P.c
-    sv.label(c, "REAL COMPUTER TASKS", DW / 2, 150, 80, fname="bangers-400", color=INK, pen=P)
-    sv.label(c, "OSWORLD · AI AGENTS", DW / 2, 220, 44, fname="bangers-400", color=WHITE, pen=P)
+    sv.label(c, "REAL COMPUTER TASKS", DW / 2, 120, 90, fname="bangers-400", color=INK, pen=P)
+    sv.label(c, "OSWORLD · AI AGENTS", DW / 2, 190, 52, fname="bangers-400", color=WHITE, pen=P)
     val = 12 + (66.3 - 12) * ease(ramp(T, C["sixty"] - 0.35, C["sixty"] + 0.3))
-    bx0, bx1, by = 60, 950, 420
+    bx0, bx1, by = 60, 950, 330
     hx = bx0 + (bx1 - bx0) * 0.724
-    sv.label(c, "HUMANS ~72%", hx, by - 46, 48, fname="bangers-400", color=INK, pen=P)
+    sv.label(c, "HUMANS ~72%", hx, by - 40, 52, fname="bangers-400", color=INK, pen=P)
     c.drawRoundRect(skia.Rect.MakeLTRB(bx0, by, bx1, by + 110), 26, 26, paint(WHITE))
     if T >= C["twelve"] - 0.2:
         c.drawRoundRect(skia.Rect.MakeLTRB(bx0, by, bx0 + (bx1 - bx0) * val / 100, by + 110), 26, 26, paint(MAG))
@@ -501,37 +519,39 @@ def _speed_c(st, P, T):
     c.drawRoundRect(skia.Rect.MakeLTRB(bx0, by, bx1, by + 110), 26, 26, paint(INK, stroke=8))
     sv.ink(c, [(hx, by - 22), (hx, by + 140)], 12, color=INK)
     if T >= C["twelve"] - 0.2:
-        sv.sfx(c, f"{int(round(val))}%", DW / 2 - 60, 760, 250, k=pop(T, C["twelve"] - 0.2), rot=-6,
+        sv.sfx(c, f"{int(round(val))}%", DW / 2 - 60, 600, 240, k=pop(T, C["twelve"] - 0.2, amp=0.15), rot=-6,
                fill=YEL if val < 60 else WHITE, fill2=ORANGE if val < 60 else YEL, dots=MAG)
-    sv.label(c, "in one year · Stanford AI Index 2026", DW / 2, 1010, 34, fname="comic-neue-700", color=INK, tag="credit", pen=P)
+    sv.label(c, "in about a year · Stanford AI Index 2026", DW / 2, 826, 42, fname="comic-neue-700", color=INK, tag="credit", pen=P)
 
 
 def s_speed(T, t, d):
     """A page that builds: each new panel slides up and squeezes the one before into a strip."""
-    st = sv.Stage(PAPER)
+    st = sv.Stage()
+    bg.page(st)
     c = st.c
     P = st.pen()
     tb, tc = S("s2") - 0.25, S("s3") - 0.25
     kb = ease(ramp(T, tb, tb + 0.35))
     kc = ease(ramp(T, tc, tc + 0.35))
-    top, bot, gap = 40, 1340, 22
+    top, bot, gap, foot = 240, 1360, 22, 1880
     quads = []
     if kc < 1:
-        a1 = bot + (330 - bot) * kb
+        a1 = bot + (400 - bot) * kb
         a0 = top + (-400 - top) * kc
         a1 = a1 + (-40 - a1) * kc
-        quads.append(place(st, P, (34, a0, 1046, a1), (DW / 2, 620), _speed_a, T, (255, 90, 170)))
+        quads.append(place(st, P, (34, a0, 1046, a1), (DW / 2, 620), _speed_a, T, (255, 90, 170), ext=foot if kb == 0 else None))
     if kb > 0:
-        b0 = (bot + gap) + (330 + gap - (bot + gap)) * kb
+        b0 = (bot + gap) + (400 + gap - (bot + gap)) * kb
         b0 = b0 + (top - b0) * kc
         b1 = bot + (560 - bot) * kc
-        quads.append(place(st, P, (34, b0, 1046, b1), (DW / 2, 780), _speed_b, T, (40, 16, 90), shade=("mag", 0.4)))
+        quads.append(place(st, P, (34, b0, 1046, b1), (DW / 2, 700), _speed_b, T, (40, 16, 90), dh=1100, shade=("mag", 0.4),
+                           ext=foot if kc == 0 else None))
     if kc > 0:
         c0 = (bot + gap) + (560 + gap - (bot + gap)) * kc
         n_before = len(sv.TEXT)
-        quads.append(place(st, P, (34, c0, 1046, bot), (DW / 2, 520), _speed_c, T, (0, 190, 240), dh=1060))
+        quads.append(place(st, P, (34, c0, 1046, bot), (DW / 2, 450), _speed_c, T, (0, 190, 240), dh=900, ext=foot))
         # lettering on the panel underneath is hidden where this one covers it
-        sv.TEXT[:n_before] = [b for b in sv.TEXT[:n_before] if not (b[3] > c0 and b[1] < bot)]
+        sv.TEXT[:n_before] = [b for b in sv.TEXT[:n_before] if not (b[3] > c0 and b[1] < foot)]
     st.flush()
     for q in quads:
         sv.panel_border(c, q)

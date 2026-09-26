@@ -22,6 +22,7 @@ SHOTS = {
 }
 CAPS = [c for c in TL.captions() if TL.who(c[3]) == NAR]
 CAP_BOTTOM = 1528
+CAP_FONT, CAP_SIZE = "bangers-400", 62          # bold comic lettering, big enough for a phone
 NOCAP = set()                     # every narrator line is lettered
 
 
@@ -59,13 +60,13 @@ def caption(arr, T):
     t0, t1, s, key = cap
     if key in NOCAP:
         return
-    f = sv.font("comic-neue-700", 50)
+    f = sv.font(CAP_FONT, CAP_SIZE)
     lines = sv.wrap(s.upper(), f, 900 - 60)
-    bh = 50 * 1.12 * len(lines) + 34
+    bh = CAP_SIZE * 1.12 * len(lines) + 34
     y = CAP_BOTTOM - bh - 12
     k = sv.pop(T, t0, 0.17, amp=0.07)
     c = skia.Surface(arr).getCanvas()
-    sv.narration(c, s, 505, y, maxw=900, size=50, k=k, rot=-1.0 if (len(s) % 2) else 1.0)
+    sv.narration(c, s, 505, y, maxw=900, size=CAP_SIZE, k=k, rot=-1.0 if (len(s) % 2) else 1.0, fname=CAP_FONT)
 
 
 def render_frame(T, idx=None, captions=True):

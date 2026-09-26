@@ -185,6 +185,58 @@ def _limb(P, a, b, w0, w1, color, dark, rim=None):
     return p
 
 
+def _sleeve(P, a, b, d, w0, w1, w2, color, folds=True):
+    """A whole limb from a through the joint b to d as ONE shape: both segments and the joint unioned,
+    so it reads as a single bent sleeve with one weighted contour, hatched on the underside,
+    with cloth folds pinched into the inside of the bend."""
+    c = P.c
+
+    def quad(p, q, wa, wb):
+        d_ = math.hypot(q[0] - p[0], q[1] - p[1]) + 1e-6
+        nx, ny = -(q[1] - p[1]) / d_, (q[0] - p[0]) / d_
+        return [(p[0] + nx * wa / 2, p[1] + ny * wa / 2), (q[0] + nx * wb / 2, q[1] + ny * wb / 2),
+                (q[0] - nx * wb / 2, q[1] - ny * wb / 2), (p[0] - nx * wa / 2, p[1] - ny * wa / 2)], (nx, ny)
+
+    q1, n1 = quad(a, b, w0, w1)
+    q2, n2 = quad(b, d, w1 * 0.96, w2)
+    shape = path(q1)
+    for extra in (path(q2), path(sv.ellipse(b[0], b[1], w1 / 2, w1 / 2)), path(sv.ellipse(d[0], d[1], w2 / 2, w2 / 2)),
+                  path(sv.ellipse(a[0], a[1], w0 / 2, w0 / 2))):
+        shape = skia.Op(shape, extra, skia.PathOp.kUnion_PathOp) or shape
+    P.fill(shape, color)
+    under = path([q1[3], q1[2], b, a])
+    under2 = path([q2[3], q2[2], d, b])
+    hv = P.sh["hatch"]
+    hv.save()
+    hv.clipPath(shape, doAntiAlias=True)
+    hv.drawPath(under, paint(WHITE, 0.55))
+    hv.drawPath(under2, paint(WHITE, 0.55))
+    hv.restore()
+    c.save()                                                    # a lighter top plane: the sleeve is round
+    c.clipPath(shape, doAntiAlias=True)
+    for q, n in ((q1, n1), (q2, n2)):
+        c.drawPath(path([q[0], q[1], (q[1][0] - n[0] * 14, q[1][1] - n[1] * 14), (q[0][0] - n[0] * 14, q[0][1] - n[1] * 14)]),
+                   paint(sv.lighter(color, 0.22)))
+    c.restore()
+    sv.outline(c, shape, 7)
+    if folds:                                                   # creases on the inside of the bend
+        cross = (b[0] - a[0]) * (d[1] - b[1]) - (b[1] - a[1]) * (d[0] - b[0])
+        side = 1 if cross < 0 else -1
+        bend = abs(math.degrees(math.atan2(d[1] - b[1], d[0] - b[0]) - math.atan2(b[1] - a[1], b[0] - a[0])) + 180) % 360 - 180
+        k = 1 if abs(bend) > 12 else 0.6
+        ix, iy = b[0] + side * (n1[0] + n2[0]) / 2 * w1 * 0.46, b[1] + side * (n1[1] + n2[1]) / 2 * w1 * 0.46
+        for j, (u, L) in enumerate(((-0.35, 0.5), (0.0, 0.62), (0.4, 0.44))):
+            ang = math.atan2(b[1] - iy, b[0] - ix) + u
+            ex, ey = ix + math.cos(ang) * w1 * L * k, iy + math.sin(ang) * w1 * L * k
+            mx, my = (ix + ex) / 2 + math.sin(ang) * 6, (iy + ey) / 2 - math.cos(ang) * 6
+            sv.ink(c, bez((ix, iy), (mx, my), (ex, ey)), 5, taper=(0.05, 0.8))
+        # a fold line across the forearm, near the cuff
+        m = (d[0] * 0.78 + b[0] * 0.22, d[1] * 0.78 + b[1] * 0.22)
+        sv.ink(c, bez((m[0] + n2[0] * w2 * 0.42, m[1] + n2[1] * w2 * 0.42), (m[0] + (d[0] - b[0]) * 0.04, m[1] + (d[1] - b[1]) * 0.04),
+                      (m[0] - n2[0] * w2 * 0.1, m[1] - n2[1] * w2 * 0.1)), 4.5, taper=(0.1, 0.7))
+    return shape
+
+
 def _hand(P, x, y, ang, s=1.0, grip=True):
     """A fist (grip=True, wrapped round a can) or an open hand, pointing along `ang` from the wrist."""
     c = P.c
@@ -241,7 +293,7 @@ def spray_can(c, x, y, ang, s=1.0, color=CAN):
 
 ARM = {                     # (shoulder angle, elbow angle) in degrees, 90 = hanging straight down
     "idle": ((100, -42), (84, 70)),
-    "point": ((-18, -12), (84, 70)),
+    "point": ((-10, -28), (84, 70)),
     "point_up": ((-50, -60), (84, 70)),
     "shake": ((110, -70), (84, 70)),
     "spray": ((-8, -2), (84, 70)),
@@ -286,8 +338,7 @@ def hero(P, x, y, s, T, talk=0.0, look=(0.35, 0.0), arms=None, expr="neutral", f
     # far arm (behind the body); in the idle pose it's tucked in the pocket
     if (sL, eL) != ARM["idle"][1]:
         elL, haL = _arm_pts(*shL, sL, eL)
-        _limb(P, shL, elL, 72, 62, HOOD_D, INK)
-        _limb(P, elL, haL, 62, 52, HOOD_D, INK)
+        _sleeve(P, shL, elL, haL, 72, 64, 52, HOOD_D)
         _hand(P, haL[0], haL[1], math.radians(eL), 1.0, grip=False)
     # legs (full-body shots)
     if legs is not None:
@@ -297,8 +348,7 @@ def hero(P, x, y, s, T, talk=0.0, look=(0.35, 0.0), arms=None, expr="neutral", f
             knee = (hip[0] + 170 * math.sin(sw), hip[1] + 170 * math.cos(sw))
             lift = max(0.0, math.sin(ph + 0.6)) * 0.5
             foot = (knee[0] + 160 * math.sin(sw - lift), knee[1] + 160 * math.cos(sw - lift))
-            _limb(P, hip, knee, 96, 82, DENIM, INK)
-            _limb(P, knee, foot, 82, 70, DENIM, INK)
+            _sleeve(P, hip, knee, foot, 96, 84, 70, DENIM, folds=False)
             shoe = path([(foot[0] - 44, foot[1] - 20), (foot[0] + 70, foot[1] - 14), (foot[0] + 86, foot[1] + 30),
                          (foot[0] - 50, foot[1] + 34)])
             c.drawPath(shoe, paint(SHOE))
@@ -365,8 +415,7 @@ def hero(P, x, y, s, T, talk=0.0, look=(0.35, 0.0), arms=None, expr="neutral", f
         ghosts = [(eR, 1)]
     for ea, j in ghosts:
         elR, haR = _arm_pts(*shR, sR, ea)
-        _limb(P, shR, elR, 74, 64, HOOD, INK, rim=None)
-        _limb(P, elR, haR, 64, 54, HOOD, INK)
+        _sleeve(P, shR, elR, haR, 76, 66, 54, HOOD)
         if can:
             spray_can(c, haR[0] + 30 * math.cos(math.radians(ea)), haR[1] + 30 * math.sin(math.radians(ea)),
                       math.radians(ea + 90 - 90), 1.0)
@@ -425,33 +474,62 @@ def noir(P, x, y, s, T, talk=0.0, look=0.0, flip=False):
         if side < 0:
             _shade(P, "xhatch", lap, lap, 0.7)
         sv.outline(c, lap, 8)
-    # neck and face: square jaw, lit from the right
+    # neck and face: square jaw, lit from the right, inked like a pulp cover
     neck = path([(-44, 60), (44, 60), (40, 130), (-40, 130)])
     P.fill(neck, G2)
+    sv.ink(c, [(-40, 70), (-36, 128)], 6, color=G1)
     face = path(np.vstack([bez((-70, -60), (-80, 10), (-72, 60)), bez((-72, 60), (-62, 108), (-10, 118)),
                            bez((-10, 118), (50, 118), (70, 70)), bez((70, 70), (84, 10), (76, -60)), [(-70, -60)]]))
     P.fill(face, G4)
-    shadow = path(np.vstack([[(-90, -80), (-14, -80)], bez((-14, -80), (-34, 30), (-22, 130)), [(-90, 130)]]))
+    shadow = path(np.vstack([[(-90, -80), (-6, -80)], bez((-6, -80), (-30, 10), (-4, 44)), bez((-4, 44), (-30, 90), (-22, 130)),
+                             [(-90, 130)]]))
+    brim_sh = path(np.vstack([[(-100, -80), (100, -80), (100, -40)], bez((100, -40), (60, -36), (40, -46)),
+                              bez((40, -46), (14, -30), (-10, -40)), [(-100, -26)]]))
     c.save()
     c.clipPath(face, doAntiAlias=True)
     c.drawPath(shadow, paint(G1))
-    c.drawRect(skia.Rect.MakeLTRB(-100, -80, 100, -8), paint(G1))         # the hat brim's shadow over the eyes
+    c.drawPath(brim_sh, paint(G1))                               # the hat brim's shadow, ragged along its lower edge
     c.restore()
-    _shade(P, "dot", face, path(sv.ellipse(34, 96, 44, 24)), 0.28)        # stubble on the lit side
+    for cv, shape, a in (("hatch", path(np.vstack([bez((44, 6), (70, 24), (78, 56)), bez((78, 56), (60, 40), (40, 20))])), 0.5),
+                         ("dot", path(sv.ellipse(34, 112, 40, 14)), 0.3)):
+        _shade(P, cv, face, shape, a)                             # hatching under the cheekbone, stubble on the jaw
     sv.outline(c, face, 8)
-    # eyes: two glints in the shadow
-    for ex, w in ((-22, 20), (40, 16)):
-        c.drawPath(path([(ex - w, -30), (ex + w, -34), (ex + w * 0.6, -24), (ex - w * 0.8, -22)]), paint(WHITE))
-        c.drawCircle(ex + look * 6, -28, 4, paint(G1))
-    # nose (lit edge) and mouth
-    sv.ink(c, [(34, -8), (48, 44), (30, 52)], 5, color=G4, taper=(0.1, 0.4))
+    # eyes: the lit one under a heavy brow, the shadowed one just a glint
+    sv.ink(c, bez((16, -40), (40, -50), (66, -40)), 12, color=G1, taper=(0.1, 0.4))
+    eye = path(np.vstack([bez((20, -26), (38, -36), (60, -26)), bez((60, -26), (40, -18), (20, -26))]))
+    c.drawPath(eye, paint(WHITE))
+    c.drawCircle(38 + look * 7, -26, 6, paint(G1))
+    sv.ink(c, bez((18, -26), (40, -38), (62, -27)), 6, color=G1, taper=(0.1, 0.3))
+    sv.ink(c, bez((24, -14), (40, -10), (56, -16)), 3.5, color=G1, taper=(0.3, 0.3))       # the bag under it
+    c.drawPath(path([(-40, -30), (-14, -34), (-18, -26), (-38, -24)]), paint(WHITE))
+    c.drawCircle(-26 + look * 5, -29, 3, paint(G1))
+    # nose: a hard cast shadow on the dark side, an inked lit edge, nostril
+    c.drawPath(path([(10, -20), (22, 36), (6, 50), (-2, 36)]), paint(G1))
+    sv.ink(c, [(24, -16), (40, 36), (28, 48)], 6, color=G1, taper=(0.2, 0.2))
+    sv.ink(c, bez((12, 50), (22, 56), (32, 48)), 4, color=G1)
+    # creases from nose to mouth, chin cleft
+    sv.ink(c, bez((46, 44), (58, 62), (56, 84)), 4.5, color=G1, taper=(0.1, 0.6))
+    sv.ink(c, [(26, 106), (24, 118)], 4, color=G1)
     o = max(0.0, min(1.0, talk))
     if o < 0.1:
-        sv.ink(c, [(-2, 80), (50, 74)], 7, color=G1)
+        c.drawPath(path([(-4, 78), (50, 72), (44, 80), (6, 84)]), paint(G1))          # a hard, tight upper lip
+        sv.ink(c, bez((10, 92), (26, 96), (40, 90)), 4, color=G2)
     else:
-        m = path(sv.ellipse(24, 80, 26, 5 + 13 * o))
+        m = path(np.vstack([bez((-2, 76), (24, 70), (52, 72)), bez((52, 72), (30, 80 + 28 * o), (-2, 76))]))
         c.drawPath(m, paint(G1))
-        c.drawRect(skia.Rect.MakeLTRB(2, 74, 46, 78), paint(G4))
+        c.save()
+        c.clipPath(m, doAntiAlias=True)
+        c.drawRect(skia.Rect.MakeLTRB(-4, 70, 56, 78), paint(G4))
+        c.restore()
+        sv.ink(c, bez((-2, 76), (24, 70), (52, 72)), 5, color=G1)
+    # a cigarette in the corner of the mouth, smoke curling up through the light
+    cy0 = 80 + 6 * o
+    sv.ink(c, [(-6, cy0), (-58, cy0 + 16)], 11, color=G1, taper=(0.02, 0.02))
+    sv.ink(c, [(-6, cy0), (-56, cy0 + 15)], 7, color=G4, taper=(0.02, 0.02))
+    c.drawCircle(-58, cy0 + 16, 6, paint(WHITE))
+    ph = t2 * 3.0
+    smoke = [(-62 - 10 * math.sin(ph + u * 5) - u * 30, cy0 + 8 - u * 150) for u in np.linspace(0, 1, 14)]
+    sv.ink(c, smoke, 7, color=G3, taper=(0.2, 0.9))
     # the fedora
     crown = path(np.vstack([bez((-96, -80), (-104, -170), (-40, -196)), bez((-40, -196), (0, -178), (40, -198)),
                             bez((40, -198), (104, -170), (96, -80))]))
@@ -580,14 +658,25 @@ def anime(P, x, y, s, T, talk=0.0, flip=False, fist=0.0, blink_seed=3):
     # the fist pump (with a smear on the way up)
     if fist > 0.01:
         hx, hy = 210, 260 - 300 * fist
-        if 0.2 < fist < 0.8:
-            smear = path([(200, 420), (250, 420), (hx + 44, hy + 20), (hx - 44, hy + 20)])
-            c.drawPath(smear, paint(A_SKIN, 0.9))
-            sv.ink(c, [(200, 420), (hx - 44, hy + 20)], 5)
-            sv.ink(c, [(250, 420), (hx + 44, hy + 20)], 5)
+        if 0.12 < fist < 0.88:                                     # smear + multiples: the fist repeated down its path
+            smear = path([(186, 440), (262, 440), (hx + 48, hy + 20), (hx - 48, hy + 20)])
+            c.drawPath(smear, paint(A_SKIN))
+            c.drawPath(smear, paint(A_SKIN_D, 0.6))
+            sv.ink(c, [(186, 440), (hx - 48, hy + 20)], 6, taper=(0.5, 0.1))
+            sv.ink(c, [(262, 440), (hx + 48, hy + 20)], 6, taper=(0.5, 0.1))
+            for j in range(4):
+                xx = hx - 60 + j * 40
+                sv.ink(c, [(xx, hy + 70), (xx, hy + 70 + 160)], 6, color=WHITE, taper=(0.1, 0.8))
         arm = path([(150, 320), (220, 300), (hx + 34, hy + 40), (hx - 34, hy + 40)])
         P.fill(arm, WHITE)
         sv.outline(c, arm, 6)
+        if 0.12 < fist < 0.88:                                     # multiples: earlier drawings of the fist, left along the path
+            for j, u in enumerate((0.3, 0.6)):
+                gy = hy + (420 - hy) * (1 - u) * 0.8
+                gx = hx + 20 * (j + 1)
+                g = skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(gx - 42, gy - 46, gx + 42, gy + 38), 22, 22)
+                c.drawRRect(g, paint(sv.lighter(A_SKIN, 0.3)))
+                c.drawRRect(g, paint(INK, stroke=5))
         fst = skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(hx - 46, hy - 50, hx + 46, hy + 40), 24, 24)
         P.fill_rrect(fst, A_SKIN)
         c.drawRRect(fst, paint(INK, stroke=7))

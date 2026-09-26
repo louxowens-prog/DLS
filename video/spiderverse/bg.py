@@ -288,3 +288,25 @@ def confetti(c, T, n=40, seed=5, y0=0):
         c.rotate(i * 37 + t2 * 200)
         c.drawRect(skia.Rect.MakeLTRB(-10, -5, 10, 5), paint(col))
         c.restore()
+
+
+def _paint_page():
+    """The page behind comic panels: a night wall - deep purple, magenta dots rising, faded tags."""
+    st = sv.Stage(NIGHT)
+    c = st.c
+    sv.bricks(c, 0, 0, sv.W, sv.H, bw=150, bh=58, col_=(58, 20, 92), mortar=(34, 10, 60))
+    st.shade("mag").drawRect(skia.Rect.MakeXYWH(0, 0, sv.W, sv.H), paint(shader=sv.lin((0, 300), (0, sv.H), [(255, 255, 255, 0.05), (255, 255, 255, 0.6)])))
+    st.flush()
+    rng = np.random.default_rng(33)
+    words = ["DREAM", "YO!", "KAPOW", "NYC", "FRESH", "ECHO", "WILD", "RAD", "LOOP", "HYPE", "WOW", "ZIG"]
+    for i in range(16):
+        x, y = rng.uniform(80, sv.W - 80), rng.uniform(100, sv.H - 80)
+        col = [(200, 80, 200), (60, 170, 220), (220, 200, 70), (240, 110, 140)][i % 4]
+        sv.tag_text(c, words[i % len(words)], x, y, rng.uniform(80, 140), fill=col, edge=(30, 8, 40), rot=rng.uniform(-12, 8),
+                    seed=i, drip=rng.random() < 0.6, tag="bgtag", a=0.3, fname="permanent-marker-400" if i % 3 else "sedgwick-ave-display-400")
+    sv.TEXT.clear()
+    return _img(st.arr)
+
+
+def page(st):
+    st.c.drawImage(_cached("page", _paint_page), 0, 0)

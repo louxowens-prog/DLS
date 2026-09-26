@@ -11,8 +11,8 @@ FPS = 24
 TWOS = 12
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-PRE = {"h1": 0.35, "r1": 0.5, "s1": 0.3, "j1": 0.7, "d1": 0.6, "d3": 0.1, "a1": 0.8, "a6": 0.2, "x1": 0.6, "f1": 0.9, "f7": 0.5}
-TAIL = 3.2
+PRE = {"h1": 0.35, "r1": 0.5, "s1": 0.3, "j1": 0.7, "d1": 1.1, "d2": 0.7, "d3": 0.6, "a1": 0.8, "a6": 0.2, "x1": 0.6, "f1": 0.9, "f7": 0.5}
+TAIL = 4.6
 
 
 class Timeline:
@@ -25,7 +25,8 @@ class Timeline:
             wav = speak(spoken, v, sp)
             d = len(wav) / SR
             words = word_times(spoken, wav)
-            self.lines[key] = dict(start=t, end=t + d, wav=wav, spoken=spoken, caption=caption or spoken, voice=v, who=who,
+            self.lines[key] = dict(start=t, end=t + d, wav=wav, spoken=spoken, caption=(caption or spoken).replace("|", ""),
+                                   breaks=caption or spoken, voice=v, who=who,
                                    words=[(w, t + a, t + b) for w, a, b in words])
             t += d + gap
         self.total = t + TAIL
@@ -52,13 +53,14 @@ class Timeline:
         """Caption chunks [(t0, t1, text, key)]: whole phrases, up to ~44 characters (two lines), held >= ~1.2 s."""
         out = []
         weak = {"a", "an", "the", "of", "to", "at", "from", "and", "or", "in", "on", "for", "with", "as", "is",
-                "it's", "was", "that", "what", "by", "over", "every", "not", "can", "must", "we", "about", "be"}
+                "it's", "was", "that", "what", "by", "over", "every", "not", "can", "must", "we", "about", "be", "calls"}
         for key in self.order:
             L = self.lines[key]
             if L["who"] != NAR:                       # characters talk in speech bubbles, one bubble per line
                 out.append((L["start"] - 0.08, L["end"] + 0.35, L["caption"], key))
                 continue
-            cw, sp = L["caption"].split(), L["words"]
+            raw = L["breaks"].split()                  # a word ending in '|' forces a caption break there
+            cw, sp = [w.rstrip("|") for w in raw], L["words"]
             n, m = len(cw), len(sp)
             times = [(sp[min(m - 1, int(i * m / n))][1], sp[min(m - 1, max(0, int((i + 1) * m / n) - 1))][2])
                      for i in range(n)]
@@ -67,7 +69,7 @@ class Timeline:
             for i, w in enumerate(cw):
                 cur.append(i)
                 short_lead = len(cur) == 1 and len(w) <= 5 and w.endswith(",") and i < n - 1
-                if (re.search(r"[,.?!:;…”]$", w) and not short_lead) or i == n - 1:
+                if (re.search(r"[,.?!:;…”]$", w) and not short_lead) or raw[i].endswith("|") or i == n - 1:
                     phrases.append(cur)
                     cur = []
 

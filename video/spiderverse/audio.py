@@ -109,17 +109,19 @@ def beat_grid(bus, bass, keys):
         if sec != "breakdown":
             if st % 2 == 0 or (sec == "full" and C["speed"] - 0.5 < t < C["scratch1"]):
                 acc = 1.0 if st % 4 == 2 else 0.7
-                bus.add(H.hat(acc * rng.uniform(0.8, 1.0), seed=s, open_=(st == 14 and bar % 2 == 1)), tt, 0.35, pan=0.62)
+                bus.add(H.hat(acc * rng.uniform(0.8, 1.0), seed=s, open_=(st == 14 and bar % 2 == 1)), tt, 0.35,
+                        pan=0.28 if (st // 2) % 2 else 0.74)                 # hats trade sides
         # 808 on the kicks
         if st in kicks and sec != "breakdown":
             dur = BEAT * (1.6 if st == 0 else 0.7)
             glide = -0.12 if (st == 10 and bar % 4 == 3) else 0.0
-            bass.add(H.bass808(H.midi(root + (12 if st == 7 else 0)), dur, 1.0, glide=glide), tt, 0.55)
+            bass.add(H.bass808(H.midi(root + (12 if st == 7 else 0)), dur, 1.0, glide=glide), tt, 0.46)
         # electric piano: a chord on 1, a lighter re-hit on the 'and' of 3
         if st == 0:
-            keys.add(H.epiano(ch, BEAT * 3.2, 1.0, seed=bar, bright=1.1 if sec == "lift" else 0.9), tt, 0.33)
+            ep = H.epiano(ch, BEAT * 3.2, 1.0, seed=bar, bright=1.1 if sec == "lift" else 0.9)
+            keys.add(np.stack([ep, np.concatenate([np.zeros(int(0.014 * SR)), ep])[:len(ep)] * 0.85]), tt, 0.33)
         if st == 10 and sec in ("full", "lift"):
-            keys.add(H.epiano(ch[1:], BEAT * 1.2, 0.8, seed=bar + 99), tt, 0.2)
+            keys.add(H.epiano(ch[1:], BEAT * 1.2, 0.8, seed=bar + 99), tt, 0.2, pan=0.25 if bar % 2 else 0.75)
 
 
 def sfx_track(fx, music_bus):
@@ -150,7 +152,7 @@ def sfx_track(fx, music_bus):
     # --- the road: a spray and a rising note for every station
     for i, ts in enumerate(C["stations"][:7]):
         fx.add(H.spray(0.45, 1.0, seed=i), ts - 0.05, 0.55, pan=0.7)
-        fx.add(H.stab((65 + i * 2, 72 + i * 2), 0.14, 1.0, seed=i), ts, 0.5)
+        fx.add(H.stab((65 + i * 2, 72 + i * 2), 0.14, 1.0, seed=i), ts, 0.5, pan=0.3 if i % 2 else 0.7)
     for ts in C["stations"][7:]:
         fx.add(H.chime([84, 89, 91], 1.0), ts, 0.45)
     fx.add(H.whoosh(0.35, up=False, seed=4), S("r4") - 0.3, 0.6)
@@ -184,7 +186,7 @@ def sfx_track(fx, music_bus):
     fx.add(H.stamp(1.0), W("d4", "autocomplete") - 0.1, 0.7, pan=0.35)
     fx.add(H.stamp(1.0), W("d4", "fully") - 0.1, 0.7, pan=0.65)
     fx.add(H.whoosh(0.4, up=False, seed=19), C["new"] - 0.4, 0.55, pan=0.7)
-    fx.add(H.hit((67, 70, 74, 79), 1.0, seed=20), C["new"] + 0.1, 0.6)
+    fx.add(H.hit((67, 70, 74, 79), 1.0, seed=20), C["new"] - 0.02, 0.6)
     # --- if AGI arrives
     fx.add(H.whoosh(0.5, up=True, seed=21), W("a1", "gets") - 0.1, 0.6)
     fx.add(H.chime([72, 76, 79, 84, 88], 1.0, step=0.06), W("a1", "top") - 0.1, 0.5)
@@ -218,7 +220,13 @@ def sfx_track(fx, music_bus):
     # --- the whole map
     fx.add(H.scratch(ahh, [(0.1, 0.35, 0.05, 1.0), (0.08, 0.05, 0.3, 1.0), (0.12, 0.3, 0.0, 1.0)], 0.32), C["scratch2"] + 0.02, 0.7)
     fx.add(H.hit((68, 72, 75, 80), 1.0, seed=36, big=True), S("f1"), 0.6)
+    for k, key in enumerate(("f2", "f3", "f4", "f5")):                 # each summary panel slams in
+        fx.add(H.paper(1.0, seed=70 + k), S(key) - 0.32, 0.45, pan=0.3 if k % 2 == 0 else 0.7)
+        fx.add(H.hit((65 + k, 68 + k, 72 + k), 0.8, seed=74 + k), S(key) - 0.02, 0.45)
     fx.add(H.chime([77, 81, 84, 89], 1.0), W("f2", "already"), 0.4)
+    fx.add(H.hit((68, 72, 75), 0.9, seed=80), W("f2", "already"), 0.45)
+    fx.add(H.hit((63, 67, 70, 74), 1.0, seed=81, big=True), S("f6") - 0.3, 0.55)       # cut to the last shot
+    fx.add(H.stamp(1.0), W("f6", "knowledge") + 0.05, 0.65, pan=0.6)
     for k, tw in enumerate([W("f4", "competent"), W("f4", "keeps"), W("f4", "works")]):
         fx.add(H.stamp(0.9), tw, 0.55, pan=0.4 + 0.1 * k)
     fx.add(H.hit((68, 72, 75, 80), 1.0, seed=37, big=True), C["general"] - 0.1, 0.8)
@@ -293,7 +301,7 @@ def build():
     rain_g[int(EDIT[6][0] * SR):int(EDIT[7][0] * SR)] = 1.0
     rain_g = np.convolve(rain_g, np.ones(SR // 10) / (SR // 10), "same")
 
-    band = widen(reverb(drums.x, 0.08, 0.6), 0.35) + widen(bass.x * 1.0, 0.0) + widen(reverb(keys.x, 0.18, 1.2), 0.8)
+    band = widen(reverb(drums.x, 0.1, 0.6), 0.5) + bass.x + widen(reverb(keys.x, 0.2, 1.2), 1.0)
     # backspins: the beat spun backwards into the silence of each record-scratch freeze
     for ts in (C["scratch1"], C["scratch2"]):
         i = int(ts * SR)
@@ -305,6 +313,7 @@ def build():
     band[:, a:b] = H._lp(band[:, a:b], 700) * 1.3
     fxr = widen(reverb(fx.x, 0.12, 0.9), 0.5)
     music = band + fxr * db(1.0) + cr * crack_gain * 0.9 + np.stack([rain, np.roll(rain, 300)]) * rain_g
+    music = H._hp(music, 32) - (1 - db(-3.0)) * H._lp(H._hp(music, 32), 90)    # less sub, so the low-mids carry it
 
     vo = voices()
     vo_st = reverb(vo, 0.05, 0.5)
@@ -326,9 +335,9 @@ def build():
         mid = x - low - high
         return low * (1 - 0.35 * env) + mid * (1 - depth_mid * env) + high * (1 - 0.6 * env)
 
-    music = carve(music * swell, 0.86)
+    music = carve(music * swell, 0.88)
     ref = music[:, int(S("r2") * SR):int(E("r5") * SR)]
-    g_mu = db(-19.3) / (np.sqrt((ref ** 2).mean()) + 1e-12)
+    g_mu = db(-20.0) / (np.sqrt((ref ** 2).mean()) + 1e-12)
     mix = music * g_mu + vo_st
     mix = loudness(mix, -14.0)
     tail = int(0.25 * SR)

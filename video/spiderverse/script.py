@@ -22,20 +22,20 @@ LINES = [
      "Calculators. Narrow AI. Deep learning. Foundation models. Multimodal. Reasoning models. Agents.", 0.1),
     ("r3", NAR, "Then A.G.I. And superintelligence.", "Then AGI. And superintelligence.", 0.35),
     ("r4", NAR, "We're right about here:", "We’re right about here:", 0.1),
-    ("r5", NAR, "general-purpose reasoning systems, plus early agents. Way past the narrow A.I. era.",
-     "general-purpose reasoning systems, plus early agents. Way past the narrow-AI era.", 0.25),
+    ("r5", NAR, "general-purpose multimodal reasoning systems, plus early agents. Way past the narrow A.I. era.",
+     "general-purpose multimodal reasoning systems, plus early agents. Way past the narrow-AI era.", 0.25),
 
     # ---- how fast
     ("s1", NAR, "And it's speeding up.", "And it’s speeding up.", 0.1),
-    ("s2", NAR, "The length of tasks A.I. agents can finish alone has doubled about every seven months.",
-     "The length of tasks AI agents can finish alone has doubled about every 7 months.", 0.2),
-    ("s3", NAR, "On real computer tasks, agents jumped from about twelve percent to sixty-six, in a single year.",
-     "On real computer tasks, agents jumped from about 12% to 66%, in a single year.", 0.3),
+    ("s2", NAR, "The length of tasks A.I. agents can finish half the time has doubled about every seven months.",
+     "The length of tasks AI agents| can finish half the time| has doubled about every 7 months.", 0.2),
+    ("s3", NAR, "On real computer tasks, agents jumped from about twelve percent to sixty-six, in about a year.",
+     "On real computer tasks, agents jumped from about 12% to 66%, in about a year.", 0.3),
 
     # ---- the jagged frontier
     ("j1", NAR, "Now, about that clock.", None, 0.15),
     ("j2", NAR, "The best model reads analog clocks right only half the time. People? Ninety percent.",
-     "The best model reads analog clocks right only half the time. People? 90%.", 0.15),
+     "The best model reads analog clocks| right only half the time. People? 90%.", 0.15),
     ("j3", NAR, "Stanford's 2026 A.I. Index calls this the jagged frontier: genius here, baffled there.",
      "Stanford’s 2026 AI Index calls this the jagged frontier: genius here, baffled there.", 0.3),
 
@@ -65,7 +65,7 @@ LINES = [
     ("x1", NAR, "That's the road from A.G.I. to superintelligence.", "That’s the road from AGI to superintelligence.", 0.1),
     ("x2", NAR, "In June 2026, Google Deep Mind mapped four routes: bigger scale, new algorithms, A.I. improving A.I., "
                 "and huge teams of cooperating agents.",
-     "In June 2026, Google Deep Mind mapped four routes: bigger scale, new algorithms, AI improving AI, "
+     "In June 2026, Google DeepMind mapped four routes: bigger scale, new algorithms, AI improving AI, "
      "and huge teams of cooperating agents.", 0.15),
     ("x3", NAR, "Their bar: a system more capable than large organizations of humans.", None, 0.15),
     ("x4", NAR, "That threshold may matter even more than A.G.I.", "That threshold may matter even more than AGI.", 0.4),
