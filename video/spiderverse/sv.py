@@ -92,13 +92,13 @@ def ramp(t, a, b):
     return min(1.0, max(0.0, (t - a) / max(1e-6, b - a)))
 
 
-def pop(t, a, dur=0.25):
-    """0 before a, then an overshooting scale-in (1.3 -> 1), sampled on twos like a drawn pose."""
+def pop(t, a, dur=0.25, amp=0.35):
+    """0 before a, then an overshooting scale-in (1 + amp -> 1), sampled on twos like a drawn pose."""
     t = twos(t) if t >= a else t
     k = ramp(t, a, a + dur)
     if t < a:
         return 0.0
-    return 1 + 0.35 * math.sin(k * math.pi) * (1 - k) * 2 if k < 1 else 1.0
+    return 1 + amp * math.sin(k * math.pi) * (1 - k) * 2 if k < 1 else 1.0
 
 
 def twos(T):

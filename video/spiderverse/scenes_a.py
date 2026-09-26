@@ -528,7 +528,10 @@ def s_speed(T, t, d):
         quads.append(place(st, P, (34, b0, 1046, b1), (DW / 2, 780), _speed_b, T, (40, 16, 90), shade=("mag", 0.4)))
     if kc > 0:
         c0 = (bot + gap) + (560 + gap - (bot + gap)) * kc
+        n_before = len(sv.TEXT)
         quads.append(place(st, P, (34, c0, 1046, bot), (DW / 2, 520), _speed_c, T, (0, 190, 240), dh=1060))
+        # lettering on the panel underneath is hidden where this one covers it
+        sv.TEXT[:n_before] = [b for b in sv.TEXT[:n_before] if not (b[3] > c0 and b[1] < bot)]
     st.flush()
     for q in quads:
         sv.panel_border(c, q)

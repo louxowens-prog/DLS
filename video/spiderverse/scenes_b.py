@@ -102,7 +102,7 @@ def s_jagged(T, t, d):
         else:
             sv.label(c, name, min(max(x, 240), 800), y + 74, 40, fname="bangers-400", color=WHITE, bg=RED, edge=INK, rot=3, a=min(1.0, ka))
     sv.tag_text(c, "JAGGED FRONTIER", 540, 250, 118, fill=CYAN, fill2=(0, 110, 200), glow=CYAN, k=pop(T, C["jagged"] - 0.1), seed=5)
-    sv.label(c, "Stanford AI Index 2026", 540, 412, 34, fname="comic-neue-700", color=WHITE, tag="credit")
+    sv.label(c, "Stanford AI Index 2026", 540, 1312, 34, fname="comic-neue-700", color=WHITE, tag="credit")
     kg, kb = pop(T, W("j3", "genius") - 0.05), pop(T, W("j3", "baffled") - 0.05)
     if kg:
         sv.sfx(c, "GENIUS!", 330, 820, 96, k=kg, rot=-8, fill=LIME, fill2=(40, 170, 60), dots=YEL)
