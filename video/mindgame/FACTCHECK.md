@@ -2,13 +2,13 @@
 
 | Claim in the video | Source | Notes |
 |---|---|---|
-| AI wins gold at the Math Olympiad | IMO 2025: Google DeepMind's Gemini Deep Think (officially certified) and an OpenAI model each scored 35/42, gold-medal level | |
-| "The best model reads a clock right about half the time. Humans? 90%." (on screen: BEST AI 50.1%, HUMANS 90.1%) | Stanford HAI, *AI Index 2026*, citing ClockBench: the top model read analog clocks correctly 50.1% of the time, versus 90.1% for humans (reported by R&D World, The Decoder and others) | "Top AI" and "best model" are used because the gold-medal system and the best clock reader are not the same model. One secondary summary gives the top model as 50.6%; the video follows the Index's 50.1%. |
+| Top AI can win gold at the Math Olympiad, and still can't reliably read a clock | IMO 2025: Google DeepMind's Gemini Deep Think (officially certified) and an OpenAI model each scored 35/42, gold-medal level | |
+| "The best model gets it right about half the time. Humans? 90%." (on screen: BEST AI 50.1%, HUMANS 90.1%) | Stanford HAI, *AI Index 2026*, citing ClockBench: the top model read analog clocks correctly 50.1% of the time, versus 90.1% for humans (reported by R&D World, The Decoder and others) | "Top AI" and "best model" are used because the gold-medal system and the best clock reader are not the same model. One secondary summary gives the top model as 50.6%; the video follows the Index's 50.1%. |
 | PhD-level science questions: top models ~94%, experts ~65% | AI Index 2026 (GPQA Diamond, April 2026: Gemini 3.1 Pro 94.3%, Claude Opus 4.7 94.2%, GPT-5.5 93.6%; domain experts ~65%) | Added as a concrete example of "meets or exceeds human baselines". |
 | Computer-using agents went from 12% to 66% of real tasks; one in three still fails | AI Index 2026: OSWorld accuracy rose from roughly 12% to 66.3% (within ~6 points of humans); agents still fail about 1 in 3 structured computer-use tasks | |
 | Robots in real homes: about 12% | AI Index 2026: about 12% success on real household robot tasks, in one evaluation | |
-| Nobody does Olympiad math and then can't tell the time | The brief's point. | Changed from "Nobel-prize-level reasoning" to "Olympiad math", which is what the evidence actually shows. |
-| Levels: narrow AI yes, general-purpose AI yes, human-level AGI disputed, autonomous AGI not shown, conscious AI no evidence, superintelligence no | The brief's table | Kept as the brief's own framework. |
+| Nobody does Olympiad math, then misreads a clock half the time | The brief's point, tied to the ClockBench figure | Worded as "misreads a clock half the time" rather than "can't tell the time", matching the ~50% score. |
+| Levels: narrow AI yes, general-purpose AI yes, human-level AGI disputed, autonomous AGI not shown, superintelligence no; conscious AI is a separate question, no evidence | The brief's table | Shown as a five-step staircase with one-line definitions; consciousness is deliberately kept off the staircase (its own axis), since intelligence and consciousness are different questions. |
 | In Feb 2026, four researchers argued in *Nature* that human-level AI is already here | *Nature* Comment by four UC San Diego faculty, February 2026, "Does AI already have human-level intelligence? The evidence is clear", with a published response disputing it | The on-screen page shows the real headline, not a paraphrase. |
 | A 2025 framework rates models against a well-educated adult: GPT-4 27%, GPT-5 58%; weakest spot, memory | Hendrycks et al., *A Definition of AGI* (arXiv 2510.18212, Oct 2025; agidefinition.ai): ten CHC-based cognitive domains; GPT-4 27%, GPT-5 58%; long-term memory storage near 0 | On screen: the ten domains as tags (knowledge, reading & writing, math, reasoning, working memory, long-term memory, recall, vision, hearing, speed), then the bars and "LONG-TERM MEMORY: ~0". |
 | Google DeepMind rates levels by performance and generality | Morris et al., *Levels of AGI* (Google DeepMind, Nov 2023; ICML 2024): Emerging, Competent, Expert, Virtuoso, Superhuman × narrow/general. The paper rates frontier chatbots (ChatGPT, Bard, Llama 2) as "Emerging AGI" and lists chess engines such as Stockfish as superhuman narrow AI | On screen: the AI character parked at general/Emerging ("chatbots, 2023: EMERGING AGI") and a chess knight at narrow/Superhuman. |
@@ -20,5 +20,9 @@
 | "I am frightened" written with nothing felt; an octopus might feel plenty with no algebra | The brief's philosophical points | The octopus is an added, commonly used example of animal sentience without abstract reasoning. |
 
 ## Imagery
+
+- Photographs: NASA Blue Marble and Hubble Deep Field (public domain); SpaceX launch photo of DSCOVR (public domain); espresso cup and gravel photos (CC0), taken from scikit-image's sample data.
+- The photographic eyes and mouths on the characters are synthesized (rendered), not photographs of any real person.
+- The finale's "possible futures" (AI doctor, Mars, remembering, discoveries, chores, honesty, "super?") are marked with question marks: speculation, not claims.
 
 - The AI character's photo-collage face is NASA's Blue Marble Earth imagery (public domain) with NASA cloud maps, rendered as a lit globe and cut out with a torn paper edge.

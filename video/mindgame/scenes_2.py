@@ -5,6 +5,7 @@ import numpy as np
 import skia
 
 import chars as CH
+import fx3
 import mg
 from mg import CX, H, INK, W, WHITE, ease, ramp
 from cues import C
@@ -43,10 +44,10 @@ def s_nature(arr, t, d, T):
         if kc > 0:
             mg.letters(c, "THE EVIDENCE IS CLEAR", CX, 745, T, size=78, fname="bangers-400", color=mg.RED, outline=None, seed=306,
                        jig=2, rot=2, scale=kc)
-        mg.photo_scrap(c, earth_scrap(300, 0.3), 330, 930, mg.rect_pts(185, 800, 290, 260), T, seed=306, border=4)
-        for i in range(8):
-            y = 820 + i * 32
-            mg.stroke(c, [(530, y), (930 - (i % 3) * 40, y)], T, 310 + i, width=4, color=(120, 120, 120))
+        for col_x in (150, 550):
+            for i in range(8):
+                y = 820 + i * 32
+                mg.stroke(c, [(col_x, y), (col_x + 380 - (i % 3) * 40, y)], T, 310 + i + col_x, width=4, color=(120, 120, 120))
         for i in range(4):
             hx = 220 + i * 210
             head = mg.circle_pts(hx, 1140, 50, 24)
@@ -110,10 +111,11 @@ def s_bars(arr, T):
     with s as c:
         mg.letters(c, "HOW CLOSE TO AGI?", CX, 420, T, size=80, fname="bangers-400", color=INK, outline=WHITE, ow=8, seed=340)
         mg.note(c, "vs. a well-educated adult, across 10 abilities", CX, 490, size=40)
-        for i, (name, val, key, col) in enumerate((("GPT-4", 27, "GPT-4", mg.BLUE), ("GPT-5", 58, "GPT-5", mg.ORANGE))):
+        for i, (name, val, key, num, col) in enumerate((("GPT-4", 27, "GPT-4", "twenty-seven", mg.BLUE),
+                                                          ("GPT-5", 58, "GPT-5", "fifty-eight", mg.ORANGE))):
             y = 640 + i * 230
             t0 = Wd("g2", key)
-            g = ease(ramp(T, t0, t0 + 0.9))
+            g = ease(ramp(T, t0, Wd("g2", num) + 0.15))
             track = mg.rect_pts(120, y, 840, 120)
             mg.fill(c, track, T, WHITE, 341 + i, off=(6, 4))
             mg.stroke(c, track, T, 343 + i, width=8, closed=True)
@@ -164,12 +166,16 @@ def s_deepmind(arr, t, d, T):
         # narrow but superhuman: a chess-engine knight up in the top-left corner
         kn = mg.pop(T, Wd("g3", "performance") - 0.1, 0.25)
         if kn > 0:
-            knight = (np.array([(-40, 70), (40, 70), (30, 30), (45, 0), (25, -55), (-5, -75), (-40, -40), (-20, -15), (-40, 10), (-30, 30)])
-                      * kn + (440, 480))
-            mg.fill(c, knight, T, WHITE, 373, off=(4, 3))
-            mg.stroke(c, knight, T, 374, width=6, closed=True)
-            mg.note(c, "chess engines:", 500, 470, size=36, align="left", color=INK)
-            mg.note(c, "superhuman, but narrow", 500, 510, size=36, align="left", color=INK)
+            kp = np.array([(-42, 60), (42, 60), (36, 36), (30, 20), (34, -10), (28, -44), (14, -62), (8, -80), (-2, -66), (-20, -60),
+                           (-40, -40), (-52, -22), (-50, -10), (-38, -8), (-22, -16), (-10, -12), (-24, 8), (-32, 20), (-36, 36)])
+            base = np.array([(-54, 60), (54, 60), (54, 78), (-54, 78)])
+            knight = kp * kn + (440, 470)
+            mg.fill(c, base * kn + (440, 470), T, INK, 376, off=(0, 0))
+            mg.fill(c, knight, T, INK, 373, off=(0, 0))
+            mg.stroke(c, knight, T, 374, width=5, closed=True)
+            c.drawCircle(440 - 14 * kn, 470 - 40 * kn, 5 * kn, mg.paint(WHITE))
+            mg.note(c, "chess engines:", 510, 470, size=38, align="left", color=INK)
+            mg.note(c, "superhuman, but narrow", 510, 512, size=38, align="left", color=INK)
         # general but only 'emerging': where the paper put 2023's chatbots
         k = ease(ramp(T, S("g3") + 0.3, Wd("g3", "both")))
         px, py = 950 - 130 * k, 1170
@@ -206,7 +212,7 @@ def s_notif(arr, t, d, T):
             L = 520 * kx
             mg.stroke(c, [(CX - L / 2, 480), (CX + L / 2, 1220)], T, 390, width=34, color=mg.RED, double=False)
             mg.stroke(c, [(CX + L / 2, 480), (CX - L / 2, 1220)], T, 391, width=34, color=mg.RED, double=False)
-            mg.letters(c, "NOPE", CX, 360, T, size=150, fname="bangers-400", color=mg.RED, ow=14, seed=392)
+            mg.letters(c, "NOPE", CX, 400, T, size=140, fname="bangers-400", color=mg.RED, ow=14, seed=392)
 
 
 # ------------------------------------------------------------------ the rising water
@@ -214,19 +220,21 @@ def s_notif(arr, t, d, T):
 PEAKS = [("CHESS", 110, 0.34), ("GO", 240, 0.42), ("VISION", 360, 0.48), ("TRANSLATION", 480, 0.53), ("WRITING", 590, 0.58),
          ("CODE", 690, 0.63), ("MATH", 780, 0.7), ("SCIENCE", 870, 0.74), ("COMPUTERS", 970, 0.8)]
 LEFT = [("LONG-TERM PLANS", 300, 0.97), ("MEMORY", 620, 1.0), ("ROBOTICS", 880, 0.93)]
+HALFWAY = [("SCIENCE", 110, 0.69), ("COMPUTERS", 975, 0.7)]
 
 
 def mountains(c, T, level, peaks, seed=0, base=1450, top=470):
     for i, (name, x, hgt) in enumerate(peaks):
         yt = base - (base - top) * hgt
-        m = np.array([(x - 150, base), (x - 60, yt + 90), (x - 25, yt + 20), (x, yt), (x + 30, yt + 40), (x + 80, yt + 70), (x + 150, base)])
+        m = np.array([(x - 150, H + 60), (x - 150, base), (x - 60, yt + 90), (x - 25, yt + 20), (x, yt), (x + 30, yt + 40), (x + 80, yt + 70),
+                      (x + 150, base), (x + 150, H + 60)])
         mg.fill(c, m, T, [(150, 120, 90), (130, 110, 90), (170, 140, 100)][i % 3], seed + i, off=(5, 4),
                 shader=mg.crayon_shader((140, 110, 80), seed=40 + i % 3, density=0.95))
         mg.stroke(c, m, T, seed + 20 + i, width=7)
         under = yt > level
         size = 34 if len(name) > 8 else 40
         tw = mg.text_w(name, size, "bangers-400")
-        lx = min(max(x, tw / 2 + 24), W - tw / 2 - 24)
+        lx = min(max(x, tw / 2 + 64), W - tw / 2 - 64)
         ly = yt - 24 - 46 * (i % 3)
         mg.stroke(c, [(x, yt - 6), (lx, ly + 8)], T, seed + 60 + i, width=3, color=INK, double=False)
         mg.letters(c, name, lx, ly, T, size=size, fname="bangers-400",
@@ -319,7 +327,8 @@ def s_montage(arr, t, d, T):
         mg.swirl(arr, T, scale=0.8)
     s = mg.surf(arr)
     local = T - (times[i] - 0.05)
-    lvl = 1700 - 900 * ease(ramp(local, 0.05, 0.45))
+    partial = name in ("SCIENCE", "COMPUTERS")
+    lvl = 1700 - (880 if partial else 1250) * ease(ramp(local, 0.05, 0.45))
     with s as c:
         dx, dy = mg.shake(T, 12, 600 + i)
         c.save()
@@ -329,6 +338,8 @@ def s_montage(arr, t, d, T):
         water(c, T, lvl, seed=610 + i, alpha=0.75)
         mg.letters(c, name, CX, 420, T, size=130 if len(name) < 9 else 100, fname="bangers-400",
                    color=[WHITE, mg.RED, mg.YELLOW, WHITE][style], ow=14, seed=620 + i, spacing=4)
+        if partial and local > 0.3:
+            mg.stamp(c, "PARTLY", CX, 560, T, times[i] + 0.25, color=mg.RED, size=60, rot=-6)
 
 
 def s_water2(arr, t, d, T):
@@ -336,6 +347,7 @@ def s_water2(arr, t, d, T):
     s = mg.surf(arr)
     lvl = 1450 - (1450 - 470) * 0.62
     with s as c:
+        mountains(c, T, lvl, HALFWAY, seed=640)
         mountains(c, T, lvl, LEFT, seed=650)
         water(c, T, lvl, seed=680)
         raft = mg.rect_pts(330, lvl + 150, 420, 46)
@@ -389,21 +401,30 @@ def CH_line_jag(c, x, y, T, s):
 
 
 def s_c2(arr, t, d, T):
-    chalk_bg(arr)
+    """Three definitions pinned over real Hubble Deep Field footage (NASA)."""
+    fx3.footage(arr, "hubble.jpg", T, t / max(0.1, d), rect=(0, 0, W, H), strip=False, z0=1.0, z1=1.25, fx=0.5, fy=0.4)
+    arr[..., :3] = (arr[..., :3].astype(np.float32) * 0.75).astype(np.uint8)
     s = mg.surf(arr)
-    items = [("INTELLIGENCE", "solving problems", "Intelligence", mg.YELLOW),
-             ("SELF-AWARENESS", "modeling yourself", "Self-awareness", mg.CYAN),
-             ("CONSCIOUSNESS", "something it's like to be you", "Consciousness", mg.PINK)]
+    items = [("INTELLIGENCE", "solving problems", "Intelligence", mg.YELLOW, -3),
+             ("SELF-AWARENESS", "modeling yourself", "Self-awareness", mg.CYAN, 2),
+             ("CONSCIOUSNESS", "there is something it's like to be you", "Consciousness", mg.PINK, -2)]
     with s as c:
-        for i, (big, small, key, col) in enumerate(items):
-            k = ease(ramp(T, Wd("c2", key) - 0.15, Wd("c2", key) + 0.15))
+        for i, (big, small, key, col, rot) in enumerate(items):
+            k = mg.pop(T, Wd("c2", key) - 0.15, 0.25)
             if k <= 0:
                 continue
-            y = 480 + i * 300
-            box = mg.rect_pts(110, y - 90, 860, 230)
-            mg.stroke(c, box, T, 720 + i, width=6, color=CHALK, closed=True, amp=3.0)
-            mg.letters(c, big, CX, y + 10, T, size=90, fname="permanent-marker-400", color=col, outline=None, seed=725 + i, jig=1.5, rot=2)
-            mg.note(c, small, CX, y + 90, size=48, color=CHALK)
+            y = 500 + i * 280
+            c.save()
+            c.translate(CX, y)
+            c.rotate(rot)
+            c.scale(k, k)
+            card = mg.rect_pts(-420, -110, 840, 210)
+            mg.fill(c, card, T, (250, 246, 236), 720 + i, off=(8, 6))
+            mg.stroke(c, card, T, 723 + i, width=6, closed=True)
+            mg.letters(c, big, 0, 0, T, size=84, fname="bangers-400", color=col, ow=8, seed=725 + i, spacing=3)
+            mg.note(c, small, 0, 70, size=44, color=INK)
+            c.restore()
+        mg.label(c, T, S("c2") + 0.2, ["HUBBLE DEEP FIELD · NASA"])
 
 
 def s_c3(arr, t, d, T):
@@ -415,7 +436,8 @@ def s_c3(arr, t, d, T):
         paper_ = mg.rect_pts(170, 420, 740, 260)
         mg.fill(c, paper_, T, (245, 240, 225), 740, off=(0, 0))
         mg.stroke(c, paper_, T, 741, width=5, color=CHALK, closed=True)
-        mg.letters(c, msg[:n], 215, 580, T, size=74, fname="rubik-800", color=INK, outline=None, seed=742, jig=0.8, rot=0.5, align="left")
+        x0 = CX - mg.text_w(msg, 70, "rubik-800") / 2
+        mg.letters(c, msg[:n], x0, 580, T, size=70, fname="rubik-800", color=INK, outline=None, seed=742, jig=0.8, rot=0.5, align="left")
         hx, hy, R = CH_line_jag(c, CX, 1400, T, 1.05)
         # inside the head: nothing at all?
         kin = ease(ramp(T, S("c4") - 0.1, S("c4") + 0.3))

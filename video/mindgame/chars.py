@@ -9,7 +9,30 @@ import numpy as np
 import skia
 
 import mg
+import photoface as PF
 from mg import INK, WHITE
+
+EYE_OPEN = {"normal": 1.0, "wide": 1.2, "closed": 0.0}
+MOUTH = {"smile": (0.0, 0.6), "open": (0.8, 0.0), "o": (0.55, -0.2), "frown": (0.0, -0.7), "flat": (0.0, 0.0)}
+
+
+def photo_features(c, T, cx, ey, my, R, eyes, gaze, mouth, talk, seed, ew=0.5, sep=0.33, iris=(96, 120, 70)):
+    """Photographic eyes and mouth pasted onto a drawn head, as torn scraps (the Mind Game face)."""
+    blink = 1.0 if (mg.step(T) + seed) % 37 else 0.0
+    if eyes == "spiral":
+        return False
+    op = EYE_OPEN.get(eyes, 1.0) * blink
+    rng = np.random.default_rng(seed)
+    for side in (-1, 1):
+        img = PF.eye(max(24, int(R * ew)), look=gaze, open_=op, iris=iris, seed=seed % 3 + (side > 0))
+        PF.paste(c, img, cx + side * sep * R, ey, T, seed=seed * 3 + side, border=max(2.0, R * 0.03),
+                 rot=rng.normal(0, 4), shadow=R > 60)
+    o, sm = MOUTH.get(mouth, (0.0, 0.0))
+    if talk is not None:
+        o = talk
+    img = PF.mouth(max(30, int(R * 0.62)), open_=o, smile=sm, seed=seed % 4)
+    PF.paste(c, img, cx, my, T, seed=seed * 3 + 7, border=max(2.0, R * 0.03), rot=rng.normal(0, 3), shadow=R > 60)
+    return True
 
 
 _faces = {}
@@ -27,10 +50,21 @@ def earth_face(D, seed=0, T=0.0):
 
 
 def jag(c, x, y, T, s=1.0, arms=(-40, 40), legs=0.0, eyes="normal", gaze=(0, 0), mouth="smile", tilt=0.0,
-        head_col=mg.CYAN, body_col=mg.ORANGE, face="earth_ne2.jpg", seed=0, style="cel", bob=True, a=1.0):
-    """x, y = point between the feet."""
+        head_col=mg.CYAN, body_col=mg.ORANGE, face="earth_ne2.jpg", seed=0, style="cel", bob=True, a=1.0,
+        photo=True, talk=None, squash=0.0):
+    """x, y = point between the feet. squash > 0 flattens and widens the whole body (rubber-hose bounce)."""
+    c.save()
+    c.translate(x, y)
+    c.scale(1 + squash, 1 - 0.8 * squash)
+    c.translate(-x, -y)
+    out = _jag(c, x, y, T, s, arms, legs, eyes, gaze, mouth, tilt, head_col, body_col, face, seed, style, bob, a, photo, talk)
+    c.restore()
+    return out
+
+
+def _jag(c, x, y, T, s, arms, legs, eyes, gaze, mouth, tilt, head_col, body_col, face, seed, style, bob, a, photo, talk):
     by = y - (6 * math.sin(T * 9) if bob else 0) * s
-    R = 110 * s
+    R = 120 * s
     hx, hy = x, by - 330 * s
     c.save()
     c.translate(hx, hy)
@@ -74,11 +108,15 @@ def jag(c, x, y, T, s=1.0, arms=(-40, 40), legs=0.0, eyes="normal", gaze=(0, 0),
     mg.stroke(c, head, T, seed + 61, width=lw * 1.2, closed=True)
     # collage face: a real photograph of the Earth, cut out with scissors and pasted on; features drawn over it
     if face and style != "line":
-        fr = 0.72 * R
+        fr = 0.8 * R
         D = int(fr * 2 * 1.12)
         img = earth_face(D, seed, T)
         fp = mg.circle_pts(hx, hy + 0.12 * R, fr * 1.08, 30)
         mg.photo_scrap(c, img, hx, hy + 0.12 * R, fp, T, seed=seed + 70, border=5 * s)
+    if photo and face and style != "line" and photo_features(c, T, hx, hy + 0.02 * R, hy + 0.52 * R, R, eyes, gaze, mouth, talk, seed,
+                                                             iris=(70, 110, 170)):
+        c.restore()
+        return hx, hy, R
     ex = 0.33 * R
     for side in (-1, 1):
         cx_, cy_ = hx + side * ex, hy + 0.05 * R
@@ -116,7 +154,18 @@ def jag(c, x, y, T, s=1.0, arms=(-40, 40), legs=0.0, eyes="normal", gaze=(0, 0),
 
 
 def human(c, x, y, T, s=1.0, arms=(-30, 30), legs=0.0, mouth="smile", eyes="normal", gaze=(0, 0), tilt=0.0,
-          shirt=mg.RED, skin=(245, 205, 170), hair=(60, 40, 30), seed=100, style="cel", bob=True):
+          shirt=mg.RED, skin=(245, 205, 170), hair=(60, 40, 30), seed=100, style="cel", bob=True, photo=True, talk=None,
+          squash=0.0):
+    c.save()
+    c.translate(x, y)
+    c.scale(1 + squash, 1 - 0.8 * squash)
+    c.translate(-x, -y)
+    out = _human(c, x, y, T, s, arms, legs, mouth, eyes, gaze, tilt, shirt, skin, hair, seed, style, bob, photo, talk)
+    c.restore()
+    return out
+
+
+def _human(c, x, y, T, s, arms, legs, mouth, eyes, gaze, tilt, shirt, skin, hair, seed, style, bob, photo, talk):
     by = y - (5 * math.sin(T * 7 + 1) if bob else 0) * s
     lw = 7 * s
     hx, hy = x, by - 380 * s
@@ -152,6 +201,10 @@ def human(c, x, y, T, s=1.0, arms=(-30, 30), legs=0.0, mouth="smile", eyes="norm
     if style != "line":
         mg.fill(c, hp, T, hair, seed + 32, off=(0, 0))
     mg.stroke(c, hairp, T, seed + 33, width=lw)
+    if photo and style != "line" and photo_features(c, T, hx, hy + 0.12 * R, hy + 0.58 * R, R, eyes, gaze, mouth, talk, seed,
+                                                     ew=0.55, sep=0.36, iris=(92, 62, 40)):
+        c.restore()
+        return hx, hy, R
     for side in (-1, 1):
         ex, ey = hx + side * R * 0.35 + gaze[0] * 5 * s, hy + R * 0.1 + gaze[1] * 5 * s
         if eyes == "closed":

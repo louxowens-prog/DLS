@@ -5,6 +5,7 @@ import numpy as np
 import skia
 
 import chars as CH
+import fx3
 import mg
 from mg import CX, H, INK, W, WHITE, ease, ramp
 from cues import C
@@ -29,7 +30,7 @@ def s_m0(arr, t, d, T):
     with s as c:
         hx, hy, R = CH.jag(c, CX, 1450, T, s=1.6, eyes="wide", mouth="o", arms=(-158, 158), seed=820, tilt=4 * math.sin(T * 5))
         # puzzle holes in its head
-        for i, (dx, dy) in enumerate(((-0.45, -0.55), (0.35, -0.7), (0.05, -0.2))):
+        for i, (dx, dy) in enumerate(((-0.5, -0.62), (0.42, -0.7), (-0.02, -0.9))):
             px, py = hx + dx * R, hy + dy * R
             hole = np.vstack([mg.circle_pts(px, py, 28, 20), mg.circle_pts(px + 30, py, 14, 10)])
             c.drawCircle(px, py, 32, mg.paint((25, 20, 30)))
@@ -92,10 +93,34 @@ def s_m2(arr, t, d, T):
             mg.letters(c, "AI", jagl[-1][0] - 10, jagl[-1][1] + 60, T, size=50, fname="bangers-400", color=mg.CYAN, ow=6, seed=877)
         kg = mg.pop(T, Wd("m2", "good") - 0.1, 0.25)
         if kg > 0:
-            mg.stamp(c, "FOR GOOD", 740, 1090, T, Wd("m2", "good") - 0.1, color=mg.RED, size=70, rot=-6)
-            mg.note(c, "(the AI stays where it was until it is retrained)", CX, 1200, size=34, color=(70, 90, 70))
+            mg.stamp(c, "FOR GOOD", 560, 1100, T, Wd("m2", "good") - 0.1, color=mg.RED, size=70, rot=-6)
+            mg.note(c, "(the AI stays put until it is retrained)", CX, 1010, size=36, color=(60, 80, 60))
         CH.human(c, 260, 1320, T, s=0.5, mouth="open" if k < 1 else "smile", seed=874, arms=(-160, 40 + 30 * math.sin(T * 6)))
         CH.jag(c, 830, 1320, T, s=0.5, eyes="normal", mouth="flat", seed=875, tilt=-8)
+
+
+_cup = {}
+
+
+def cup_photo(w):
+    """The espresso cup from a CC0 photograph, cropped around the cup."""
+    if w not in _cup:
+        from PIL import Image
+        im = Image.open(mg.TEX + "/coffee.jpg").convert("RGB").crop((160, 5, 425, 312))
+        im = im.resize((w, int(w * im.size[1] / im.size[0])), Image.LANCZOS)
+        a = np.asarray(im)
+        _cup[w] = np.dstack([a, np.full(a.shape[:2], 255, np.uint8)])
+    return _cup[w]
+
+
+def cup_scrap(c, T, x, y, w, seed=0, rot=0.0):
+    img = cup_photo(w)
+    h = img.shape[0]
+    c.save()
+    c.translate(x, y)
+    c.rotate(rot)
+    mg.photo_scrap(c, img, 0, 0, mg.rect_pts(-w / 2 + 4, -h / 2 + 4, w - 8, h - 8), T, seed=seed, border=4)
+    c.restore()
 
 
 def s_m3(arr, t, d, T):
@@ -111,9 +136,7 @@ def s_m3(arr, t, d, T):
         mg.stroke(c, table, T, 881, width=8, closed=True)
         for x in (370, 710):
             mg.stroke(c, [(x, 1094), (x, 1290)], T, 882 + x, width=10)
-        cup = np.array([(500, 930), (580, 930), (570, 1060), (510, 1060)])
-        mg.fill(c, cup, T, WHITE, 885, off=(4, 3))
-        mg.stroke(c, cup, T, 886, width=7, closed=True)
+        cup_scrap(c, T, 540, 996, 112, seed=885)
         cy = 700 + 330 * drop
         cloth = np.array([(430, cy + 30), (470, cy - 110), (610, cy - 110), (650, cy + 30)]) if drop < 1 else \
             np.array([(450, 1060), (480, 900), (600, 900), (630, 1060)])
@@ -132,9 +155,7 @@ def s_m3(arr, t, d, T):
             if k < 0.9:
                 continue
             if who == "you":
-                mc = np.array([(bx - 30, 600), (bx + 30, 600), (bx + 24, 690), (bx - 24, 690)])
-                mg.fill(c, mc, T, WHITE, 897, off=(3, 3))
-                mg.stroke(c, mc, T, 898, width=6, closed=True)
+                cup_scrap(c, T, bx, 648, 64, seed=897)
                 mg.stroke(c, np.array([(bx - 80, 700), (bx - 55, 580), (bx + 55, 580), (bx + 80, 700)]), T, 899, width=5,
                           color=mg.RED, closed=True)
                 mg.note(c, "still there", bx, 745, size=38, color=(30, 130, 60))
@@ -143,9 +164,7 @@ def s_m3(arr, t, d, T):
             else:
                 import scenes_2 as B
                 mg.photo_scrap(c, B.earth_scrap(150, 1.3), bx - 60, 630, mg.circle_pts(bx - 60, 630, 70, 24), T, seed=901, border=4)
-                mc = np.array([(bx + 60, 590), (bx + 110, 600), (bx + 95, 675), (bx + 50, 665)])
-                mg.fill(c, mc, T, WHITE, 902, off=(3, 3))
-                mg.stroke(c, mc, T, 903, width=6, closed=True)
+                cup_scrap(c, T, bx + 82, 628, 58, seed=902, rot=25 * math.sin(T * 3))
                 mg.note(c, "in orbit?!", bx, 745, size=38, color=mg.RED)
         CH.human(c, 190, 1330, T, s=0.5, mouth="smile", seed=904, gaze=(1, -1), arms=(-30, 60))
         CH.jag(c, 880, 1330, T, s=0.5, eyes="spiral" if kt > 0 else "wide", mouth="o", seed=889, gaze=(-1, -1), tilt=6)
@@ -284,36 +303,205 @@ def s_m6(arr, t, d, T):
 
 # ------------------------------------------------------------------ finale
 
-def s_finale(arr, t, d, T):
-    """Frantic montage: earlier shots re-cut every few frames in clashing styles, as in the film's climax.
+def _card(c, T, text, col=mg.YELLOW, y=380):
+    mg.letters(c, text, CX, y, T, size=120, fname="bangers-400", color=col, ow=14, seed=hash(text) % 997, spacing=3)
 
-    Only light shots, no inversions, and cuts on fours, so the rush never becomes a strobe."""
-    import scenes_1 as A
-    import scenes_2 as B
-    pool = [(A.s_gold, S("h1") + 1.0, "cel"), (A.s_clock, C["half"] + 0.6, "pencil"), (A.s_agents, E("a2") - 0.3, "crayon"),
-            (A.s_robot, E("a3"), "pencil"), (A.s_levels, E("l4") + 1.5, "cel"), (B.s_score, E("g2") - 0.2, "crayon"),
-            (B.s_montage, C["montage"][5] + 0.2, "print"), (B.s_water2, E("g7") - 0.3, "crayon"),
-            (B.s_octo, E("c4") - 0.3, "print"), (s_m0, E("m0"), "cel"), (s_m3, E("m3") - 0.2, "cel"),
-            (s_m5, E("m5") - 0.2, "crayon"), (A.s_nobody, E("a4") - 0.3, "crayon"), (B.s_nature, E("g1") - 0.3, "print"),
-            (s_m2, E("m2") - 0.2, "pencil"), (B.s_notif, E("g4") - 0.2, "cel")]
-    blk = int(T * 24) // 4
-    rng = np.random.default_rng(blk)
-    last = int(np.random.default_rng(blk - 1).integers(len(pool)))
-    i = int(rng.integers(len(pool) - 1))
-    i = i + 1 if i >= last else i
-    fn, tt, st = pool[i]
-    mg.set_style(st)
-    fn(arr, 1.0, 2.0, tt + (T - C["finale"]) * 0.3)
-    fx = blk % 4
-    if fx == 1:
-        pal = np.array([mg.YELLOW, mg.PINK, mg.CYAN, (255, 250, 235)], np.uint8)
-        lum = arr[..., :3].mean(-1)
-        arr[..., :3] = pal[(lum / 64).astype(int).clip(0, 3)]
-    elif fx == 3:
-        mg.fisheye(arr, 0.7)
+
+def fut_doctor(arr, T):
+    fx3.painterly(arr, [(0, (200, 235, 255)), (1, (240, 250, 255))], seed=41, T=T, n=1800, jit=10)
     s = mg.surf(arr)
     with s as c:
-        mg.speed_lines(c, CX, 880, T, n=30, color=WHITE, r0=520, seed=blk)
+        mg.fill(c, mg.rect_pts(780, 520, 160, 160), T, WHITE, 1001, off=(4, 3))
+        mg.fill(c, mg.rect_pts(840, 540, 40, 120), T, mg.RED, 1002, off=(0, 0))
+        mg.fill(c, mg.rect_pts(800, 580, 120, 40), T, mg.RED, 1003, off=(0, 0))
+        hx, hy, R = CH.jag(c, 480, 1290, T, s=1.15, arms=(-60, 120), mouth="smile", seed=1004, body_col=WHITE, head_col=mg.CYAN)
+        mg.stroke(c, mg.bez((440, hy + R + 40), (480, hy + R + 170), (530, hy + R + 50)), T, 1005, width=9, color=(60, 60, 70))
+        c.drawCircle(480, hy + R + 150, 18, mg.paint((160, 160, 170)))
+        _card(c, T, "AI DOCTOR?")
+
+
+def fut_mars(arr, T):
+    mg.paper(arr, (255, 200, 120), 42)
+    fx3.footage(arr, "rocket.jpg", T, (T * 0.4) % 1, rect=(40, 560, W - 80, 660), z0=1.05, z1=1.3, fy=0.35)
+    s = mg.surf(arr)
+    with s as c:
+        _card(c, T, "MARS?", mg.RED)
+
+
+def fut_friends(arr, T):
+    fx3.painterly(arr, [(0, (255, 170, 120)), (0.6, (255, 220, 170)), (1, (250, 150, 170))], seed=43, T=T, n=1800, jit=10)
+    s = mg.surf(arr)
+    with s as c:
+        CH.human(c, 420, 1250, T, s=0.95, arms=(-150, 150), mouth="open", seed=1010, tilt=8)
+        CH.jag(c, 680, 1250, T, s=0.9, arms=(-150, 150), mouth="open", seed=1011, tilt=-8)
+        for k in range(5):
+            x, y = 300 + k * 120, 640 - 40 * math.sin(T * 6 + k)
+            mg.letters(c, "♥" if False else "<3", x, y, T, size=60, fname="bangers-400", color=mg.PINK, ow=6, seed=1012 + k)
+        _card(c, T, "FRIENDS?", mg.PINK)
+
+
+def fut_memory(arr, T):
+    mg.paper(arr, (230, 220, 255), 44)
+    s = mg.surf(arr)
+    import scenes_2 as B
+    with s as c:
+        book = mg.rect_pts(150, 560, 780, 480)
+        mg.fill(c, book, T, (255, 250, 240), 1020, off=(8, 6))
+        mg.stroke(c, book, T, 1021, width=8, closed=True)
+        mg.stroke(c, [(540, 560), (540, 1040)], T, 1022, width=6)
+        mg.photo_scrap(c, B.earth_scrap(200, 0.3), 330, 720, mg.rect_pts(240, 630, 180, 180), T, seed=1023, border=5)
+        cup_scrap(c, T, 750, 720, 150, seed=1024, rot=-6)
+        mg.note(c, "yesterday", 330, 880, size=44)
+        mg.note(c, "last year", 750, 880, size=44)
+        CH.jag(c, 540, 1330, T, s=0.6, mouth="smile", seed=1025, arms=(-150, 150))
+        _card(c, T, "REMEMBERS?", mg.PURPLE)
+
+
+def fut_science(arr, T):
+    mg.paper(arr, (255, 190, 220), 45)
+    fx3.footage(arr, "hubble.jpg", T, (T * 0.5) % 1, rect=(40, 560, W - 80, 660), z0=1.0, z1=1.5)
+    s = mg.surf(arr)
+    with s as c:
+        _card(c, T, "DISCOVERIES?", mg.BLUE)
+
+
+def fut_chores(arr, T):
+    mg.paper(arr, (210, 250, 220), 46)
+    s = mg.surf(arr)
+    with s as c:
+        hand = CH.robot(c, 380, 1280, T, s=1.3, arm=0.3 + 0.3 * math.sin(T * 8), seed=1030)
+        shirt = np.array([(-90, -60), (-40, -80), (40, -80), (90, -60), (70, -20), (45, -30), (45, 70), (-45, 70), (-45, -30), (-70, -20)])
+        mg.fill(c, shirt + (hand[0] + 90, hand[1] + 40), T, mg.RED, 1031, off=(4, 3))
+        mg.stroke(c, shirt + (hand[0] + 90, hand[1] + 40), T, 1032, width=6, closed=True)
+        _card(c, T, "CHORES?", mg.GREEN)
+
+
+def fut_honest(arr, T):
+    mg.burst(arr, CX, 900, T, colors=[(255, 240, 200), (255, 220, 150)], rays=12, spin=0.6)
+    s = mg.surf(arr)
+    with s as c:
+        sign = mg.rect_pts(250, 560, 580, 220)
+        mg.fill(c, sign, T, WHITE, 1040, off=(6, 4))
+        mg.stroke(c, sign, T, 1041, width=8, closed=True)
+        mg.letters(c, "I DON'T KNOW", CX, 700, T, size=86, fname="bangers-400", color=mg.PURPLE, outline=None, seed=1042)
+        mg.stroke(c, [(540, 780), (540, 900)], T, 1043, width=10)
+        CH.jag(c, 540, 1320, T, s=0.95, arms=(-170, 170), mouth="smile", seed=1044)
+        _card(c, T, "HONEST?", mg.PURPLE)
+
+
+def fut_giant(arr, T):
+    mg.swirl(arr, T, colors=[mg.PINK, mg.ORANGE, mg.YELLOW, (255, 240, 220)], scale=1.2)
+    s = mg.surf(arr)
+    with s as c:
+        for k in range(12):
+            bw, bh = 70 + (k * 37) % 50, 120 + (k * 53) % 160
+            b = mg.rect_pts(k * 92, 1300 - bh, bw, bh)
+            mg.fill(c, b, T, (60, 60, 90), 1050 + k, off=(0, 0))
+            mg.stroke(c, b, T, 1062 + k, width=5, closed=True)
+        CH.jag(c, 540, 1320, T, s=2.2, arms=(-120, 120), mouth="o", eyes="wide", seed=1075)
+        _card(c, T, "SUPER?", mg.RED, y=330)
+    mg.fisheye(arr, 0.55)
+
+
+FUTURES = [fut_doctor, fut_mars, fut_friends, fut_memory, fut_science, fut_chores, fut_honest, fut_giant]
+_tex = {}
+
+
+def _thumb(fn, T):
+    """A small render of a future, for the tunnel walls (re-drawn on fours so it keeps boiling)."""
+    k = (fn.__name__, mg.step(T) // 2 % 3)
+    if k not in _tex:
+        a = mg.new()
+        prev = mg.STYLE
+        mg.set_style(["cel", "crayon", "pencil"][hash(fn.__name__) % 3])
+        fn(a, T)
+        mg.set_style(prev)
+        from PIL import Image
+        small = np.asarray(Image.fromarray(a[..., :3]).resize((270, 480), Image.BILINEAR))
+        _tex[k] = skia.Image.fromarray(np.ascontiguousarray(np.dstack([small, np.full(small.shape[:2], 255, np.uint8)])),
+                                       colorType=skia.kRGBA_8888_ColorType)
+    return _tex[k]
+
+
+def tunnel(arr, T, u):
+    """Flat-shaded CG tunnel with the futures pinned to its walls; the camera flies forward."""
+    mg.swirl(arr, T * 1.4, colors=[mg.PURPLE, mg.PINK, mg.ORANGE, mg.YELLOW], scale=0.8, cx=CX, cy=900)
+    zc = u * 14.0
+    cam = fx3.Cam((0, 0, -zc), (0, 0, -zc - 5), fov=70, cy=900)
+    s = mg.surf(arr)
+    with s as c:
+        for ring in range(12, -1, -1):
+            z = -(int(zc / 2.2) * 2.2 + ring * 2.2)
+            pts = [cam.project(p) for p in ((-2.2, -3.2, z), (2.2, -3.2, z), (2.2, 3.2, z), (-2.2, 3.2, z))]
+            if min(zz for _, zz in pts) < 0.2:
+                continue
+            mg.stroke(c, np.array([p for p, _ in pts]), T, 1100 + ring, width=6, closed=True, color=WHITE, double=False)
+        panels = []
+        for i in range(16):
+            z = -(3.0 + i * 1.9)
+            side = (-1, 1)[i % 2]
+            quad = [(side * 2.2, -1.2, z - 0.8), (side * 2.2, -1.2, z + 0.8), (side * 2.2, 1.6, z + 0.8), (side * 2.2, 1.6, z - 0.8)]
+            if side > 0:
+                quad = [quad[1], quad[0], quad[3], quad[2]]
+            pr = [cam.project(p) for p in quad]
+            if min(zz for _, zz in pr) < 0.3:
+                continue
+            panels.append((np.mean([zz for _, zz in pr]), i, [p for p, _ in pr]))
+        for _, i, pp in sorted(panels, key=lambda x: -x[0]):
+            img = _thumb(FUTURES[i % len(FUTURES)], T)
+            m = skia.Matrix()
+            src = [skia.Point(0, 480), skia.Point(270, 480), skia.Point(270, 0), skia.Point(0, 0)]
+            dst = [skia.Point(float(p[0]), float(p[1])) for p in pp]
+            if not m.setPolyToPoly(src, dst):
+                continue
+            c.save()
+            c.concat(m)
+            c.drawImage(img, 0, 0)
+            c.restore()
+            c.drawPath(mg.path_of(np.array(pp), True), mg.paint(INK, stroke=6))
+        k = 0.35 + 1.1 * u
+        CH.jag(c, CX, 1000 + 500 * k, T, s=k, arms=(-165, 165), eyes="wide", mouth="open", seed=1120, legs=0.6,
+               squash=0.1 * math.sin(T * 20))
+
+
+def s_finale(arr, t, d, T):
+    """Mind Game's climax rush: a CG flight past possible futures, then cuts that get faster into the silence.
+
+    Only light frames and no inversions, so the rush never becomes a strobe."""
+    import scenes_1 as A
+    import scenes_2 as B
+    t_tun = 2.3
+    if t < t_tun:
+        mg.set_style("cel")
+        tunnel(arr, T, t / t_tun)
+        return
+    tt = t - t_tun
+    fr = int(tt * 24)
+    # cut length tightens from 6 frames to 3
+    edges, f, L = [], 0, 6.0
+    while f <= fr:
+        edges.append(f)
+        f += int(round(L))
+        L = max(3.0, L - 0.35)
+    blk = len(edges) - 1
+    pool = [(fn, "cel") for fn in FUTURES] + [
+        (lambda a, T_: A.s_hook(a, 1.0, 2.0, 2.5), "cel"), (lambda a, T_: A.s_levels(a, 1.0, 2.0, C["stamps"][4] + 0.8), "print"),
+        (lambda a, T_: B.s_c2(a, 3.0, 6.0, E("c2") - 0.3), "print"), (lambda a, T_: s_m3(a, 1.0, 2.0, E("m3") - 0.2), "cel"),
+        (lambda a, T_: B.s_water2(a, 1.0, 2.0, E("g7") - 0.3), "crayon"), (lambda a, T_: A.s_nobody(a, 1.0, 2.0, E("a4") - 0.3), "crayon")]
+    nf = len(FUTURES)
+    fut = list(np.random.default_rng(5).permutation(nf)) + list(np.random.default_rng(6).permutation(nf))
+    old_ = list(nf + np.random.default_rng(7).permutation(len(pool) - nf))
+    order = []
+    while fut or old_:                                   # two futures, then one callback to an earlier shot
+        order += [fut.pop(0) for _ in range(min(2, len(fut)))] + ([old_.pop(0)] if old_ else [])
+    fn, st = pool[order[blk % len(order)]]
+    mg.set_style(["cel", "crayon", "pencil", "print"][blk % 4] if fn in FUTURES else st)
+    fn(arr, T)
+    if blk % 3 == 2 and fn not in FUTURES:
+        mg.fisheye(arr, 0.6)
+    s = mg.surf(arr)
+    with s as c:
+        mg.speed_lines(c, CX, 880, T, n=24, color=WHITE, r0=560, seed=blk)
 
 
 def s_final(arr, t, d, T):
@@ -333,28 +521,31 @@ def s_final(arr, t, d, T):
         CH.jag(c, 668, top + 8, T, s=0.32, eyes="normal", mouth="smile", seed=991, bob=False)
 
 
-SOURCES = ["Stanford HAI, AI Index 2026", "Nature Comment, Feb 2026 (UC San Diego)", "Hendrycks et al., A Definition of AGI (2025)",
+SOURCES = ["Stanford HAI, AI Index 2026 (incl. ClockBench, OSWorld)", "IMO 2025 gold-level results (Google DeepMind, OpenAI)",
+           "Nature Comment, Feb 2026 (UC San Diego)", "Hendrycks et al., A Definition of AGI (2025)",
            "Google DeepMind, Levels of AGI (2023)", "Butlin, Long et al., Consciousness in AI (2023)",
            "METR, AI time horizons (2025-26)", "OpenAI, Why Language Models Hallucinate (2025)"]
+CREDITS = ["Style homage to Mind Game (2004, dir. Masaaki Yuasa)",
+           "Photos: NASA (Blue Marble, Hubble), SpaceX launch (public domain),",
+           "clock, espresso and gravel (CC0, via scikit-image)", "Music, voices and eye/mouth photos synthesized"]
 
 
 def s_end(arr, t, d, T):
     mg.paper(arr, (25, 22, 30), 24)
     s = mg.surf(arr)
     with s as c:
-        mg.letters(c, "JAGGED", CX, 820, T, size=230, fname="bangers-400", color=mg.YELLOW, ow=18, seed=995, spacing=6)
-        mg.letters(c, "WHAT HAS ACTUALLY HAPPENED IN AI", CX, 930, T, size=50, fname="rubik-800", color=WHITE, outline=None, seed=996, jig=0.5, rot=0.3)
-        f = mg.font("rubik-500", 30)
-        mg.letters(c, "SOURCES", CX, 1040, T, size=36, fname="rubik-800", color=mg.YELLOW, outline=None, seed=997, jig=0.5, rot=0.3)
+        mg.letters(c, "JAGGED", CX, 640, T, size=200, fname="bangers-400", color=mg.YELLOW, ow=16, seed=995, spacing=6)
+        mg.letters(c, "WHAT HAS ACTUALLY HAPPENED IN AI", CX, 740, T, size=48, fname="rubik-800", color=WHITE, outline=None, seed=996, jig=0.5, rot=0.3)
+        f = mg.font("rubik-500", 31)
+        mg.letters(c, "SOURCES", CX, 850, T, size=38, fname="rubik-800", color=mg.YELLOW, outline=None, seed=997, jig=0.5, rot=0.3)
         for i, ln in enumerate(SOURCES):
-            c.drawString(ln, CX - f.measureText(ln) / 2, 1095 + i * 40, f, mg.paint((215, 215, 225)))
-        f2 = mg.font("rubik-500", 26)
-        for i, ln in enumerate(["Style homage to Mind Game (2004, dir. Masaaki Yuasa)", "Earth imagery: NASA Blue Marble",
-                                "Music and voice synthesized"]):
-            c.drawString(ln, CX - f2.measureText(ln) / 2, 1410 + i * 36, f2, mg.paint((170, 170, 180)))
+            c.drawString(ln, CX - f.measureText(ln) / 2, 905 + i * 44, f, mg.paint((225, 225, 235)))
+        f2 = mg.font("rubik-500", 27)
+        for i, ln in enumerate(CREDITS):
+            c.drawString(ln, CX - f2.measureText(ln) / 2, 1300 + i * 38, f2, mg.paint((170, 170, 185)))
 
 
-def insert_face(who, bg, text, t0):
+def insert_face(who, bg, text, t0, mouth=None):
     """Returns a shot function: a huge, boiling close-up of a character with a shouted word."""
     def shot(arr, t, dd, T):
         if bg == "burst":
@@ -364,19 +555,40 @@ def insert_face(who, bg, text, t0):
         else:
             mg.paper(arr, bg, 25)
         s = mg.surf(arr)
+        u = T - t0
+        sq = 0.22 * math.exp(-7 * u) * math.cos(28 * u)
         with s as c:
             dx, dy = mg.shake(T, 14, 900)
             c.save()
             c.translate(dx, dy)
             mg.speed_lines(c, CX, 820, T, n=40, color=WHITE, r0=520, seed=901)
             if who == "jag":
-                CH.jag(c, CX, 2050, T, s=3.3, eyes="spiral" if text == "?!" else "wide", mouth="o" if text != "!!" else "open",
-                       arms=(-150, 150), seed=902)
+                CH.jag(c, CX, 2050, T, s=3.3, eyes="spiral" if text == "?!" else "wide", mouth=mouth or ("o" if text != "!!" else "open"),
+                       arms=(-150, 150), seed=902, squash=sq)
             else:
-                CH.human(c, CX, 2150, T, s=3.0, mouth="open", eyes="wide", seed=903, arms=(-160, 160))
+                CH.human(c, CX, 2150, T, s=3.0, mouth=mouth or "open", eyes="wide", seed=903, arms=(-160, 160), squash=sq)
             c.restore()
             if text:
-                mg.letters(c, text, CX, 470, T, size=220, fname="bangers-400", color=mg.YELLOW, ow=18, seed=904,
+                mg.letters(c, text, CX, 450, T, size=200, fname="bangers-400", color=mg.YELLOW, ow=18, seed=904,
                            scale=mg.pop(T, t0, 0.2) or 0.001)
     shot.__name__ = f"insert_{who}"
+    return shot
+
+
+def insert_talk(key):
+    """Jag in extreme close-up, saying its line with a photographic mouth (the film's signature device)."""
+    words = TL.lines[key]["words"]
+    spans = [(a - 0.02, b - 0.04) for w, a, b in words]
+
+    def shot(arr, t, dd, T):
+        arr[..., :3] = mg.paper_tex((20, 18, 30), 26)
+        s = mg.surf(arr)
+        with s as c:
+            o = 0.0
+            for a, b in spans:
+                if a <= T < b:
+                    ph = (T - a) / max(0.05, b - a)
+                    o = 0.25 + 0.7 * math.sin(ph * math.pi) * (0.7 + 0.3 * ((mg.step(T) % 2)))
+            CH.jag(c, CX, 1990, T, s=3.1, eyes="normal", gaze=(0, 0), mouth="flat", talk=o, arms=(-20, 20), seed=906, bob=False)
+    shot.__name__ = "insert_talk"
     return shot

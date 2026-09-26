@@ -13,7 +13,7 @@ S, E, Wd = TL.s, TL.e, TL.word
 OCTO = Wd("c4", "octopus") - 0.35
 
 SHOTS = [
-    (0.0, S("h2"), A.s_gold), (S("h2"), S("h3"), A.s_clock), (S("h3"), S("a1"), A.s_title),
+    (0.0, S("h2"), A.s_hook), (S("h2"), S("h3"), A.s_clock), (S("h3"), S("a1"), A.s_title),
     (S("a1"), S("a2"), A.s_gpqa), (S("a2"), S("a3"), A.s_agents), (S("a3"), S("a4"), A.s_robot),
     (S("a4"), S("a5"), A.s_nobody), (S("a5"), S("l1"), A.s_agiq), (S("l1"), S("g1"), A.s_levels),
     (S("g1"), S("g2"), B.s_nature), (S("g2"), S("g3"), B.s_score), (S("g3"), S("g4"), B.s_deepmind),
@@ -27,33 +27,44 @@ SHOTS = [
 ]
 # big-face cutaways inserted over the main shots (start, end, shot)
 INSERTS = [
+    (S("a3") + 1.8, S("a3") + 2.45, D.insert_face("jag", (255, 200, 90), "OOPS!", S("a3") + 1.8)),
     (Wd("a4", "then"), Wd("a4", "then") + 0.75, D.insert_face("jag", "swirl", "?!", Wd("a4", "then"))),
     (S("g1"), S("g1") + 1.2, D.insert_face("jag", "burst", "WAIT!", S("g1"))),
-    (S("m6"), S("m6") + 0.8, D.insert_face("human", (255, 214, 60), "HMM...", S("m6"))),
+    (S("c3j") - 0.05, E("c3j") + 0.12, D.insert_talk("c3j")),
+    (Wd("m5", "touched") - 0.1, Wd("m5", "touched") + 0.75, D.insert_face("human", (255, 150, 120), "OW!", Wd("m5", "touched") - 0.1)),
+    (S("m6"), S("m6") + 0.8, D.insert_face("human", (255, 214, 60), "HMM...", S("m6"), mouth="flat")),
 ]
 # Mind Game switches drawing method from scene to scene; every shot gets its own
 STYLE_OF = {
-    A.s_gold: "cel", A.s_clock: "pencil", A.s_title: "print", A.s_gpqa: "crayon", A.s_agents: "cel", A.s_robot: "pencil",
-    A.s_nobody: "crayon", A.s_agiq: "print", A.s_levels: "cel", B.s_nature: "print", B.s_score: "crayon",
+    A.s_hook: "cel", A.s_gold: "cel", A.s_clock: "pencil", A.s_title: "print", A.s_gpqa: "crayon", A.s_agents: "cel", A.s_robot: "pencil",
+    A.s_nobody: "crayon", A.s_agiq: "print", A.s_levels: "print", B.s_nature: "print", B.s_score: "crayon",
     B.s_deepmind: "pencil", B.s_notif: "cel", B.s_water: "crayon", B.s_montage: "print", B.s_water2: "crayon",
     B.s_c1: "print", B.s_c2: "print", B.s_c3: "print", B.s_octo: "crayon", B.s_c5: "print",
     D.s_m0: "cel", D.s_m1: "pencil", D.s_m2: "crayon", D.s_m3: "cel", D.s_m4: "pencil", D.s_m5: "crayon", D.s_m6: "print",
     D.s_final: "crayon", D.s_end: "print",
 }
-CALM = {B.s_c1, B.s_c2, B.s_c3, B.s_c5, D.s_final, D.s_end, D.s_finale}
+CALM = {B.s_c1, B.s_c2, B.s_c3, B.s_c5, D.s_final, D.s_end, D.s_finale, A.s_levels}
 NO_DRIFT = {B.s_montage, D.s_finale, D.s_end, A.s_title, A.s_agiq, A.s_levels}
-NOCAP_KEYS = {"g6", "c3j"}
+NOCAP_KEYS = {"g6"}
 CAPS = [c for c in TL.captions() if c[3] not in NOCAP_KEYS]
 
 
+GAP = 1.55          # word spacing, in spaces: the heavy outline must never fill the gap between words
+
+
+def line_w(ln, f):
+    words = ln.split()
+    return sum(f.measureText(w) for w in words) + f.measureText(" ") * GAP * (len(words) - 1)
+
+
 def balanced(s, f, maxw):
-    if f.measureText(s) <= maxw:
+    if line_w(s, f) <= maxw:
         return [s]
     words = s.split()
     best, bi = None, 1
     for i in range(1, len(words)):
         a, b = " ".join(words[:i]), " ".join(words[i:])
-        wa, wb = f.measureText(a), f.measureText(b)
+        wa, wb = line_w(a, f), line_w(b, f)
         cost = max(wa, wb) + (400 if max(wa, wb) > maxw else 0)
         if best is None or cost < best:
             best, bi = cost, i
@@ -65,15 +76,19 @@ def draw_caption(arr, T):
     if not s or T >= C["end_card"]:
         return
     f = mg.font("rubik-900", 60)
+    sp = f.measureText(" ") * GAP
     lines = balanced(s, f, 840)
     surf = mg.surf(arr)
     with surf as c:
         y = mg.CAP_Y - (len(lines) - 1) * 10
         for ln in lines:
-            w = f.measureText(ln)
-            c.drawString(ln, mg.CX - w / 2, y, f, mg.paint((0, 0, 0), 1.0, stroke=10))
-            c.drawString(ln, mg.CX - w / 2, y, f, mg.paint((255, 255, 255)))
-            y += 70
+            x = mg.CX - line_w(ln, f) / 2
+            for w in ln.split():
+                c.drawString(w, x + 3, y + 5, f, mg.paint((0, 0, 0), 0.55, blur=5))
+                c.drawString(w, x, y, f, mg.paint((0, 0, 0), 1.0, stroke=8))
+                c.drawString(w, x, y, f, mg.paint((255, 255, 255)))
+                x += f.measureText(w) + sp
+            y += 72
 
 
 def flash(arr, T, a):

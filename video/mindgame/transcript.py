@@ -21,9 +21,9 @@ def main():
     out += ["", "SOUND CUES"]
     for k, v in C.items():
         out.append(f"  {k}: " + (", ".join(f"{x:.2f}" for x in v) if isinstance(v, list) else f"{v:.2f}"))
-    out += ["  band silenced: " + ", ".join(f"{a:.2f}-{b:.2f}" for a, b in
-                                          ((C["wait_stop"], C["wait"] + 0.6), (C["silence"], C["missing"] - 0.01),
-                                           (C["final_silence"], C["end_card"] - 0.01))),
+    from audio import dead_stops
+    out += ["  band cut dead: " + ", ".join(f"{a:.2f}-{b:.2f}" for a, b in dead_stops()),
+            "  sparse, quiet band (about -5 dB, low density) through the rest of the consciousness section",
             "", "SHOTS (start-end, shot, art style)"]
     for a, b, fn in shots.SHOTS:
         out.append(f"{a:7.2f}-{b:7.2f}  {fn.__name__:12s} {shots.STYLE_OF.get(fn, 'print')}")
@@ -32,7 +32,9 @@ def main():
             f"{Wd('g2', 'GPT-4') - 0.1:7.2f}  s_score: yardstick (well-educated adult, 10 abilities) -> bar chart",
             f"{Wd('c5', 'And') - 0.1:7.2f}  s_c5: consciousness checklist -> conscious-o-meter",
             f"{Wd('m4', 'The') - 0.05:7.2f}  s_m4: ten-year road -> METR time-horizon chart",
-            f"{C['finale']:7.2f}  s_finale: re-cuts of earlier shots every 4 frames (light shots only, no inversions)"]
+            f"{C['stamps'][0] - 1.5:7.2f}  s_levels: 3D staircase (flat-shaded CG, camera orbit); at {C['separate']:.2f} consciousness splits off onto its own axis",
+            f"{C['finale']:7.2f}  s_finale: 2.3 s CG tunnel flight past 'possible futures', then cuts tightening from 6 to 3 frames",
+            "          (8 new futures vignettes interleaved with callbacks; light frames only, no inversions)"]
     out += ["", "BIG-FACE INSERTS"]
     for a, b, fn in shots.INSERTS:
         out.append(f"{a:7.2f}-{b:7.2f}  {fn.__name__}")
