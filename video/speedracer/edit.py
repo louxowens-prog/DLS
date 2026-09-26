@@ -14,7 +14,8 @@ S, E, W = TL.s, TL.e, TL.word
 
 EDIT = [
     # (start, shot name, transition in)
-    (0.0, "grid", "cut"),
+    (0.0, "open", "cut"),
+    (S("a0") - 0.2, "launch", "cut"),
     (S("h2") - 0.3, "race", "cut"),
     (W("h2", "There"), "two", "split"),
     (S("d1"), "finish", "head:host"),

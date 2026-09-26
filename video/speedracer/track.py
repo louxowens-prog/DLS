@@ -92,6 +92,7 @@ def road_side(c, T, y0=1180, y1=1330, speed=1.0):
         c.drawRect(skia.Rect.MakeXYWH(x - off + 60, y0 - 22, 60, 22), paint(sr.RED))
     c.drawRect(skia.Rect.MakeXYWH(0, y1, W, 30), paint(INK))
     c.drawRect(skia.Rect.MakeXYWH(0, y0 + 2, W, 10), paint(WHITE, 0.55, blur=4))
+    c.drawRect(skia.Rect.MakeXYWH(0, y0 + (y1 - y0) * 0.18, W, (y1 - y0) * 0.16), paint(WHITE, 0.18, blur=6))
 
 
 def road_front(c, T, speed=1.0, horizon=760, curve=0.0, width=2.6, y_bottom=H):
@@ -114,6 +115,8 @@ def road_front(c, T, speed=1.0, horizon=760, curve=0.0, width=2.6, y_bottom=H):
         for side in (-1, 1):
             kc = WHITE if int((z1 - T * speed * 14) // 1.2) % 2 else sr.RED
             c.drawPath(path([(xc0 + side * h0, y0), (xc0 + side * h0 * 1.08, y0), (xc1 + side * h1 * 1.08, y1), (xc1 + side * h1, y1)]), paint(kc))
+    sheen = sr.path([(CX - W * width / 2 * 0.95, y_bottom), (CX - W * width / 2 * 0.35, y_bottom), (CX + 6, horizon + 8), (CX - 6, horizon + 8)])
+    c.drawPath(sheen, paint(WHITE, 0.16))
     for k in range(8):                                             # neon poles
         z = 1.2 + ((k * 3.0 - T * speed * 14) % 24)
         y = horizon + (y_bottom - horizon) * (1 / z) ** 0.9

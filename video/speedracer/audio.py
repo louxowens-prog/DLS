@@ -64,11 +64,11 @@ def short(sig, dur):
 
 def energy_curve():
     E = lambda k: TL.s(k)
-    pts = [(0, 0.0), (C["go"] - 0.05, 0.0), (C["go"] + 1.0, 0.0), (C["go"] + 1.02, 1.0), (E("h2"), 0.8), (E("d1"), 0.5),
+    pts = [(0, 0.9), (1.0, 0.6), (C["go"] - 0.05, 0.75), (C["go"], 0.0), (C["go"] + 1.2, 0.0), (C["go"] + 1.22, 1.0), (E("h2"), 0.8), (E("d1"), 0.5),
            (E("d2"), 0.55), (E("d4"), 0.45), (E("d5"), 0.6), (E("d6"), 0.8), (E("d7"), 0.45), (E("e1"), 0.5), (E("e2"), 0.6),
            (E("a1"), 0.7), (E("t2"), 1.0), (E("t3"), 0.6), (E("t4"), 0.55), (E("t6"), 0.45), (E("u1"), 0.5), (E("u2"), 0.8),
-           (E("u3"), 0.55), (E("a2"), 0.8), (E("v2"), 0.75), (C["crash"] - 0.02, 0.9), (C["crash"], 0.0), (C["crash"] + 0.7, 0.0),
-           (C["crash"] + 0.72, 0.7), (E("v4"), 0.5), (E("w1"), 0.6), (E("a3"), 0.4), (E("w2"), 0.3), (E("f1"), 1.0),
+           (E("u3"), 0.55), (E("a2"), 0.8), (E("v2"), 0.75), (C["crash"] - 0.02, 0.9), (C["crash"], 0.0), (C["crash"] + 1.0, 0.0),
+           (C["crash"] + 1.02, 0.7), (E("v4"), 0.5), (E("w1"), 0.6), (E("a3"), 0.4), (E("w2"), 0.3), (E("f1"), 1.0),
            (C["end_card"], 1.0), (C["end_card"] + 0.4, 0.0), (C["end"], 0.0)]
     xs, ys = zip(*sorted(pts))
     return lambda t: float(np.interp(t, xs, ys))
@@ -142,26 +142,24 @@ def build():
     backgrounds(band, E)
 
     # ---- the grid: revs, lights, the launch in slow motion, then everyone goes
-    rpm = lambda x: 1400 + 1300 * (0.5 + 0.5 * np.sin(x * 3.1)) ** 3 + 700 * max(0, x - 2.5)
-    e = B.engine(C["go"] + 0.2, rpm, seed=1)
-    fx.add(e, 0.0, 0.08, pan=0.35)
-    fx.add(B.engine(C["go"] + 0.2, lambda x: rpm(x + 0.7) * 1.1, seed=2), 0.0, 0.06, pan=0.65)
+    fx.add(B.chord_hit([58, 65, 70, 74, 77, 82], dur=0.5, seed=1, doit=2), 0.0, 0.9)          # frame one: the band hits
+    fx.add(short(J.crash(seed=2), 0.6), 0.0, 0.6)
+    fx.add(J.kick(seed=3), 0.0, 1.0)
+    for k, t in enumerate((0.9, 2.6)):
+        fx.add(B.passby(1.3, seed=4 + k), t, 0.16)
     crowd_bus.add(B.crowd(T, seed=4), 0.0, 1.0)
-    for k, t in enumerate((C["go"] - 2.4, C["go"] - 1.6, C["go"] - 0.8)):
-        fx.add(J.ping() if hasattr(J, "ping") else J.tick(), t, 0.35)
-    for k in range(10):                                                      # snare roll into the launch
-        fx.add(J.snare(seed=200 + k, tight=0.6), C["go"] - 1.0 + k * 0.1, 0.07 + 0.03 * k)
-    fx.add(B.riser(1.0, seed=3), C["go"] - 1.0, 0.18)
+    for k in range(8):                                                       # snare roll into the launch
+        fx.add(J.snare(seed=200 + k, tight=0.6), C["go"] - 0.8 + k * 0.1, 0.07 + 0.03 * k)
     fx.add(B.chord_hit([58, 65, 70, 74, 77, 82], dur=0.9, seed=7), C["go"], 0.9)
-    fx.add(J.crash(seed=8), C["go"], 0.7)
+    fx.add(short(J.crash(seed=8), 0.8), C["go"], 0.6)
     fx.add(J.kick(seed=9), C["go"], 1.0)
-    slow = B._lp(np.random.default_rng(10).normal(0, 1, int(1.0 * SR)), 260) * np.linspace(0.2, 1, int(1.0 * SR))
+    slow = B._lp(np.random.default_rng(10).normal(0, 1, int(1.2 * SR)), 260) * np.linspace(0.2, 1, int(1.2 * SR))
     fx.add(slow * 0.7, C["go"] + 0.05, 0.6)                                  # the slow-motion 'breath'
-    fx.add(B.whoosh(0.35, up=True, seed=13), C["go"] + 0.7, 0.6)
-    fx.add(B.chord_hit([70, 74, 77, 82], dur=0.25, seed=11), C["go"] + 1.0, 0.9)
-    fx.add(short(J.crash(seed=12), 0.7), C["go"] + 1.0, 0.7)
-    fx.add(J.kick(seed=14), C["go"] + 1.0, 1.0)
-    fx.add(B.passby(0.8, seed=20), C["go"] + 0.95, 0.4)
+    fx.add(B.whoosh(0.4, up=True, seed=13), C["go"] + 0.85, 0.7)
+    fx.add(B.chord_hit([70, 74, 77, 82], dur=0.3, seed=11), C["go"] + 1.2, 1.0)
+    fx.add(short(J.crash(seed=12), 0.9), C["go"] + 1.2, 0.8)
+    fx.add(J.kick(seed=14), C["go"] + 1.2, 1.0)
+    fx.add(B.passby(0.8, seed=20), C["go"] + 1.15, 0.45)
 
     # ---- every transition: a stab, drums, and a whoosh on wipes
     for i, (t, name, tr) in enumerate(EDIT[1:], 1):
@@ -183,6 +181,8 @@ def build():
     for k, key in enumerate(("a0", "a1", "a2", "a3")):
         if key != "a0":
             fanfare(fx, TL.s(key) - 0.02, seed=400 + 10 * k)
+    fx.add(B.chord_hit([58, 65, 70, 74, 77, 82], dur=0.6, seed=450, doit=2), TL.e("a1") + 0.02, 0.9)
+    fx.add(short(J.crash(seed=451), 0.6), TL.e("a1") + 0.02, 0.6)
     # 'done!' moments get the crowd
     for key in ("d2", "d3"):
         t = TL.e(key) + 0.02                                              # right after "Done."
@@ -217,19 +217,20 @@ def build():
     fx.add(B.passby(1.8, seed=800), TL.s("v2") + 0.4, 0.18)
     fx.add(B.engine(2.0, lambda x: 2600 + 1800 * x, seed=801), C["crash"] - 2.0, 0.1)
     fx.add(B.screech(0.9, seed=802), C["crash"] - 0.8, 0.2)
-    fx.add(B.smash(0.6, seed=803), C["crash"], 0.32)
+    fx.add(B.smash(0.7, seed=803), C["crash"], 0.5)
     fx.add(short(J.crash(seed=804), 0.5), C["crash"], 0.5)
-    fx.add(B.chord_hit([58, 65, 70, 74, 77], dur=0.3, seed=805), C["crash"] + 0.7, 0.8)
+    fx.add(B.chord_hit([58, 65, 70, 74, 77], dur=0.3, seed=805), C["crash"] + 1.0, 0.9)
+    fx.add(B.whoosh(0.4, up=True, seed=806), C["crash"] + 0.65, 0.5)
 
     # ---- the old joke: ba-dum-tss
     fx.add(B.rimshot(), TL.e("w2") + 0.05, 0.8)
 
     # ---- the finish: a shout chorus, then one last hit on the end card
-    f0 = TL.s("f1") - 0.1
+    f0 = TL.s("f1") - 1.25
     riff = [(0, [70, 74, 77]), (0.5, [72, 75, 79]), (1.0, [74, 77, 82]), (1.75, [70, 74, 77, 82]), (2.5, [75, 79, 82]),
             (3.0, [74, 77, 81]), (3.5, [72, 76, 79]), (4.0, [70, 74, 77, 82])]
     for k, (beat, notes) in enumerate(riff):
-        fx.add(B.chord_hit(notes, dur=0.3 if k < 7 else 0.9, seed=900 + k, doit=3 if k == 7 else 0), f0 + beat * B.BEAT * 1.0, 0.12)
+        fx.add(B.chord_hit(notes, dur=0.3 if k < 7 else 0.9, seed=900 + k, doit=3 if k == 7 else 0), f0 + beat * B.BEAT * 1.0, 0.55 if f0 + beat * B.BEAT < TL.s("f1") - 0.1 else 0.14)
     crowd_bus.add(B.crowd(4.0, seed=901), f0, 0.8)
     fx.add(B.chord_hit([58, 65, 70, 74, 77, 82], dur=1.4, seed=910, doit=2), C["end_card"], 0.9)
     fx.add(J.crash(seed=911), C["end_card"], 0.7)
@@ -276,15 +277,15 @@ def build():
     r = int(0.08 * SR)
     swell = 1 + (db(7.0) - 1) * (1 - np.convolve(talk, np.ones(r) / r, mode="same"))
     gate = np.ones(N)
-    gate[int(C["crash"] * SR): int((C["crash"] + 0.7) * SR)] = 0.0                  # the slow-motion crash: band cut dead
-    gate[int(C["go"] * SR + 0.05 * SR): int((C["go"] + 1.0) * SR)] *= 0.1
+    gate[int(C["crash"] * SR): int((C["crash"] + 1.0) * SR)] = 0.0                  # the slow-motion crash: band cut dead
+    gate[int(C["go"] * SR + 0.05 * SR): int((C["go"] + 1.2) * SR)] *= 0.1
     gate = np.convolve(gate, np.ones(int(0.004 * SR)) / int(0.004 * SR), mode="same")
     crowd_env = np.full(N, db(-22))
     for key in ("a0", "a1", "a2", "a3"):
         i0, i1 = int((TL.s(key) - 0.4) * SR), int((TL.e(key) + 0.9) * SR)
         crowd_env[i0:i1] = db(-9)
     crowd_env[: int(TL.e("h1") * SR)] = db(-18)
-    crowd_env[int(C["go"] * SR): int((C["go"] + 2.0) * SR)] = db(-4)
+    crowd_env[int((C["go"] + 1.2) * SR): int((C["go"] + 2.2) * SR)] = db(-2)
     crowd_env[int(TL.e("f1") * SR):] = db(-8)
     crowd_env = np.convolve(crowd_env, np.ones(SR // 3) / (SR // 3), mode="same")
 

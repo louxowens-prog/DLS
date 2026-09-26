@@ -28,7 +28,7 @@ def s_engine(arr, t, d, T):
         c.translate(CX, 880)
         c.scale(z, z)
         c.translate(-CX, -880)
-        I.engine_block(c, CX, 900, 1.9, T)
+        I.engine_block(c, CX, 930, 1.95, T)
         rng = np.random.default_rng(int(T * 12))
         for k in range(14):
             a = rng.uniform(0, 2 * math.pi)
@@ -37,8 +37,8 @@ def s_engine(arr, t, d, T):
                        paint(LEMON, 0.8, stroke=4))
         c.restore()
         sr.flare(c, 760, 650, 0.9, T, tint=PINK)
-        sr.race_text(c, "ANSWER 2", CX, 380, 110, fill=LEMON)
-        sr.lower_third(c, T, S("e1") + 0.2, E("e1") + 0.3, "TECHNOLOGY", "a truly general learner", color=CYAN, y=1230)
+        sr.race_text(c, "ANSWER 2", CX, 360, 110, fill=LEMON)
+        sr.race_text(c, "TECHNOLOGY", CX, 470, 80, fill=CYAN)
 
 
 def s_learner(arr, t, d, T):
@@ -209,10 +209,17 @@ def s_hazards(arr, t, d, T):
         sr.plain(c, f"HAZARD {i + 1}/8", CX, 350, 40, color=WHITE, fname="bungee-400")
         if not slow:
             sr.speed_lines(c, CX, 900, T, n=40, color=WHITE, r0=460, a=0.6, seed=i)
-        if i == 7 and slow:
-            c.drawRect(skia.Rect.MakeWH(sr.W, H), paint((60, 0, 30), 0.18))
-        if i == 7 and 1.0 <= lt < 1.12:
-            c.drawRect(skia.Rect.MakeWH(sr.W, H), paint(WHITE, 0.65 * (1 - (lt - 1.0) / 0.12)))
+        pass
+        pass
+    if i == 7 and slow:
+        sr.freeze(arr, min(1.0, lt / 0.15))
+        with s as c:
+            sr.focus_lines(c, CX + 200 * math.sin(i * 2.1) + 80, 980, T, a=0.3)
+            I.wine(c, CX + 200 * math.sin(i * 2.1), 1000, 2.0, tilt=70 * (0.55 + 0.1 * ease(lt)), T=T, drops=0.55 + 0.1 * ease(lt))
+    if i == 7:
+        sr.snap_flash(arr, lt - 1.0)
+    with s as c:
+        pass
 
 
 SKILLS = [("PERCEIVE", "perceive"), ("REASON", "reason"), ("ASK", "ask"), ("PLAN", "plan"), ("FIX", "fix"), ("IMPROVISE", "improvise"),
@@ -279,19 +286,29 @@ def s_transfer(arr, t, d, T):
     uu = 0.25 + (u - 0.25) * 0.3 if slow else (u if u <= 0.25 else 0.385 + (u - 0.7) * 2.05)
     s = sr.surf(arr)
     with s as c:
-        track.road_side(c, T, 1180, 1330, speed=1.5)
-    track.near_wall(arr, T, 1330, speed=1.5)
+        track.road_side(c, T * (0.1 if slow else 1.0), 1060, 1200, speed=1.5)
+    track.near_wall(arr, T, 1200, speed=0.2 if slow else 1.5)
     with s as c:
-        c.drawRect(skia.Rect.MakeXYWH(470, 1170, 140, 200), paint((20, 10, 40)))
+        canyon = sr.path([(440, 1050), (640, 1050), (600, 1330), (480, 1330)])
+        c.drawPath(canyon, paint(shader=sr.lin((0, 1050), (0, 1330), [(90, 40, 170), (20, 10, 40)])))
+        for j in range(6):
+            c.drawLine(450 + j * 30, 1060, 470 + j * 26, 1320, paint(sr.lighter(VIOLET, 0.3), 0.5, stroke=3))
+        c.drawPath(canyon, paint(INK, stroke=5))
+        sr.sparkles(c, T, n=6, seed=8, y0=1080, y1=1300)
         x = 150 + 800 * min(1.0, uu)
-        y = 1250 - 480 * math.sin(math.pi * min(1.0, uu))
+        y = 1130 - 480 * math.sin(math.pi * min(1.0, uu))
         cast.car_side(c, x, y, 0.8, T, speed=2, flames=True, **AI_CAR)
-        sr.plain(c, "DINNER", 200, 1100, 44, color=WHITE, fname="bungee-400")
-        sr.plain(c, "EXPEDITION", 860, 1100, 44, color=WHITE, fname="bungee-400")
+        sr.plain(c, "DINNER", 220, 1000, 44, color=WHITE, fname="bungee-400")
+        sr.plain(c, "EXPEDITION", 790, 1000, 44, color=WHITE, fname="bungee-400")
         sr.race_text(c, "TRANSFER", CX, 460, 130, fill=LEMON)
         sr.race_text(c, "= GENERALITY", CX, 590, 100, fill=CYAN)
         if not slow:
-            sr.hlines(c, T, 700, 1150, n=24, a=0.7, seed=5)
+            sr.hlines(c, T, 700, 1050, n=24, a=0.7, seed=5)
+    if slow:
+        sr.freeze(arr, 1.0)
+        with s as c:
+            sr.focus_lines(c, x, y - 60, T, a=0.3)
+            cast.car_side(c, x, y, 0.8, T, speed=2, flames=True, **AI_CAR)
 
 
 def s_coffee(arr, t, d, T):

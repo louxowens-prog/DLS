@@ -165,9 +165,42 @@ def sunburst(arr, T, cols=None, cx=CX, cy=880, rays=20, spin=0.35, dim=1.0):
     img = pal[k.astype(int) % len(cols)]
     r = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2) / 900
     glow = np.clip(1 - r, 0, 1)[..., None] ** 2
-    img = img * dim * (0.75 + 0.25 * (1 - np.clip(r, 0, 1))[..., None]) + 255 * glow * 0.55
+    # each ray is shaded like a glossy ribbon: bright along its centre line, darker at its edges
+    frac = k - np.floor(k)
+    ribbon = (0.72 + 0.38 * np.sin(frac * math.pi))[..., None]
+    img = img * dim * ribbon * (0.75 + 0.25 * (1 - np.clip(r, 0, 1))[..., None]) + 255 * glow * 0.55
     img = np.clip(img, 0, 255).astype(np.uint8)
     arr[..., :3] = np.asarray(Image.fromarray(img).resize((W, H), Image.BILINEAR))
+
+
+def freeze(arr, k=1.0):
+    """The slow-motion look: the world drains a little, darkens, and a vignette closes in."""
+    a = arr[..., :3].astype(np.float32)
+    g = a.mean(-1, keepdims=True)
+    a = a * (1 - 0.45 * k) + g * 0.45 * k
+    yy, xx = np.mgrid[0:H:4, 0:W:4].astype(np.float32)
+    v = 1 - 0.45 * k * np.clip(((xx - CX) / (W * 0.7)) ** 2 + ((yy - 880) / (H * 0.55)) ** 2, 0, 1)
+    v = np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((W, H), Image.BILINEAR)).astype(np.float32)[..., None] / 255
+    arr[..., :3] = np.clip(a * v * (1 - 0.08 * k), 0, 255).astype(np.uint8)
+
+
+def focus_lines(c, cx, cy, T, n=90, a=0.35, r0=260):
+    """Still, thin radial lines converging on the subject (the frozen-moment focus)."""
+    rng = np.random.default_rng(99)
+    for _ in range(n):
+        ang = rng.uniform(0, 2 * math.pi)
+        r1 = r0 + rng.uniform(0, 160)
+        c.drawLine(cx + r1 * math.cos(ang), cy + r1 * math.sin(ang), cx + 1500 * math.cos(ang), cy + 1500 * math.sin(ang),
+                   paint(WHITE, a, stroke=rng.uniform(1.5, 4)))
+    k = (T * 2.5) % 1.0
+    c.drawCircle(cx, cy, r0 * (0.6 + 0.8 * k), paint(WHITE, 0.35 * (1 - k), stroke=8))
+
+
+def snap_flash(arr, dt):
+    """Two frames of white at the snap back to full speed."""
+    if 0 <= dt < 2 / 24:
+        w = 0.7 if dt < 1 / 24 else 0.35
+        arr[..., :3] = (arr[..., :3] * (1 - w) + 255 * w).astype(np.uint8)
 
 
 def sparkles(c, T, n=24, seed=0, y0=0, y1=H, a=0.9):

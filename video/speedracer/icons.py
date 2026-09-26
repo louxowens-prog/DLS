@@ -87,19 +87,40 @@ def gauge(c, x, y, r, value, label, lit, T=0.0, color=CYAN):
 
 
 def engine_block(c, x, y, s, T):
-    blk = [(-150, 80), (150, 80), (170, -40), (-170, -40)]
-    _g(c, _xf(blk, x, y, s), (200, 205, 225), rim=CYAN)
+    """A chrome racing engine: finned block, candy piston caps pumping, exhaust flames, and a name plate that fits."""
+    chrome = sr.lin((0, y - 120 * s), (0, y + 110 * s), [(255, 255, 255), (150, 160, 190), (240, 245, 255), (90, 95, 125)], [0, 0.35, 0.55, 1])
+    blk = skia.Path()
+    blk.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(x - 200 * s, y - 60 * s, 400 * s, 170 * s), 26 * s, 26 * s))
+    c.drawPath(blk, paint(shader=chrome))
+    for k in range(9):
+        c.drawLine(x - 180 * s + k * 45 * s, y - 50 * s, x - 180 * s + k * 45 * s, y + 100 * s, paint((110, 115, 150), 0.6, stroke=6 * s))
+    c.drawPath(blk, paint(INK, stroke=6))
     for k in range(4):
-        px = x + (-105 + k * 70) * s
-        up = 30 * math.sin(T * 25 + k * 1.6) * s
-        _g(c, _xf([(-24, 0), (24, 0), (24, -70), (-24, -70)], px, y - 40 * s + up, s), (245, 245, 255))
-        c.drawCircle(px, y - 115 * s + up, 16 * s, paint(sr.TANG, blur=4 * s))
-    pl = skia.Path()
-    pl.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(x - 130 * s, y + 5 * s, 260 * s, 56 * s), 10 * s, 10 * s))
-    sr.glossy(c, pl, PINK, lw=4)
-    f = sr.font("bungee-400", 30 * s)
+        px = x + (-135 + k * 90) * s
+        up = 34 * math.sin(T * 25 + k * 1.6) * s
+        cyl = skia.Path()
+        cyl.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(px - 32 * s, y - 150 * s + up, 64 * s, 100 * s), 12 * s, 12 * s))
+        c.drawPath(cyl, paint(shader=sr.lin((px - 32 * s, 0), (px + 32 * s, 0), [(120, 125, 160), (255, 255, 255), (130, 135, 170)])))
+        c.drawPath(cyl, paint(INK, stroke=5))
+        cap = skia.Path()
+        cap.addOval(skia.Rect.MakeXYWH(px - 40 * s, y - 180 * s + up, 80 * s, 44 * s))
+        sr.glossy(c, cap, CANDY_[k], rim=WHITE, lw=4)
+    for side in (-1, 1):                                            # exhaust pipes with flames
+        ex = x + side * 230 * s
+        c.drawRoundRect(skia.Rect.MakeXYWH(ex - 22 * s, y - 20 * s, 44 * s, 120 * s), 16 * s, 16 * s, paint(shader=chrome))
+        fl = 60 + 30 * math.sin(T * 30 + side)
+        c.drawPath(path([(ex - 20 * s, y - 20 * s), (ex, y - (20 + fl) * s), (ex + 20 * s, y - 20 * s)]), paint(TANG, 0.95, blur=3))
+        c.drawPath(path([(ex - 10 * s, y - 20 * s), (ex, y - (20 + fl * 0.6) * s), (ex + 10 * s, y - 20 * s)]), paint(LEMON))
+    f = sr.font("bungee-400", 34 * s)
     t = "GENERAL LEARNER"
-    c.drawString(t, x - f.measureText(t) / 2, y + 45 * s, f, paint(WHITE))
+    w = f.measureText(t) + 50 * s
+    pl = skia.Path()
+    pl.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(x - w / 2, y + 20 * s, w, 64 * s), 14 * s, 14 * s))
+    sr.glossy(c, pl, PINK, rim=LEMON, lw=5)
+    c.drawString(t, x - f.measureText(t) / 2, y + 66 * s, f, paint(WHITE))
+
+
+CANDY_ = [PINK, LEMON, CYAN, LIME]
 
 
 def speedo(c, x, y, r, v, label="SKILL"):

@@ -10,7 +10,7 @@ VOICE = "af_heart"
 SPEED = 1.2
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-PRE = {"h1": 0.2, "a0": 0.2, "h2": 1.2, "d4": 0.3, "t5": 0.3, "t3": 0.2, "d1": 0.2, "e1": 0.35, "a1": 0.35, "u1": 0.35, "a2": 0.35, "w1": 0.35, "f1": 0.25}
+PRE = {"h1": 0.2, "a0": 0.2, "h2": 1.4, "d1": 0.7, "d4": 0.3, "t5": 0.3, "t3": 0.2, "e1": 0.9, "a1": 0.9, "u1": 0.9, "u3": 0.6, "a2": 0.9, "w1": 0.9, "f1": 1.3}
 TAIL = 3.4
 
 
@@ -59,7 +59,8 @@ class Timeline:
             phrases, cur = [], []
             for i, w in enumerate(cw):
                 cur.append(i)
-                if re.search(r"[,.?!:;…”]$", w) or i == n - 1:
+                short_lead = len(cur) == 1 and len(w) <= 5 and w.endswith(",") and i < n - 1
+                if (re.search(r"[,.?!:;…”]$", w) and not short_lead) or i == n - 1:
                     phrases.append(cur)
                     cur = []
 

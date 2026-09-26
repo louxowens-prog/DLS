@@ -16,7 +16,7 @@ from edit import EDIT, WIPE
 from timeline import FPS, TL
 
 SHOT = {
-    "grid": A.s_grid, "race": A.s_race, "two": A.s_two, "finish": A.s_finish, "chess": A.s_chess, "imagenet": A.s_imagenet,
+    "open": A.s_open, "launch": A.s_launch, "race": A.s_race, "two": A.s_two, "finish": A.s_finish, "chess": A.s_chess, "imagenet": A.s_imagenet,
     "fuzzy": A.s_fuzzy, "dash": A.s_dash, "frameworks": A.s_frameworks, "arc": A.s_arc,
     "engine": B.s_engine, "learner": B.s_learner, "facts": B.s_facts, "dinner": B.s_dinner, "hazards": B.s_hazards,
     "skills": B.s_skills, "expedition": B.s_expedition, "transfer": B.s_transfer, "coffee": B.s_coffee,
@@ -24,13 +24,14 @@ SHOT = {
     "chess2": Cc.s_chess2, "laps": Cc.s_laps, "joke": Cc.s_joke, "final": Cc.s_final, "end": Cc.s_end,
 }
 STARTS = [e[0] for e in EDIT]
-NOCAP_KEYS = {"d6", "t2", "u2"}
+NOCAP_KEYS = {"d6", "t2"}
 CAPS = [c for c in TL.captions() if c[3] not in NOCAP_KEYS]
 # the announcer's TV box for each of his lines: (x, y, w, h)
-PIP = {"a0": (580, 660, 440, 340), "a1": (40, 620, 440, 340), "a2": (600, 470, 440, 340)}
+PIP = {"a0": (600, 650, 420, 330), "a1": (40, 620, 440, 340), "a2": (600, 470, 440, 340)}
 PIP_END = {"a0": C["go"] - 0.05}
+PIP_START = {"a2": TL.s("a2") + 0.3}
 # shots that run their own camera (no push-in)
-NO_DRIFT = {"grid", "loop", "final", "end", "two", "chess2", "skills"}
+NO_DRIFT = {"open", "launch", "loop", "final", "end", "two", "chess2", "skills"}
 
 
 def drift(arr, k, T):
@@ -117,7 +118,7 @@ def split_slam(a, b, k):
 
 def pip(arr, T):
     for key, (x, y, w, h) in PIP.items():
-        t0, t1 = TL.s(key) - 0.3, PIP_END.get(key, TL.e(key) + 0.4)
+        t0, t1 = PIP_START.get(key, TL.s(key) - 0.3), PIP_END.get(key, TL.e(key) + 0.4)
         if not (t0 <= T < t1):
             continue
         k = sr.pop(T, t0, 0.25) * (1 - sr.ease(sr.ramp(T, t1 - 0.2, t1)))
@@ -189,6 +190,7 @@ def draw_caption(arr, T):
         for ln in lines:
             x = sr.CX - line_w(ln, f) / 2
             for w in ln.split():
+                w = w.replace("~", " ")
                 c.drawString(w, x + 3, y + 5, f, sr.paint((0, 0, 0), 0.55, blur=5))
                 c.drawString(w, x, y, f, sr.paint((0, 0, 0), 1.0, stroke=8))
                 c.drawString(w, x, y, f, sr.paint((255, 255, 255)))

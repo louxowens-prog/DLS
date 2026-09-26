@@ -21,63 +21,93 @@ def dusk(arr, sun=True):
 
 # ------------------------------------------------------------------ hook
 
-def s_grid(arr, t, d, T):
-    """The starting grid under the hook line, lights counting down; at the green light the launch freezes
-    (speed ramp), then snaps to full speed."""
+def s_open(arr, t, d, T):
+    """Frame one: the title over cars already racing at us. Then: where IS the finish line? Banners pop up everywhere."""
+    dusk(arr)
+    s = sr.surf(arr)
+    kb = ease(ramp(T, W("h1", "nobody") - 0.15, W("h1", "nobody") + 0.35))
+    with s as c:
+        track.road_front(c, T, speed=1.6, curve=0.25 * math.sin(T * 0.9))
+        # finish banners at different distances: nobody agrees which one counts
+        for j, (z, dx, lab) in enumerate(((4.2, -900, "?"), (3.4, 850, "?"), (2.6, 0, "?"))):
+            kj = pop(T, W("h1", "nobody") - 0.1 + 0.25 * j, 0.25)
+            if not kj:
+                continue
+            sc = 1.0 / z * kj
+            ax, ay = CX + dx / z, 760 + 1160 * (1 / z) ** 0.9
+            c.save()
+            c.translate(ax, ay)
+            c.scale(sc * 1.3, sc * 1.3)
+            for side in (-1, 1):
+                c.drawRect(skia.Rect.MakeXYWH(side * 420 - 18, -560, 36, 560), paint(WHITE))
+            sr.checker(c, -440, -640, 880, 100, n=14, m=2)
+            f = sr.font("bungee-400", 200)
+            c.drawString(lab, -f.measureText(lab) / 2, -300, f, paint(LEMON))
+            c.restore()
+        for k, (dx, body, num, ph) in enumerate(((-280, PINK, "7", 0.0), (300, LEMON, "3", 1.7), (20, CYAN, "G", 3.1))):
+            bob = 30 * math.sin(T * 2.2 + ph)
+            z = 1.0 + 0.18 * math.sin(T * 1.3 + ph)
+            cast.car_front(c, CX + dx * z + 90 * math.sin(T * 1.8 + ph), 1270 + 120 * (z - 1) + bob * 0.3, 0.74 * z, T, body=body, number=num)
+        sr.speed_lines(c, CX, 820, T, n=50, color=WHITE, r0=420, a=0.6, seed=4)
+        sr.race_text(c, "THE RACE", CX, 330, 130, fill=LEMON)
+        sr.race_text(c, "TO AGI", CX, 440, 110, fill=CYAN)
+        if kb > 0.02:
+            sr.race_text(c, "WHERE'S THE", CX, 560, 84, fill=WHITE, scale=kb)
+            sr.race_text(c, "FINISH LINE?", CX, 660, 96, fill=PINK, scale=kb)
+        sr.flare(c, 540, 700, 0.7, T, tint=LEMON)
+
+
+def s_launch(arr, t, d, T):
+    """'The race to AGI is ON!': a jump ramp; at the green light the cars freeze in mid-air (speed ramp), then snap."""
     go = C["go"]
     dusk(arr)
     if T < go:
-        u, spd = 0.0, 0.0
-    elif T < go + 1.0:
-        u, spd = (T - go) * 0.06, 0.05                       # near-freeze
+        u = (T - (go - 1.6)) / 1.6 * 0.4
+    elif T < go + 1.2:
+        u = 0.4 + (T - go) * 0.04                            # near-freeze
     else:
-        u, spd = 0.06 + (T - go - 1.0) * 2.8, 3.0             # snap
+        u = 0.448 + (T - go - 1.2) * 1.6                     # snap
+    frozen = go <= T < go + 1.2
     s = sr.surf(arr)
-    punch = 1.0 + 0.12 * max(0.0, 1 - (T - go - 1.0) / 0.25) if T >= go + 1.0 else 1.0
+    punch = 1.0 + 0.14 * max(0.0, 1 - (T - go - 1.2) / 0.3) if T >= go + 1.2 else 1.0
     with s as c:
         c.save()
         c.translate(CX, 900)
         c.scale(punch, punch)
         c.translate(-CX, -900)
-        track.road_front(c, u * 3, speed=1.0, curve=0.0)
-        shake = 3 * math.sin(T * 70) if T < go else 0
+        track.road_front(c, T * (0.05 if frozen else 1.0), speed=1.8, curve=0.0)
+        # the ramp
+        ramp_p = sr.path([(CX - 330, 1180), (CX + 330, 1180), (CX + 260, 1060), (CX - 260, 1060)])
+        sr.glossy(c, ramp_p, (250, 250, 255), rim=CYAN, lw=6)
         for k, (dx, body, num) in enumerate(((-330, PINK, "7"), (330, LEMON, "3"), (0, CYAN, "G"))):
-            z = 1.0 + (u * 6 if k == 2 else u * 4.5)
-            sc = 0.66 * z
-            y = 1300 + 260 * (z - 1)
+            air = max(0.0, u - 0.25) * 2.6
+            h = 520 * math.sin(min(math.pi, air * 1.3)) if air > 0 else 0
+            z = 1.0 + max(0.0, u - 0.2) * (3.0 if k == 2 else 2.2)
             x = CX + dx * z
-            if y - 260 * sc > 2600:
+            y = 1320 + 200 * (z - 1) - h
+            if y - 260 * 0.66 * z > 2600:
                 continue
-            cast.car_front(c, x + shake * (k - 1), y, sc, T, body=body, number=num)
-            if go <= T < go + 1.0:                                # frozen smoke puffs behind the wheels
-                for j in range(3):
-                    c.drawCircle(x + (j - 1) * 90 * sc, y - 10, (40 + 20 * j) * sc, paint(WHITE, 0.55, blur=12))
+            cast.car_front(c, x, y, 0.66 * z, T, body=body, number=num)
+            if frozen:
+                for j in range(5):
+                    c.drawCircle(x + (j - 2) * 60, y + 30 + 25 * (j % 2), 22, paint(WHITE, 0.6, blur=6))
         c.restore()
-        # the light gantry
         c.drawRect(skia.Rect.MakeXYWH(140, 470, 800, 150), paint(INK))
         for i in range(3):
-            on = T >= go - 2.4 + 0.8 * i
             green = T >= go
-            colr = sr.LIME if green else (RED if on else (70, 30, 40))
+            colr = sr.LIME if green else RED
             c.drawCircle(290 + i * 250, 545, 55, paint(colr))
-            if on or green:
-                c.drawCircle(290 + i * 250, 545, 120, paint(colr, 0.35, blur=40))
-                sr.glint(c, 270 + i * 250, 525, 40, T)
-        k = pop(T, 0.1, 0.3)
-        if k:
-            sr.race_text(c, "THE RACE", CX, 330, 130, fill=LEMON, scale=k)
-            sr.race_text(c, "TO AGI", CX, 440, 110, fill=CYAN, scale=k)
-        kh = pop(T, 0.3, 0.3) * (1 - ease(ramp(T, S("a0") - 0.5, S("a0") - 0.2)))
-        if kh > 0.02:
-            sr.race_text(c, "WHERE'S THE", CX, 820, 110, fill=WHITE, scale=kh)
-            sr.race_text(c, "FINISH LINE?", CX, 950, 120, fill=PINK, scale=kh)
-        if T >= go + 1.0:
-            sr.speed_lines(c, CX, 900, T, n=80, color=WHITE, r0=260, seed=3)
-        if go <= T < go + 1.0:
-            sr.race_text(c, "GO!", CX, 1060, 260, fill=sr.LIME, scale=1 + 0.1 * (T - go))
-            c.drawRect(skia.Rect.MakeWH(sr.W, H), paint((40, 20, 90), 0.18))
-    if go + 1.0 <= T < go + 1.0 + 2 / 24:
-        arr[..., :3] = (arr[..., :3] * 0.4 + 255 * 0.6).astype(np.uint8)
+            c.drawCircle(290 + i * 250, 545, 120, paint(colr, 0.35, blur=40))
+            sr.glint(c, 270 + i * 250, 525, 40, T)
+    if frozen:
+        sr.freeze(arr, min(1.0, (T - go) / 0.15))
+    with s as c:
+        if frozen:
+            sr.focus_lines(c, CX, 1000, T, a=0.3)
+            sr.race_text(c, "GO!", CX, 900, 240, fill=sr.LIME, scale=1 + 0.05 * (T - go))
+        elif T >= go + 1.2:
+            sr.speed_lines(c, CX, 900, T, n=90, color=WHITE, r0=240, seed=3)
+    sr.snap_flash(arr, T - go - 1.2)
 
 
 def s_race(arr, t, d, T):
@@ -275,7 +305,7 @@ def s_dash(arr, t, d, T):
         c.drawPath(dash, paint(shader=sr.lin((0, 760), (0, H), [(60, 40, 110), (20, 10, 40)])))
         c.drawRect(skia.Rect.MakeXYWH(0, 752, sr.W, 16), paint(shader=sr.lin((0, 752), (0, 768), [WHITE, (150, 160, 190)])))
         sr.race_text(c, "THE AGI DASHBOARD", CX, 700, 70, fill=LEMON)
-        pos = [(145 + i * 263, 880) for i in range(4)] + [(145 + i * 263, 1085) for i in range(4)] + [(276 + i * 263, 1290) for i in range(3)]
+        pos = [(128 + i * 244, 880) for i in range(4)] + [(128 + i * 244, 1080) for i in range(4)] + [(250 + i * 244, 1280) for i in range(3)]
         for i, (lab, (gx, gy)) in enumerate(zip(GAUGES, pos)):
             t0 = C["gauges"][i]
             lit = ease(ramp(T, t0 - 0.05, t0 + 0.12))
@@ -284,8 +314,8 @@ def s_dash(arr, t, d, T):
             val = 0.05 + (LEVELS[i] - 0.05) * ease(sweep) + over + 0.02 * math.sin(T * 11 + i) * lit
             colr = CANDY[i % len(CANDY)]
             if lit > 0:
-                c.drawCircle(gx, gy, 115, paint(colr, 0.4 * lit, blur=28))
-            I.gauge(c, gx, gy, 92, val, "", lit, T, color=colr)
+                c.drawCircle(gx, gy, 108, paint(colr, 0.4 * lit, blur=28))
+            I.gauge(c, gx, gy, 86, val, "", lit, T, color=colr)
             f = sr.font("bungee-400", 21)
             w = f.measureText(lab)
             c.drawString(lab, gx - w / 2, gy + 52, f, paint(WHITE if lit > 0.5 else (170, 165, 200)))

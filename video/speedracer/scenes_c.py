@@ -57,75 +57,93 @@ LOOP = ["PERCEIVE", "MODEL", "PREDICT", "PLAN", "ACT", "OBSERVE", "LEARN"]
 
 
 def s_loop(arr, t, d, T):
-    """The agent loop as a 3D circuit with seven gates; the car laps faster and faster."""
-    sr.sky(arr, [(0, (10, 5, 40)), (0.5, (60, 20, 130)), (1, (255, 80, 170))])
+    """The agent loop as a glossy rainbow ring with seven gates spaced evenly around it; each gate lights as it's spoken,
+    the car laps faster and faster, and the current step blazes in the middle."""
+    sr.sunburst(arr, T, cols=[(70, 20, 140), (40, 10, 90), (120, 40, 200)], cy=900, rays=26, spin=0.25)
     s = sr.surf(arr)
-    ang = 0.3 + 0.25 * t
-    cam = track.Cam((7.2 * math.sin(ang), 5.6, 7.2 * math.cos(ang)), (0, -0.4, 0), fov=62, cy=820)
     ts = C["loop"]
+    cur = sum(1 for x in ts if T >= x - 0.05) - 1
+    cx, cy, rx, ry = CX, 900, 380, 300
+    tilt = 0.92 + 0.08 * math.sin(T * 0.8)
     with s as c:
-        P = track.draw_circuit(c, cam, T)
-        n = len(P)
-        cur = sum(1 for x in ts if T >= x - 0.05) - 1
-        gates = []
-        for k, lab in enumerate(LOOP):
-            idx = int(k / 7 * n)
-            p, z = cam.project(P[idx] + np.array([0, 0.9, 0]))
-            gates.append((z, k, lab, p, idx))
-        for z, k, lab, p, idx in sorted(gates, key=lambda g: -g[0]):
+        for j, colr in enumerate(CANDY):                            # the ring: seven candy lanes with a sheen
+            r = 1.0 - (j - 3) * 0.045
+            c.drawOval(skia.Rect.MakeXYWH(cx - rx * r, cy - ry * r * tilt, 2 * rx * r, 2 * ry * r * tilt), paint(colr, stroke=16))
+        c.drawOval(skia.Rect.MakeXYWH(cx - rx * 1.16, cy - ry * 1.16 * tilt, 2 * rx * 1.16, 2 * ry * 1.16 * tilt), paint(WHITE, 0.7, stroke=5))
+        c.drawOval(skia.Rect.MakeXYWH(cx - rx * 0.84, cy - ry * 0.84 * tilt, 2 * rx * 0.84, 2 * ry * 0.84 * tilt), paint(WHITE, 0.7, stroke=5))
+        arc = skia.Path()
+        arc.addArc(skia.Rect.MakeXYWH(cx - rx, cy - ry * tilt, 2 * rx, 2 * ry * tilt), -150, 70)
+        c.drawPath(arc, paint(WHITE, 0.45, stroke=10, blur=4))
+        # the car goes round, faster each lap
+        prog = (0.1 + t * (0.18 + 0.05 * t)) % 1.0
+        a = -math.pi / 2 + prog * 2 * math.pi
+        px, py = cx + rx * math.cos(a), cy + ry * tilt * math.sin(a)
+        cast.car_side(c, px, py + 30, 0.34, T, speed=2, facing=1 if math.cos(a + math.pi / 2) > 0 else -1, **AI_CAR)
+        for k, lab in enumerate(LOOP):                               # gates, evenly spaced, labels outside the ring
+            a = -math.pi / 2 + k / 7 * 2 * math.pi
+            gx, gy = cx + rx * math.cos(a), cy + ry * tilt * math.sin(a)
+            lx, ly = cx + (rx + 150) * math.cos(a), cy + (ry * tilt + 120) * math.sin(a)
             lit = k <= cur
-            sc = 9.0 / z
-            q, _ = cam.project(P[idx])
-            c.drawLine(q[0], q[1], p[0], p[1], paint(WHITE, stroke=6 * sc))
-            f = sr.font("bungee-400", 44 * sc)
-            w = f.measureText(lab) + 30 * sc
-            p = np.array([min(max(p[0], w / 2 + 20), sr.W - w / 2 - 20), p[1]])
-            rr = skia.Path()
-            rr.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(p[0] - w / 2, p[1] - 60 * sc, w, 70 * sc), 14 * sc, 14 * sc))
-            sr.glossy(c, rr, CANDY[k % len(CANDY)] if lit else (70, 60, 100), rim=WHITE, lw=4)
-            c.drawString(lab, p[0] - w / 2 + 15 * sc, p[1] - 10 * sc, f, paint(WHITE if lit else (190, 180, 220)))
-            if k == cur:
-                c.drawCircle(p[0], p[1] - 22 * sc, 90 * sc, paint(WHITE, 0.25, blur=30 * sc))
-        # the car: position along the circuit, faster each lap
-        prog = (t * (0.35 + 0.1 * t)) % 1.0
-        idx = int(prog * n)
-        p, z = cam.project(P[idx])
-        cast.car_front(c, p[0], p[1], 0.9 * 9.0 / z * 0.5, T, **FRONT)
+            hot = k == cur
+            f = sr.font("bungee-400", 40)
+            w = f.measureText(lab) + 34
+            lx = min(max(lx, w / 2 + 24), sr.W - w / 2 - 24)
+            c.drawLine(gx, gy, lx, ly, paint(WHITE, 0.8, stroke=5))
+            c.drawCircle(gx, gy, 16, paint(CANDY[k % len(CANDY)] if lit else (90, 80, 120)))
+            pill = skia.Path()
+            sc = 1.18 if hot else 1.0
+            pill.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(lx - w * sc / 2, ly - 34 * sc, w * sc, 64 * sc), 16, 16))
+            if hot:
+                c.drawPath(pill, paint(CANDY[k % len(CANDY)], 0.6, blur=22))
+            sr.glossy(c, pill, CANDY[k % len(CANDY)] if lit else (70, 60, 100), rim=WHITE, lw=4)
+            c.drawString(lab, lx - f.measureText(lab) / 2, ly + 14, f, paint(WHITE if lit else (190, 180, 220)))
+        if cur >= 0:
+            kk = pop(T, ts[cur] - 0.05, 0.2)
+            sr.race_text(c, LOOP[cur], cx, cy + 40, 110 if len(LOOP[cur]) < 7 else 90, fill=LEMON, scale=kk)
+            sr.plain(c, f"step {cur + 1} of 7", cx, cy + 110, 36, color=WHITE, fname="bungee-400")
         k_again = pop(T, W("u2", "again") - 0.1, 0.25)
         if k_again:
-            sr.race_text(c, "...AND AGAIN!", CX, 1250, 90, fill=LEMON, scale=k_again)
+            sr.race_text(c, "...AND AGAIN!", CX, 1300, 80, fill=PINK, scale=k_again)
         sr.race_text(c, "THE AGENT LOOP", CX, 380, 90, fill=WHITE)
 
 
-MEMS = [("EPISODIC", "what happened", "happened", PINK), ("SEMANTIC", "what I know", "know", CYAN), ("PROCEDURAL", "how to do things", "how", LIME)]
+MEMS = [("EPISODIC", "what happened", ("what", 0), PINK), ("SEMANTIC", "what I know", ("what", 1), CYAN),
+        ("PROCEDURAL", "how to do things", ("how", 0), LIME)]
 
 
 def s_memory(arr, t, d, T):
-    """Three memories, like three pit crews fuelling the car."""
+    """Three memories, like three pit crews fuelling the car; each card lights as its phrase is spoken."""
     sr.sunburst(arr, T, cols=[(90, 40, 170), (50, 20, 110), (140, 60, 220)], cy=1300, rays=26, spin=0.3)
     s = sr.surf(arr)
     with s as c:
         sr.sparkles(c, T, n=10, seed=31, y0=250, y1=480)
-        cast.car_side(c, CX, 1320, 0.9, T, speed=0.1, **AI_CAR)
+        cast.car_side(c, CX, 1300, 0.95, T, speed=0.1, **AI_CAR)
         sr.race_text(c, "3 KINDS OF MEMORY", CX, 380, 84, fill=LEMON)
-        for k, (name, desc, word, colr) in enumerate(MEMS):
-            t0 = W("u3", word)
-            kk = pop(T, t0 - 0.15, 0.25)
+        for k, (name, desc, (word, nth), colr) in enumerate(MEMS):
+            t0 = W("u3", word, nth)
+            lit = ease(ramp(T, t0 - 0.1, t0 + 0.15))
+            kk = 1 + 0.12 * math.sin(math.pi * min(1.0, max(0.0, (T - t0 + 0.1) / 0.3))) if lit > 0 else 1
             x = 190 + k * 350
-            if kk:
-                panel = skia.Path()
-                panel.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(x - 160, 480, 320, 460), 26, 26))
-                sr.glossy(c, panel, colr, rim=WHITE, lw=5)
-                if k == 0:
-                    I.clock(c, x, 640, 0.9, 7, int(T * 60) % 60)
-                elif k == 1:
-                    I.book(c, x, 650, 0.7, color=sr.BLUE, title="FACTS")
-                else:
-                    I.chip(c, x, 650, 0.9, "HOW-TO", color=LEMON)
-                sr.plain(c, name, x, 830, 40, color=WHITE, fname="bungee-400")
-                sr.plain(c, desc, x, 890, 34, color=INK, fname="rubik-800")
-                # fuel hose to the car
-                c.drawPath(sr.path(sr.bez((x, 940), (x, 1080), (CX - 40 + k * 40, 1180)), closed=False), paint(sr.darker(colr, 0.7), stroke=16))
+            c.save()
+            c.translate(x, 710)
+            c.scale(kk, kk)
+            panel = skia.Path()
+            panel.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(-160, -230, 320, 460), 26, 26))
+            if lit > 0:
+                c.drawPath(panel, paint(colr, 0.5 * lit, blur=26))
+            sr.glossy(c, panel, colr if lit > 0.5 else (80, 60, 120), rim=WHITE, lw=5)
+            if k == 0:
+                I.clock(c, 0, -70, 0.9, 7, int(T * 60) % 60)
+            elif k == 1:
+                I.book(c, 0, -60, 0.7, color=sr.BLUE, title="FACTS")
+            else:
+                I.chip(c, 0, -60, 0.9, "HOW-TO", color=LEMON)
+            sr.plain(c, name, 0, 120, 40, color=WHITE, fname="bungee-400")
+            sr.plain(c, desc, 0, 180, 34, color=INK if lit > 0.5 else (200, 190, 230), fname="rubik-800")
+            c.restore()
+            if lit > 0:
+                c.drawPath(sr.path(sr.bez((x, 940), (x, 1060), (CX - 40 + k * 40, 1150)), closed=False),
+                           paint(sr.darker(colr, 0.7), lit, stroke=16))
 
 
 def s_h2h(arr, t, d, T):
@@ -147,28 +165,31 @@ def s_h2h(arr, t, d, T):
         else:
             k1 = pop(T, W("v2", "memorized") - 0.2, 0.25)
             k2 = pop(T, W("v2", "other") - 0.1, 0.25)
-            for side, (kk, name, l1, l2, colr) in enumerate(((k1, "THE MEMORIZER", "tracks memorized:", "ALL OF THEM", VIOLET),
-                                                             (k2, "THE LEARNER", "tracks raced: 0", "LEARNS FAST", sr.BLUE))):
+            for side, (kk, name, l1, l2, colr, who) in enumerate(((k1, "THE MEMORIZER", "tracks memorized:", "ALL OF THEM", VIOLET, "memorizer"),
+                                                                  (k2, "THE LEARNER", "tracks raced: 0", "LEARNS FAST", sr.BLUE, "ai"))):
                 if not kk:
                     continue
                 x = 60 + side * 500
+                cast.face(c, who, x + 230, 470, 1.35 * kk, T, look=(0.6 if side == 0 else -0.6, 0.2), facing=1 if side == 0 else -1,
+                          expr="grin")
                 card = skia.Path()
-                card.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(x, 480, 460, 300), 26, 26))
-                sr.glossy(c, card, colr, rim=WHITE, lw=5)
-                sr.plain(c, name, x + 230, 550, 40, color=WHITE, fname="bungee-400")
-                sr.plain(c, l1, x + 230, 640, 36, color=WHITE, fname="rubik-800")
-                sr.plain(c, l2, x + 230, 720, 50, color=LEMON, fname="bungee-400")
+                card.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(x, 640, 460, 300), 26, 26))
+                sr.glossy(c, card, sr.darker(colr, 0.55), rim=sr.lighter(colr, 0.6), lw=5)
+                sr.plain(c, name, x + 230, 710, 40, color=LEMON, fname="bungee-400")
+                sr.plain(c, l1, x + 230, 800, 36, color=WHITE, fname="rubik-800")
+                sr.plain(c, l2, x + 230, 880, 50, color=WHITE, fname="bungee-400")
         # layered depth: the rival's face looms in the foreground
         ko = ease(ramp(T, S("v2") - 0.2, S("v2") + 0.3))
-        cast.face(c, "memorizer", 250 - 700 * ko, 660, 3.3, T, talk=0.0, look=(0.9, 0.2), facing=1, expr="grin")
+        if ko < 1:
+            cast.face(c, "memorizer", 250 - 700 * ko, 660, 3.3, T, talk=0.0, look=(0.9, 0.2), facing=1, expr="grin")
 
 
 def s_newtrack(arr, t, d, T):
     """A brand-new track. The Memorizer follows its old map and crashes (slow motion, then snap); the Learner adapts."""
     dusk(arr)
     cr = C["crash"]
-    slow = cr <= T < cr + 0.7
-    ts = cr + (T - cr) * 0.15 if slow else (T if T < cr else T - 0.6)
+    slow = cr <= T < cr + 1.0
+    ts = cr + (T - cr) * 0.08 if slow else (T if T < cr else T - 0.92)
     s = sr.surf(arr)
     with s as c:
         track.road_front(c, ts, speed=1.6, curve=0.9 * math.sin(ts * 0.9))
@@ -199,8 +220,6 @@ def s_newtrack(arr, t, d, T):
                 sr.glossy(c, shard, [VIOLET, LIME, WHITE][j % 3], lw=3)
                 c.restore()
             sr.badge(c, "CRASH!", 290, 960, T, cr, color=RED, size=90, rot=-8)
-            if slow:
-                c.drawRect(skia.Rect.MakeWH(sr.W, H), paint(INK, 0.15))
         # the learner reads the road
         lx = CX + 220 + 120 * math.sin(ts * 0.9)
         cast.car_front(c, lx, 1330, 0.75, T, **FRONT)
@@ -220,6 +239,13 @@ def s_newtrack(arr, t, d, T):
         sr.race_text(c, "BRAND-NEW TRACK", CX, 380, 90, fill=WHITE)
         if not slow:
             sr.speed_lines(c, CX, 850, T, n=36, color=WHITE, r0=480, a=0.55, seed=11)
+    if slow:
+        sr.freeze(arr, min(1.0, (T - cr) / 0.15))
+        with s as c:
+            sr.focus_lines(c, CX - 220, 1150, T, a=0.3)
+    sr.snap_flash(arr, T - cr - 1.0)
+    with s as c:
+        pass
 
 
 def s_chess2(arr, t, d, T):
@@ -367,7 +393,7 @@ def s_final(arr, t, d, T):
 
 SOURCES = ["IBM Deep Blue vs Kasparov (1997)", "ImageNet: He et al., Microsoft (2015)", "Hendrycks et al., A Definition of AGI (2025)",
            "ARC Prize Foundation, ARC-AGI-3 (March 2026)", "Wozniak coffee test (Fast Company, 2010)",
-           "Tesler's theorem (Hofstadter, Godel, Escher, Bach, 1979)"]
+           "Tesler's theorem (Hofstadter, G\u00f6del, Escher, Bach, 1979)"]
 
 
 def s_end(arr, t, d, T):
@@ -381,5 +407,5 @@ def s_end(arr, t, d, T):
         for i, ln in enumerate(SOURCES):
             c.drawString(ln, CX - f.measureText(ln) / 2, 830 + i * 48, f, paint((225, 225, 240)))
         f2 = sr.font("rubik-500", 27)
-        for i, ln in enumerate(["Style homage to Speed Racer (2008, dir. the Wachowskis)", "All visuals, music and voices synthesized"]):
+        for i, ln in enumerate(["A style homage to the Wachowskis' 2008 racing film", "All visuals, music and voices synthesized"]):
             c.drawString(ln, CX - f2.measureText(ln) / 2, 1180 + i * 40, f2, paint((170, 170, 190)))
