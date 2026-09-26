@@ -5,8 +5,9 @@ The narrator is Kokoro "af_heart"; the AI character ("Jag") gets its own process
 """
 LINES = [
     # ---- hook
-    ("h1", "This A.I. can win gold at the Math Olympiad.", "This AI can win gold at the Math Olympiad.", 0.15, {}),
-    ("h2", "And it reads a clock right... about half the time.", "And it reads a clock right… about half the time.", 0.2, {}),
+    ("h1", "Top A.I. can win gold at the Math Olympiad.", "Top AI can win gold at the Math Olympiad.", 0.15, {}),
+    ("h2", "Yet the best model reads a clock right... about half the time. Humans? Ninety percent.",
+     "Yet the best model reads a clock right… about half the time. Humans? 90%.", 0.2, {}),
     ("h3", "Welcome to jagged intelligence.", None, 0.5, {}),
     # ---- what actually happened
     ("a1", "Stanford's twenty twenty-six A.I. Index: on PhD-level science questions, top models score ninety-four percent. Experts? Sixty-five.",
@@ -30,7 +31,8 @@ LINES = [
     ("g4", "So don't expect a notification: A.G.I. achieved, nine forty-two A.M.", "So don’t expect a notification: “AGI achieved, 9:42 AM.”", 0.2, {}),
     ("g5", "It's more like rising water.", "It’s more like rising water.", 0.1, {}),
     ("g6", "Chess. Go. Vision. Translation. Writing. Code. Math. Science. Using computers.", None, 0.2, {"speed": 1.32}),
-    ("g7", "Until the list of things only humans can do gets so short, we call it general. And keep arguing anyway.", None, 0.4, {}),
+    ("g7", "Eventually, the list of things only humans can do gets short enough that we call it general. And we'll keep arguing anyway.",
+     "Eventually, the list of things only humans can do gets short enough that we call it general. And we’ll keep arguing anyway.", 0.4, {}),
     # ---- intelligence is not consciousness
     ("c1", "And none of that means it's conscious.", "And none of that means it’s conscious.", 0.25, {}),
     ("c2", "Intelligence is solving problems. Self-awareness is modeling yourself. Consciousness is there being something it's like to be you.",
@@ -38,8 +40,8 @@ LINES = [
     ("c3", "A system could write...", "A system could write…", 0.1, {}),
     ("c3j", "I am frightened.", "“I am frightened.”", 0.15, {"voice": "am_puck", "speed": 0.95}),
     ("c4", "and feel nothing at all. An octopus might feel plenty, with no algebra.", "…and feel nothing at all. An octopus might feel plenty, with no algebra.", 0.2, {}),
-    ("c5", "A twenty twenty-three study found no current A.I. is likely conscious. And there's no accepted test, because we don't understand consciousness itself.",
-     "A 2023 study found no current AI is likely conscious. And there’s no accepted test, because we don’t understand consciousness itself.", 0.35, {}),
+    ("c5", "A twenty twenty-three study found current A.I. unlikely to be conscious. And there's no accepted test, because we don't understand consciousness itself.",
+     "A 2023 study found current AI unlikely to be conscious. And there’s no accepted test, because we don’t understand consciousness itself.", 0.35, {}),
     # ---- what is still missing
     ("m0", "So what's still missing?", "So what’s still missing?", 0.15, {}),
     ("m1", "Memory. You don't get retrained every morning to remember yesterday.", "Memory. You don’t get retrained every morning to remember yesterday.", 0.15, {}),
@@ -51,6 +53,6 @@ LINES = [
     ("m6", "And saying, I don't know. OpenAI researchers found that training and tests reward guessing over admitting uncertainty.",
      "And saying “I don’t know.” OpenAI researchers found that training and tests reward guessing over admitting uncertainty.", 0.35, {}),
     # ---- finale
-    ("f1", "So: brilliant. Jagged. Still missing pieces.", "So: brilliant. Jagged. Still missing pieces.", 0.25, {}),
+    ("f1", "So: brilliant. Jagged. Still missing pieces.", "So: brilliant. Jagged. Still missing pieces.", 0.1, {}),
     ("f2", "The water is rising. Keep an eye on what's still dry.", "The water is rising. Keep an eye on what’s still dry.", 0.0, {}),
 ]

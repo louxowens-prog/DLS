@@ -42,7 +42,7 @@ def energy_curve():
     pts = [
         (0.0, 0.95), (0.3, 0.5), (TL.s("h2"), 0.3), (C["half"], 0.15), (TL.s("h3"), 0.5), (C["title"], 0.9),
         (TL.s("a1") - 0.05, 0.9), (TL.s("a1") + 0.3, 0.4), (TL.s("a4"), 0.18), (TL.s("a5"), 0.35),
-        (TL.s("l1"), 0.2), (TL.e("l4"), 0.25), (C["wait"] - 0.02, 0.4), (C["wait"], 0.0), (C["wait"] + 0.45, 0.0),
+        (TL.s("l1"), 0.2), (TL.e("l4"), 0.25), (C["wait_stop"] - 0.02, 0.4), (C["wait_stop"], 0.0), (C["wait"] + 0.6, 0.0),
         (C["wait"] + 0.5, 0.38), (TL.s("g4"), 0.25), (C["water"], 0.45), (TL.s("g6"), 0.75), (TL.e("g6"), 0.8),
         (TL.s("g7"), 0.55), (TL.e("g7"), 0.3), (C["silence"] - 0.01, 0.3), (C["silence"], 0.0),
         (C["missing"] - 0.01, 0.0), (C["missing"], 0.7), (TL.s("m1"), 0.4), (TL.e("m6"), 0.45),
@@ -82,7 +82,7 @@ def build():
         fx.add(J.noise_hit(0.2, 800, 8000, seed=40 + i), t, 0.35)
 
     # ---- "But wait." hard stop, then the notification and the water
-    fx.add(J.scratch(0.35, seed=50), C["wait"] - 0.3, 0.45)
+    fx.add(J.scratch(0.35, seed=50), C["wait_stop"] - 0.35, 0.45)
     fx.add(J.ping(), C["notif"], 0.45)
     fx.add(J.riser(TL.s("g6") - C["water"] + 0.2, seed=51), C["water"], 0.45)
     for i, t in enumerate(C["montage"]):
@@ -139,10 +139,11 @@ def build():
 
     # hard silences: the music bus is cut dead (the voice carries on alone)
     gate = np.ones(N)
-    for a_, b_ in ((C["wait"] - 0.02, C["wait"] + 0.45), (C["silence"], C["missing"] - 0.01),
+    for a_, b_ in ((C["wait_stop"], C["wait"] + 0.6), (C["silence"], C["missing"] - 0.01),
                    (C["final_silence"], C["end_card"] - 0.01)):
         gate[int(a_ * SR): int(b_ * SR)] = 0.0
     gate[int((TL.s("f1") - 0.1) * SR): int(C["final_silence"] * SR)] *= db(-6)
+    gate[: int(TL.e("h2") * SR)] *= db(-4)                                   # the hook: voice first
     gate[int((TL.s("h3") - 0.05) * SR): int(TL.e("h3") * SR)] *= db(-3)
     gate = np.convolve(gate, np.ones(int(0.004 * SR)) / int(0.004 * SR), mode="same")
     # the lone piano notes and bubbles live inside the consciousness silence, so they bypass that gate
