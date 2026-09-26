@@ -1,0 +1,15 @@
+# The first step toward AGI (Speed Racer style) — fact-check notes
+
+| Claim in the video | Source | Notes |
+|---|---|---|
+| Chess had a finish line: beat the world champion, 1997 | IBM Deep Blue defeated Garry Kasparov 3½–2½ in a six-game match, May 1997 | |
+| Image recognition: beat humans on a standard test, 2015 | ImageNet (ILSVRC) top-5 error: estimated human 5.1% (Karpathy). Microsoft's PReLU-net reported 4.94% (Feb 2015); ResNet won ILSVRC 2015 at 3.57% | |
+| A real test needs many abilities: reasoning, memory, spatial sense, language, learning speed, planning, social reasoning, perception, transfer, new problems, long-term autonomy | The brief's list | Shown as an 11-gauge dashboard. |
+| One framework scores AI against a well-educated adult | Hendrycks et al., *A Definition of AGI* (arXiv 2510.18212, Oct 2025): ten CHC cognitive domains, 100% = a well-educated adult | |
+| The new ARC test drops AI into games with no instructions and no goals; people solve every one; at its March launch, top AI scored under 1% | ARC Prize Foundation, ARC-AGI-3, launched 25 March 2026: hundreds of hand-made interactive environments with no stated rules or goals; every environment was solved by human testers; frontier models scored under 1% at launch (e.g., ~0.3%) | Dated to the launch because scores may rise. |
+| A truly general learner: learns new environments by experience, remembers, acquires untaught skills, transfers them, keeps improving without being rebuilt | The brief's definition | Related to Chollet's *On the Measure of Intelligence* (2019): intelligence as skill-acquisition efficiency. |
+| The dinner test; next week a science expedition; transfer is generality | The brief's thought experiment | Hazards kept from the brief: six guests/four chairs, vegetarian, peanut allergy, store closes at six, oven runs hot, missing ingredient, late guest, spilled wine. |
+| Steve Wozniak's coffee test: walk into a stranger's home and make coffee | Wozniak, Fast Company interview (2010) | Added: a well-known embodied cousin of the dinner test. |
+| The agent loop: perceive, model, predict, plan, act, observe, learn; episodic, semantic and procedural memory | The brief's architecture; memory types from cognitive psychology (Tulving, 1972, episodic vs semantic; procedural memory) | "What happened / what I know / how to do things". |
+| Generalization: memorizer vs learner, chess analogy | The brief's point | |
+| "AI is whatever hasn't been done yet" | Tesler's theorem, as quoted by Douglas Hofstadter in *Gödel, Escher, Bach* (1979); Tesler said his wording was "Intelligence is whatever machines haven't done yet" | On screen: "Tesler's theorem". Related: the "AI effect". |
