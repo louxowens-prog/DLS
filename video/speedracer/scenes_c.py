@@ -19,7 +19,7 @@ MEM_CAR = dict(body=VIOLET, stripe=LIME, number="99", driver="memorizer", books=
 
 def s_hood(arr, t, d, T):
     """The hood pops open: it's not a chat window in there, it's a loop."""
-    sr.sky(arr, [(0, (20, 10, 60)), (1, (80, 40, 160))])
+    sr.sunburst(arr, T, cols=[(80, 40, 170), (40, 20, 100), (130, 60, 220)], cy=1250, rays=24, spin=0.35)
     s = sr.surf(arr)
     k = ease(ramp(T, S("u1") + 0.3, S("u1") + 0.9))
     kl = ease(ramp(T, W("u1", "loop") - 0.3, W("u1", "loop") + 0.2))
@@ -79,6 +79,7 @@ def s_loop(arr, t, d, T):
             c.drawLine(q[0], q[1], p[0], p[1], paint(WHITE, stroke=6 * sc))
             f = sr.font("bungee-400", 44 * sc)
             w = f.measureText(lab) + 30 * sc
+            p = np.array([min(max(p[0], w / 2 + 20), sr.W - w / 2 - 20), p[1]])
             rr = skia.Path()
             rr.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(p[0] - w / 2, p[1] - 60 * sc, w, 70 * sc), 14 * sc, 14 * sc))
             sr.glossy(c, rr, CANDY[k % len(CANDY)] if lit else (70, 60, 100), rim=WHITE, lw=4)
@@ -101,9 +102,10 @@ MEMS = [("EPISODIC", "what happened", "happened", PINK), ("SEMANTIC", "what I kn
 
 def s_memory(arr, t, d, T):
     """Three memories, like three pit crews fuelling the car."""
-    sr.sky(arr, [(0, (30, 15, 70)), (1, (90, 40, 170))])
+    sr.sunburst(arr, T, cols=[(90, 40, 170), (50, 20, 110), (140, 60, 220)], cy=1300, rays=26, spin=0.3)
     s = sr.surf(arr)
     with s as c:
+        sr.sparkles(c, T, n=10, seed=31, y0=250, y1=480)
         cast.car_side(c, CX, 1320, 0.9, T, speed=0.1, **AI_CAR)
         sr.race_text(c, "3 KINDS OF MEMORY", CX, 380, 84, fill=LEMON)
         for k, (name, desc, word, colr) in enumerate(MEMS):
@@ -139,8 +141,9 @@ def s_h2h(arr, t, d, T):
         cast.car_side(c, 760, 1340, 0.75, T, speed=2, flames=True, **AI_CAR)
         if T < S("v2"):
             if kg:
-                sr.race_text(c, "GENERALIZATION", CX, 620, 96, fill=LEMON, scale=kg)
-                sr.flare(c, 860, 540, 0.8, T, tint=CYAN)
+                sr.race_text(c, "GENERAL-", 780, 900, 84, fill=LEMON, scale=kg)
+                sr.race_text(c, "IZATION", 800, 1000, 84, fill=LEMON, scale=kg)
+                sr.flare(c, 860, 820, 0.8, T, tint=CYAN)
         else:
             k1 = pop(T, W("v2", "memorized") - 0.2, 0.25)
             k2 = pop(T, W("v2", "other") - 0.1, 0.25)
@@ -156,7 +159,8 @@ def s_h2h(arr, t, d, T):
                 sr.plain(c, l1, x + 230, 640, 36, color=WHITE, fname="rubik-800")
                 sr.plain(c, l2, x + 230, 720, 50, color=LEMON, fname="bungee-400")
         # layered depth: the rival's face looms in the foreground
-        cast.face(c, "memorizer", 1010, 950, 2.6, T, talk=0.0, look=(-0.8, 0.2), facing=-1, expr="grin")
+        ko = ease(ramp(T, S("v2") - 0.2, S("v2") + 0.3))
+        cast.face(c, "memorizer", 250 - 700 * ko, 660, 3.3, T, talk=0.0, look=(0.9, 0.2), facing=1, expr="grin")
 
 
 def s_newtrack(arr, t, d, T):
@@ -194,7 +198,7 @@ def s_newtrack(arr, t, d, T):
                 shard.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(-30, -16, 60, 32), 8, 8))
                 sr.glossy(c, shard, [VIOLET, LIME, WHITE][j % 3], lw=3)
                 c.restore()
-            sr.badge(c, "CRASH!", CX - 180, 900, T, cr, color=RED, size=90, rot=-8)
+            sr.badge(c, "CRASH!", 290, 960, T, cr, color=RED, size=90, rot=-8)
             if slow:
                 c.drawRect(skia.Rect.MakeWH(sr.W, H), paint(INK, 0.15))
         # the learner reads the road
@@ -202,8 +206,8 @@ def s_newtrack(arr, t, d, T):
         cast.car_front(c, lx, 1330, 0.75, T, **FRONT)
         if T > W("v3", "notices") - 0.1:
             c.save()
-            c.translate(820, 560)
-            c.rotate(5)
+            c.translate(560, 1100)
+            c.rotate(4)
             m = skia.Path()
             m.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(-180, -80, 360, 160), 18, 18))
             sr.glossy(c, m, (230, 255, 240), top=WHITE, rim=CYAN, spec=0.2, lw=5)
@@ -211,8 +215,8 @@ def s_newtrack(arr, t, d, T):
             c.drawLine(-110, -24, 110, -24, paint(RED, stroke=8))
             sr.plain(c, "UPDATE: GO RIGHT", 0, 45, 32, color=sr.BLUE, fname="bungee-400")
             c.restore()
-        cast.face(c, "ai", 20, 980, 2.0, T, talk=0.0, look=(0.9, -0.1), facing=1)
-        sr.badge(c, "ADAPTS!", 800, 900, T, W("v3", "adapts") - 0.1, color=sr.LIME, size=70, rot=6)
+        cast.face(c, "ai", 790, 640, 2.5, T, talk=0.0, look=(-0.9, 0.2), facing=-1)
+        sr.badge(c, "ADAPTS!", 800, 1040, T, W("v3", "adapts") - 0.1, color=sr.LIME, size=70, rot=6)
         sr.race_text(c, "BRAND-NEW TRACK", CX, 380, 90, fill=WHITE)
         if not slow:
             sr.speed_lines(c, CX, 850, T, n=36, color=WHITE, r0=480, a=0.55, seed=11)
@@ -238,9 +242,9 @@ def s_chess2(arr, t, d, T):
             pts = [(hx + 46 * math.cos(i / 6 * 2 * math.pi), hy + 46 * math.sin(i / 6 * 2 * math.pi)) for i in range(6)]
             c.drawPath(sr.path(pts), paint(CANDY[k % len(CANDY)]))
             c.drawPath(sr.path(pts), paint(INK, stroke=5))
-        sr.plain(c, "a NEW game", 250, 1200, 40, color=WHITE, fname="rubik-800")
-        cast.face(c, "memorizer", 150, 1250, 0.75, T, look=(0.6, -0.4), expr="grin")
-        sr.race_text(c, "?!", 370, 1000, 130, fill=LEMON)
+        sr.plain(c, "a NEW game", 250, 925, 36, color=WHITE, fname="rubik-800")
+        cast.face(c, "memorizer", 150, 1215, 0.6, T, look=(0.6, -0.4), expr="grin")
+        sr.race_text(c, "?!", 400, 1150, 110, fill=LEMON)
         sr.badge(c, "NOT GENERAL", 260, 560, T, W("v4", "Not") - 0.05, color=RED, size=54, rot=-6)
         I.book(c, 830, 700, 0.9, color=TANG, title="HOW TO\nPLAY")
         k = ease(ramp(T, W("v4", "Never") - 0.1, E("v4")))
@@ -253,7 +257,7 @@ def s_chess2(arr, t, d, T):
             I.chess_king(c, 706 + 2.5 * cs + 60 * k, 920 + 1.5 * cs, 0.42)
         if k > 0.7:
             sr.race_text(c, "WIN!", 830, 1230, 80, fill=sr.LIME)
-        cast.face(c, "ai", 960, 1240, 0.7, T, talk=0.0, look=(-0.4, -0.6))
+        cast.face(c, "ai", 640, 1250, 0.55, T, talk=0.0, look=(0.4, -0.6))
         sr.badge(c, "INTELLIGENCE!", 820, 560, T, W("v4", "intelligence") - 0.2, color=sr.LIME, size=50, rot=6)
 
 
@@ -285,27 +289,39 @@ def s_laps(arr, t, d, T):
 
 
 def s_joke(arr, t, d, T):
-    """The old joke, in neon: Tesler's theorem."""
-    sr.sky(arr, [(0, (10, 5, 30)), (1, (60, 20, 90))])
+    """The old joke: the announcer under a spotlight, then Tesler's theorem in neon."""
+    sr.sunburst(arr, T, cols=[(60, 20, 110), (30, 10, 60)], cy=1500, rays=28, spin=0.2)
     s = sr.surf(arr)
+    kq = pop(T, S("w2") - 0.1, 0.3)
     with s as c:
-        for k in range(30):
-            x = (k * 83) % sr.W
-            c.drawCircle(x, 300 + (k * 137) % 1100, 3, paint(WHITE, 0.6))
-        k = pop(T, S("w2") - 0.1, 0.3)
-        if k:
+        for side in (-1, 1):                                       # spotlights
+            c.drawPath(sr.path([(CX + side * 420, 0), (CX + side * 320, 0), (CX + side * 60, 1250), (CX + side * 360, 1250)]),
+                       paint(LEMON, 0.16, blur=18))
+        rng = np.random.default_rng(5)
+        for j in range(160):                                        # the crowd, in silhouette
+            x = rng.uniform(0, sr.W)
+            c.drawCircle(x, 1280 + rng.uniform(0, 80), rng.uniform(26, 40), paint((20, 10, 40)))
+        if kq <= 0.01:
+            cast.face(c, "announcer", CX, 800, 2.6, T, talk=talk(T, "announcer"), look=(0.2, 0.1), expr="wow")
+            c.drawRoundRect(skia.Rect.MakeXYWH(CX + 170, 980, 80, 150), 24, 24, paint(shader=sr.lin((0, 980), (0, 1130), [WHITE, (150, 160, 190)])))
+            c.drawRect(skia.Rect.MakeXYWH(CX + 200, 1130, 20, 150), paint(INK))
+            sr.race_text(c, "THE ANNOUNCER", CX, 380, 70, fill=LEMON)
+        else:
             c.save()
             c.translate(CX, 820)
-            c.scale(k, k)
+            c.scale(kq, kq)
             p = skia.Path()
-            p.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(-470, -300, 940, 560), 40, 40))
+            p.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(-480, -310, 960, 580), 40, 40))
+            c.drawPath(p, paint((15, 5, 30), 0.85))
             c.drawPath(p, paint(PINK, stroke=16))
             c.drawPath(p, paint(PINK, 0.6, stroke=40, blur=22))
-            for i, ln in enumerate(("“AI IS WHATEVER", "HASN'T BEEN", "DONE YET.”")):
-                f = sr.font("monoton-400", 92)
-                c.drawString(ln, -f.measureText(ln) / 2, -150 + i * 140, f, paint(CYAN))
+            f = sr.font("righteous-400", 96)
+            for i, ln in enumerate(("\u201cAI IS WHATEVER", "HASN'T BEEN", "DONE YET.\u201d")):
+                w = f.measureText(ln)
+                c.drawString(ln, -w / 2, -150 + i * 140, f, paint(CYAN, 0.6, blur=10))
+                c.drawString(ln, -w / 2, -150 + i * 140, f, paint((210, 255, 255)))
             c.restore()
-            sr.plain(c, "Tesler's theorem (via Hofstadter, 1979)", CX, 1180, 36, color=WHITE, fname="rubik-700")
+            sr.plain(c, "Tesler's theorem (via Hofstadter, 1979)", CX, 1190, 36, color=WHITE, fname="rubik-700")
         kb = pop(T, E("w2") + 0.05, 0.2)
         if kb:
             sr.badge(c, "BA-DUM-TSS!", 760, 470, T, E("w2") + 0.05, color=TANG, size=56, rot=8)

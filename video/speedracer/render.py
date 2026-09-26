@@ -83,7 +83,7 @@ def main():
     master = os.path.join(BUILD, f"final{tag}.mp4")
     af = "anull"                          # loudness is set in audio.py with a static gain, so dynamics survive
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", video, "-ss", str(args.start), "-i", audio, "-map", "0:v", "-map", "1:a",
-                    "-c:v", "libx264", "-preset", "slow", "-crf", "17", "-profile:v", "high", "-pix_fmt", "yuv420p",
+                    "-c:v", "libx264", "-preset", "slow", "-crf", "12", "-profile:v", "high", "-pix_fmt", "yuv420p",
                     "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
                     "-r", str(FPS), "-af", af, "-ar", "48000", "-c:a", "aac", "-b:a", "256k", "-shortest",
                     "-movflags", "+faststart", master], check=True)

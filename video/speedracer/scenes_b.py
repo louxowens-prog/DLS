@@ -51,9 +51,13 @@ def s_learner(arr, t, d, T):
            [(0, (80, 40, 200)), (1, (200, 120, 255))], [(0, (0, 180, 255)), (1, (180, 255, 255))],
            [(0, (140, 200, 255)), (1, (255, 255, 255))], [(0, (255, 60, 150)), (1, (255, 200, 90))],
            [(0, (30, 20, 70)), (1, (90, 60, 160))]]
-    sr.sky(arr, bgs[i])
+    SB = [[LIME, (40, 200, 120), LEMON], [TANG, LEMON, PINK], [VIOLET, PINK, (120, 80, 255)], [CYAN, (0, 150, 255), WHITE],
+          [(160, 210, 255), WHITE, CYAN], [PINK, TANG, LEMON], [(90, 60, 160), VIOLET, PINK]]
+    sr.sunburst(arr, T, cols=SB[i], cy=820, rays=18, spin=0.5 * (1 if i % 2 else -1), dim=0.95)
     s = sr.surf(arr)
     with s as c:
+        sr.sparkles(c, T, n=10, seed=i, y0=300, y1=1100)
+        sr.flare(c, 880, 330, 0.7, T, tint=WHITE)
         labels = ["DROPPED SOMEWHERE NEW", "LEARNS BY TRYING", "REMEMBERS", "NEW SKILLS, NOBODY TAUGHT", "CARRIES THEM ELSEWHERE",
                   "KEEPS IMPROVING", "NO REBUILD NEEDED"]
         if i == 0:                                          # parachute drop into a candy jungle
@@ -144,7 +148,6 @@ def s_dinner(arr, t, d, T):
             sr.glossy(c, card, (255, 250, 240), top=WHITE, rim=PINK, spec=0.3, lw=6)
             sr.plain(c, "6 people. Tonight. 7:00", 0, -50, 48, color=INK, fname="bungee-400")
             sr.plain(c, "Make it a great evening.", 0, 30, 46, color=PINK, fname="rubik-800")
-            sr.plain(c, "(no special benchmark)", 0, 100, 34, color=(110, 100, 130), fname="rubik-700")
             c.restore()
         cast.car_front(c, CX + 260, 1330, 0.55, T, **FRONT)
 
@@ -161,8 +164,8 @@ def s_hazards(arr, t, d, T):
     lt = T - hz[i]
     bg = HAZ_BG[i]
     sr.sky(arr, [(0, sr.darker(bg, 0.35)), (0.45, bg), (1, sr.lighter(bg, 0.6))])
-    slow = i == 7 and lt < 0.85
-    ts = hz[7] + (lt * 0.2 if slow else 0.17 + (lt - 0.85) * 1.5) if i == 7 else T
+    slow = i == 7 and lt < 1.0
+    ts = hz[7] + (lt * 0.05 if slow else 0.05 + (lt - 1.0) * 1.8) if i == 7 else T
     s = sr.surf(arr)
     with s as c:
         track.road_front(c, ts, speed=1.8 if not slow else 0.3, curve=0.35 * math.sin(i * 1.7 + lt))
@@ -191,8 +194,10 @@ def s_hazards(arr, t, d, T):
             c.drawCircle(ox + 100, oy - 60, 20, paint(LEMON))
             I.clock(c, ox + 260, oy - 280, 0.9, 7, 25)
         else:
-            k = ease(lt / 0.85) if slow else 1.0
+            k = 0.55 + 0.1 * ease(lt / 1.0) if slow else min(1.0, 0.65 + (lt - 1.0) * 2)
             I.wine(c, ox, oy, 2.0, tilt=70 * k, T=T, drops=k)
+            if slow:
+                c.drawCircle(ox + 80, oy - 20, 330, paint(WHITE, 0.12 + 0.05 * math.sin(T * 20), stroke=10))
         lean = 14 * math.sin(i * 1.9 + lt * 3)
         c.save()
         c.translate(CX + 160 * math.sin(i * 1.3 + lt * 2), 1330)
@@ -204,8 +209,10 @@ def s_hazards(arr, t, d, T):
         sr.plain(c, f"HAZARD {i + 1}/8", CX, 350, 40, color=WHITE, fname="bungee-400")
         if not slow:
             sr.speed_lines(c, CX, 900, T, n=40, color=WHITE, r0=460, a=0.6, seed=i)
-        if i == 7 and 0.85 <= lt < 1.0:
-            c.drawRect(skia.Rect.MakeWH(sr.W, H), paint(WHITE, 0.6 * (1 - (lt - 0.85) / 0.15)))
+        if i == 7 and slow:
+            c.drawRect(skia.Rect.MakeWH(sr.W, H), paint((60, 0, 30), 0.18))
+        if i == 7 and 1.0 <= lt < 1.12:
+            c.drawRect(skia.Rect.MakeWH(sr.W, H), paint(WHITE, 0.65 * (1 - (lt - 1.0) / 0.12)))
 
 
 SKILLS = [("PERCEIVE", "perceive"), ("REASON", "reason"), ("ASK", "ask"), ("PLAN", "plan"), ("FIX", "fix"), ("IMPROVISE", "improvise"),
@@ -214,7 +221,7 @@ SKILLS = [("PERCEIVE", "perceive"), ("REASON", "reason"), ("ASK", "ask"), ("PLAN
 
 def s_skills(arr, t, d, T):
     """Eight-way split screen: each skill lights as it's named."""
-    arr[..., :3] = (20, 10, 45)
+    sr.sunburst(arr, T, cols=[(60, 20, 120), (30, 10, 70)], cy=900, rays=24, spin=0.3)
     s = sr.surf(arr)
     with s as c:
         for k, (lab, word) in enumerate(SKILLS):
@@ -242,15 +249,16 @@ def s_expedition(arr, t, d, T):
         cast.car_side(c, 520 + 100 * math.sin(T), 900, 0.7, T, speed=2, flames=True, **AI_CAR)
         c.drawRect(skia.Rect.MakeXYWH(440 + 100 * math.sin(T) - 10, 690, 8, 110), paint(INK))
         c.drawPath(sr.path([(440 + 100 * math.sin(T), 690), (520 + 100 * math.sin(T), 715), (440 + 100 * math.sin(T), 740)]), paint(RED))
-        sr.race_text(c, "SCIENCE EXPEDITION", CX, 380, 74, fill=sr.BLUE)
-        sr.plain(c, "new track, same skills", CX, 450, 38, color=INK, fname="rubik-800")
+        sr.race_text(c, "SCIENCE EXPEDITION", CX, 330, 74, fill=sr.BLUE)
+        c.drawRoundRect(skia.Rect.MakeXYWH(CX - 230, 368, 460, 60), 18, 18, paint(WHITE, 0.9))
+        sr.plain(c, "new track, same skills", CX, 410, 38, color=INK, fname="rubik-800")
         # split: dinner panel (left) -> expedition panel (right)
         for side, (lab, colr) in enumerate((("DINNER", PINK), ("EXPEDITION", CYAN))):
             x = 60 + side * 520
             p = skia.Path()
             p.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(x, 960, 440, 330), 24, 24))
             sr.glossy(c, p, colr, rim=WHITE, lw=5)
-            sr.plain(c, lab, x + 220, 1010, 40, color=WHITE, fname="bungee-400")
+            sr.race_text(c, lab, x + 220, 1020, 44, fill=WHITE, shadow=True)
         chips = [("SCHEDULING", "scheduling"), ("BUDGETS", "budgets"), ("BACKUP PLANS", "backup"), ("PEOPLE'S NEEDS", "needs"), ("RISK", "risk")]
         for k, (lab, word) in enumerate(chips):
             t0 = W("t4", word)
@@ -288,9 +296,10 @@ def s_transfer(arr, t, d, T):
 
 def s_coffee(arr, t, d, T):
     """Wozniak's coffee test: walk into a stranger's home and make a cup of coffee."""
-    sr.sky(arr, [(0, (255, 230, 190)), (1, (255, 180, 150))])
+    sr.sunburst(arr, T, cols=[(255, 200, 120), (255, 150, 170), (255, 230, 140)], cy=900, rays=22, spin=0.25)
     s = sr.surf(arr)
     with s as c:
+        sr.sparkles(c, T, n=8, seed=21, y0=300, y1=900)
         for k in range(4):
             c.drawRoundRect(skia.Rect.MakeXYWH(90 + k * 230, 560, 200, 220), 18, 18, paint(sr.lighter(CANDY[k], 0.4)))
             c.drawRoundRect(skia.Rect.MakeXYWH(90 + k * 230, 560, 200, 220), 18, 18, paint(INK, stroke=5))
@@ -316,5 +325,6 @@ def s_coffee(arr, t, d, T):
         c.drawCircle(190, 0, 36, paint(CYAN))
         c.restore()
         sr.glint(c, 790, 820, 50, T)
+        sr.flare(c, 790, 820, 0.8, T, tint=LEMON)
         sr.lower_third(c, T, S("t6") + 0.3, E("t6") + 0.3, "THE COFFEE TEST", "Steve Wozniak, 2010", color=TANG, y=420)
         sr.race_text(c, "ANY KITCHEN.", CX, 1250, 90, fill=WHITE)

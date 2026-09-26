@@ -27,7 +27,22 @@ STARTS = [e[0] for e in EDIT]
 NOCAP_KEYS = {"d6", "t2", "u2"}
 CAPS = [c for c in TL.captions() if c[3] not in NOCAP_KEYS]
 # the announcer's TV box for each of his lines: (x, y, w, h)
-PIP = {"a0": (580, 660, 440, 340), "a1": (40, 620, 440, 340), "a2": (40, 470, 440, 340), "a3": (190, 560, 700, 540)}
+PIP = {"a0": (580, 660, 440, 340), "a1": (40, 620, 440, 340), "a2": (600, 470, 440, 340)}
+PIP_END = {"a0": C["go"] - 0.05}
+# shots that run their own camera (no push-in)
+NO_DRIFT = {"grid", "loop", "final", "end", "two", "chess2", "skills"}
+
+
+def drift(arr, k, T):
+    """A slow push-in with a little hand-held wobble, so no shot ever sits still."""
+    from PIL import Image
+    z = 1.0 + 0.055 * min(1.0, max(0.0, k))
+    rng = np.random.default_rng(int(T * 12))
+    ox, oy = rng.normal(0, 1.2), rng.normal(0, 1.2)
+    w, h = sr.W / z, sr.H / z
+    x0 = min(max(0.0, sr.CX - w / 2 + ox), sr.W - w)
+    y0 = min(max(0.0, 880 - 880 / z + oy), sr.H - h)
+    arr[..., :3] = np.asarray(Image.fromarray(arr[..., :3]).resize((sr.W, sr.H), Image.BILINEAR, box=(x0, y0, x0 + w, y0 + h)))
 
 
 def shot_frame(i, T):
@@ -35,6 +50,8 @@ def shot_frame(i, T):
     t1 = EDIT[i + 1][0] if i + 1 < len(EDIT) else TL.total + 1.0
     arr = sr.new()
     SHOT[name](arr, T - t0, t1 - t0, T)
+    if name not in NO_DRIFT:
+        drift(arr, (T - t0) / max(0.1, t1 - t0), T)
     return arr
 
 
@@ -100,7 +117,7 @@ def split_slam(a, b, k):
 
 def pip(arr, T):
     for key, (x, y, w, h) in PIP.items():
-        t0, t1 = TL.s(key) - 0.3, TL.e(key) + 0.4
+        t0, t1 = TL.s(key) - 0.3, PIP_END.get(key, TL.e(key) + 0.4)
         if not (t0 <= T < t1):
             continue
         k = sr.pop(T, t0, 0.25) * (1 - sr.ease(sr.ramp(T, t1 - 0.2, t1)))
@@ -127,9 +144,11 @@ def pip(arr, T):
             c.restore()
             sr.tv_frame(c, x, y, w, h, T)
             bar = skia.Path()
-            bar.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(x + 20, y + h - 64, w * 0.62, 48), 10, 10))
+            fnt = sr.font("bungee-400", 28)
+            bw = fnt.measureText("THE ANNOUNCER") + 36
+            bar.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(x + 20, y + h - 64, bw, 48), 10, 10))
             sr.glossy(c, bar, sr.LEMON, lw=3)
-            c.drawString("THE ANNOUNCER", x + 34, y + h - 28, sr.font("bungee-400", min(30, h * 0.09)), sr.paint(sr.INK))
+            c.drawString("THE ANNOUNCER", x + 38, y + h - 29, fnt, sr.paint(sr.INK))
             c.restore()
 
 
@@ -200,6 +219,8 @@ def render_frame(T, idx=None, captions=True):
             out[..., :3] = (out[..., :3] * (1 - w) + 255 * w).astype(np.uint8)
     pip(out, T)
     sr.bloom(out, 0.45)
+    dn = np.random.default_rng(int(T * 24)).integers(-2, 3, (sr.H, sr.W, 1), dtype=np.int16)   # dither: no banding in the gradients
+    out[..., :3] = np.clip(out[..., :3].astype(np.int16) + dn, 0, 255).astype(np.uint8)
     if captions:
         draw_caption(out, T)
     return out

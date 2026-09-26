@@ -151,8 +151,31 @@ def glossy(c, pth, base, top=None, rim=None, spec=0.85, ink=True, lw=5.0):
         r = skia.Rect.MakeLTRB(x0 + (x1 - x0) * 0.1, y0 + hgt * 0.08, x1 - (x1 - x0) * 0.2, y0 + hgt * 0.28)
         c.drawRRect(skia.RRect.MakeRectXY(r, hgt * 0.1, hgt * 0.1), paint(WHITE, spec * 0.75, blur=hgt * 0.03))
     c.restore()
-    if ink:
+    if ink and lw > 0:
         c.drawPath(pth, paint(INK, stroke=lw))
+
+
+def sunburst(arr, T, cols=None, cx=CX, cy=880, rays=20, spin=0.35, dim=1.0):
+    """Hyper-saturated candy rays spinning out from a hot glowing centre."""
+    cols = cols or CANDY
+    yy, xx = np.mgrid[0:H:2, 0:W:2].astype(np.float32)
+    ang = np.arctan2(yy - cy, xx - cx)
+    k = (((ang + T * spin) / (2 * math.pi)) * rays) % len(cols)
+    pal = np.array(cols, np.float32)
+    img = pal[k.astype(int) % len(cols)]
+    r = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2) / 900
+    glow = np.clip(1 - r, 0, 1)[..., None] ** 2
+    img = img * dim * (0.75 + 0.25 * (1 - np.clip(r, 0, 1))[..., None]) + 255 * glow * 0.55
+    img = np.clip(img, 0, 255).astype(np.uint8)
+    arr[..., :3] = np.asarray(Image.fromarray(img).resize((W, H), Image.BILINEAR))
+
+
+def sparkles(c, T, n=24, seed=0, y0=0, y1=H, a=0.9):
+    rng = np.random.default_rng(seed)
+    for i in range(n):
+        x, y = rng.uniform(40, W - 40), rng.uniform(y0, y1)
+        r = rng.uniform(14, 34) * (0.6 + 0.4 * math.sin(T * 6 + i))
+        glint(c, x, y, r, T, a)
 
 
 def glint(c, x, y, r, T=0.0, a=1.0):

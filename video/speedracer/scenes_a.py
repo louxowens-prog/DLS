@@ -22,28 +22,37 @@ def dusk(arr, sun=True):
 # ------------------------------------------------------------------ hook
 
 def s_grid(arr, t, d, T):
-    """The starting grid: lights, revving cars, the flag... then a slow-motion launch that snaps to full speed."""
+    """The starting grid under the hook line, lights counting down; at the green light the launch freezes
+    (speed ramp), then snaps to full speed."""
     go = C["go"]
     dusk(arr)
-    # speed ramp: crawl for 0.6 s after the green light, then snap
     if T < go:
         u, spd = 0.0, 0.0
-    elif T < go + 0.6:
-        u, spd = (T - go) * 0.18, 0.1
+    elif T < go + 1.0:
+        u, spd = (T - go) * 0.06, 0.05                       # near-freeze
     else:
-        u, spd = 0.108 + (T - go - 0.6) * 2.4, 3.0
+        u, spd = 0.06 + (T - go - 1.0) * 2.8, 3.0             # snap
     s = sr.surf(arr)
+    punch = 1.0 + 0.12 * max(0.0, 1 - (T - go - 1.0) / 0.25) if T >= go + 1.0 else 1.0
     with s as c:
+        c.save()
+        c.translate(CX, 900)
+        c.scale(punch, punch)
+        c.translate(-CX, -900)
         track.road_front(c, u * 3, speed=1.0, curve=0.0)
         shake = 3 * math.sin(T * 70) if T < go else 0
         for k, (dx, body, num) in enumerate(((-330, PINK, "7"), (330, LEMON, "3"), (0, CYAN, "G"))):
             z = 1.0 + (u * 6 if k == 2 else u * 4.5)
-            sc = 0.62 * z
-            y = 1320 + 260 * (z - 1)
+            sc = 0.66 * z
+            y = 1300 + 260 * (z - 1)
             x = CX + dx * z
             if y - 260 * sc > 2600:
                 continue
             cast.car_front(c, x + shake * (k - 1), y, sc, T, body=body, number=num)
+            if go <= T < go + 1.0:                                # frozen smoke puffs behind the wheels
+                for j in range(3):
+                    c.drawCircle(x + (j - 1) * 90 * sc, y - 10, (40 + 20 * j) * sc, paint(WHITE, 0.55, blur=12))
+        c.restore()
         # the light gantry
         c.drawRect(skia.Rect.MakeXYWH(140, 470, 800, 150), paint(INK))
         for i in range(3):
@@ -54,38 +63,44 @@ def s_grid(arr, t, d, T):
             if on or green:
                 c.drawCircle(290 + i * 250, 545, 120, paint(colr, 0.35, blur=40))
                 sr.glint(c, 270 + i * 250, 525, 40, T)
-        k = pop(T, 0.15, 0.3)
-        if k > 0:
+        k = pop(T, 0.1, 0.3)
+        if k:
             sr.race_text(c, "THE RACE", CX, 330, 130, fill=LEMON, scale=k)
             sr.race_text(c, "TO AGI", CX, 440, 110, fill=CYAN, scale=k)
-        if T >= go + 0.6:
-            sr.speed_lines(c, CX, 900, T, n=70, color=WHITE, r0=300, seed=3)
-        if go <= T < go + 0.6:
-            sr.race_text(c, "GO!", CX, 1060, 260, fill=sr.LIME, scale=1 + 0.3 * (T - go))
+        kh = pop(T, 0.3, 0.3) * (1 - ease(ramp(T, S("a0") - 0.5, S("a0") - 0.2)))
+        if kh > 0.02:
+            sr.race_text(c, "WHERE'S THE", CX, 820, 110, fill=WHITE, scale=kh)
+            sr.race_text(c, "FINISH LINE?", CX, 950, 120, fill=PINK, scale=kh)
+        if T >= go + 1.0:
+            sr.speed_lines(c, CX, 900, T, n=80, color=WHITE, r0=260, seed=3)
+        if go <= T < go + 1.0:
+            sr.race_text(c, "GO!", CX, 1060, 260, fill=sr.LIME, scale=1 + 0.1 * (T - go))
+            c.drawRect(skia.Rect.MakeWH(sr.W, H), paint((40, 20, 90), 0.18))
+    if go + 1.0 <= T < go + 1.0 + 2 / 24:
+        arr[..., :3] = (arr[..., :3] * 0.4 + 255 * 0.6).astype(np.uint8)
 
 
 def s_race(arr, t, d, T):
-    """Side-on race through the candy stadium; the cars jockey; then the question slams in."""
+    """Side-on race through the candy stadium, the driver's giant face in the foreground; then the question slams in."""
     track.stadium(arr, T, speed=1.2)
     s = sr.surf(arr)
-    kq = pop(T, W("h1", "first") - 0.1, 0.3)
+    kq = pop(T, W("h2", "first") - 0.1, 0.3)
     with s as c:
         track.road_side(c, T, 1180, 1330, speed=1.2)
     track.near_wall(arr, T, 1330, speed=1.2)
     with s as c:
         sr.hlines(c, T, 700, 1180, n=26, a=0.55, seed=2)
         rng_bob = lambda k: 4 * math.sin(T * 30 + k)
-        cast.car_side(c, 300 + 60 * math.sin(T * 1.3), 1250 + rng_bob(0), 0.62, T, body=PINK, number="7", speed=2)
-        cast.car_side(c, 760 - 90 * math.sin(T * 1.1), 1318 + rng_bob(1), 0.8, T, body=LEMON, number="3", speed=2)
-        cast.car_side(c, 520 + 140 * ease(t / d), 1420 + rng_bob(2), 1.0, T, speed=2, flames=True, **AI_CAR)
-        # layered depth: the Generalist's driver looms in the foreground, the race sharp behind
-        cast.face(c, "ai", 1000, 930, 2.3, T, talk=0.0, look=(-0.8, 0.1), facing=-1)
-        sr.lower_third(c, T, S("h1") + 0.2, W("h1", "first") - 0.2, "LAP 1", "The race to build AGI", color=VIOLET, y=560)
+        cast.car_side(c, 500 + 60 * math.sin(T * 1.3), 1250 + rng_bob(0), 0.62, T, body=PINK, number="7", speed=2)
+        cast.car_side(c, 860 - 90 * math.sin(T * 1.1), 1318 + rng_bob(1), 0.8, T, body=LEMON, number="3", speed=2)
+        cast.car_side(c, 640 + 140 * ease(t / d), 1420 + rng_bob(2), 1.0, T, speed=2, flames=True, **AI_CAR)
+        # layered depth: the Generalist's driver, huge in the foreground, the race sharp behind
+        cast.face(c, "ai", 250, 640, 3.3, T, talk=0.0, look=(0.9, 0.1), facing=1)
         if kq > 0:
-            c.drawCircle(CX, 760, 260 * kq, paint(shader=sr.rad((CX, 700), 260 * kq, [(255, 255, 255), LEMON, TANG])))
-            c.drawCircle(CX, 760, 260 * kq, paint(INK, stroke=10))
-            sr.race_text(c, "?", CX + 10, 860, 300, fill=PINK, scale=kq, skew=-0.1)
-            sr.race_text(c, "STEP 1 = ?", CX, 1100, 90, fill=WHITE, scale=kq)
+            c.drawCircle(770, 700, 220 * kq, paint(shader=sr.rad((770, 640), 220 * kq, [(255, 255, 255), LEMON, TANG])))
+            c.drawCircle(770, 700, 220 * kq, paint(INK, stroke=10))
+            sr.race_text(c, "?", 780, 790, 260, fill=PINK, scale=kq, skew=-0.1)
+            sr.race_text(c, "STEP 1?", 770, 1020, 90, fill=WHITE, scale=kq)
 
 
 def s_two(arr, t, d, T):
@@ -146,7 +161,7 @@ def s_finish(arr, t, d, T):
         c.restore()
         cast.car_front(c, CX + 120 * math.sin(T * 1.6), 1330, 0.9, T, **{k: v for k, v in AI_CAR.items() if k != "stripe"})
         # layered depth: the anchor, huge, in the foreground
-        cast.face(c, "host", 60, 1060, 3.0, T, talk=talk(T), look=(0.8, -0.2), facing=1)
+        cast.face(c, "host", 190, 1030, 3.3, T, talk=talk(T), look=(0.8, -0.2), facing=1)
         sr.lower_third(c, T, S("d1") + 0.1, W("d1", "Without") - 0.1, "ANSWER 1 · SCIENCE", "Define what counts", color=PINK, y=560)
         sr.badge(c, "GOALPOSTS MOVE!", 700, 560, T, W("d1", "move"), color=RED, size=56, rot=5)
 
@@ -173,7 +188,7 @@ def s_chess(arr, t, d, T):
         sr.plain(c, "Finish line: beat the world champion", CX, 480, 42, color=WHITE, fname="rubik-800")
         k = pop(T, W("d2", "Nineteen") - 0.05, 0.25)
         if k:
-            sr.race_text(c, "1997", 330, 740, 150, fill=LEMON, scale=k)
+            sr.race_text(c, "1997", 300, 900, 150, fill=LEMON, scale=k)
         sr.badge(c, "DONE!", 780, 700, T, W("d2", "Done"), color=sr.LIME, size=80, rot=-7)
         if T > W("d2", "Done"):
             sr.flare(c, 780, 660, 1.0, T, tint=LEMON)
@@ -230,31 +245,51 @@ def s_fuzzy(arr, t, d, T):
 
 # ------------------------------------------------------------------ the dashboard
 
-GAUGES = ["REASONING", "MEMORY", "SPATIAL", "LANGUAGE", "LEARNING\nSPEED", "PLANNING", "SOCIAL", "PERCEPTION", "TRANSFER",
-          "NEW\nPROBLEMS", "LONG-TERM\nAUTONOMY"]
+GAUGES = ["REASONING", "MEMORY", "SPATIAL", "LANGUAGE", "LEARNING SPD", "PLANNING", "SOCIAL", "PERCEPTION", "TRANSFER",
+          "NEW PROBLEMS", "AUTONOMY"]
+LEVELS = [0.82, 0.3, 0.55, 0.9, 0.35, 0.6, 0.65, 0.72, 0.4, 0.45, 0.2]
 
 
 def s_dash(arr, t, d, T):
-    """Cockpit view: the road streaks past the windscreen; eleven gauges light up one by one."""
+    """Cockpit view: the road streaks past the windscreen; eleven gauges swing up one by one, each to its own level."""
     dusk(arr)
     s = sr.surf(arr)
     with s as c:
         track.road_front(c, T, speed=1.6, curve=0.2 * math.sin(T * 0.7), y_bottom=1150)
     sr.streak(arr, 30, 300, 700)
     with s as c:
+        # rear-view mirror: the driver's eyes on the road
+        m = skia.Path()
+        m.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(290, 250, 500, 190), 60, 60))
+        c.save()
+        c.clipPath(m, doAntiAlias=True)
+        c.drawRect(skia.Rect.MakeXYWH(290, 250, 500, 190), paint(shader=sr.lin((0, 250), (0, 440), [(60, 30, 120), (20, 10, 50)])))
+        cast.face(c, "ai", 540, 420, 1.9, T, talk=0.0, look=(0, -0.2))
+        c.restore()
+        c.drawPath(m, paint(shader=sr.lin((0, 250), (0, 440), [WHITE, (140, 150, 190), WHITE]), stroke=14))
+        c.drawRect(skia.Rect.MakeXYWH(530, 220, 20, 34), paint(INK))
+        shake = 3 * math.sin(T * 40)
+        c.save()
+        c.translate(0, shake)
         dash = sr.path([(0, 760), (sr.W, 760), (sr.W, H), (0, H)])
         c.drawPath(dash, paint(shader=sr.lin((0, 760), (0, H), [(60, 40, 110), (20, 10, 40)])))
         c.drawRect(skia.Rect.MakeXYWH(0, 752, sr.W, 16), paint(shader=sr.lin((0, 752), (0, 768), [WHITE, (150, 160, 190)])))
         sr.race_text(c, "THE AGI DASHBOARD", CX, 700, 70, fill=LEMON)
-        pos = [(145 + i * 263, 890) for i in range(4)] + [(145 + i * 263, 1110) for i in range(4)] + [(276 + i * 263, 1325) for i in range(3)]
+        pos = [(145 + i * 263, 880) for i in range(4)] + [(145 + i * 263, 1085) for i in range(4)] + [(276 + i * 263, 1290) for i in range(3)]
         for i, (lab, (gx, gy)) in enumerate(zip(GAUGES, pos)):
             t0 = C["gauges"][i]
-            lit = ease(ramp(T, t0 - 0.05, t0 + 0.15))
-            val = 0.15 + 0.7 * lit + 0.05 * math.sin(T * 9 + i) * lit
+            lit = ease(ramp(T, t0 - 0.05, t0 + 0.12))
+            sweep = ramp(T, t0 - 0.05, t0 + 0.35)
+            over = math.sin(sweep * math.pi) * 0.12 if sweep < 1 else 0
+            val = 0.05 + (LEVELS[i] - 0.05) * ease(sweep) + over + 0.02 * math.sin(T * 11 + i) * lit
+            colr = CANDY[i % len(CANDY)]
             if lit > 0:
-                c.drawCircle(gx, gy, 118, paint(CANDY[i % len(CANDY)], 0.35 * lit, blur=30))
-            I.gauge(c, gx, gy, 86, val, lab, lit, T, color=CANDY[i % len(CANDY)])
-        sr.lower_third(c, T, S("d5") + 0.05, C["gauges"][0] - 0.05, "A REAL TEST", "needs a whole dashboard", color=TANG, y=560)
+                c.drawCircle(gx, gy, 115, paint(colr, 0.4 * lit, blur=28))
+            I.gauge(c, gx, gy, 92, val, "", lit, T, color=colr)
+            f = sr.font("bungee-400", 21)
+            w = f.measureText(lab)
+            c.drawString(lab, gx - w / 2, gy + 52, f, paint(WHITE if lit > 0.5 else (170, 165, 200)))
+        c.restore()
 
 
 # ------------------------------------------------------------------ frameworks and ARC
@@ -272,22 +307,12 @@ def s_frameworks(arr, t, d, T):
         sr.glossy(c, card, (250, 245, 255), top=WHITE, rim=CYAN, spec=0.4, lw=7)
         sr.plain(c, "A DEFINITION OF AGI", CX, 520, 56, color=VIOLET, fname="bungee-400")
         sr.plain(c, "Hendrycks et al., 2025", CX, 580, 36, color=INK, fname="rubik-700")
-        # the meter: 0% -> 100% = a well-educated adult
-        c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(150, 700, 780, 90), 45, 45), paint((230, 225, 245)))
-        k = ease(ramp(T, W("d7", "scores") - 0.2, W("d7", "adult") + 0.2))
-        if k > 0.01:
-            fill = skia.Path()
-            fill.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(150, 700, 780 * k, 90), 45, 45))
-            sr.glossy(c, fill, PINK, rim=LEMON, lw=0)
-        c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(150, 700, 780, 90), 45, 45), paint(INK, stroke=6))
-        sr.plain(c, "0%", 170, 850, 40, color=INK, fname="bungee-400", align="left")
-        sr.plain(c, "100%", 930, 850, 40, color=INK, fname="bungee-400", align="right")
         abil = ["KNOWLEDGE", "READING", "MATH", "REASONING", "WORKING MEM", "LONG-TERM MEM", "RECALL", "VISION", "HEARING", "SPEED"]
         for j, lab in enumerate(abil):
             kj = pop(T, S("d7") + 0.12 * j, 0.2)
             if not kj:
                 continue
-            cx_, cy_ = 190 + (j % 5) * 175, 910 + (j // 5) * 60
+            cx_, cy_ = 190 + (j % 5) * 175, 650 + (j // 5) * 56
             f = sr.font("bungee-400", 22)
             w = f.measureText(lab) + 20
             c.save()
@@ -296,10 +321,24 @@ def s_frameworks(arr, t, d, T):
             c.drawRoundRect(skia.Rect.MakeXYWH(-w / 2, -24, w, 38), 10, 10, paint(CANDY[j % len(CANDY)]))
             c.drawString(lab, -w / 2 + 10, 4, f, paint(WHITE))
             c.restore()
+        # the scale: 100% = a well-educated adult; the real scores fill in as they're spoken
+        x0, x1 = 170, 910
+        for j, (name, val, word, colr) in enumerate((("GPT-4", 0.27, "twenty-seven", sr.BLUE), ("GPT-5", 0.58, "fifty-eight", PINK))):
+            y = 820 + j * 120
+            sr.plain(c, name, x0, y - 12, 34, color=INK, fname="bungee-400", align="left")
+            c.drawRoundRect(skia.Rect.MakeXYWH(x0, y, x1 - x0, 56), 28, 28, paint((230, 225, 245)))
+            kk = ease(ramp(T, W("d7", word) - 0.6, W("d7", word) + 0.2))
+            if kk > 0.01:
+                bar = skia.Path()
+                bar.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(x0, y, (x1 - x0) * val * kk, 56), 28, 28))
+                sr.glossy(c, bar, colr, rim=sr.lighter(colr, 0.7), lw=0)
+                sr.plain(c, f"{int(round(100 * val * kk))}%", x0 + (x1 - x0) * val * kk + 12, y + 44, 38, color=colr, fname="bungee-400", align="left")
+            c.drawRoundRect(skia.Rect.MakeXYWH(x0, y, x1 - x0, 56), 28, 28, paint(INK, stroke=5))
+        c.drawLine(x1, 770, x1, 1010, paint(RED, stroke=6))
+        sr.plain(c, "100% = a well-educated adult", x1, 1070, 34, color=RED, fname="rubik-800", align="right")
         kk = pop(T, W("d7", "well-educated") - 0.1, 0.25)
         if kk:
-            cast.face(c, "host", 850, 1080, 0.55 * kk, T, talk=0, look=(-0.6, 0), facing=-1, expr="smile")
-            sr.plain(c, "100% = a well-educated adult", 450, 1100, 42, color=INK, fname="rubik-800")
+            cast.face(c, "host", 230, 1100, 0.45 * kk, T, talk=0, look=(0.6, 0), expr="smile")
 
 
 def s_arc(arr, t, d, T):
@@ -321,12 +360,16 @@ def s_arc(arr, t, d, T):
                 c.drawRoundRect(skia.Rect.MakeXYWH(gx + i * cs + 3, gy + j * cs + 3, cs - 6, cs - 6), 8, 8, paint(colr))
         c.drawRoundRect(skia.Rect.MakeXYWH(gx + ax * cs, gy + ay * cs, cs, cs), 10, 10, paint(WHITE, stroke=8))
         c.drawRoundRect(skia.Rect.MakeXYWH(gx + ax * cs, gy + ay * cs, cs, cs), 10, 10, paint(WHITE, 0.4, blur=10))
-        sr.badge(c, "NO INSTRUCTIONS", 300, 1180, T, W("d8", "instructions") - 0.1, color=RED, size=44, rot=-5)
-        sr.badge(c, "NO GOALS", 800, 1180, T, W("d8", "goals") - 0.1, color=RED, size=44, rot=6)
+        kp = ease(ramp(T, W("d8", "People") - 0.1, W("d8", "People") + 0.3))
+        if kp < 0.5:
+            sr.badge(c, "NO INSTRUCTIONS", 300, 1180, T, W("d8", "instructions") - 0.1, color=RED, size=44, rot=-5)
+            sr.badge(c, "NO STATED GOALS", 780, 1180, T, W("d8", "stated") - 0.1, color=RED, size=44, rot=6)
         if T > W("d8", "People") - 0.1:
-            k = ease(ramp(T, W("d8", "People") - 0.1, W("d8", "People") + 0.4))
-            ov = sr.path([(0, 480), (sr.W, 480), (sr.W, 1300), (0, 1300)])
-            c.drawPath(ov, paint(INK, 0.75 * k))
+            k = kp
+            ov = skia.Path()
+            ov.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(60, 500, sr.W - 120, 830), 30, 30))
+            c.drawPath(ov, paint((24, 16, 60), k))
+            c.drawPath(ov, paint(CYAN, k, stroke=6))
             for side, (lab, val, colr, t0) in enumerate((("PEOPLE", 1.0, LIME, W("d8", "People")), ("TOP AI*", 0.006, RED, W("d8", "top")))):
                 kk = ease(ramp(T, t0, t0 + 0.6))
                 x = 300 + side * 480
