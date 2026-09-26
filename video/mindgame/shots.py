@@ -83,12 +83,12 @@ def flash(arr, T, a):
 def drift(arr, k, T):
     """Slow push-in with a tiny hand-held wobble on twos."""
     from PIL import Image
-    z = 1.0 + 0.05 * k
+    z = 1.004 + 0.05 * k
     rng = np.random.default_rng(mg.step(T))
     ox, oy = rng.normal(0, 1.5), rng.normal(0, 1.5)
     w, h = mg.W / z, mg.H / z
-    x0 = mg.CX - w / 2 + ox
-    y0 = 880 - 880 / z + oy
+    x0 = min(max(0.0, mg.CX - w / 2 + ox), mg.W - w)
+    y0 = min(max(0.0, 880 - 880 / z + oy), mg.H - h)
     img = Image.fromarray(arr[..., :3]).resize((mg.W, mg.H), Image.BILINEAR, box=(x0, y0, x0 + w, y0 + h))
     arr[..., :3] = np.asarray(img)
 
