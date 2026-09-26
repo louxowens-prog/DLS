@@ -12,6 +12,20 @@ import mg
 from mg import INK, WHITE
 
 
+_faces = {}
+
+
+def earth_face(D, seed=0, T=0.0):
+    """The Earth photo used as Jag's face; it turns slowly (re-rendered on fours to keep it cheap)."""
+    D = max(24, int(D) // 4 * 4)
+    k = (D, seed % 5, int(T * 6) % 180)
+    if k not in _faces:
+        if len(_faces) > 400:
+            _faces.clear()
+        _faces[k] = mg.earth_photo(D, lon0=0.1 + (seed % 5) * 0.5 + k[2] * 0.02, lat0=0.35, space=0.1)
+    return _faces[k]
+
+
 def jag(c, x, y, T, s=1.0, arms=(-40, 40), legs=0.0, eyes="normal", gaze=(0, 0), mouth="smile", tilt=0.0,
         head_col=mg.CYAN, body_col=mg.ORANGE, face="earth_ne2.jpg", seed=0, style="cel", bob=True, a=1.0):
     """x, y = point between the feet."""
@@ -58,10 +72,13 @@ def jag(c, x, y, T, s=1.0, arms=(-40, 40), legs=0.0, eyes="normal", gaze=(0, 0),
     if style != "line":
         mg.fill(c, head, T, head_col, seed + 60, off=(7 * s, 5 * s))
     mg.stroke(c, head, T, seed + 61, width=lw * 1.2, closed=True)
-    # collage face: a photo scrap pasted on, features drawn over it
+    # collage face: a real photograph of the Earth, cut out with scissors and pasted on; features drawn over it
     if face and style != "line":
-        fp = mg.circle_pts(hx, hy + 0.2 * R, 0, 28, rx=0.72 * R, ry=0.58 * R)
-        mg.collage(c, face, fp, T, seed=seed + 70, src=(900 + 300 * math.sin(seed), 300), scale=1.2 * s, border=6 * s)
+        fr = 0.72 * R
+        D = int(fr * 2 * 1.12)
+        img = earth_face(D, seed, T)
+        fp = mg.circle_pts(hx, hy + 0.12 * R, fr * 1.08, 30)
+        mg.photo_scrap(c, img, hx, hy + 0.12 * R, fp, T, seed=seed + 70, border=5 * s)
     ex = 0.33 * R
     for side in (-1, 1):
         cx_, cy_ = hx + side * ex, hy + 0.05 * R

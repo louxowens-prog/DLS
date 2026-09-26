@@ -14,6 +14,16 @@ from timeline import TL
 S, E, Wd = TL.s, TL.e, TL.word
 
 
+_scraps = {}
+
+
+def earth_scrap(D, lon0):
+    k = (D, lon0)
+    if k not in _scraps:
+        _scraps[k] = mg.earth_photo(D, lon0=lon0, lat0=0.3, space=0.35)
+    return _scraps[k]
+
+
 def s_nature(arr, t, d, T):
     mg.paper(arr, (235, 232, 222), 9)
     s = mg.surf(arr)
@@ -25,55 +35,104 @@ def s_nature(arr, t, d, T):
         page = mg.rect_pts(90, 360, 900, 940)
         mg.fill(c, page, T, (250, 248, 240), 300, off=(12, 10))
         mg.stroke(c, page, T, 301, width=8, closed=True)
-        mg.letters(c, "COMMENT · FEB 2026", CX, 450, T, size=42, fname="rubik-800", color=INK, outline=None, seed=302, jig=1, rot=1)
-        mg.stroke(c, [(130, 480), (950, 480)], T, 303, width=6)
-        mg.letters(c, "HUMAN-LEVEL AI", CX, 590, T, size=98, fname="bangers-400", color=INK, outline=None, seed=304, jig=2, rot=2)
-        mg.letters(c, "IS ALREADY HERE", CX, 700, T, size=98, fname="bangers-400", color=mg.RED, outline=None, seed=305, jig=2, rot=2)
-        mg.collage(c, "earth_ne2.jpg", mg.rect_pts(150, 760, 380, 300), T, seed=306, src=(950, 180), scale=0.9, border=0)
-        for i in range(9):
-            y = 780 + i * 34
-            mg.stroke(c, [(570, y), (930 - (i % 3) * 40, y)], T, 310 + i, width=4, color=(120, 120, 120))
+        mg.letters(c, "NATURE · COMMENT · FEB 2026", CX, 440, T, size=38, fname="rubik-800", color=INK, outline=None, seed=302, jig=1, rot=1)
+        mg.stroke(c, [(130, 470), (950, 470)], T, 303, width=6)
+        mg.letters(c, "DOES AI ALREADY HAVE", CX, 560, T, size=74, fname="bangers-400", color=INK, outline=None, seed=304, jig=2, rot=2)
+        mg.letters(c, "HUMAN-LEVEL INTELLIGENCE?", CX, 645, T, size=74, fname="bangers-400", color=INK, outline=None, seed=305, jig=2, rot=2)
+        kc = mg.pop(T, Wd("g1", "already"), 0.3)
+        if kc > 0:
+            mg.letters(c, "THE EVIDENCE IS CLEAR", CX, 745, T, size=78, fname="bangers-400", color=mg.RED, outline=None, seed=306,
+                       jig=2, rot=2, scale=kc)
+        mg.photo_scrap(c, earth_scrap(300, 0.3), 330, 930, mg.rect_pts(185, 800, 290, 260), T, seed=306, border=4)
+        for i in range(8):
+            y = 820 + i * 32
+            mg.stroke(c, [(530, y), (930 - (i % 3) * 40, y)], T, 310 + i, width=4, color=(120, 120, 120))
         for i in range(4):
             hx = 220 + i * 210
-            head = mg.circle_pts(hx, 1130, 50, 24)
+            head = mg.circle_pts(hx, 1140, 50, 24)
             mg.fill(c, head, T, [(245, 205, 170), (210, 160, 120), (240, 190, 150), (180, 130, 100)][i], 320 + i, off=(3, 3))
             mg.stroke(c, head, T, 324 + i, width=6, closed=True)
-            c.drawCircle(hx - 16, 1125, 6, mg.paint(INK))
-            c.drawCircle(hx + 16, 1125, 6, mg.paint(INK))
-            mg.stroke(c, mg.bez((hx - 15, 1150), (hx, 1161), (hx + 15, 1150)), T, 328 + i, width=5)
-        mg.note(c, "4 researchers, UC San Diego", CX, 1250, size=44)
+            c.drawCircle(hx - 16, 1135, 6, mg.paint(INK))
+            c.drawCircle(hx + 16, 1135, 6, mg.paint(INK))
+            mg.stroke(c, mg.bez((hx - 15, 1160), (hx, 1171), (hx + 15, 1160)), T, 328 + i, width=5)
+        mg.note(c, "4 researchers, UC San Diego", CX, 1255, size=44)
         c.restore()
-        mg.label(c, T, S("g1") + 0.3, ["NATURE, FEBRUARY 2026"])
+
+
+ABILITIES = ["KNOWLEDGE", "READING & WRITING", "MATH", "REASONING", "WORKING MEMORY", "LONG-TERM MEMORY",
+             "RECALL", "VISION", "HEARING", "SPEED"]
 
 
 def s_score(arr, t, d, T):
+    if T < Wd("g2", "GPT-4") - 0.1:
+        s_yardstick(arr, T)
+    else:
+        s_bars(arr, T)
+
+
+def s_yardstick(arr, T):
+    """The yardstick: a well-educated adult, scored across ten abilities."""
+    mg.paper(arr, (255, 236, 200), 17)
+    s = mg.surf(arr)
+    with s as c:
+        mg.stamp(c, "NOT YET?", 540, 500, T, Wd("g2", "not"), color=mg.RED, size=84, rot=-6)
+        hx, hy, R = CH.human(c, 300, 1250, T, s=1.05, arms=(-150, 30), mouth="smile", seed=330)
+        cap = np.array([(hx - 95, hy - 70), (hx + 5, hy - 115), (hx + 105, hy - 70), (hx + 5, hy - 30)])
+        mg.fill(c, cap, T, INK, 331, off=(0, 0))
+        mg.stroke(c, [(hx + 90, hy - 72), (hx + 110, hy - 10)], T, 332, width=5, color=mg.YELLOW)
+        kw = ease(ramp(T, Wd("g2", "well-educated") - 0.2, Wd("g2", "well-educated") + 0.2))
+        if kw > 0:
+            mg.letters(c, "= 100%", 300, 640, T, size=96 * kw + 0.1, fname="bangers-400", color=mg.GREEN, ow=10, seed=333)
+            mg.note(c, "well-educated adult", 300, 700, size=42)
+        for i, name in enumerate(ABILITIES):
+            k = mg.pop(T, Wd("g2", "framework") + 0.16 * i, 0.2)
+            if k <= 0:
+                continue
+            y = 610 + i * 64
+            w = mg.text_w(name, 34, "rubik-800") + 30
+            c.save()
+            c.translate(770, y)
+            c.rotate((-2, 1.5, -1, 2)[i % 4])
+            c.scale(k, k)
+            tag = mg.rect_pts(-w / 2, -40, w, 54)
+            mg.fill(c, tag, T, (255, 255, 255), 334 + i, off=(3, 3))
+            mg.stroke(c, tag, T, 345 + i, width=4, closed=True)
+            mg.note(c, name, 0, 0, size=34, fname="rubik-800",
+                    color=mg.RED if "MEMORY" in name or name == "RECALL" else INK)
+            c.restore()
+        mg.note(c, "10 abilities", 770, 1280, size=44, color=INK)
+        mg.label(c, T, S("g2") + 1.3, ["HENDRYCKS ET AL. 2025", "A DEFINITION OF AGI"])
+
+
+def s_bars(arr, T):
     mg.paper(arr, (230, 245, 230), 10)
     s = mg.surf(arr)
     with s as c:
-        mg.letters(c, "HOW CLOSE TO AGI?", CX, 440, T, size=80, fname="bangers-400", color=INK, outline=WHITE, ow=8, seed=340)
-        mg.note(c, "vs. a well-educated adult, across 10 abilities", CX, 510, size=40)
-        for i, (name, val, key, col) in enumerate((("GPT-4", 27, "twenty-seven", mg.BLUE), ("GPT-5", 58, "fifty", mg.ORANGE))):
-            y = 650 + i * 260
-            g = ease(ramp(T, Wd("g2", key) - 0.3, Wd("g2", key) + 0.35))
+        mg.letters(c, "HOW CLOSE TO AGI?", CX, 420, T, size=80, fname="bangers-400", color=INK, outline=WHITE, ow=8, seed=340)
+        mg.note(c, "vs. a well-educated adult, across 10 abilities", CX, 490, size=40)
+        for i, (name, val, key, col) in enumerate((("GPT-4", 27, "GPT-4", mg.BLUE), ("GPT-5", 58, "GPT-5", mg.ORANGE))):
+            y = 640 + i * 230
+            t0 = Wd("g2", key)
+            g = ease(ramp(T, t0, t0 + 0.9))
             track = mg.rect_pts(120, y, 840, 120)
             mg.fill(c, track, T, WHITE, 341 + i, off=(6, 4))
             mg.stroke(c, track, T, 343 + i, width=8, closed=True)
             if g > 0.02:
                 f = mg.rect_pts(128, y + 8, 824 * val / 100 * g, 104)
                 mg.fill(c, f, T, col, 345 + i, off=(0, 0), shader=mg.crayon_shader(col, seed=20 + i, density=1.0))
-            mg.letters(c, name, 150, y - 16, T, size=60, fname="permanent-marker-400", color=INK, outline=None, seed=347 + i, align="left")
-            mg.letters(c, f"{int(val * g)}%", 900, y - 16, T, size=76, fname="bangers-400", color=col, ow=8, seed=349 + i, align="right")
-        mg.stroke(c, [(952, 620), (952, 1170)], T, 351, width=6, color=mg.RED)
-        mg.note(c, "AGI = 100%", 900, 1215, size=40, color=mg.RED)
+            if T >= t0 - 0.05:
+                mg.letters(c, name, 150, y - 16, T, size=60, fname="permanent-marker-400", color=INK, outline=None, seed=347 + i, align="left")
+                mg.letters(c, f"{int(round(val * g))}%", 900, y - 16, T, size=76, fname="bangers-400", color=col, ow=8, seed=349 + i, align="right")
+        mg.stroke(c, [(952, 600), (952, 1030)], T, 351, width=6, color=mg.RED)
+        mg.note(c, "AGI = 100%", 945, 1072, size=38, color=mg.RED, align="right")
         km = ease(ramp(T, Wd("g2", "memory") - 0.2, Wd("g2", "memory") + 0.2))
         if km > 0:
-            box = mg.rect_pts(170, 1260, 740, 150)
+            box = mg.rect_pts(150, 1110, 780, 150)
             mg.fill(c, box, T, (255, 240, 240), 352, off=(6, 5), a=km)
             mg.stroke(c, box, T, 353, width=8, closed=True, color=mg.RED, a=km)
-            mg.letters(c, "LONG-TERM MEMORY: ~0", CX, 1360, T, size=72, fname="bangers-400", color=mg.RED, outline=None, seed=354,
+            mg.letters(c, "LONG-TERM MEMORY: ~0", CX, 1210, T, size=72, fname="bangers-400", color=mg.RED, outline=None, seed=354,
                        a=km, scale=mg.pop(T, Wd("g2", "memory") - 0.1, 0.25) or 0.001)
-        mg.stamp(c, "NOT YET?", 540, 862, T, Wd("g2", "not"), color=mg.RED, size=66, rot=8)
-        mg.label(c, T, S("g2") + 0.2, ["HENDRYCKS ET AL. 2025", "A DEFINITION OF AGI"])
+        mg.label(c, T, Wd("g2", "GPT-4") - 0.1, ["HENDRYCKS ET AL. 2025"])
 
 
 def s_deepmind(arr, t, d, T):
@@ -100,9 +159,26 @@ def s_deepmind(arr, t, d, T):
         mg.letters(c, "PERFORMANCE", 0, 0, T, size=56, fname="bangers-400", color=mg.RED, outline=None, seed=370, spacing=3)
         c.restore()
         mg.letters(c, "GENERALITY", 560, 1300, T, size=56, fname="bangers-400", color=mg.BLUE, outline=None, seed=371, spacing=3)
-        k = ease(ramp(T, S("g3") + 0.8, E("g3")))
-        px, py = 250 + 520 * k, 1110 - 260 * k
-        CH.jag(c, px, py, T, s=0.4, eyes="normal", mouth="smile", arms=(-150, 150), seed=372)
+        mg.note(c, "narrow", 200, 1262, size=36, color=(90, 90, 100), align="left")
+        mg.note(c, "general", 950, 1262, size=36, color=(90, 90, 100), align="right")
+        # narrow but superhuman: a chess-engine knight up in the top-left corner
+        kn = mg.pop(T, Wd("g3", "performance") - 0.1, 0.25)
+        if kn > 0:
+            knight = (np.array([(-40, 70), (40, 70), (30, 30), (45, 0), (25, -55), (-5, -75), (-40, -40), (-20, -15), (-40, 10), (-30, 30)])
+                      * kn + (440, 480))
+            mg.fill(c, knight, T, WHITE, 373, off=(4, 3))
+            mg.stroke(c, knight, T, 374, width=6, closed=True)
+            mg.note(c, "chess engines:", 500, 470, size=36, align="left", color=INK)
+            mg.note(c, "superhuman, but narrow", 500, 510, size=36, align="left", color=INK)
+        # general but only 'emerging': where the paper put 2023's chatbots
+        k = ease(ramp(T, S("g3") + 0.3, Wd("g3", "both")))
+        px, py = 950 - 130 * k, 1170
+        CH.jag(c, px, py, T, s=0.4, eyes="normal", mouth="smile" if k < 1 else "o", arms=(-150, 150), seed=372,
+               legs=0.6 * math.sin(T * 14) * (1 - k))
+        kl = mg.pop(T, Wd("g3", "generality") - 0.2, 0.25)
+        if kl > 0:
+            mg.note(c, "chatbots, 2023: EMERGING AGI", 900, 860, size=38, align="right", color=mg.RED)
+            mg.stroke(c, mg.bez((780, 880), (810, 910), (818, 960)), T, 375, width=5, color=mg.RED)
         mg.label(c, T, S("g3") + 0.1, ["GOOGLE DEEPMIND", "LEVELS OF AGI, 2023"])
 
 
@@ -123,8 +199,8 @@ def s_notif(arr, t, d, T):
             card = mg.rect_pts(300, y, 480, 170)
             mg.fill(c, card, T, (245, 245, 250), 384, off=(4, 4))
             mg.stroke(c, card, T, 385, width=6, closed=True)
-            mg.letters(c, "AGI ACHIEVED", CX, y + 85, T, size=64, fname="rubik-900", color=INK, outline=None, seed=386, jig=1, rot=1)
-            mg.note(c, "now", 740, y + 40, size=30)
+            mg.letters(c, "AGI ACHIEVED", CX, y + 92, T, size=52, fname="rubik-900", color=INK, outline=None, seed=386, jig=1, rot=1)
+            mg.note(c, "now", 755, y + 36, size=28, align="right", color=(90, 90, 100))
             mg.note(c, "Humanity · 9:42 AM", CX, y + 138, size=34, color=GREY_ if False else (90, 90, 100))
         if kx > 0:
             L = 520 * kx
@@ -135,8 +211,8 @@ def s_notif(arr, t, d, T):
 
 # ------------------------------------------------------------------ the rising water
 
-PEAKS = [("CHESS", 110, 0.34), ("GO", 260, 0.42), ("VISION", 400, 0.48), ("TRANSLATION", 520, 0.53), ("WRITING", 620, 0.58),
-         ("CODE", 720, 0.63), ("MATH", 810, 0.7), ("SCIENCE", 900, 0.74), ("COMPUTERS", 990, 0.8)]
+PEAKS = [("CHESS", 110, 0.34), ("GO", 240, 0.42), ("VISION", 360, 0.48), ("TRANSLATION", 480, 0.53), ("WRITING", 590, 0.58),
+         ("CODE", 690, 0.63), ("MATH", 780, 0.7), ("SCIENCE", 870, 0.74), ("COMPUTERS", 970, 0.8)]
 LEFT = [("LONG-TERM PLANS", 300, 0.97), ("MEMORY", 620, 1.0), ("ROBOTICS", 880, 0.93)]
 
 
@@ -148,7 +224,12 @@ def mountains(c, T, level, peaks, seed=0, base=1450, top=470):
                 shader=mg.crayon_shader((140, 110, 80), seed=40 + i % 3, density=0.95))
         mg.stroke(c, m, T, seed + 20 + i, width=7)
         under = yt > level
-        mg.letters(c, name, x, yt - 22 - (48 if i % 2 else 0), T, size=32 if len(name) > 8 else 40, fname="bangers-400",
+        size = 34 if len(name) > 8 else 40
+        tw = mg.text_w(name, size, "bangers-400")
+        lx = min(max(x, tw / 2 + 24), W - tw / 2 - 24)
+        ly = yt - 24 - 46 * (i % 3)
+        mg.stroke(c, [(x, yt - 6), (lx, ly + 8)], T, seed + 60 + i, width=3, color=INK, double=False)
+        mg.letters(c, name, lx, ly, T, size=size, fname="bangers-400",
                    color=(170, 200, 240) if under else INK, outline=WHITE if not under else None, ow=6, seed=seed + 40 + i)
 
 
@@ -285,7 +366,7 @@ def s_c1(arr, t, d, T):
         c.save()
         CH_line_jag(c, CX, 1380, T, 1.1)
         c.restore()
-        mg.letters(c, "CONSCIOUS?", CX, 560, T, size=150, fname="permanent-marker-400", color=CHALK, outline=None, seed=701, jig=2, rot=3)
+        mg.letters(c, "CONSCIOUS?", CX, 560, T, size=128, fname="permanent-marker-400", color=CHALK, outline=None, seed=701, jig=2, rot=3)
 
 
 def CH_line_jag(c, x, y, T, s):
@@ -323,7 +404,6 @@ def s_c2(arr, t, d, T):
             mg.stroke(c, box, T, 720 + i, width=6, color=CHALK, closed=True, amp=3.0)
             mg.letters(c, big, CX, y + 10, T, size=90, fname="permanent-marker-400", color=col, outline=None, seed=725 + i, jig=1.5, rot=2)
             mg.note(c, small, CX, y + 90, size=48, color=CHALK)
-        mg.note(c, "three different things", CX, 1330, size=44, color=(170, 175, 170))
 
 
 def s_c3(arr, t, d, T):
@@ -376,15 +456,16 @@ def s_octo(arr, t, d, T):
 
 def s_c5(arr, t, d, T):
     chalk_bg(arr)
+    if T >= Wd("c5", "And") - 0.1:
+        return s_meter(arr, T)
     s = mg.surf(arr)
     # the theories the 2023 report drew its indicator properties from
     inds = ["recurrent processing", "global workspace", "higher-order theories", "predictive processing",
             "attention schema", "agency & embodiment"]
-    ticks = [None] * len(inds)
     with s as c:
         mg.letters(c, "CONSCIOUSNESS CHECKLIST", CX, 450, T, size=70, fname="permanent-marker-400", color=CHALK, outline=None, seed=770, jig=1)
-        for i, (name, ok) in enumerate(zip(inds, ticks)):
-            y = 560 + i * 95
+        for i, name in enumerate(inds):
+            y = 540 + i * 90
             k = ease(ramp(T, S("c5") + 0.15 * i, S("c5") + 0.15 * i + 0.2))
             if k <= 0:
                 continue
@@ -392,10 +473,30 @@ def s_c5(arr, t, d, T):
             mg.stroke(c, box, T, 771 + i, width=5, color=CHALK, closed=True)
             mg.letters(c, "?", 200, y + 52, T, size=58, fname="permanent-marker-400", color=mg.YELLOW, outline=None, seed=780 + i)
             mg.note(c, name, 260, y + 46, size=50, color=CHALK, align="left")
-        kt = ease(ramp(T, Wd("c5", "accepted") - 0.3, Wd("c5", "accepted")))
-        if kt > 0:
-            box = mg.rect_pts(150, 1180, 780, 170)
-            mg.stroke(c, box, T, 790, width=7, color=mg.RED, closed=True)
-            mg.letters(c, "NO ACCEPTED TEST", CX, 1290, T, size=86, fname="bangers-400", color=mg.RED, outline=None, seed=791,
-                       scale=mg.pop(T, Wd("c5", "accepted") - 0.2, 0.25) or 0.001)
+        mg.stamp(c, "CURRENT AI: UNLIKELY", CX, 1190, T, Wd("c5", "unlikely"), color=mg.PINK, size=70, rot=-4)
         mg.label(c, T, S("c5") + 0.1, ["BUTLIN, LONG ET AL. 2023", "INDICATORS FROM 5+ THEORIES"])
+
+
+def s_meter(arr, T):
+    """No accepted test: a consciousness meter whose needle cannot settle."""
+    s = mg.surf(arr)
+    t0 = Wd("c5", "And")
+    with s as c:
+        cx, cy, R = CX, 900, 330
+        arc = mg.circle_pts(cx, cy, R, 40, a0=math.pi, a1=2 * math.pi)
+        mg.stroke(c, np.vstack([arc, [(cx - R, cy)]]), T, 800, width=7, color=CHALK, closed=True, amp=3.0)
+        for k in range(9):
+            a = math.pi + k / 8 * math.pi
+            mg.stroke(c, [(cx + (R - 40) * math.cos(a), cy + (R - 40) * math.sin(a)), (cx + (R - 8) * math.cos(a), cy + (R - 8) * math.sin(a))],
+                      T, 801 + k, width=5, color=CHALK)
+        mg.note(c, "not", cx - R + 20, cy + 50, size=40, color=CHALK, align="left")
+        mg.note(c, "conscious", cx + R - 20, cy + 50, size=40, color=CHALK, align="right")
+        mg.letters(c, "CONSCIOUS-O-METER", CX, 470, T, size=76, fname="permanent-marker-400", color=mg.YELLOW, outline=None, seed=805, jig=1)
+        rng = np.random.default_rng(mg.step(T) // 2)
+        a = math.pi * 1.5 + 1.3 * math.sin(T * 7.3) + rng.normal(0, 0.35)
+        mg.stroke(c, [(cx, cy), (cx + (R - 60) * math.cos(a), cy + (R - 60) * math.sin(a))], T, 806, width=12, color=mg.RED, double=False)
+        c.drawCircle(cx, cy, 20, mg.paint(CHALK))
+        kd = ease(ramp(T, Wd("c5", "understand") - 0.2, Wd("c5", "understand") + 0.3))
+        if kd > 0:
+            mg.letters(c, "???", cx, cy - 120, T, size=110 * kd + 0.1, fname="permanent-marker-400", color=CHALK, outline=None, seed=807)
+        mg.stamp(c, "NO ACCEPTED TEST", CX, 1150, T, Wd("c5", "accepted") - 0.1, color=mg.RED, size=86, rot=-3)

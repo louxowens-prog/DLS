@@ -28,11 +28,20 @@ SHOTS = [
 # big-face cutaways inserted over the main shots (start, end, shot)
 INSERTS = [
     (Wd("a4", "then"), Wd("a4", "then") + 0.75, D.insert_face("jag", "swirl", "?!", Wd("a4", "then"))),
-    (S("g1"), S("g1") + 0.85, D.insert_face("jag", "burst", "WAIT!", S("g1"))),
+    (S("g1"), S("g1") + 1.2, D.insert_face("jag", "burst", "WAIT!", S("g1"))),
     (S("m6"), S("m6") + 0.8, D.insert_face("human", (255, 214, 60), "HMM...", S("m6"))),
 ]
+# Mind Game switches drawing method from scene to scene; every shot gets its own
+STYLE_OF = {
+    A.s_gold: "cel", A.s_clock: "pencil", A.s_title: "print", A.s_gpqa: "crayon", A.s_agents: "cel", A.s_robot: "pencil",
+    A.s_nobody: "crayon", A.s_agiq: "print", A.s_levels: "cel", B.s_nature: "print", B.s_score: "crayon",
+    B.s_deepmind: "pencil", B.s_notif: "cel", B.s_water: "crayon", B.s_montage: "print", B.s_water2: "crayon",
+    B.s_c1: "print", B.s_c2: "print", B.s_c3: "print", B.s_octo: "crayon", B.s_c5: "print",
+    D.s_m0: "cel", D.s_m1: "pencil", D.s_m2: "crayon", D.s_m3: "cel", D.s_m4: "pencil", D.s_m5: "crayon", D.s_m6: "print",
+    D.s_final: "crayon", D.s_end: "print",
+}
 CALM = {B.s_c1, B.s_c2, B.s_c3, B.s_c5, D.s_final, D.s_end, D.s_finale}
-NO_DRIFT = {B.s_montage, D.s_finale, D.s_end, A.s_title, A.s_agiq}
+NO_DRIFT = {B.s_montage, D.s_finale, D.s_end, A.s_title, A.s_agiq, A.s_levels}
 NOCAP_KEYS = {"g6", "c3j"}
 CAPS = [c for c in TL.captions() if c[3] not in NOCAP_KEYS]
 
@@ -53,10 +62,10 @@ def balanced(s, f, maxw):
 
 def draw_caption(arr, T):
     s = next((c[2] for c in CAPS if c[0] <= T < c[1]), None)
-    if not s:
+    if not s or T >= C["end_card"]:
         return
     f = mg.font("rubik-900", 60)
-    lines = balanced(s, f, 880)
+    lines = balanced(s, f, 840)
     surf = mg.surf(arr)
     with surf as c:
         y = mg.CAP_Y - (len(lines) - 1) * 10
@@ -68,16 +77,14 @@ def draw_caption(arr, T):
 
 
 def flash(arr, T, a):
-    """Flash frames on the cut: two frames of inverted or colour-slammed picture."""
+    """Flash frames on the cut: two frames washed with a slammed colour (no inversions)."""
     k = int((T - a) * FPS)
     if k >= 2:
         return
     rng = np.random.default_rng(int(a * 100))
-    if rng.random() < 0.5:
-        arr[..., :3] = 255 - arr[..., :3]
-    else:
-        col = np.array(mg.PSY[int(rng.integers(len(mg.PSY)))], np.float32)
-        arr[..., :3] = (arr[..., :3] * 0.45 + col * 0.55).astype(np.uint8)
+    col = np.array(mg.PSY[int(rng.integers(len(mg.PSY)))], np.float32)
+    w = 0.5 if k == 0 else 0.25
+    arr[..., :3] = (arr[..., :3] * (1 - w) + col * w).astype(np.uint8)
 
 
 def drift(arr, k, T):
@@ -98,6 +105,7 @@ def render_frame(T, idx=None, captions=True):
     ins = next(((a, b, fn) for a, b, fn in INSERTS if a <= T < b), None)
     for a, b, fn in ([ins] if ins else SHOTS):
         if a <= T < b:
+            mg.set_style(STYLE_OF.get(fn, "cel" if ins else "print"))
             fn(arr, T - a, b - a, T)
             if fn not in NO_DRIFT and not ins:
                 drift(arr, (T - a) / max(0.1, b - a), T)

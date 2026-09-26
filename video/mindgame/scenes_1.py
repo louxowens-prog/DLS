@@ -43,14 +43,14 @@ def s_gold(arr, t, d, T):
         c.scale(z, z)
         c.translate(-CX, -900)
         mg.speed_lines(c, CX, 820, T, n=46, color=WHITE, r0=460, seed=1)
-        pod = mg.rect_pts(310, 1230, 460, 190)
+        pod = mg.rect_pts(310, 1110, 460, 170)
         mg.fill(c, pod, T, (250, 250, 250), 3, off=(8, 6))
         mg.stroke(c, pod, T, 4, width=9, closed=True)
-        mg.letters(c, "1", CX, 1370, T, size=130, fname="bangers-400", color=mg.YELLOW, ow=12, seed=2)
-        CH.jag(c, CX, 1235, T, s=1.35, arms=(-155, 155), eyes="wide", mouth="open", seed=5)
+        mg.letters(c, "1", CX, 1240, T, size=120, fname="bangers-400", color=mg.YELLOW, ow=12, seed=2)
+        CH.jag(c, CX, 1115, T, s=1.22, arms=(-155, 155), eyes="wide", mouth="open", seed=5)
         # the medal
-        mg.stroke(c, [(CX - 40, 860), (CX, 960), (CX + 40, 860)], T, 7, width=10, color=mg.RED)
-        med = mg.circle_pts(CX, 990, 44, 24)
+        mg.stroke(c, [(CX - 36, 780), (CX, 870), (CX + 36, 780)], T, 7, width=10, color=mg.RED)
+        med = mg.circle_pts(CX, 898, 40, 24)
         mg.fill(c, med, T, mg.YELLOW, 8, off=(4, 3))
         mg.stroke(c, med, T, 9, width=7, closed=True)
         c.restore()
@@ -65,7 +65,7 @@ def s_clock(arr, t, d, T):
     s = mg.surf(arr)
     split = ease(ramp(T, C["half"] - 0.05, C["half"] + 0.25))
     with s as c:
-        cx, cy, R = CX, 820, 330
+        cx, cy, R = CX, 760, 300
         for half, sx in ((0, -1), (1, 1)):
             c.save()
             c.translate(sx * 90 * split, 30 * split * (1 if half else -1))
@@ -91,8 +91,9 @@ def s_clock(arr, t, d, T):
             mg.stroke(c, [(cx, cy), (cx + 160 * math.cos(ah), cy + 160 * math.sin(ah))], T, 50, width=16)
             mg.stroke(c, [(cx, cy), (cx + 250 * math.cos(am), cy + 250 * math.sin(am))], T, 51, width=10)
             c.drawCircle(cx, cy, 16, mg.paint(INK))
-        CH.jag(c, 840, 1330, T, s=0.75, eyes="spiral", mouth="o", tilt=-10, arms=(-60, 20), seed=60)
-        mg.stamp(c, "50.1% RIGHT", CX - 60, 1250, T, C["half"], color=mg.RED, size=96, rot=-9)
+        CH.jag(c, 850, 1310, T, s=0.7, eyes="spiral", mouth="o", tilt=-10, arms=(-60, 20), seed=60)
+        mg.stamp(c, "BEST AI: 50.1%", 380, 1170, T, C["half"], color=mg.RED, size=78, rot=-7)
+        mg.stamp(c, "HUMANS: 90.1%", 390, 1285, T, Wd("h2", "Ninety"), color=(30, 150, 70), size=78, rot=4)
         mg.label(c, T, S("h2") + 0.2, ["READING ANALOG CLOCKS", "STANFORD AI INDEX 2026"])
 
 
@@ -117,7 +118,7 @@ def s_title(arr, t, d, T):
         mg.letters(c, "JAGGED", CX, 820, T, size=230, fname="bangers-400", color=col, ow=20, seed=72, spacing=6,
                    scale=mg.pop(T, C["title"] - 0.1, 0.3) or 0.001)
         mg.letters(c, "INTELLIGENCE", CX, 1300, T, size=128, fname="permanent-marker-400", color=WHITE, ow=14, seed=73)
-        CH.jag(c, 870, 1620, T, s=0.7, eyes="wide", mouth="smile", arms=(-150, 30), seed=74)
+        CH.jag(c, 800, 652, T, s=0.45, eyes="wide", mouth="smile", arms=(-150, 30), seed=74, tilt=-8)
 
 
 # ------------------------------------------------------------------ what actually happened
@@ -126,22 +127,43 @@ def s_gpqa(arr, t, d, T):
     mg.paper(arr, (225, 240, 250), 4)
     s = mg.surf(arr)
     with s as c:
-        base, x1, x2, bw = 1230, 250, 620, 230
+        base, x1, x2, bw = 1180, 250, 620, 230
         mg.stroke(c, [(120, base), (960, base)], T, 80, width=9)
-        g = ease(ramp(T, Wd("a1", "science") - 0.2, Wd("a1", "ninety") + 0.2))
+        t_bars = Wd("a1", "science") - 0.2
+        g = ease(ramp(T, t_bars, Wd("a1", "ninety") + 0.2))
         g2 = ease(ramp(T, Wd("a1", "Experts") - 0.1, Wd("a1", "Sixty") + 0.2))
         h1, h2 = 560 * 0.94 * g, 560 * 0.65 * g2
-        for x, h, col, lab, pct, seed in ((x1, h1, mg.ORANGE, "TOP AI", "94%", 81), (x2, h2, mg.BLUE, "EXPERTS", "65%", 85)):
+        for x, h, col, lab, val, gg, seed in ((x1, h1, mg.ORANGE, "TOP AI", 94, g, 81), (x2, h2, mg.BLUE, "EXPERTS", 65, g2, 85)):
             if h > 4:
                 bar = mg.rect_pts(x, base - h, bw, h)
                 mg.fill(c, bar, T, col, seed, off=(6, 4), shader=mg.crayon_shader(col, seed=seed, density=0.9))
                 mg.stroke(c, bar, T, seed + 1, width=8, closed=True)
-                mg.letters(c, pct, x + bw / 2, base - h + 110, T, size=96, fname="bangers-400", color=WHITE, ow=10, seed=seed + 2)
-            mg.letters(c, lab, x + bw / 2, base + 80, T, size=60, fname="permanent-marker-400", color=INK, outline=None, seed=seed + 3)
+                ty = base - h + 110 if h > 160 else base - h - 24
+                mg.letters(c, f"{int(round(val * gg))}%", x + bw / 2, ty, T, size=96, fname="bangers-400", color=WHITE, ow=10,
+                           seed=seed + 2)
+            mg.letters(c, lab, x + bw / 2, base + 76, T, size=60, fname="permanent-marker-400", color=INK, outline=None, seed=seed + 3)
         if g > 0.9:
             CH.jag(c, x1 + bw / 2, base - h1 - 4, T, s=0.42, eyes="normal", mouth="smile", arms=(-150, 150), seed=88)
         if g2 > 0.9:
             CH.human(c, x2 + bw / 2, base - h2 - 4, T, s=0.38, mouth="flat", seed=89)
+        # the exam itself, until the scores come in
+        ke = ease(ramp(T, t_bars - 0.3, t_bars + 0.1))
+        if ke < 1:
+            c.save()
+            c.translate(CX, 800 - 1100 * ke)
+            c.rotate(-4 + 2 * math.sin(T * 3))
+            sheet = mg.rect_pts(-310, -300, 620, 630)
+            mg.fill(c, sheet, T, (252, 250, 244), 91, off=(10, 8))
+            mg.stroke(c, sheet, T, 92, width=8, closed=True)
+            mg.letters(c, "Q17.", -270, -240, T, size=70, fname="rubik-900", color=INK, outline=None, seed=93, align="left")
+            for i in range(6):
+                y = -150 + i * 52
+                mg.stroke(c, [(-270, y), (250 - (i % 3) * 70, y)], T, 94 + i, width=5, color=(110, 110, 120))
+            for i, opt in enumerate("ABCD"):
+                mg.stroke(c, mg.circle_pts(-225 + i * 150, 260, 26, 16), T, 102 + i, width=5, closed=True)
+                mg.note(c, opt, -225 + i * 150, 273, size=36)
+            mg.note(c, "graduate-level physics, chemistry, biology", 0, 195, size=32, color=(80, 80, 90))
+            c.restore()
         mg.letters(c, "PhD-LEVEL SCIENCE QUIZ", CX, 440, T, size=66, fname="bangers-400", color=mg.RED, ow=8, seed=90, spacing=2)
         mg.label(c, T, S("a1") + 0.1, ["STANFORD AI INDEX 2026"])
 
@@ -155,7 +177,7 @@ def s_agents(arr, t, d, T):
         mg.stroke(c, mon, T, 101, width=12, closed=True)
         scr = mg.rect_pts(150, 460, 780, 520)
         mg.fill(c, scr, T, (235, 245, 255), 102, off=(0, 0))
-        mg.stroke(c, [(CX - 60, 1020), (CX - 90, 1110), (CX + 90, 1110), (CX + 60, 1020)], T, 103, width=10, closed=True)
+        mg.stroke(c, [(CX - 50, 1020), (CX - 70, 1085), (CX + 70, 1085), (CX + 50, 1020)], T, 103, width=10, closed=True)
         g = ease(ramp(T, S("a2") + 0.5, Wd("a2", "sixty") + 0.2))
         pct = 12 + (66 - 12) * g
         meter = mg.rect_pts(200, 620, 680, 90)
@@ -169,11 +191,11 @@ def s_agents(arr, t, d, T):
             k = mg.pop(T, kf + 0.18 * i, 0.2)
             if k <= 0:
                 continue
-            x = 260 + i * 280
-            card = mg.rect_pts(x - 100, 1190, 200, 200)
+            x = 300 + i * 240
+            card = mg.rect_pts(x - 75, 1135, 150, 140)
             mg.fill(c, card, T, WHITE, 110 + i, off=(6, 5))
             mg.stroke(c, card, T, 112 + i, width=8, closed=True)
-            mg.letters(c, "OK" if mark == "✓" else "X", x, 1340, T, size=130 * k, fname="bangers-400", color=col, ow=10, seed=115 + i)
+            mg.letters(c, "OK" if mark == "✓" else "X", x, 1245, T, size=100 * k, fname="bangers-400", color=col, ow=9, seed=115 + i)
         mg.label(c, T, S("a2") + 0.1, ["OSWORLD BENCHMARK · AI INDEX 2026"])
 
 
@@ -252,19 +274,44 @@ STEP_COLS = [(120, 210, 255), (110, 230, 170), (255, 210, 90), (255, 170, 120), 
 
 
 def s_levels(arr, t, d, T):
-    mg.paper(arr, (240, 235, 250), 8)
     st = C["stamps"]
     cur = sum(1 for x in st if T >= x - 0.05) - 1
+    tint = STEP_COLS[cur] if cur >= 0 else (240, 235, 250)
+    mg.paper(arr, tuple(int(245 * 0.55 + v * 0.45) for v in tint), 8)
+    # camera: follows the rung being judged, then pulls back to show the whole ladder
+    focus = -0.5
+    for i, x in enumerate(st):
+        focus += ease(ramp(T, x - 0.3, x + 0.05)) * (1.0 if i else 0.5)
+    out = ease(ramp(T, st[-1] + 0.9, st[-1] + 1.5))
+    zin = ease(ramp(T, S("l1"), st[0])) * (1 - out)
+    # the ladder spans y 360..1240; with the zoom it pans inside the safe band 240..1320
+    r = 1.5 * math.sin(focus * 2.2) * zin
+    z = 1 + 0.06 * zin
+    top = 360 * (1 - zin) + (250 + 120 * min(1.0, max(0.0, focus / 5))) * zin
     s = mg.surf(arr)
     with s as c:
-        mg.letters(c, "LEVELS", CX, 330, T, size=100, fname="bangers-400", color=mg.RED, ow=12, seed=250, spacing=6)
+        ta = 1 - ramp(T, st[0] - 0.3, st[0])
+        if ta > 0:
+            mg.letters(c, "LEVELS", CX, 300, T, size=100, fname="bangers-400", color=mg.RED, ow=12, seed=250, spacing=6, a=ta)
+        c.save()
+        c.translate(CX, top)
+        c.rotate(r)
+        c.scale(z, z)
+        c.translate(-CX, -360)
         for i, (name, verdict, vcol) in enumerate(STEPS):
             y = 1230 - i * 150
             x = 80 + i * 22
+            hot = i == cur and out < 1
+            c.save()
+            if hot:
+                k = mg.pop(T, st[i], 0.3)
+                c.translate(-14 * k, -10 * k)
             blk = mg.rect_pts(x, y - 120, 1000 - x, 130)
-            mg.fill(c, blk, T, STEP_COLS[i], 210 + i, off=(7, 5))
-            mg.stroke(c, blk, T, 220 + i, width=7, closed=True)
+            mg.fill(c, blk, T, STEP_COLS[i] if (i <= cur or out > 0) else (235, 232, 240), 210 + i, off=(7, 5))
+            mg.stroke(c, blk, T, 220 + i, width=9 if hot else 7, closed=True)
             mg.letters(c, name, x + 24, y - 38, T, size=52, fname="bangers-400", color=INK, outline=None, seed=230 + i,
                        align="left", spacing=2)
+            c.restore()
             if T >= st[i] - 0.02:
                 mg.stamp(c, verdict, 800, y - 40, T, st[i], color=vcol, size=58, rot=-6 + 4 * (i % 3))
+        c.restore()

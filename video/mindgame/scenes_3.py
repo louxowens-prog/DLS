@@ -27,7 +27,7 @@ def s_m0(arr, t, d, T):
     mg.burst(arr, CX, 900, T, colors=[mg.YELLOW, mg.ORANGE, mg.RED, mg.PINK], spin=1.0)
     s = mg.surf(arr)
     with s as c:
-        hx, hy, R = CH.jag(c, CX, 1450, T, s=1.6, eyes="wide", mouth="o", arms=(-120, 120), seed=820)
+        hx, hy, R = CH.jag(c, CX, 1450, T, s=1.6, eyes="wide", mouth="o", arms=(-158, 158), seed=820, tilt=4 * math.sin(T * 5))
         # puzzle holes in its head
         for i, (dx, dy) in enumerate(((-0.45, -0.55), (0.35, -0.7), (0.05, -0.2))):
             px, py = hx + dx * R, hy + dy * R
@@ -54,8 +54,9 @@ def s_m1(arr, t, d, T):
         CH.jag(c, 790, 1210, T, s=0.6, eyes="wide", mouth="o", seed=851, arms=(-30, 30))
         # thought bubbles: memories vs blank
         mg.stroke(c, mg.circle_pts(290, 690, 170, 40, rx=190, ry=150), T, 852, width=8, closed=True)
-        mg.collage(c, "earth_ne2.jpg", mg.rect_pts(170, 610, 120, 100), T, seed=853, src=(300, 100), scale=0.8, border=4)
-        mg.collage(c, "moon.jpg", mg.rect_pts(300, 640, 120, 100), T, seed=854, src=(50, 30), scale=2.0, border=4)
+        import scenes_2 as B
+        mg.photo_scrap(c, B.earth_scrap(130, 0.3), 230, 660, mg.rect_pts(170, 605, 120, 110), T, seed=853, border=4)
+        mg.photo_scrap(c, B.earth_scrap(130, 2.4), 355, 690, mg.rect_pts(295, 635, 120, 110), T, seed=854, border=4)
         mg.note(c, "yesterday", 290, 790, size=40)
         mg.stroke(c, mg.circle_pts(790, 690, 170, 40, rx=190, ry=150), T, 855, width=8, closed=True)
         mg.letters(c, "?", 790, 740, T, size=150, fname="permanent-marker-400", color=mg.PURPLE, outline=None, seed=856)
@@ -67,84 +68,167 @@ def s_m2(arr, t, d, T):
     mg.paper(arr, (225, 250, 225), 18)
     s = mg.surf(arr)
     with s as c:
-        tag(c, T, 2, "KEEPS LEARNING", mg.GREEN, S("m2") - 0.1)
+        tag(c, T, 2, "CONTINUAL LEARNING", mg.GREEN, S("m2") - 0.1)
         # a new board game
         for i in range(4):
             for j in range(4):
-                sq = mg.rect_pts(140 + i * 80, 540 + j * 80, 80, 80)
+                sq = mg.rect_pts(120 + i * 80, 560 + j * 80, 80, 80)
                 if (i + j) % 2:
                     mg.fill(c, sq, T, (60, 140, 80), 860 + i * 4 + j, off=(0, 0))
-        mg.stroke(c, mg.rect_pts(140, 540, 320, 320), T, 870, width=8, closed=True)
+        mg.stroke(c, mg.rect_pts(120, 560, 320, 320), T, 870, width=8, closed=True)
+        mg.note(c, "a new game", 280, 930, size=40)
         # skill over one hour
-        ox, oy, gw, gh = 560, 900, 400, 340
+        ox, oy, gw, gh = 540, 900, 400, 340
         mg.stroke(c, [(ox, oy - gh), (ox, oy), (ox + gw, oy)], T, 871, width=8)
         mg.note(c, "1 hour", ox + gw - 60, oy + 50, size=40)
-        mg.note(c, "skill", ox - 10, oy - gh - 20, size=40)
-        k = ease(ramp(T, S("m2") + 0.8, E("m2")))
+        mg.note(c, "skill", ox + 10, oy - gh - 20, size=40, align="left")
+        k = ease(ramp(T, S("m2") + 0.8, Wd("m2", "better") + 0.2))
         hum = [(ox + gw * u * k, oy - gh * 0.9 * (1 - math.exp(-3 * u * k))) for u in np.linspace(0, 1, 20)]
         mg.stroke(c, hum, T, 872, width=10, color=mg.RED)
-        jagl = [(ox + gw * u * k, oy - gh * 0.35) for u in np.linspace(0, 1, 20)]
+        jagl = [(ox + gw * u * k, oy - gh * 0.3) for u in np.linspace(0, 1, 20)]
         mg.stroke(c, jagl, T, 873, width=10, color=mg.CYAN)
-        CH.human(c, 300, 1400, T, s=0.55, mouth="open", seed=874, arms=(-160, 40))
-        CH.jag(c, 760, 1400, T, s=0.55, eyes="normal", mouth="flat", seed=875)
-        mg.note(c, "you: better, for good", 300, 1500 - 60, size=40, color=mg.RED) if False else None
+        if k > 0.05:
+            mg.letters(c, "YOU", hum[-1][0] - 10, hum[-1][1] - 22, T, size=50, fname="bangers-400", color=mg.RED, ow=6, seed=876)
+            mg.letters(c, "AI", jagl[-1][0] - 10, jagl[-1][1] + 60, T, size=50, fname="bangers-400", color=mg.CYAN, ow=6, seed=877)
+        kg = mg.pop(T, Wd("m2", "good") - 0.1, 0.25)
+        if kg > 0:
+            mg.stamp(c, "FOR GOOD", 740, 1090, T, Wd("m2", "good") - 0.1, color=mg.RED, size=70, rot=-6)
+            mg.note(c, "(the AI stays where it was until it is retrained)", CX, 1200, size=34, color=(70, 90, 70))
+        CH.human(c, 260, 1320, T, s=0.5, mouth="open" if k < 1 else "smile", seed=874, arms=(-160, 40 + 30 * math.sin(T * 6)))
+        CH.jag(c, 830, 1320, T, s=0.5, eyes="normal", mouth="flat", seed=875, tilt=-8)
 
 
 def s_m3(arr, t, d, T):
     mg.paper(arr, (255, 235, 210), 19)
     s = mg.surf(arr)
+    drop = ease(ramp(T, S("m3") + 0.3, S("m3") + 0.8))
+    kh = ramp(T, Wd("m3", "Hidden") - 0.1, Wd("m3", "Hidden") + 0.2)
+    kt = ramp(T, Wd("m3", "teleport") - 0.5, Wd("m3", "teleport") - 0.2)
     with s as c:
         tag(c, T, 3, "WORLD MODEL", mg.ORANGE, S("m3") - 0.1)
-        table = mg.rect_pts(120, 1000, 840, 40)
+        table = mg.rect_pts(330, 1060, 420, 34)
         mg.fill(c, table, T, (190, 130, 80), 880, off=(5, 4))
         mg.stroke(c, table, T, 881, width=8, closed=True)
-        for x in (180, 900):
-            mg.stroke(c, [(x, 1040), (x, 1300)], T, 882 + x, width=10)
-        lift = ease(ramp(T, Wd("m3", "Hidden") + 0.3, Wd("m3", "Hidden") + 0.7))
-        cloth = np.array([(380, 1000), (430, 800 - 300 * lift), (650, 800 - 300 * lift), (700, 1000)])
-        tele = ramp(T, Wd("m3", "teleport") - 0.4, Wd("m3", "teleport"))
-        if lift < 0.5 or tele < 0.5:
-            cup = np.array([(500, 870), (580, 870), (570, 1000), (510, 1000)])
-            mg.fill(c, cup, T, WHITE, 885, off=(4, 3))
-            mg.stroke(c, cup, T, 886, width=7, closed=True)
-        mg.fill(c, cloth, T, mg.RED, 887, off=(5, 4), a=0.95)
+        for x in (370, 710):
+            mg.stroke(c, [(x, 1094), (x, 1290)], T, 882 + x, width=10)
+        cup = np.array([(500, 930), (580, 930), (570, 1060), (510, 1060)])
+        mg.fill(c, cup, T, WHITE, 885, off=(4, 3))
+        mg.stroke(c, cup, T, 886, width=7, closed=True)
+        cy = 700 + 330 * drop
+        cloth = np.array([(430, cy + 30), (470, cy - 110), (610, cy - 110), (650, cy + 30)]) if drop < 1 else \
+            np.array([(450, 1060), (480, 900), (600, 900), (630, 1060)])
+        mg.fill(c, cloth, T, mg.RED, 887, off=(5, 4), a=0.97)
         mg.stroke(c, cloth, T, 888, width=8, closed=True)
-        hx, hy, R = CH.jag(c, 800, 1600 - 100, T, s=0.6, eyes="wide", mouth="o", seed=889)
-        if tele >= 0.5:
-            cup = np.array([(hx - 40, hy - R - 120), (hx + 40, hy - R - 120), (hx + 30, hy - R), (hx - 30, hy - R)])
-            mg.fill(c, cup, T, WHITE, 890, off=(4, 3))
-            mg.stroke(c, cup, T, 891, width=7, closed=True)
-            mg.letters(c, "?!", hx + 110, hy - R - 60, T, size=110, fname="bangers-400", color=mg.RED, ow=10, seed=892)
+        # what each of them thinks is under the cloth
+        for who, bx, x0 in (("you", 250, 190), ("ai", 820, 880)):
+            if kh <= 0:
+                continue
+            k = ease(kh)
+            bub = mg.circle_pts(bx, 640, 0, 40, rx=200 * k + 1, ry=140 * k + 1)
+            mg.fill(c, bub, T, WHITE, 893 + bx, off=(0, 0))
+            mg.stroke(c, bub, T, 894 + bx, width=7, closed=True)
+            for j, (px, py, r) in enumerate(((x0, 990, 10), (x0 + (bx - x0) * 0.35, 870, 16))):
+                mg.stroke(c, mg.circle_pts(px, py, r, 12), T, 895 + bx + j, width=6, closed=True)
+            if k < 0.9:
+                continue
+            if who == "you":
+                mc = np.array([(bx - 30, 600), (bx + 30, 600), (bx + 24, 690), (bx - 24, 690)])
+                mg.fill(c, mc, T, WHITE, 897, off=(3, 3))
+                mg.stroke(c, mc, T, 898, width=6, closed=True)
+                mg.stroke(c, np.array([(bx - 80, 700), (bx - 55, 580), (bx + 55, 580), (bx + 80, 700)]), T, 899, width=5,
+                          color=mg.RED, closed=True)
+                mg.note(c, "still there", bx, 745, size=38, color=(30, 130, 60))
+            elif kt <= 0:
+                mg.letters(c, "?", bx, 690, T, size=130, fname="permanent-marker-400", color=mg.ORANGE, outline=None, seed=900)
+            else:
+                import scenes_2 as B
+                mg.photo_scrap(c, B.earth_scrap(150, 1.3), bx - 60, 630, mg.circle_pts(bx - 60, 630, 70, 24), T, seed=901, border=4)
+                mc = np.array([(bx + 60, 590), (bx + 110, 600), (bx + 95, 675), (bx + 50, 665)])
+                mg.fill(c, mc, T, WHITE, 902, off=(3, 3))
+                mg.stroke(c, mc, T, 903, width=6, closed=True)
+                mg.note(c, "in orbit?!", bx, 745, size=38, color=mg.RED)
+        CH.human(c, 190, 1330, T, s=0.5, mouth="smile", seed=904, gaze=(1, -1), arms=(-30, 60))
+        CH.jag(c, 880, 1330, T, s=0.5, eyes="spiral" if kt > 0 else "wide", mouth="o", seed=889, gaze=(-1, -1), tilt=6)
 
 
 def s_m4(arr, t, d, T):
+    if T < Wd("m4", "The") - 0.05:
+        s_road(arr, T)
+    else:
+        s_horizon(arr, T)
+
+
+def s_road(arr, T):
+    """Ten years of medical school: a long road, a calendar shedding pages."""
     mg.paper(arr, (230, 240, 255), 20)
     s = mg.surf(arr)
     with s as c:
         tag(c, T, 4, "LONG-TERM GOALS", mg.BLUE, S("m4") - 0.1)
-        # the ten-year road
-        road = np.array([(60, 700), (1020, 560), (1020, 640), (60, 800)])
+        road = np.array([(40, 1150), (1040, 700), (1040, 800), (40, 1290)])
         mg.fill(c, road, T, (170, 170, 175), 900, off=(4, 3))
         mg.stroke(c, road, T, 901, width=7, closed=True)
         for k in range(10):
-            x = 100 + k * 90
-            mg.stroke(c, [(x, 752 - k * 14), (x + 40, 746 - k * 14)], T, 902 + k, width=6, color=WHITE)
-        mg.letters(c, "10 YEARS", 330, 870, T, size=70, fname="bangers-400", color=mg.BLUE, ow=8, seed=915)
-        mg.letters(c, "MD", 960, 520, T, size=90, fname="bangers-400", color=mg.RED, ow=8, seed=916)
-        k = ramp(T, S("m4"), Wd("m4", "doubles"))
-        CH.human(c, 140 + 700 * k, 760 - 100 * k, T, s=0.4, mouth="smile", seed=917, legs=0.4 * math.sin(T * 10))
-        # the task-length curve: doubling about every 7 months
-        kc = ease(ramp(T, Wd("m4", "doubles") - 0.2, Wd("m4", "doubles") + 0.8))
-        ox, oy, gw, gh = 200, 1390, 700, 380
-        mg.stroke(c, [(ox, oy - gh), (ox, oy), (ox + gw, oy)], T, 918, width=8)
-        pts = [(ox + gw * u * kc, oy - gh * (2 ** (7 * u * kc) - 1) / (2 ** 7 - 1)) for u in np.linspace(0, 1, 40)]
-        mg.stroke(c, pts, T, 919, width=10, color=mg.ORANGE)
-        mg.note(c, "task length AI agents can finish", ox + 20, oy - gh - 25, size=38, align="left")
-        mg.note(c, "x2 every ~7 months", ox + gw - 230, oy - 60, size=40, color=mg.ORANGE)
-        kh = ease(ramp(T, Wd("m4", "hours") - 0.2, Wd("m4", "hours") + 0.2))
+            x = 90 + k * 95
+            y = 1215 - k * 44
+            mg.stroke(c, [(x, y), (x + 40, y - 18)], T, 902 + k, width=6, color=WHITE)
+            mg.note(c, f"yr {k + 1}", x + 20, y - 60, size=30, color=(60, 70, 100))
+        k = ramp(T, S("m4") + 0.3, Wd("m4", "The") - 0.1)
+        hx = 110 + 780 * k
+        CH.human(c, hx, 1220 - 440 * k * 1.0 + 0, T, s=0.45, mouth="smile", seed=917, legs=0.45 * math.sin(T * 12),
+                 arms=(-40 + 30 * math.sin(T * 12), 40 - 30 * math.sin(T * 12)))
+        # calendar
+        cal = mg.rect_pts(640, 470, 300, 210)
+        mg.fill(c, cal, T, WHITE, 918, off=(5, 4))
+        mg.stroke(c, cal, T, 919, width=7, closed=True)
+        mg.fill(c, mg.rect_pts(640, 470, 300, 50), T, mg.RED, 920, off=(0, 0))
+        yr = 2026 + int(10 * ease(k))
+        mg.letters(c, str(yr), 790, 640, T, size=90, fname="rubik-900", color=INK, outline=None, seed=921, jig=1, rot=1)
+        mg.letters(c, "MD", 960, 650, T, size=80, fname="bangers-400", color=mg.RED, ow=8, seed=916) if k >= 1 else None
+        mg.letters(c, "10 YEARS", 300, 640, T, size=96, fname="bangers-400", color=mg.BLUE, ow=10, seed=915)
+
+
+HZ = [("1 sec", 0.0), ("1 min", 1.78), ("1 hour", 3.56), ("1 day", 4.94), ("1 month", 6.41), ("1 year", 7.5), ("10 years", 8.5)]
+
+
+def s_horizon(arr, T):
+    """METR time horizons on a log scale: doubling every ~7 months, still far below a ten-year goal."""
+    mg.paper(arr, (240, 236, 255), 26)
+    s = mg.surf(arr)
+    ox, x1, y0, dec = 250, 900, 1180, 73.0
+    Y = lambda lg: y0 - lg * dec
+    with s as c:
+        tag(c, T, 4, "LONG-TERM GOALS", mg.BLUE, S("m4") - 1)
+        mg.note(c, "longest tasks AI agents finish (half the time)", CX, 500, size=38)
+        mg.stroke(c, [(ox, Y(8.9)), (ox, y0), (x1 + 40, y0)], T, 918, width=8)
+        for i, (lab, lg) in enumerate(HZ):
+            mg.stroke(c, [(ox - 14, Y(lg)), (ox + 6, Y(lg))], T, 930 + i, width=5)
+            mg.note(c, lab, ox - 24, Y(lg) + 12, size=32, align="right", color=INK if lab != "10 years" else mg.RED)
+        mg.note(c, "2019", ox + 30, y0 + 44, size=34)
+        mg.note(c, "2026", x1, y0 + 44, size=34)
+        k = ease(ramp(T, Wd("m4", "length") - 0.1, Wd("m4", "months")))
+        l0, l1 = math.log10(2), math.log10(3 * 3600)
+        pts = [(ox + 30 + (x1 - ox - 30) * u * k, Y(l0 + (l1 - l0) * u * k)) for u in np.linspace(0, 1, 24)]
+        mg.stroke(c, pts, T, 940, width=11, color=mg.ORANGE)
+        if k > 0.02:
+            c.drawCircle(pts[-1][0], pts[-1][1], 14, mg.paint(mg.ORANGE))
+        kd = mg.pop(T, Wd("m4", "doubles") - 0.1, 0.25)
+        if kd > 0:
+            c.save()
+            c.translate(560, 1000)
+            c.rotate(-27)
+            mg.note(c, "x2 every ~7 months", 0, 0, size=42 * kd, color=mg.ORANGE)
+            c.restore()
+        # the goal: ten years, way up the scale
+        mg.stroke(c, [(x1 - 40, Y(8.5)), (x1 + 40, Y(8.5))], T, 941, width=8, color=mg.RED)
+        mg.note(c, "becoming a doctor", x1 - 10, Y(8.5) - 20, size=36, color=mg.RED, align="right")
+        kh = ease(ramp(T, Wd("m4", "hours") - 0.2, Wd("m4", "hours") + 0.4))
         if kh > 0:
-            mg.stamp(c, "HOURS, NOT YEARS", CX, 1030, T, Wd("m4", "hours") - 0.1, color=mg.RED, size=80, rot=-5)
-        mg.label(c, T, S("m4") + 1.0, ["METR, 2025-26"], y=300)
+            ytop = Y(l1) - (Y(l1) - Y(8.5)) * kh
+            for j in range(int((Y(l1) - ytop) / 28)):
+                ya = Y(l1) - 20 - j * 28
+                c.drawLine(x1, ya, x1, ya - 14, mg.paint(mg.RED, 0.9, stroke=6))
+            mg.stamp(c, "HOURS, NOT YEARS", 560, 700, T, Wd("m4", "hours") - 0.1, color=mg.RED, size=76, rot=-4)
+        mg.label(c, T, Wd("m4", "The") + 0.2, ["METR TIME HORIZONS, 2025-26"], y=300)
 
 
 def s_m5(arr, t, d, T):
@@ -162,7 +246,7 @@ def s_m5(arr, t, d, T):
             fl = np.array([(x - 22, 980), (x, 980 - h), (x + 22, 980)])
             mg.fill(c, fl, T, mg.PSY[(k + mg.step(T)) % 4], 932 + k, off=(0, 0))
         kt = ease(ramp(T, Wd("m5", "touched") - 0.2, Wd("m5", "touched")))
-        CH.human(c, 520, 1450, T, s=0.6, mouth="open" if kt > 0.5 else "smile", eyes="wide" if kt > 0.5 else "normal",
+        CH.human(c, 520, 1360, T, s=0.6, mouth="open" if kt > 0.5 else "smile", eyes="wide" if kt > 0.5 else "normal",
                  seed=940, arms=(-40, -120 + 60 * kt))
         if kt > 0.5:
             mg.letters(c, "HOT!!", 330, 820, T, size=150, fname="bangers-400", color=mg.RED, ow=14, seed=941, jig=10, rot=10)
@@ -173,7 +257,7 @@ def s_m5(arr, t, d, T):
         mg.note(c, "hot (adj.)", 720, 700, size=38)
         mg.note(c, "high in", 720, 750, size=32)
         mg.note(c, "temperature", 720, 790, size=32)
-        CH.jag(c, 810, 1450, T, s=0.55, eyes="normal", mouth="flat", seed=945, arms=(-150, 150))
+        CH.jag(c, 820, 1360, T, s=0.55, eyes="normal", mouth="flat", seed=945, arms=(-150, 150), tilt=-6)
 
 
 def s_m6(arr, t, d, T):
@@ -189,7 +273,7 @@ def s_m6(arr, t, d, T):
         kr = ease(ramp(T, Wd("m6", "reward") - 0.3, Wd("m6", "reward")))
         mg.letters(c, "LUCKY GUESS  +1", CX, 750, T, size=62, fname="rubik-800", color=mg.YELLOW, outline=None, seed=953, jig=1, rot=0.5, a=kr)
         mg.letters(c, "\"I DON'T KNOW\"  0", CX, 840, T, size=62, fname="rubik-800", color=(255, 150, 150), outline=None, seed=954, jig=1, rot=0.5, a=kr)
-        hx, hy, R = CH.jag(c, 330, 1470, T, s=0.6, eyes="normal", mouth="open", seed=955, arms=(-40, 150))
+        hx, hy, R = CH.jag(c, 300, 1360, T, s=0.6, eyes="normal", mouth="open", seed=955, arms=(-40, 150), tilt=5)
         bub = mg.rect_pts(420, 930, 520, 200)
         mg.fill(c, bub, T, WHITE, 956, off=(5, 4))
         mg.stroke(c, bub, T, 957, width=7, closed=True)
@@ -201,30 +285,35 @@ def s_m6(arr, t, d, T):
 # ------------------------------------------------------------------ finale
 
 def s_finale(arr, t, d, T):
-    """Frantic montage: earlier shots re-cut every few frames in clashing styles, as in the film's climax."""
+    """Frantic montage: earlier shots re-cut every few frames in clashing styles, as in the film's climax.
+
+    Only light shots, no inversions, and cuts on fours, so the rush never becomes a strobe."""
     import scenes_1 as A
     import scenes_2 as B
-    pool = [(A.s_gold, S("h1") + 1.0), (A.s_clock, C["half"] + 0.3), (A.s_title, C["title"] + 0.3),
-            (A.s_agents, E("a2") - 0.3), (A.s_robot, E("a3")), (A.s_levels, E("l4") - 0.2),
-            (B.s_score, E("g2") - 0.2), (B.s_montage, C["montage"][5] + 0.2), (B.s_water2, E("g7") - 0.3),
-            (B.s_octo, E("c4") - 0.3), (s_m0, E("m0")), (s_m3, E("m3") - 0.2), (s_m5, E("m5") - 0.2),
-            (B.s_montage, C["montage"][2] + 0.2), (A.s_nobody, E("a4") - 0.3)]
-    blk = int(T * 24) // 3
+    pool = [(A.s_gold, S("h1") + 1.0, "cel"), (A.s_clock, C["half"] + 0.6, "pencil"), (A.s_agents, E("a2") - 0.3, "crayon"),
+            (A.s_robot, E("a3"), "pencil"), (A.s_levels, E("l4") + 1.5, "cel"), (B.s_score, E("g2") - 0.2, "crayon"),
+            (B.s_montage, C["montage"][5] + 0.2, "print"), (B.s_water2, E("g7") - 0.3, "crayon"),
+            (B.s_octo, E("c4") - 0.3, "print"), (s_m0, E("m0"), "cel"), (s_m3, E("m3") - 0.2, "cel"),
+            (s_m5, E("m5") - 0.2, "crayon"), (A.s_nobody, E("a4") - 0.3, "crayon"), (B.s_nature, E("g1") - 0.3, "print"),
+            (s_m2, E("m2") - 0.2, "pencil"), (B.s_notif, E("g4") - 0.2, "cel")]
+    blk = int(T * 24) // 4
     rng = np.random.default_rng(blk)
-    fn, tt = pool[int(rng.integers(len(pool)))]
+    last = int(np.random.default_rng(blk - 1).integers(len(pool)))
+    i = int(rng.integers(len(pool) - 1))
+    i = i + 1 if i >= last else i
+    fn, tt, st = pool[i]
+    mg.set_style(st)
     fn(arr, 1.0, 2.0, tt + (T - C["finale"]) * 0.3)
-    fx = blk % 5
+    fx = blk % 4
     if fx == 1:
-        arr[..., :3] = 255 - arr[..., :3]
-    elif fx == 2:
-        pal = np.array([mg.RED, mg.YELLOW, mg.CYAN, mg.PURPLE], np.uint8)
+        pal = np.array([mg.YELLOW, mg.PINK, mg.CYAN, (255, 250, 235)], np.uint8)
         lum = arr[..., :3].mean(-1)
         arr[..., :3] = pal[(lum / 64).astype(int).clip(0, 3)]
     elif fx == 3:
         mg.fisheye(arr, 0.7)
     s = mg.surf(arr)
     with s as c:
-        mg.speed_lines(c, CX, 880, T, n=30, color=WHITE if fx != 1 else INK, r0=520, seed=blk)
+        mg.speed_lines(c, CX, 880, T, n=30, color=WHITE, r0=520, seed=blk)
 
 
 def s_final(arr, t, d, T):
@@ -260,7 +349,8 @@ def s_end(arr, t, d, T):
         for i, ln in enumerate(SOURCES):
             c.drawString(ln, CX - f.measureText(ln) / 2, 1095 + i * 40, f, mg.paint((215, 215, 225)))
         f2 = mg.font("rubik-500", 26)
-        for i, ln in enumerate(["Style homage to Mind Game (2004, dir. Masaaki Yuasa)", "Music and voice synthesized"]):
+        for i, ln in enumerate(["Style homage to Mind Game (2004, dir. Masaaki Yuasa)", "Earth imagery: NASA Blue Marble",
+                                "Music and voice synthesized"]):
             c.drawString(ln, CX - f2.measureText(ln) / 2, 1410 + i * 36, f2, mg.paint((170, 170, 180)))
 
 
