@@ -5,7 +5,7 @@ import sys
 import numpy as np
 from PIL import Image
 
-import mg as G
+import sr as G
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "build", "preview")
 

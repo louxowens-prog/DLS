@@ -27,7 +27,7 @@ STARTS = [e[0] for e in EDIT]
 NOCAP_KEYS = {"d6", "t2", "u2"}
 CAPS = [c for c in TL.captions() if c[3] not in NOCAP_KEYS]
 # the announcer's TV box for each of his lines: (x, y, w, h)
-PIP = {"a0": (600, 660, 440, 340), "a1": (40, 620, 440, 340), "a2": (40, 470, 440, 340), "a3": (190, 560, 700, 540)}
+PIP = {"a0": (580, 660, 440, 340), "a1": (40, 620, 440, 340), "a2": (40, 470, 440, 340), "a3": (190, 560, 700, 540)}
 
 
 def shot_frame(i, T):

@@ -111,6 +111,8 @@ def s_facts(arr, t, d, T):
     s = sr.surf(arr)
     with s as c:
         track.road_side(c, T * 0.2, 1180, 1330, speed=0.2)
+    track.near_wall(arr, T * 0.2, 1330, speed=0.2)
+    with s as c:
         cast.car_side(c, CX - 40, 1300, 1.0, T, body=VIOLET, stripe=LIME, number="99", driver="memorizer", books=True, speed=0.2)
         for k in range(6):
             I.book(c, 250 + k * 110, 980 - 30 * (k % 2), 0.6, color=CANDY[k % len(CANDY)])
@@ -270,6 +272,8 @@ def s_transfer(arr, t, d, T):
     s = sr.surf(arr)
     with s as c:
         track.road_side(c, T, 1180, 1330, speed=1.5)
+    track.near_wall(arr, T, 1330, speed=1.5)
+    with s as c:
         c.drawRect(skia.Rect.MakeXYWH(470, 1170, 140, 200), paint((20, 10, 40)))
         x = 150 + 800 * min(1.0, uu)
         y = 1250 - 480 * math.sin(math.pi * min(1.0, uu))
@@ -292,10 +296,25 @@ def s_coffee(arr, t, d, T):
             c.drawRoundRect(skia.Rect.MakeXYWH(90 + k * 230, 560, 200, 220), 18, 18, paint(INK, stroke=5))
             c.drawCircle(170 + k * 230, 670, 10, paint(INK))
         c.drawRect(skia.Rect.MakeXYWH(0, 1040, sr.W, 60), paint((200, 120, 80)))
-        I.cup(c, 700, 960, 1.1, T)
-        rx = 330 + 30 * math.sin(T * 3)
-        c.drawLine(rx, 1300, rx + 180, 1010, paint((200, 205, 225), stroke=30))
-        c.drawCircle(rx + 190, 995, 34, paint(CYAN))
-        sr.glint(c, 760, 860, 40, T)
+        I.cup(c, 720, 930, 1.7, T)
+        # a glossy household robot, reaching for the cup
+        bob = 8 * math.sin(T * 4)
+        body = skia.Path()
+        body.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(150, 900 + bob, 260, 300), 60, 60))
+        sr.glossy(c, body, (230, 235, 250), top=WHITE, rim=CYAN, lw=6)
+        head = skia.Path()
+        head.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(170, 700 + bob, 220, 180), 70, 70))
+        sr.glossy(c, head, (230, 235, 250), top=WHITE, rim=PINK, lw=6)
+        c.drawRoundRect(skia.Rect.MakeXYWH(195, 740 + bob, 170, 90), 40, 40, paint((30, 15, 80)))
+        for ex in (240, 320):
+            c.drawOval(skia.Rect.MakeXYWH(ex - 20, 770 + bob, 40, 26), paint(CYAN, blur=4))
+        ang = -20 + 10 * math.sin(T * 3)
+        c.save()
+        c.translate(400, 980 + bob)
+        c.rotate(ang)
+        c.drawRoundRect(skia.Rect.MakeXYWH(0, -24, 180, 48), 24, 24, paint((200, 205, 225)))
+        c.drawCircle(190, 0, 36, paint(CYAN))
+        c.restore()
+        sr.glint(c, 790, 820, 50, T)
         sr.lower_third(c, T, S("t6") + 0.3, E("t6") + 0.3, "THE COFFEE TEST", "Steve Wozniak, 2010", color=TANG, y=420)
         sr.race_text(c, "ANY KITCHEN.", CX, 1250, 90, fill=WHITE)

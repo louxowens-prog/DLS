@@ -61,7 +61,7 @@ def s_loop(arr, t, d, T):
     sr.sky(arr, [(0, (10, 5, 40)), (0.5, (60, 20, 130)), (1, (255, 80, 170))])
     s = sr.surf(arr)
     ang = 0.3 + 0.25 * t
-    cam = track.Cam((9.5 * math.sin(ang), 6.5, 9.5 * math.cos(ang)), (0, 0, 0), fov=52, cy=900)
+    cam = track.Cam((7.2 * math.sin(ang), 5.6, 7.2 * math.cos(ang)), (0, -0.4, 0), fov=62, cy=820)
     ts = C["loop"]
     with s as c:
         P = track.draw_circuit(c, cam, T)
@@ -74,22 +74,22 @@ def s_loop(arr, t, d, T):
             gates.append((z, k, lab, p, idx))
         for z, k, lab, p, idx in sorted(gates, key=lambda g: -g[0]):
             lit = k <= cur
-            sc = 7.0 / z
+            sc = 9.0 / z
             q, _ = cam.project(P[idx])
             c.drawLine(q[0], q[1], p[0], p[1], paint(WHITE, stroke=6 * sc))
-            f = sr.font("bungee-400", 34 * sc)
+            f = sr.font("bungee-400", 44 * sc)
             w = f.measureText(lab) + 30 * sc
             rr = skia.Path()
-            rr.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(p[0] - w / 2, p[1] - 50 * sc, w, 56 * sc), 12 * sc, 12 * sc))
+            rr.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeXYWH(p[0] - w / 2, p[1] - 60 * sc, w, 70 * sc), 14 * sc, 14 * sc))
             sr.glossy(c, rr, CANDY[k % len(CANDY)] if lit else (70, 60, 100), rim=WHITE, lw=4)
-            c.drawString(lab, p[0] - w / 2 + 15 * sc, p[1] - 10 * sc, f, paint(WHITE if lit else (180, 170, 210)))
+            c.drawString(lab, p[0] - w / 2 + 15 * sc, p[1] - 10 * sc, f, paint(WHITE if lit else (190, 180, 220)))
             if k == cur:
                 c.drawCircle(p[0], p[1] - 22 * sc, 90 * sc, paint(WHITE, 0.25, blur=30 * sc))
         # the car: position along the circuit, faster each lap
         prog = (t * (0.35 + 0.1 * t)) % 1.0
         idx = int(prog * n)
         p, z = cam.project(P[idx])
-        cast.car_front(c, p[0], p[1], 0.9 * 7.0 / z * 0.5, T, **FRONT)
+        cast.car_front(c, p[0], p[1], 0.9 * 9.0 / z * 0.5, T, **FRONT)
         k_again = pop(T, W("u2", "again") - 0.1, 0.25)
         if k_again:
             sr.race_text(c, "...AND AGAIN!", CX, 1250, 90, fill=LEMON, scale=k_again)
@@ -133,6 +133,8 @@ def s_h2h(arr, t, d, T):
     kg = pop(T, S("v1") + 0.1, 0.3)
     with s as c:
         track.road_side(c, T, 1180, 1330, speed=0.9)
+    track.near_wall(arr, T, 1330, speed=0.9)
+    with s as c:
         cast.car_side(c, 330, 1260, 0.7, T, speed=2, **MEM_CAR)
         cast.car_side(c, 760, 1340, 0.75, T, speed=2, flames=True, **AI_CAR)
         if T < S("v2"):
@@ -209,6 +211,7 @@ def s_newtrack(arr, t, d, T):
             c.drawLine(-110, -24, 110, -24, paint(RED, stroke=8))
             sr.plain(c, "UPDATE: GO RIGHT", 0, 45, 32, color=sr.BLUE, fname="bungee-400")
             c.restore()
+        cast.face(c, "ai", 20, 980, 2.0, T, talk=0.0, look=(0.9, -0.1), facing=1)
         sr.badge(c, "ADAPTS!", 800, 900, T, W("v3", "adapts") - 0.1, color=sr.LIME, size=70, rot=6)
         sr.race_text(c, "BRAND-NEW TRACK", CX, 380, 90, fill=WHITE)
         if not slow:
@@ -227,26 +230,31 @@ def s_chess2(arr, t, d, T):
     arr[..., :3] = np.where(left[..., None], a[..., :3], b[..., :3])
     s = sr.surf(arr)
     with s as c:
-        I.book(c, 220, 700, 1.0, color=VIOLET, title="EVERY\nCHESS\nGAME")
-        hexes = [(330 + dx, 960 + dy) for dx, dy in ((0, 0), (60, 34), (-60, 34), (0, 68), (60, -34), (-60, -34))]
+        sr.race_text(c, "MEMORIZER", 250, 420, 64, fill=WHITE)
+        sr.race_text(c, "LEARNER", 830, 420, 64, fill=WHITE)
+        I.book(c, 250, 700, 1.4, color=VIOLET, title="EVERY\nCHESS\nGAME")
+        hexes = [(250 + dx, 1040 + dy) for dx, dy in ((0, 0), (80, 46), (-80, 46), (0, 92), (80, -46), (-80, -46), (0, -92))]
         for k, (hx, hy) in enumerate(hexes):
-            pts = [(hx + 34 * math.cos(i / 6 * 2 * math.pi), hy + 34 * math.sin(i / 6 * 2 * math.pi)) for i in range(6)]
+            pts = [(hx + 46 * math.cos(i / 6 * 2 * math.pi), hy + 46 * math.sin(i / 6 * 2 * math.pi)) for i in range(6)]
             c.drawPath(sr.path(pts), paint(CANDY[k % len(CANDY)]))
-            c.drawPath(sr.path(pts), paint(INK, stroke=4))
-        sr.plain(c, "a NEW game", 300, 1080, 36, color=WHITE, fname="rubik-800")
-        cast.face(c, "memorizer", 170, 1180, 0.8, T, look=(0.6, -0.4), expr="grin")
-        sr.race_text(c, "?!", 280, 1200, 100, fill=LEMON)
-        sr.badge(c, "NOT GENERAL", 260, 470, T, W("v4", "Not") - 0.05, color=RED, size=54, rot=-6)
-        I.book(c, 820, 700, 0.6, color=TANG, title="RULES")
+            c.drawPath(sr.path(pts), paint(INK, stroke=5))
+        sr.plain(c, "a NEW game", 250, 1200, 40, color=WHITE, fname="rubik-800")
+        cast.face(c, "memorizer", 150, 1250, 0.75, T, look=(0.6, -0.4), expr="grin")
+        sr.race_text(c, "?!", 370, 1000, 130, fill=LEMON)
+        sr.badge(c, "NOT GENERAL", 260, 560, T, W("v4", "Not") - 0.05, color=RED, size=54, rot=-6)
+        I.book(c, 830, 700, 0.9, color=TANG, title="HOW TO\nPLAY")
         k = ease(ramp(T, W("v4", "Never") - 0.1, E("v4")))
-        cs = 46
+        cs = 62
         for i in range(4):
             for j in range(4):
-                c.drawRect(skia.Rect.MakeXYWH(720 + i * cs, 900 + j * cs, cs, cs), paint(WHITE if (i + j) % 2 else INK))
+                c.drawRect(skia.Rect.MakeXYWH(706 + i * cs, 920 + j * cs, cs, cs), paint(WHITE if (i + j) % 2 else INK))
+        c.drawRect(skia.Rect.MakeXYWH(706, 920, 4 * cs, 4 * cs), paint(INK, stroke=6))
         if k > 0.3:
-            I.chess_king(c, 720 + 3.5 * cs, 900 + 1.5 * cs, 0.3)
-        cast.face(c, "ai", 900, 1200, 0.8, T, talk=0.0, look=(-0.4, -0.6))
-        sr.badge(c, "INTELLIGENCE!", 800, 470, T, W("v4", "intelligence") - 0.2, color=sr.LIME, size=50, rot=6)
+            I.chess_king(c, 706 + 2.5 * cs + 60 * k, 920 + 1.5 * cs, 0.42)
+        if k > 0.7:
+            sr.race_text(c, "WIN!", 830, 1230, 80, fill=sr.LIME)
+        cast.face(c, "ai", 960, 1240, 0.7, T, talk=0.0, look=(-0.4, -0.6))
+        sr.badge(c, "INTELLIGENCE!", 820, 560, T, W("v4", "intelligence") - 0.2, color=sr.LIME, size=50, rot=6)
 
 
 LAPS = [("CALCULATION", "calculation"), ("CHESS", "chess"), ("LANGUAGE", "language"), ("VISION", "vision")]
@@ -258,6 +266,8 @@ def s_laps(arr, t, d, T):
     s = sr.surf(arr)
     with s as c:
         track.road_side(c, T, 1180, 1330, speed=1.0)
+    track.near_wall(arr, T, 1330, speed=1.0)
+    with s as c:
         cast.car_side(c, 420, 1330, 0.85, T, speed=2, flames=True, **AI_CAR)
         done = [lab for lab, w in LAPS if T >= W("w1", w) - 0.05]
         for k, lab in enumerate(done):

@@ -151,3 +151,23 @@ def draw_circuit(c, cam, T, width=0.7):
     for _, pp, cc in quads:
         c.drawPath(path(pp), paint(cc))
     return P
+
+
+def near_wall(arr, T, y0=1330, speed=1.0):
+    """The near side of the track (the camera rides the rail): candy barrier panels with chevrons, streaking past."""
+    sf = skia.Surface(arr)
+    off = (T * speed * 2200) % 520
+    with sf as c:
+        c.drawRect(skia.Rect.MakeXYWH(0, y0, W, H - y0), paint(shader=sr.lin((0, y0), (0, H), [(60, 30, 120), (20, 10, 50)])))
+        for k in range(-1, 4):
+            x = k * 520 - off
+            for j, cc in enumerate((sr.PINK, sr.LEMON)):
+                px = x + j * 260
+                c.drawRect(skia.Rect.MakeXYWH(px, y0 + 40, 250, 260), paint(cc))
+                for m in range(3):
+                    cx0 = px + 40 + m * 70
+                    c.drawPath(path([(cx0, y0 + 80), (cx0 + 40, y0 + 170), (cx0, y0 + 260), (cx0 + 22, y0 + 260), (cx0 + 62, y0 + 170), (cx0 + 22, y0 + 80)]),
+                               paint(WHITE, 0.9))
+        c.drawRect(skia.Rect.MakeXYWH(0, y0, W, 40), paint(shader=sr.lin((0, y0), (0, y0 + 40), [WHITE, (150, 160, 200), (90, 90, 130)])))
+        c.drawRect(skia.Rect.MakeXYWH(0, y0 + 300, W, 30), paint(shader=sr.lin((0, y0 + 300), (0, y0 + 330), [WHITE, (120, 120, 160)])))
+    sr.streak(arr, 30 + 150 * min(1.5, speed), y0, H)
