@@ -43,7 +43,7 @@ def _clock_panel(st, P, T):
         c.drawRoundRect(skia.Rect.MakeLTRB(460, y, 960, y + 84), 20, 20, paint(INK, stroke=7))
         if k > 0.5:
             sv.label(c, f"{int(round(val))}%", 460 + 500 * val / 100 * k - 66, y + 60, 50, fname="bangers-400", color=INK, pen=P)
-    sv.label(c, "ClockBench · Stanford AI Index 2026", DW / 2, 655, 40, fname="comic-neue-700", color=WHITE, tag="credit", pen=P)
+    sv.label(c, "ClockBench · Stanford AI Index 2026", DW / 2, 610, 40, fname="comic-neue-700", color=WHITE, tag="credit", pen=P)
 
 
 def s_jagged(T, t, d):
@@ -52,7 +52,7 @@ def s_jagged(T, t, d):
     P = st.pen()
     ts = C["scratch1"]
     if T < S("j3") - 0.15:
-        bg.page(st)
+        bg.page(st, 2)
     tsplit = S("j2") - 0.2
     tj = S("j3") - 0.15
     if T < tsplit:
@@ -68,7 +68,7 @@ def s_jagged(T, t, d):
             sv.sfx(c, "SKRRT!", 560, 1200, 170, k=pop(T, ts, amp=0.2), rot=-7, fill=WHITE, fill2=CYAN, dots=MAG)
         return st.arr
     if T < tj:
-        k = ease(ramp(T, tsplit, tsplit + 0.3))
+        k = 1.0                                                    # a hard panel cut (nothing slides under the caption)
         yb = 240 + 500 * k + 1120 * (1 - k)
         q1 = place(st, P, (34, 240, 1046, yb), (DW / 2, 280), _gold_panel, T, (255, 214, 90), dh=560)
         q2 = place(st, P, (34, yb + 22, 1046, 1360), (DW / 2, 360), _clock_panel, T, (40, 16, 90), dh=720, ext=1880)
@@ -106,7 +106,6 @@ def s_jagged(T, t, d):
         else:
             sv.label(c, name, min(max(x, 240), 800), y + 74, 40, fname="bangers-400", color=WHITE, bg=RED, edge=INK, rot=3, a=min(1.0, ka))
     sv.tag_text(c, "JAGGED FRONTIER", 540, 330, 98, fill=CYAN, fill2=(0, 110, 200), glow=CYAN, k=pop(T, C["jagged"] - 0.1), seed=5)
-    sv.label(c, "Stanford AI Index 2026", 540, 1318, 40, fname="comic-neue-700", color=WHITE, tag="credit")
     kg, kb = pop(T, W("j3", "genius") - 0.05), pop(T, W("j3", "baffled") - 0.05)
     if kg:
         sv.sfx(c, "GENIUS!", 330, 820, 96, k=kg, rot=-8, fill=LIME, fill2=(40, 170, 60), dots=YEL)
@@ -147,15 +146,15 @@ def s_noir(T, t, d):
 
 def s_anime(T, t, d):
     st = sv.Stage((255, 200, 236))
-    bg.anime_burst(st, T, cy=900)
+    bg.anime_burst(st, T, cy=1080)
     P = st.pen()
-    fist = ease(ramp(twos(T), S("d2") - 0.05, S("d2") + 0.45))
-    cast.anime(P, 520, 920, 1.95, T, talk=talk(T, ANIME), fist=fist)
+    fist = ease(ramp(twos(T), S("d2") - 0.12, S("d2") + 0.45))
+    cast.anime(P, 520, 1130, 1.8, T, talk=talk(T, ANIME), fist=fist)
     st.flush()
     c = st.c
     if S("d2") - 0.1 <= T < E("d2") + 0.25:
-        sv.bubble(c, "No way! It’s already a real mind!", 540, 450, tail=(470, 640), size=50, k=pop(T, S("d2") - 0.1, amp=0.15),
-                  kind="shout", maxw=600, fill=WHITE)
+        sv.bubble(c, "No way! It’s already a real mind!", 540, 440, tail=(470, 700), size=46, k=pop(T, S("d2") - 0.1, amp=0.1),
+                  kind="shout", maxw=420, fill=WHITE)
     # katakana sound effect: 'don' (the dramatic boom of manga)
     sv.sfx(c, "ドン", 300, 1180, 190, k=pop(T, S("d2") + 0.05), rot=-10, fill=YEL, fill2=ORANGE, dots=MAG, fname="dela-gothic-kana-400",
            extrude=(12, 14))
@@ -168,7 +167,7 @@ def s_clash(T, t, d):
     """Top: the noir panel and the anime panel, split on a diagonal. Bottom: the narrator in the main style,
     and then the cartoon AI dropping in between them."""
     st = sv.Stage()
-    bg.page(st)
+    bg.page(st, 3)
     c = st.c
     P = st.pen()
     qn = [(34, 236), (600, 236), (470, 800), (34, 800)]
@@ -219,12 +218,16 @@ def s_clash(T, t, d):
         by = {0: 1500, 1: 1300}.get(drop, land)
         if drop <= 1:                                               # smear: the body smeared into a streak behind it
             bot_y = 1000 if drop == 0 else 1010
-            streak = path([(750, 822), (850, 822), (900, bot_y), (800, bot_y + 90), (700, bot_y)])
-            c.drawPath(streak, paint(sv.lighter(cast.B_BODY, 0.1)))
+            streak = path([(730, 822), (870, 822), (910, bot_y), (800, bot_y + 90), (690, bot_y)])
+            c.drawPath(streak, paint(cast.B_BODY))
             c.save()
             c.clipPath(streak, doAntiAlias=True)
-            c.drawRect(skia.Rect.MakeLTRB(700, 822, 900, bot_y - 120), paint(WHITE, 0.55))
+            c.drawRect(skia.Rect.MakeLTRB(690, 822, 760, bot_y + 90), paint(cast.B_DARK))
+            c.drawRect(skia.Rect.MakeLTRB(820, 822, 850, bot_y + 90), paint(WHITE, 0.8))
             c.restore()
+            for yy in (870, 940):
+                c.drawCircle(800, yy, 20, paint(MAG, 0.7))
+                c.drawCircle(800, yy, 20, paint(INK, 0.7, stroke=5))
             for xx, w in ((745, 7), (800, 10), (855, 7)):
                 sv.ink(c, [(xx, 830), (xx + (xx - 800) * 0.6, bot_y - 20)], w, taper=(0.8, 0.1))
             sv.outline(c, streak, 7)
@@ -232,7 +235,7 @@ def s_clash(T, t, d):
             c.drawCircle(800, bot_y + 20 if drop == 0 else 880, 26, paint(INK, stroke=6))
             for j in range(6):                                      # vertical speed lines either side
                 xx = 630 + j * 50 if j < 3 else 820 + j * 50
-                sv.ink(c, [(xx, 840 + 30 * (j % 3)), (xx, 1150 + 40 * (j % 2))], 7, color=WHITE, taper=(0.2, 0.8))
+                sv.ink(c, [(xx, 840 + 30 * (j % 3)), (xx, 1150 + 40 * (j % 2))], 9, color=[WHITE, YEL, CYAN][j % 3], taper=(0.2, 0.8))
         if drop >= 1:
             P.save()
             P.translate(800, by)
@@ -261,9 +264,10 @@ def s_clash(T, t, d):
         k = pop(T, W("d4", "fully") - 0.1, amp=0.2)
         sv.sfx(c, "X", 860, 360, 190, k=k, rot=8, fill=RED, fill2=(160, 0, 30), dots=None, extrude=(10, 12))
         sv.label(c, "A FULL HUMAN-LIKE MIND?", 770, 764, 40, fname="bangers-400", color=INK, bg=WHITE, edge=INK, rot=3, a=min(1.0, k))
-    if tn <= T < tn + 1.3:
+    if tn <= T < tn + 1.5:
         sv.spidey(c, hx + 10 * 0.95, 1060 - 40, 150, T, k=ease(ramp(T, tn, tn + 0.2)), seed=4, spreads=[(185, 290)], n=7)
-        sv.sfx(c, "NEITHER!", 720, 990, 110, k=pop(T, tn, amp=0.2), rot=-5, fill=YEL, fill2=ORANGE, dots=MAG)
+    if E("d3") - 0.05 <= T < tn + 1.5:
+        sv.sfx(c, "NEITHER!", 720, 990, 120, k=pop(T, E("d3") - 0.05, amp=0.2), rot=-5, fill=YEL, fill2=ORANGE, dots=MAG)
     if T >= C["new"] + 0.15:
         sv.tag_text(c, "SOMETHING NEW", 600, 930, 84, fill=LIME, fill2=(40, 150, 60), glow=LIME, k=pop(T, C["new"] + 0.15, amp=0.2), seed=3, rot=-4)
     return st.arr

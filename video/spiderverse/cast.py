@@ -391,21 +391,34 @@ def hero(P, x, y, s, T, talk=0.0, look=(0.35, 0.0), arms=None, expr="neutral", f
         c.restore()
     # head
     hero_head(P, T, talk=talk, look=look, blink=blink, expr=expr)
-    # a smear frame when the near arm whips between poses: the swept area filled in, plus the previous can
+    # a smear frame when the near arm whips between poses: the swept arc as one streaky, stretched shape,
+    # with repeated drawings of the hand and can left along the way
     if smear_from is not None:
         (psR, peR), _ = smear_from
         pel, pha = _arm_pts(*shR, psR, peR)
         cel, cha = _arm_pts(*shR, sR, eR)
         if math.hypot(cha[0] - pha[0], cha[1] - pha[1]) > 60:
-            sm = path([pel, pha, cha, cel])
-            c.drawPath(sm, paint(HOOD))
-            c.drawPath(path([pha, cha, (cha[0] * 0.5 + cel[0] * 0.5, cha[1] * 0.5 + cel[1] * 0.5)]), paint(sv.lighter(HOOD, 0.3)))
-            for u in (0.25, 0.5, 0.75):
-                a = (pha[0] + (cha[0] - pha[0]) * u, pha[1] + (cha[1] - pha[1]) * u)
-                b = (pel[0] + (cel[0] - pel[0]) * u, pel[1] + (cel[1] - pel[1]) * u)
-                sv.ink(c, [a, b], 5, taper=(0.4, 0.4))
-            if can:
-                spray_can(c, pha[0] + 30 * math.cos(math.radians(peR)), pha[1] + 30 * math.sin(math.radians(peR)), math.radians(peR), 0.9)
+            us = np.linspace(0, 1, 9)
+            poses = [_arm_pts(*shR, psR + (sR - psR) * u, peR + (eR - peR) * u) for u in us]
+            outer = [(h[0] + 40 * math.cos(math.radians(peR + (eR - peR) * u)), h[1] + 40 * math.sin(math.radians(peR + (eR - peR) * u)))
+                     for (e_, h), u in zip(poses, us)]
+            inner = [e_ for e_, h in poses][::-1]
+            sm = path(outer + inner)
+            c.drawPath(sm, paint(sv.lighter(HOOD, 0.35)))
+            c.save()
+            c.clipPath(sm, doAntiAlias=True)
+            for j in range(7):                                  # dry-brush streaks along the swing
+                v = (j + 0.5) / 7
+                arc = [(e_[0] + (o[0] - e_[0]) * v, e_[1] + (o[1] - e_[1]) * v) for (e_, h), o in zip(poses, outer)]
+                sv.ink(c, arc, 7, color=HOOD if j % 2 else WHITE, taper=(0.1, 0.9), a=0.85)
+            c.restore()
+            sv.outline(c, sm, 6)
+            for u in (0.33, 0.66):                              # multiples of the hand and can along the arc
+                ea = peR + (eR - peR) * u
+                e_, h = _arm_pts(*shR, psR + (sR - psR) * u, ea)
+                if can:
+                    spray_can(c, h[0] + 30 * math.cos(math.radians(ea)), h[1] + 30 * math.sin(math.radians(ea)), math.radians(ea), 0.9)
+                _hand(P, h[0], h[1], math.radians(ea), 1.0, grip=can)
     # near arm, with the can - drawn with multiples when shaking fast
     ghosts = []
     if shake > 0.05:
@@ -658,7 +671,7 @@ def anime(P, x, y, s, T, talk=0.0, flip=False, fist=0.0, blink_seed=3):
     # the fist pump (with a smear on the way up)
     if fist > 0.01:
         hx, hy = 210, 260 - 300 * fist
-        if 0.12 < fist < 0.88:                                     # smear + multiples: the fist repeated down its path
+        if 0.02 < fist < 0.9:                                      # smear + multiples: the fist repeated down its path
             smear = path([(186, 440), (262, 440), (hx + 48, hy + 20), (hx - 48, hy + 20)])
             c.drawPath(smear, paint(A_SKIN))
             c.drawPath(smear, paint(A_SKIN_D, 0.6))
@@ -670,7 +683,7 @@ def anime(P, x, y, s, T, talk=0.0, flip=False, fist=0.0, blink_seed=3):
         arm = path([(150, 320), (220, 300), (hx + 34, hy + 40), (hx - 34, hy + 40)])
         P.fill(arm, WHITE)
         sv.outline(c, arm, 6)
-        if 0.12 < fist < 0.88:                                     # multiples: earlier drawings of the fist, left along the path
+        if 0.02 < fist < 0.9:                                      # multiples: earlier drawings of the fist, left along the path
             for j, u in enumerate((0.3, 0.6)):
                 gy = hy + (420 - hy) * (1 - u) * 0.8
                 gx = hx + 20 * (j + 1)

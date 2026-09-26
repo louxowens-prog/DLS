@@ -92,7 +92,7 @@ def clock_face(c, x, y, r, T, hands=(10 * 30 + 5, 60), wobble=0.0):
 
 def s_clock(T, t, d):
     st = sv.Stage()
-    bg.page(st)
+    bg.page(st, 0)
     c = st.c
     q1 = [(40, 236), (1040, 236), (1040, 800), (40, 870)]
     q2 = [(40, 902), (1040, 832), (1040, 1880), (40, 1880)]
@@ -161,10 +161,17 @@ def s_hookq(T, t, d):
     st.flush()
     P = st.pen()
     tk = C["shake"]
-    keys = [(0, "idle"), (tk, "shake"), (tk + 0.55, "point")]
-    shake = 1.0 if tk <= twos(T) < tk + 0.55 else 0.0
-    cast.hero(P, 470, 760, 1.28, T, talk=talk(T), arms=cast.arm_pose(T, keys), look=(0.5, 0.0), shake=shake,
-              expr="wow" if T > tk + 0.55 else "neutral", smear_from=cast.arm_pose(T - 1 / 12, keys))
+    tw = tk + 0.55                                              # the whip: shake -> point in ONE smear drawing
+    t2 = twos(T)
+    shake = 1.0 if tk <= t2 < tw else 0.0
+    if t2 < tw:
+        arms, smear = cast.arm_pose(T, [(0, "idle"), (tk, "shake")]), None
+    else:
+        whip = t2 - tw < 1 / 12 - 1e-6
+        arms = cast.ARM["point"]
+        smear = cast.ARM["shake"] if whip else None
+    cast.hero(P, 470, 760, 1.28, T, talk=talk(T), arms=arms, look=(0.5, 0.0), shake=shake,
+              expr="wow" if T > tw else "neutral", smear_from=smear)
     st.flush()
     c = st.c
     if shake:
@@ -186,6 +193,9 @@ HERO_S = 0.6
 HERO_HEAD = 1000 - 880 * HERO_S                # head centre (wall coords) so the feet stand on the sidewalk
 SCOL = [(255, 240, 120), (255, 150, 60), MAG, (180, 90, 255), CYAN, LIME, (255, 90, 90), WHITE, WHITE]
 PIN_X = STX[5] + 0.5 * (STX[6] - STX[5])
+GLOSS = ["fixed rules", "one narrow job", "learns from data", "one model, many uses", "text, images, sound",
+         "thinks step by step", "takes actions", "human-level, broadly", "beyond all of us"]
+ZW = 0.8                                       # the walk is framed a little wide, so each station's name reads whole
 
 
 def road_y(x):
@@ -269,6 +279,10 @@ def draw_road(c, T, reveal, st_alpha=1.0, zoom=1.0, labels=True):
         size = 104 if len(STATIONS[i]) < 11 else (84 if len(STATIONS[i]) < 16 else 72)
         if not labels:
             continue
+        if k > 0.6:                                        # a two-word gloss under each station
+            gy = y + 150
+            sv.label(c, GLOSS[i], x, gy, 44, fname="comic-neue-700", color=WHITE if i < 7 else INK, bg=INK if i < 7 else WHITE,
+                     pad=10, tag="gloss", a=min(1.0, (k - 0.6) * 4))
         if i < 7:
             sv.tag_text(c, STATIONS[i], x, y + LABEL_DY + (30 if i % 2 else 0), size, fill=SCOL[i], fill2=sv.darker(SCOL[i], 0.65),
                         rot=-5 + (i % 3) * 4, seed=i, prog=min(1.0, k), tag="station")
@@ -317,18 +331,26 @@ def _cam_walk(T):
     return max(0.0, cx)
 
 
+def _cam_smooth(T, sig=0.38):
+    """The walk's stepped camera path, smoothed into one steady glide (so names don't whip past)."""
+    ts = np.linspace(T - 2.5 * sig, T + 2.5 * sig, 31)
+    w = np.exp(-0.5 * ((ts - T) / sig) ** 2)
+    return float((w * np.array([_cam_walk(t) for t in ts])).sum() / w.sum())
+
+
 def road_view(T):
-    """Camera on the wall: (centre x, centre y) in wall coordinates and zoom, eased on ones."""
+    """Camera on the wall: (centre x, centre y) in wall coordinates and zoom, moving on ones."""
     cy1 = 860 - WALL_Y0
-    if T < S("r4") - 0.15:
-        return _cam_walk(T) + 540, cy1, 1.0
-    far = STX[8] - 640 + 540
-    back = PIN_X - 620 + 540
-    k = ease(ramp(T, S("r4") - 0.15, S("r4") + 0.15))
+    t_back = S("r4") - 0.15
+    if T < t_back:
+        return _cam_smooth(T) + 540, cy1, ZW
+    far = _cam_smooth(t_back) + 540
+    back = PIN_X
+    k = ease(ramp(T, t_back, S("r4") + 0.15))
     cx = far + (back - far) * k
     # pull back (readable), then whip back down the road to where it started
     zk = ease(ramp(T, S("r5") + 0.3, S("r5") + 1.3))
-    zoom = 1.0 + (0.5 - 1.0) * zk
+    zoom = ZW + (0.5 - ZW) * zk
     cx = cx + (PIN_X - cx) * zk
     cy = cy1 + (ROAD_Y - 80 - cy1) * zk
     wk = ease(ramp(T, W("r5", "Way") - 0.35, W("r5", "Way") + 0.35))
@@ -381,12 +403,15 @@ def s_road(T, t, d):
         hx = hero_wx(T)
         t2 = twos(T)
         moving = abs(hero_wx(t2) - hero_wx(t2 - 1 / 12)) > 3
-        painting = any(tw - 0.1 <= twos(T) < tw + 0.5 for tw in ts[:7])
-        pose = "spray" if painting else ("point_up" if T >= C["pin"] else "idle")
+        # the spray arm comes up and goes down through an in-between drawing, never in one snap
+        kpaint = max([ease(ramp(t2, tw - 0.27, tw - 0.1)) * (1 - ease(ramp(t2, tw + 0.5, tw + 0.67))) for tw in ts[:7]] + [0.0])
+        painting = kpaint > 0.99
+        A0, A1 = cast.ARM["point_up" if T >= C["pin"] else "idle"], cast.ARM["spray"]
+        arms = tuple(tuple(pa + (pb - pa) * kpaint for pa, pb in zip(X, Y)) for X, Y in zip(A0, A1))
         ph = twos(T) * 2 * math.pi * 1.7 if moving else 0.35
         n_on = sum(1 for tw in ts if tw <= T)
         look = (0.8, -0.3) if T < C["pin"] else (0.9, -0.6)
-        cast.hero(P, hx, HERO_HEAD, HERO_S, T, talk=talk(T), arms=cast.ARM[pose], legs=ph,
+        cast.hero(P, hx, HERO_HEAD, HERO_S, T, talk=talk(T), arms=arms, legs=ph,
                   spray=SCOL[max(0, n_on - 1)] if painting else None, look=look,
                   expr="wow" if C["pin"] <= T < C["pin"] + 1.2 else "neutral")
     P.restore()
@@ -403,6 +428,64 @@ def s_road(T, t, d):
     if T > W("r5", "Way") + 0.3:
         sv.label(c, "WE CAME THIS FAR", 520, 1240, 70, fname="bangers-400", color=INK, bg=YEL, edge=INK, rot=-3,
                  a=ease(ramp(T, W("r5", "Way") + 0.3, W("r5", "Way") + 0.6)))
+    return st.arr
+
+
+def s_here(T, t, d):
+    """Close-up cutaway at the pin: her pointing it out, and what 'here' means - three cards slam in on the words."""
+    st = sv.Stage()
+    bg.page(st, 3)
+    c = st.c
+    P = st.pen()
+    qt = [(40, 236), (1040, 236), (1040, 900), (40, 960)]
+    qb = [(40, 982), (1040, 922), (1040, 1880), (40, 1880)]
+    P.save()
+    P.clip(path(qt))
+    sv.bricks(c, 40, 200, 1040, 980, bw=150, bh=58, col_=(110, 36, 130), mortar=(60, 14, 70))
+    st.shade("mag").drawPath(path(qt), paint(shader=sv.lin((0, 236), (0, 960), [(255, 255, 255, 0.05), (255, 255, 255, 0.5)])))
+    P.restore()
+    P.save()
+    P.clip(path(qb))
+    c.drawColor(sv.col((40, 16, 90)))
+    sv.speed_lines(c, 540, 1150, T, n=36, r0=260, r1=1000, color=(70, 30, 130), seed=31, w=16)
+    st.shade("cyan").drawPath(path(qb), paint(shader=sv.lin((0, 922), (0, 1880), [(255, 255, 255, 0.05), (255, 255, 255, 0.55)])))
+    P.restore()
+    st.flush()
+    z = 1.0 + 0.06 * ease(t / d)                                  # a slow push-in on her
+    P.save()
+    P.clip(path(qt))
+    xs = np.linspace(40, 1040, 40)
+    for j, (dy, col) in enumerate(((-26, MAG), (0, YEL), (26, CYAN))):
+        sv.spray_stroke(c, [(x, 760 + dy + 20 * math.sin(x / 200)) for x in xs], 30, col, seed=60 + j)
+    pin(c, 800, 700, 1.0, s=0.8, T=T)
+    P.translate(300, 620)
+    P.scale(z)
+    P.translate(-300, -620)
+    cast.hero(P, 290, 600, 1.2, T, talk=talk(T), arms=cast.ARM["point_up"], expr="wow", look=(0.9, -0.4))
+    P.restore()
+    st.flush()
+    sv.panel_border(c, qt)
+    sv.panel_border(c, qb)
+    for j, (name, si, wd) in enumerate((("MULTIMODAL", 4, "multimodal"), ("REASONING", 5, "reasoning"), ("EARLY AGENTS", 6, "agents"))):
+        tw = W("r5", wd) - 0.1
+        if T < tw:
+            continue
+        k = pop(T, tw, 0.25, amp=0.15)
+        cx, cy = 200 + j * 340, 1135
+        c.save()
+        c.translate(cx, cy)
+        c.rotate([-4, 2, -2][j])
+        c.scale(k, k)
+        card = skia.Rect.MakeLTRB(-150, -140, 150, 140)
+        c.drawRect(card.makeOffset(10, 12), paint(INK))
+        c.drawRect(card, paint(SCOL[si]))
+        c.drawRect(skia.Rect.MakeLTRB(-150, 60, 150, 140), paint(WHITE))
+        c.drawRect(card, paint(INK, stroke=8))
+        station_icon(c, si, 0, -40, 1.6)
+        f = sv.font("bangers-400", 48)
+        c.drawString(name, -f.measureText(name) / 2, 118, f, paint(INK))
+        sv.reg_local(c, -f.measureText(name) / 2, 80, f.measureText(name) / 2, 128, "card")
+        c.restore()
     return st.arr
 
 
@@ -484,7 +567,7 @@ def _speed_b(st, P, T):
     sv.label(c, "CAN FINISH ALONE", DW / 2, 200, 72, fname="bangers-400", color=YEL, pen=P)
     heights = [2 ** (i * 0.62) for i in range(9)]
     kb = ramp(T, S("s2") + 0.3, C["doubled"] + 0.4)
-    base, top = 860, 390
+    base, top = 840, 380
     for i, hgt in enumerate(heights):
         ki = ease(min(1.0, max(0.0, kb * 9 - i)))
         if ki <= 0:
@@ -495,6 +578,12 @@ def _speed_b(st, P, T):
         c.drawRect(rr.makeOffset(8, 8), paint(INK))
         c.drawRect(rr, paint([CYAN, MAG, YEL][i % 3]))
         c.drawRect(rr, paint(INK, stroke=5))
+    sv.ink(c, [(58, base + 10), (58, top - 20)], 9, color=WHITE, taper=(0.02, 0.02))            # the y-axis: task length
+    c.drawPath(path([(58, top - 60), (36, top - 14), (80, top - 14)]), paint(WHITE))
+    sv.label(c, "TASK LENGTH", 30, (base + top) / 2, 40, fname="bangers-400", color=WHITE, rot=-90, pen=P)
+    if T >= C["lately"] - 0.05:
+        sv.label(c, "2024–25: EVERY ~4 MONTHS", 620, 450, 42, fname="bangers-400", color=WHITE, bg=MAG, edge=INK, rot=-3,
+                 a=min(1.0, pop(T, C["lately"] - 0.05, amp=0.15)), pen=P)
     sv.label(c, "SECONDS", 120, base + 66, 54, fname="bangers-400", color=WHITE, pen=P)
     sv.label(c, "HOURS", 880, base + 66, 54, fname="bangers-400", color=WHITE, pen=P)
     sv.label(c, "2019", 120, base + 116, 40, fname="comic-neue-700", color=(220, 210, 255), pen=P)
@@ -507,7 +596,7 @@ def _speed_b(st, P, T):
 def _speed_c(st, P, T):
     c = P.c
     sv.label(c, "REAL COMPUTER TASKS", DW / 2, 120, 90, fname="bangers-400", color=INK, pen=P)
-    sv.label(c, "OSWORLD · AI AGENTS", DW / 2, 190, 52, fname="bangers-400", color=WHITE, pen=P)
+    sv.label(c, "AI AGENTS VS PEOPLE", DW / 2, 190, 52, fname="bangers-400", color=WHITE, pen=P)
     val = 12 + (66.3 - 12) * ease(ramp(T, C["sixty"] - 0.35, C["sixty"] + 0.3))
     bx0, bx1, by = 60, 950, 330
     hx = bx0 + (bx1 - bx0) * 0.724
@@ -519,15 +608,15 @@ def _speed_c(st, P, T):
     c.drawRoundRect(skia.Rect.MakeLTRB(bx0, by, bx1, by + 110), 26, 26, paint(INK, stroke=8))
     sv.ink(c, [(hx, by - 22), (hx, by + 140)], 12, color=INK)
     if T >= C["twelve"] - 0.2:
-        sv.sfx(c, f"{int(round(val))}%", DW / 2 - 60, 600, 240, k=pop(T, C["twelve"] - 0.2, amp=0.15), rot=-6,
+        sv.sfx(c, f"{int(round(val))}%", DW / 2 - 60, 565, 230, k=pop(T, C["twelve"] - 0.2, amp=0.15), rot=-6,
                fill=YEL if val < 60 else WHITE, fill2=ORANGE if val < 60 else YEL, dots=MAG)
-    sv.label(c, "in about a year · Stanford AI Index 2026", DW / 2, 826, 42, fname="comic-neue-700", color=INK, tag="credit", pen=P)
+    sv.label(c, "OSWorld · Stanford AI Index 2026", DW / 2, 790, 42, fname="comic-neue-700", color=INK, tag="credit", pen=P)
 
 
 def s_speed(T, t, d):
     """A page that builds: each new panel slides up and squeezes the one before into a strip."""
     st = sv.Stage()
-    bg.page(st)
+    bg.page(st, 1)
     c = st.c
     P = st.pen()
     tb, tc = S("s2") - 0.25, S("s3") - 0.25

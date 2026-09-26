@@ -19,11 +19,12 @@ SHOTS = {
     "jagged": B.s_jagged, "noir": B.s_noir, "anime": B.s_anime, "clash": B.s_clash,
     "agi": Cc.s_agi, "nosleep": Cc.s_nosleep, "copies": Cc.s_copies, "evolve": Cc.s_evolve, "question": Cc.s_question,
     "routes": Cc.s_routes, "bar": Cc.s_bar, "summary": Cc.s_summary, "outro": Cc.s_outro, "end": Cc.s_end,
+    "here": A.s_here, "notyet": Cc.s_notyet, "conscious": Cc.s_conscious, "final": Cc.s_final,
 }
 CAPS = [c for c in TL.captions() if TL.who(c[3]) == NAR]
-CAP_BOTTOM = 1528
-CAP_FONT, CAP_SIZE = "bangers-400", 62          # bold comic lettering, big enough for a phone
-NOCAP = set()                     # every narrator line is lettered
+CAP_BOTTOM = 1486                 # clear of the Reels bottom bar
+CAP_FONT, CAP_SIZE, CAP_W = "bangers-400", 60, 840     # bold comic lettering; the box stays left of the button strip
+NOCAP = {"d3"}                    # "Neither." is already the drawn sound word NEITHER!
 
 
 def shot_frame(i, T):
@@ -61,18 +62,19 @@ def caption(arr, T):
     if key in NOCAP:
         return
     f = sv.font(CAP_FONT, CAP_SIZE)
-    lines = sv.wrap(s.upper(), f, 900 - 60)
+    lines = sv.wrap(s.upper(), f, CAP_W - 60)
     bh = CAP_SIZE * 1.12 * len(lines) + 34
     y = CAP_BOTTOM - bh - 12
     k = sv.pop(T, t0, 0.17, amp=0.07)
     c = skia.Surface(arr).getCanvas()
-    sv.narration(c, s, 505, y, maxw=900, size=CAP_SIZE, k=k, rot=-1.0 if (len(s) % 2) else 1.0, fname=CAP_FONT)
+    sv.narration(c, s, 490, y, maxw=CAP_W, size=CAP_SIZE, k=k, rot=-1.0 if (len(s) % 2) else 1.0, fname=CAP_FONT)
 
 
 def render_frame(T, idx=None, captions=True):
     sv.TEXT.clear()
     i = shot_at(T)
     out = None
+    glitching = False
     for j in (i, i + 1):
         if j <= 0 or j >= len(EDIT):
             continue
@@ -83,6 +85,7 @@ def render_frame(T, idx=None, captions=True):
             fb = shot_frame(j, max(T, b0))
             sv.TEXT.clear()
             out = sv.glitch(fa, fb, k, seed=j, idx=int(round(T * FPS)))
+            glitching = True
             break
         if tr == "slide" and b0 <= T < b0 + SLIDE:
             fa = shot_frame(j - 1, T)
@@ -96,7 +99,8 @@ def render_frame(T, idx=None, captions=True):
     if out is None:
         out = shot_frame(i, T)
     out = np.ascontiguousarray(out)
-    sv.grain(out, 4)
+    if not glitching:
+        sv.grain(out, 3)                       # (no grain on glitch frames: noise there only costs the encoder)
     if captions:
         caption(out, T)
     return out

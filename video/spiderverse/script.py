@@ -27,10 +27,10 @@ LINES = [
 
     # ---- how fast
     ("s1", NAR, "And it's speeding up.", "And it’s speeding up.", 0.1),
-    ("s2", NAR, "The length of tasks A.I. agents can finish half the time has doubled about every seven months.",
-     "The length of tasks AI agents| can finish half the time| has doubled about every 7 months.", 0.2),
-    ("s3", NAR, "On real computer tasks, agents jumped from about twelve percent to sixty-six, in about a year.",
-     "On real computer tasks, agents jumped from about 12% to 66%, in about a year.", 0.3),
+    ("s2", NAR, "Every seven months or so, the tasks A.I. agents can finish, half the time, get twice as long. And lately, even faster.",
+     "Every 7 months or so, the tasks AI agents can finish, half the time, get twice as long. And lately, even faster.", 0.2),
+    ("s3", NAR, "On real computer tasks, agents jumped from about twelve percent to sixty-six. Humans manage about seventy-two.",
+     "On real computer tasks, agents jumped from about 12% to 66%. Humans manage about 72%.", 0.3),
 
     # ---- the jagged frontier
     ("j1", NAR, "Now, about that clock.", None, 0.15),
@@ -68,7 +68,7 @@ LINES = [
      "In June 2026, Google DeepMind mapped four routes: bigger scale, new algorithms, AI improving AI, "
      "and huge teams of cooperating agents.", 0.15),
     ("x3", NAR, "Their bar: a system more capable than large organizations of humans.", None, 0.15),
-    ("x4", NAR, "That threshold may matter even more than A.G.I.", "That threshold may matter even more than AGI.", 0.4),
+    ("x4", NAR, "Arguably, that threshold matters even more than A.G.I.", "Arguably that threshold matters even more than AGI.", 0.4),
 
     # ---- the whole thing in one breath
     ("f1", NAR, "So here's the whole map, in one breath.", "So here’s the whole map, in one breath.", 0.1),

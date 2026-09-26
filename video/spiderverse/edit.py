@@ -18,6 +18,8 @@ EDIT = [
     (S("h2") - 0.12, "clock", "impact"),
     (S("h4") - 0.15, "hookq", "glitch"),
     (S("r1") - 0.35, "road", "slide"),
+    (C["pin"] + 0.85, "here", "cut"),
+    (W("r5", "Way") - 0.65, "road", "slide"),
     (S("s1") - 0.25, "speed", "slide"),
     (C["scratch1"], "jagged", "cut"),
     (S("d1") - 0.8, "noir", "glitch"),
@@ -31,11 +33,19 @@ EDIT = [
     (S("x1") - 0.45, "routes", "slide"),
     (S("x3") - 0.1, "bar", "cut"),
     (C["scratch2"], "summary", "glitch"),
+    (S("f4") - 0.3, "notyet", "slide"),
+    (S("f5") - 0.12, "conscious", "impact"),
+    (S("f6") - 0.3, "final", "cut"),
     (S("f7") - 0.35, "outro", "slide"),
     (C["end_card"], "end", "glitch"),
 ]
 GLITCH = 0.5          # seconds a dimensional glitch takes (centred on the cut)
 SLIDE = 0.3           # seconds a panel takes to slide in
+
+
+def first(name):
+    """When the shot called `name` first starts."""
+    return next(t for t, n, _ in EDIT if n == name)
 
 
 def shot_at(t):

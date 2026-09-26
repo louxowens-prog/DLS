@@ -849,14 +849,51 @@ def glitch(a, b, k, seed=0, idx=0):
         blk = out[y0:y0 + h, x0:x0 + w, :3]
         small = blk[::s, ::s]
         out[y0:y0 + h, x0:x0 + w, :3] = np.repeat(np.repeat(small, s, 0), s, 1)[:h, :w]
+    # broken glass: triangular shards of the other world, knocked out of place, with cracks running from the hit point
+    if inten > 0.25:
+        out = np.ascontiguousarray(out)
+        if out.shape[2] == 3:
+            out = np.dstack([out, np.full(out.shape[:2], 255, np.uint8)])
+        oth = np.ascontiguousarray(other if other.shape[2] == 4 else np.dstack([other, np.full(other.shape[:2], 255, np.uint8)]))
+        img = skia.Image.fromarray(oth, colorType=skia.kRGBA_8888_ColorType)
+        c = skia.Surface(out).getCanvas()
+        hx, hy = float(rng.uniform(260, W - 260)), float(rng.uniform(500, H - 600))
+        n = int(5 + 9 * inten)
+        for j in range(n):
+            a0 = 2 * math.pi * j / n + rng.uniform(-0.2, 0.2)
+            r0, r1 = rng.uniform(40, 200), rng.uniform(320, 900) * (0.6 + 0.4 * inten)
+            a1 = a0 + rng.uniform(0.18, 0.5)
+            tri = [(hx + r0 * math.cos(a0), hy + r0 * math.sin(a0)), (hx + r1 * math.cos(a0), hy + r1 * math.sin(a0)),
+                   (hx + r1 * 0.8 * math.cos(a1), hy + r1 * 0.8 * math.sin(a1))]
+            p = path(tri)
+            push = 30 + 90 * inten
+            dx, dy = push * math.cos(a0 + 0.25) + rng.normal(0, 12), push * math.sin(a0 + 0.25) + rng.normal(0, 12)
+            c.save()
+            c.clipPath(p, doAntiAlias=True)
+            c.drawImage(img, dx, dy)
+            if rng.random() < 0.35:
+                c.drawColor(col([MAG, CYAN, YEL][j % 3], 0.35))
+            c.restore()
+            c.drawPath(p, paint(WHITE, 0.95, stroke=5))
+            c.save()
+            c.translate(5, 3)
+            c.drawPath(p, paint(CYAN, 0.8, stroke=3))
+            c.restore()
+        for j in range(int(4 + 6 * inten)):                    # cracks
+            a0 = rng.uniform(0, 2 * math.pi)
+            pts, px, py = [], hx, hy
+            for _ in range(5):
+                a0 += rng.normal(0, 0.35)
+                L = rng.uniform(60, 180)
+                px, py = px + L * math.cos(a0), py + L * math.sin(a0)
+                pts.append((px, py))
+            c.drawPath(path([(hx, hy)] + pts, closed=False), paint(WHITE, 0.9, stroke=4))
     # RGB split
     d = int(26 * inten)
     if d:
         r, bch = out[..., 0].copy(), out[..., 2].copy()
         out[..., 0] = shift(r, d, 0)
         out[..., 2] = shift(bch, -d, 0)
-    # scanlines
-    out[::4, :, :3] = (out[::4, :, :3].astype(np.uint16) * 3 // 4).astype(np.uint8)
     return out
 
 

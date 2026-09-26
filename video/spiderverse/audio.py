@@ -14,7 +14,7 @@ from scipy import signal
 
 import hiphop as H
 from cues import C
-from edit import EDIT
+from edit import EDIT, first
 from script import ANIME, BOT, NAR, NOIR
 from timeline import TL
 from voice import SR as VSR
@@ -61,13 +61,11 @@ def section(t):
         return "full"
     if t < S("j2") - 0.1:
         return "stop"
-    if t < EDIT[6][0]:                       # until the noir glitch
+    if t < first("noir"):                    # until the noir glitch
         return "half"
-    if t < EDIT[7][0]:
+    if t < first("anime"):
         return "noir"
-    if t < EDIT[8][0]:
-        return "full"
-    if t < EDIT[13][0]:                      # until the question
+    if t < first("question"):
         return "full"
     if t < C["brain"]:
         return "breakdown"
@@ -160,6 +158,9 @@ def sfx_track(fx, music_bus):
     fx.add(H.hit((68, 72, 75, 80), 1.0, seed=5, big=True), C["pin"], 0.8)
     fx.add(H.tingle(1.0), C["pin"] + 0.05, 0.7)
     fx.add(H.whoosh(0.5, up=False, seed=6), W("r5", "Way") - 0.35, 0.6, pan=0.3)
+    for k, wd in enumerate(("multimodal", "reasoning", "agents")):          # the three cards in the close-up
+        fx.add(H.stab((72 + 2 * k, 79 + 2 * k), 0.12, 1.0, seed=90 + k), W("r5", wd) - 0.05, 0.4, pan=0.3 + 0.2 * k)
+    fx.add(H.hit((70, 74, 77), 0.9, seed=95), C["lately"], 0.45)
     # --- speed
     fx.add(H.whoosh(0.9, up=True, seed=7), C["speed"] - 0.5, 0.7, pan=0.2)
     fx.add(H.hit((65, 68, 72), 1.0, seed=8), C["speed"], 0.6)
@@ -181,8 +182,8 @@ def sfx_track(fx, music_bus):
     fx.add(H.chime([84, 88, 91, 96, 100], 1.0, step=0.05), S("d2") - 0.1, 0.45, pan=0.6)
     fx.add(H.tom(70, 1.0, 0.9), S("d2") + 0.05, 0.8)
     fx.add(H.hit((68, 72, 75, 80), 1.0, seed=17, big=True), S("d2") + 0.05, 0.6)
-    fx.add(H.hit((65, 68, 72, 77), 1.0, seed=18, big=True), C["neither"], 0.75)
-    fx.add(H.tingle(1.0), C["neither"] + 0.05, 0.7)
+    fx.add(H.hit((65, 68, 72, 77), 1.0, seed=18, big=True), E("d3") - 0.05, 0.7)       # right after the word, not on it
+    fx.add(H.tingle(1.0), E("d3"), 0.5)
     fx.add(H.stamp(1.0), W("d4", "autocomplete") - 0.1, 0.7, pan=0.35)
     fx.add(H.stamp(1.0), W("d4", "fully") - 0.1, 0.7, pan=0.65)
     fx.add(H.whoosh(0.4, up=False, seed=19), C["new"] - 0.4, 0.55, pan=0.7)
@@ -220,15 +221,13 @@ def sfx_track(fx, music_bus):
     # --- the whole map
     fx.add(H.scratch(ahh, [(0.1, 0.35, 0.05, 1.0), (0.08, 0.05, 0.3, 1.0), (0.12, 0.3, 0.0, 1.0)], 0.32), C["scratch2"] + 0.02, 0.7)
     fx.add(H.hit((68, 72, 75, 80), 1.0, seed=36, big=True), S("f1"), 0.6)
-    for k, key in enumerate(("f2", "f3", "f4", "f5")):                 # each summary panel slams in
-        fx.add(H.paper(1.0, seed=70 + k), S(key) - 0.32, 0.45, pan=0.3 if k % 2 == 0 else 0.7)
-        fx.add(H.hit((65 + k, 68 + k, 72 + k), 0.8, seed=74 + k), S(key) - 0.02, 0.45)
+    for k, key in enumerate(("f2", "f3")):                               # the two webtoon panels slam in
+        fx.add(H.hit((65 + k, 68 + k, 72 + k), 0.8, seed=74 + k), S(key) - 0.02, 0.35)
     fx.add(H.chime([77, 81, 84, 89], 1.0), W("f2", "already"), 0.4)
-    fx.add(H.hit((68, 72, 75), 0.9, seed=80), W("f2", "already"), 0.45)
-    fx.add(H.hit((63, 67, 70, 74), 1.0, seed=81, big=True), S("f6") - 0.3, 0.55)       # cut to the last shot
-    fx.add(H.stamp(1.0), W("f6", "knowledge") + 0.05, 0.65, pan=0.6)
+    fx.add(H.stamp(1.0), W("f5", "established") - 0.05, 0.5, pan=0.55)
+    fx.add(H.stamp(1.0), W("f6", "knowledge") + 0.05, 0.6, pan=0.6)
     for k, tw in enumerate([W("f4", "competent"), W("f4", "keeps"), W("f4", "works")]):
-        fx.add(H.stamp(0.9), tw, 0.55, pan=0.4 + 0.1 * k)
+        fx.add(H.stamp(0.9), tw, 0.5, pan=0.4 + 0.1 * k)
     fx.add(H.hit((68, 72, 75, 80), 1.0, seed=37, big=True), C["general"] - 0.1, 0.8)
     fx.add(H.tingle(1.0), C["general"], 0.75)
     fx.add(H.spray(0.8, 1.0, seed=38), C["general"] - 0.05, 0.4, pan=0.6)
@@ -295,10 +294,10 @@ def build():
     crack_gain = np.full(N, db(-6))
     for a, b in ((C["scratch1"], S("j2") - 0.1), (C["scratch2"], S("f2") - 0.25)):
         crack_gain[int(a * SR):int(b * SR)] = db(4)
-    crack_gain[int(EDIT[6][0] * SR):int(EDIT[7][0] * SR)] = db(6)            # the noir world is all crackle and rain
+    crack_gain[int(first("noir") * SR):int(first("anime") * SR)] = db(6)      # the noir world is all crackle and rain
     rain = H._lp(np.random.default_rng(9).normal(0, 1, N), 3000) * 0.05
     rain_g = np.zeros(N)
-    rain_g[int(EDIT[6][0] * SR):int(EDIT[7][0] * SR)] = 1.0
+    rain_g[int(first("noir") * SR):int(first("anime") * SR)] = 1.0
     rain_g = np.convolve(rain_g, np.ones(SR // 10) / (SR // 10), "same")
 
     band = widen(reverb(drums.x, 0.1, 0.6), 0.5) + bass.x + widen(reverb(keys.x, 0.2, 1.2), 1.0)
@@ -309,7 +308,7 @@ def build():
         bs = H.backspin(mono, 0.42)
         band[:, i:i + len(bs)] += bs * 1.2
     # the noir world: the beat heard through a wall
-    a, b = int(EDIT[6][0] * SR), int(EDIT[7][0] * SR)
+    a, b = int(first("noir") * SR), int(first("anime") * SR)
     band[:, a:b] = H._lp(band[:, a:b], 700) * 1.3
     fxr = widen(reverb(fx.x, 0.12, 0.9), 0.5)
     music = band + fxr * db(1.0) + cr * crack_gain * 0.9 + np.stack([rain, np.roll(rain, 300)]) * rain_g

@@ -27,19 +27,19 @@ def _goggles(c, x, y, s):
 # ------------------------------------------------------------------ 10. AGI territory
 
 def s_agi(T, t, d):
-    st = sv.Stage((34, 90, 70))
+    st = sv.Stage((40, 16, 90))
     c = st.c
     P = st.pen()
-    # a lab-blackboard world, still printed: green board, chalk scribbles, dots in the corners
-    c.drawColor(sv.col((28, 70, 58)))
-    st.inks["white"] = ((70, 140, 110), 20, 45, "dot")
+    # a lab-blackboard world, still printed: a night-purple board, cyan chalk scribbles, magenta dots in the corners
+    c.drawColor(sv.col((40, 16, 90)))
+    st.inks["white"] = ((200, 40, 150), 20, 45, "dot")
     st.shade("white").drawRect(skia.Rect.MakeXYWH(0, 0, sv.W, sv.H), paint(shader=sv.rad((540, 760), 1100, [(255, 255, 255, 0.0), (255, 255, 255, 0.0), (255, 255, 255, 0.45)], [0, 0.6, 1])))
     rng = np.random.default_rng(3)
     for i in range(12):
         x, y = rng.uniform(80, 900), rng.uniform(330, 1250)
         eq = ["E=mc²", "∑x", "f(x)", "∂/∂t", "p(a|b)", "O(n log n)", "x²+y²", "∫dx", "λ", "∇·F", "log(n)", "e^iπ"][i]
         f = sv.font("permanent-marker-400", rng.uniform(44, 70))
-        c.drawString(eq, x - 60, y, f, paint((230, 245, 235), 0.28))
+        c.drawString(eq, x - 60, y, f, paint((150, 230, 255), 0.3))
     st.flush()
     tg = W("a1", "gets") - 0.1
     k = ease(ramp(twos(T), tg, tg + 0.5))
@@ -68,7 +68,7 @@ def s_agi(T, t, d):
         sv.ink(c, [(0, -60), (0, 200)], 22, color=(160, 170, 180), taper=(0.02, 0.02))
         sign = skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-190, -190, 190, -40), 16, 16)
         c.drawRRect(sign.makeOffset(10, 12), paint(INK))
-        c.drawRRect(sign, paint((20, 130, 70)))
+        c.drawRRect(sign, paint((0, 140, 200)))
         c.drawRRect(sign, paint(WHITE, stroke=8))
         f = sv.font("bangers-400", 60)
         for j, s_ in enumerate(("AGI", "TERRITORY")):
@@ -101,7 +101,7 @@ def _sleeper(P, x, y, s, T):
 
 def s_nosleep(T, t, d):
     st = sv.Stage()
-    bg.page(st)
+    bg.page(st, 1)
     c = st.c
     P = st.pen()
     ql = [(34, 236), (540, 236), (500, 1880), (34, 1880)]
@@ -167,7 +167,7 @@ def s_nosleep(T, t, d):
 
 def s_copies(T, t, d):
     st = sv.Stage()
-    bg.page(st)
+    bg.page(st, 2)
     c = st.c
     P = st.pen()
     steps = [S("a4") - 0.12, W("a4", "Thousands") + 0.25, C["copies"], W("a4", "work"), W("a4", "once")]
@@ -223,12 +223,12 @@ def s_copies(T, t, d):
         sv.sfx(c, "SHARE!", 540, 720, 110, k=pop(T, C["share"], amp=0.2), rot=-5, fill=CYAN, fill2=(0, 120, 200), dots=WHITE)
     if T >= C["scale"] - 0.1:
         kk = ease(ramp(T, C["scale"] - 0.1, C["scale"] + 0.8))
-        m = skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(120, 1236, 960, 1326), 20, 20)
+        m = skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(120, 1180, 960, 1266), 20, 20)
         c.drawRRect(m.makeOffset(8, 8), paint(INK))
         c.drawRRect(m, paint(WHITE))
-        c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(120, 1236, 120 + 840 * (0.2 + 0.8 * kk), 1326), 20, 20), paint(MAG))
+        c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(120, 1180, 120 + 840 * (0.2 + 0.8 * kk), 1266), 20, 20), paint(MAG))
         c.drawRRect(m, paint(INK, stroke=7))
-        sv.label(c, "MORE COMPUTE", 540, 1301, 56, fname="bangers-400", color=INK)
+        sv.label(c, "MORE COMPUTE", 540, 1243, 56, fname="bangers-400", color=INK)
         sv.sfx(c, "POWER UP!", 640, 990, 96, k=pop(T, C["scale"] + 0.2, amp=0.2), rot=6, fill=YEL, fill2=ORANGE, dots=MAG)
     return st.arr
 
@@ -425,10 +425,12 @@ def s_routes(T, t, d):
     P = st.pen()
     # the wall again, from AGI on to superintelligence
     kpan = ease(ramp(T, S("x1") - 0.2, C["asi_road"] + 0.4))
-    cwx = STX[7] - 200 + (STX[8] - STX[7] + 200) * kpan
-    bg.city(st, camx=(cwx - 540) * 0.6, T=T, train=False)
+    zr = 0.75                                                      # wide enough for AGI and SUPERINTELLIGENCE to read whole
+    cwx = STX[7] + 60 + 410 * kpan
+    bg.city(st, camx=(cwx - 540) * 0.45, T=T, train=False)
     P.save()
     P.translate(540, 860)
+    P.scale(zr)
     P.translate(-cwx, -(860 - WALL_Y0))
     c.drawImage(bg._cached("wall", bg._paint_wall), 0, 0)
     draw_road(c, T, [1.0] * 9)
@@ -443,14 +445,14 @@ def s_routes(T, t, d):
         kp = ease(ramp(T, tp, tp + 0.3))
         hdr = skia.Rect.MakeLTRB(50, 250, 1010, 370)
         c.save()
-        c.translate(0, -200 * (1 - kp))
+        c.translate(-1100 * (1 - kp), 0)                          # slides in from the side, never through the top bar
         c.drawRect(hdr.makeOffset(10, 12), paint(INK))
         c.drawRect(hdr, paint(WHITE))
         c.drawRect(hdr, paint(INK, stroke=8))
         sv.label(c, "GOOGLE DEEPMIND · JUNE 2026", 530, 302, 48, fname="bangers-400", color=INK)
         sv.label(c, "4 ROUTES FROM AGI TO SUPERINTELLIGENCE", 530, 352, 38, fname="bangers-400", color=MAG)
         c.restore()
-        quads = [(50, 390, 520, 850), (540, 390, 1010, 850), (50, 870, 520, 1330), (540, 870, 1010, 1330)]
+        quads = [(50, 390, 520, 820), (540, 390, 1010, 820), (50, 840, 520, 1266), (540, 840, 1010, 1266)]
         for i, ((name, kind), q, tr) in enumerate(zip(ROUTES, quads, C["routes"])):
             if T < tr - 0.15:
                 continue
@@ -501,7 +503,7 @@ def s_bar(T, t, d):
     tb = C["boom"]
     if tb <= T < tb + 3 / 24:
         return impact(T, CYAN, lambda P: cast.bot(P, 540, 820, 3.0, T, bounce=0.0, arms=((230, -40), (-50, 40))),
-                      cx=540, cy=700, word="BOOM!", wx=540, wy=1260, wsize=220)
+                      cx=540, cy=700, word="BOOM!", wx=540, wy=1130, wsize=200)
     st = sv.Stage(sv.NIGHT)
     bg.city(st, camx=20 * t, T=T, train=False, mid=False)
     c = st.c
@@ -522,7 +524,7 @@ def s_bar(T, t, d):
     _towers(c, T, 1.0)
     st.shade("dot").drawRect(skia.Rect.MakeLTRB(0, 600, sv.W, 1340), paint(shader=sv.lin((0, 600), (0, 1340), [(255, 255, 255, 0.0), (255, 255, 255, 0.4)])))
     st.flush()
-    sv.label(c, "LARGE ORGANIZATIONS OF HUMANS", 540, 1300, 44, fname="bangers-400", color=INK, bg=YEL, edge=INK)
+    sv.label(c, "LARGE ORGANIZATIONS OF HUMANS", 540, 1252, 44, fname="bangers-400", color=INK, bg=YEL, edge=INK)
     if T >= tb + 3 / 24:
         sv.tag_text(c, "THE REAL THRESHOLD", 540, 600, 96, fill=YEL, fill2=ORANGE, glow=YEL, k=pop(T, tb + 0.15), seed=8, rot=-4)
     return st.arr
@@ -642,18 +644,16 @@ def _summary_final(T):
     if tg - 0.1 <= T < tg + 1.3:
         sv.spidey(c, 250 - 20 * kz + 6 * s, 1020, 150 * s, T, k=ease(ramp(T, tg - 0.1, tg + 0.1)), seed=9, spreads=[(150, 260)], n=8)
     if T >= W("f6", "learning") - 0.1:
-        sv.label(c, "learning what it has never seen", 660, 890, 44, fname="comic-neue-700", color=INK, bg=WHITE, edge=INK, rot=-2,
+        sv.label(c, "learning what it’s never seen", 660, 890, 44, fname="comic-neue-700", color=INK, bg=WHITE, edge=INK, rot=-2,
                  a=min(1.0, pop(T, W("f6", "learning") - 0.1, amp=0.15)))
     return st.arr
 
 
 def s_summary(T, t, d):
-    """A vertical 'webtoon' scroll of four panels in a frame on the night page, two on screen at a time: the camera glides
-    down as each line lands, pushes in on the live panel and dims the one before. The last line gets its own shot."""
+    """'The whole map': the title card, then the first two points as a two-panel webtoon page - the camera pushes in on
+    the live panel and dims the one before. The next points get shots of their own."""
     import scenes_a
-    starts = [S("f2") - 0.3, S("f3") - 0.3, S("f4") - 0.3, S("f5") - 0.3, S("f6") - 0.3]
-    if T >= starts[4]:
-        return _summary_final(T)
+    starts = [S("f2") - 0.3, S("f3") - 0.3]
     st = sv.Stage()
     c = st.c
     P = st.pen()
@@ -668,25 +668,14 @@ def s_summary(T, t, d):
         st.flush()
         sv.tag_text(c, "THE WHOLE MAP", 540, 390, 120, fill=YEL, fill2=ORANGE, glow=YEL, k=pop(T, S("f1"), amp=0.2), seed=4)
         if T < C["scratch2"] + 0.5:
-            sv.sfx(c, "SKRRT!", 540, 1200, 170, k=pop(T, C["scratch2"], amp=0.2), rot=-6, fill=WHITE, fill2=CYAN, dots=MAG)
+            sv.sfx(c, "SKRRT!", 540, 1130, 160, k=pop(T, C["scratch2"], amp=0.2), rot=-6, fill=WHITE, fill2=CYAN, dots=MAG)
         return st.arr
-    bg.page(st)
-    scroll = 0.0
-    for j in range(2, 4):
-        scroll += (ph + gap) * ease(ramp(T, starts[j], starts[j] + 0.45))
-    live = max(i for i in range(4) if T >= starts[i])
-    # the '?' stamps shake the page for a drawing or two
-    ticks = [W("f4", "competent"), W("f4", "keeps"), W("f4", "works")]
-    shake = any(tw <= twos(T) < tw + 2 / 12 for tw in ticks)
-    sx, sy = (10 * (1 if int(twos(T) * 12) % 2 else -1), 6) if shake else (0, 0)
-    n0 = len(sv.TEXT)
-    P.save()
-    P.clip(path([(0, 236), (sv.W, 236), (sv.W, sv.H), (0, sv.H)]))
-    P.translate(sx, sy - scroll)
+    bg.page(st, 0)
+    live = max(i for i in range(2) if T >= starts[i])
     quads = []
-    for i in range(4):
+    for i in range(2):
         y0 = y_first + i * (ph + gap)
-        if T < starts[i] or y0 + ph - scroll < 200:
+        if T < starts[i]:
             continue
         kin = ease(ramp(T, starts[i], starts[i] + 0.3))
         dx = 1100 * (1 - kin) * (1 if i % 2 else -1)
@@ -694,23 +683,95 @@ def s_summary(T, t, d):
         cx, cy = 540 + dx, y0 + ph / 2
         r = (cx - 506 * z, cy - ph / 2 * z, cx + 506 * z, cy + ph / 2 * z)
         quads.append((place(st, P, r, (DW / 2, 350), lambda st_, P_, T_, i=i: _sum_panel(st_, P_, i, T_), T,
-                            [(255, 250, 235), (230, 248, 255), (255, 236, 236), (245, 236, 255)][i], dh=700), i))
+                            [(255, 250, 235), (230, 248, 255)][i], dh=700), i))
+    st.flush()
+    for q, i in quads:
+        if i != live:
+            c.drawPath(path(q), paint((20, 8, 40), 0.45))
+        sv.panel_border(c, q)
+    return st.arr
+
+
+def s_notyet(T, t, d):
+    """'No one has shown...': three boxes that never get ticked - each gets a red '?' stamp that shakes the page."""
+    st = sv.Stage()
+    bg.page(st, 2)
+    c = st.c
+    P = st.pen()
+    ticks = [W("f4", "competent"), W("f4", "keeps"), W("f4", "works")]
+    shake = any(tw <= twos(T) < tw + 2 / 12 for tw in ticks)
+    sx, sy = (12 * (1 if int(twos(T) * 12) % 2 else -1), 7) if shake else (0, 0)
+    z = 1.0 + 0.05 * ease(t / d)
+    q = [(40, 236), (1040, 236), (1040, 1880), (40, 1880)]
+    P.save()
+    P.clip(path(q))
+    c.drawColor(sv.col((50, 18, 100)))
+    st.shade("mag").drawPath(path(q), paint(shader=sv.lin((0, 236), (0, 1880), [(255, 255, 255, 0.05), (255, 255, 255, 0.6)])))
     P.restore()
     st.flush()
-    c.save()
-    c.clipRect(skia.Rect.MakeLTRB(0, 236, sv.W, sv.H))
-    for q, i in quads:
-        qq = [(x + sx, y + sy - scroll) for x, y in q]
-        if i != live:
-            c.drawPath(path(qq), paint((20, 8, 40), 0.45))
-        sv.panel_border(c, qq)
-    c.restore()
-    kept = []                                                         # lettering scrolled up out of the frame is gone
-    for b in sv.TEXT[n0:]:
-        if b[3] > 236 + 6:
-            kept.append((b[0], max(b[1], 236.0), b[2], b[3], b[4]))
-    sv.TEXT[n0:] = kept
+    P.save()
+    P.clip(path(q))
+    P.translate(540 + sx, 760 + sy)
+    P.scale(z)
+    P.translate(-540, -760)
+    rows = ["COMPETENT EVERYWHERE", "KEEPS LEARNING", "RELIABLE ON ITS OWN"]
+    for j, (txt, tw) in enumerate(zip(rows, ticks)):
+        y = 560 + j * 210
+        on = T >= tw
+        box = skia.Rect.MakeXYWH(90, y - 90, 120, 120)
+        c.drawRect(box.makeOffset(8, 10), paint(INK))
+        c.drawRect(box, paint(WHITE))
+        c.drawRect(box, paint(INK, stroke=8))
+        sv.label(c, txt, 250, y, 66, fname="bangers-400", color=YEL if on else (170, 150, 210), align="left")
+        if on:
+            sv.sfx(c, "?", 150, y - 20, 150, k=pop(T, tw, amp=0.25), rot=10, fill=RED, fill2=(160, 0, 30), dots=None, extrude=(6, 7))
+    cast.bot(P, 800, 1215, 0.62, T, expr="confused", look=(-0.6, -0.5), arms=((200, 160), (-100, -60)), bounce=0.3,
+             eyes_x=shake)
+    P.restore()
+    sv.panel_border(c, q)
+    sv.label(c, "NOT SHOWN YET", 540, 350, 96, fname="bangers-400", color=WHITE, bg=RED, edge=INK, rot=-2, pad=18)
     return st.arr
+
+
+def s_conscious(T, t, d):
+    """'No established evidence it's conscious': back on the cartoon stage, the AI puzzling over itself."""
+    st = sv.Stage((255, 214, 90))
+    bg.cartoon_stage(st, T)
+    c = st.c
+    P = st.pen()
+    z = 1.0 + 0.07 * ease(t / d)
+    tilt = 7 * math.sin(twos(T) * 5)
+    P.save()
+    P.translate(540, 1000)
+    P.scale(z)
+    P.rotate(tilt)
+    P.translate(-540, -1000)
+    cast.bot(P, 540, 1000, 1.55, T, expr="confused", look=(0.6, -0.7), arms=((200, 160), (-100, -60)), bounce=0.2)
+    P.restore()
+    st.flush()
+    sv.label(c, "CONSCIOUS?", 540, 360, 100, fname="bangers-400", color=INK, bg=(180, 120, 255), edge=INK, rot=-2, pad=18)
+    sv.bubble(c, "?", 800, 560, tail=(700, 660), size=90, kind="thought", maxw=140)
+    te = W("f5", "evidence") - 0.05
+    if T >= te:
+        k = pop(T, te, amp=0.2)
+        c.save()
+        c.translate(540, 1270)
+        c.rotate(-8)
+        c.scale(k, k)
+        f = sv.font("bangers-400", 96)
+        s_ = "NO EVIDENCE"
+        w = f.measureText(s_)
+        r = skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-w / 2 - 30, -90, w / 2 + 30, 30), 18, 18)
+        c.drawRRect(r, paint(WHITE, 0.85))
+        c.drawRRect(r, paint(RED, stroke=12))
+        c.drawString(s_, -w / 2, 4, f, paint(RED))
+        sv.reg_local(c, -w / 2, -76, w / 2, 20, "stamp")
+        c.restore()
+    return st.arr
+
+
+def s_final(T, t, d):
+    return _summary_final(T)
 
 
 # ------------------------------------------------------------------ 18. where would you put the pin?
