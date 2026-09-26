@@ -1,0 +1,43 @@
+"""Named moments the picture and the soundtrack both hit."""
+from timeline import TL
+
+S, E, W = TL.s, TL.e, TL.word
+
+C = {
+    "gold": W("h1", "gold"),
+    "clock": W("h2", "clock") - 0.05,
+    "thirteen": W("h3", "thirteen"),
+    "shake": W("h4", "Let's"),
+    "road": W("r1", "road"),
+    "stations": [W("r2", "Calculators"), W("r2", "Narrow"), W("r2", "Deep"), W("r2", "Foundation"), W("r2", "Multimodal"),
+                 W("r2", "Reasoning"), W("r2", "Agents"), W("r3", "A.G.I."), W("r3", "superintelligence")],
+    "pin": W("r4", "here") - 0.05,
+    "speed": W("s1", "speeding"),
+    "doubled": W("s2", "doubled"),
+    "twelve": W("s3", "twelve"),
+    "sixty": W("s3", "sixty-six"),
+    "scratch1": S("j1") - 0.42,
+    "half": W("j2", "half"),
+    "ninety": W("j2", "Ninety"),
+    "jagged": W("j3", "jagged"),
+    "neither": S("d3"),
+    "new": W("d5", "historically"),
+    "agi": W("a1", "A.G.I."),
+    "sleep": W("a2", "sleep"),
+    "copies": W("a4", "copies"),
+    "share": W("a4", "share"),
+    "scale": W("a4", "scale"),
+    "evolve": W("a5", "Alpha"),
+    "changes": W("a6", "changes"),
+    "brain": W("a7", "brain") - 0.1,
+    "asi_road": W("x1", "superintelligence"),
+    "routes": [W("x2", "bigger"), W("x2", "new"), W("x2", "improving") - 0.3, W("x2", "teams") - 0.2],
+    "orgs": W("x3", "organizations"),
+    "boom": W("x4", "threshold"),
+    "scratch2": S("f1") - 0.45,
+    "summary": [W("f2", "already"), W("f3", "entering"), W("f4", "competent"), W("f5", "established"), W("f6", "generalization") - 0.1],
+    "general": W("f6", "generalization"),
+    "pinq": W("f7", "pin"),
+    "end_card": E("f7") + 0.55,
+    "end": TL.total,
+}
