@@ -153,6 +153,8 @@ def pip(arr, T):
 
 
 GAP = 1.55
+# a fixed ordered-noise pattern: breaks up banding in the gradients without costing the encoder anything per frame
+DITHER = np.random.default_rng(1).integers(-1, 2, (sr.H, sr.W, 1)).astype(np.int16)
 
 
 def line_w(ln, f):
@@ -219,8 +221,7 @@ def render_frame(T, idx=None, captions=True):
             out[..., :3] = (out[..., :3] * (1 - w) + 255 * w).astype(np.uint8)
     pip(out, T)
     sr.bloom(out, 0.45)
-    dn = np.random.default_rng(int(T * 24)).integers(-2, 3, (sr.H, sr.W, 1), dtype=np.int16)   # dither: no banding in the gradients
-    out[..., :3] = np.clip(out[..., :3].astype(np.int16) + dn, 0, 255).astype(np.uint8)
+    out[..., :3] = np.clip(out[..., :3].astype(np.int16) + DITHER, 0, 255).astype(np.uint8)
     if captions:
         draw_caption(out, T)
     return out

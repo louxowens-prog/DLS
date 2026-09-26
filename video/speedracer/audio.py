@@ -310,7 +310,7 @@ def loudness(x, target):
     import pyloudnorm as pyln
     for _ in range(2):
         lufs = pyln.Meter(SR).integrated_loudness(x.T)
-        x = limit(x * db(target - lufs), db(-2.6))
+        x = limit(x * db(target - lufs), db(-3.3))
     return x
 
 
