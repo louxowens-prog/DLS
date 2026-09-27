@@ -27,9 +27,15 @@ def parlor_set(st, T, clock=True, cat_eyes="gold", helper=True, h_mood="sweet", 
 # ------------------------------------------------------------------ 1. the hook
 
 def s_hook(T, t, d):
+    """The parlour. A sweet porcelain face quotes a study. On the wall, the cuckoo clock is already counting."""
     st = hx.Stage()
-    parlor_set(st, T, h_talk=kit.ai_talk(T), hy=900, hs=1.05)
-    kit.ai_card(st.c, "“According to the study…”", T, -1.0, y=250, size=66)
+    c = st.c
+    kit.backdrop(st, "parlor")
+    cast.cuckoo_clock(c, 205, 650, 0.6, T, count(T))
+    cast.cat(c, 175, 1255, 0.55, T, eyes="gold")
+    cast.helper(c, 650, 990, 0.95, T, talk=kit.ai_talk(T), mood="sweet", look=(0.0, 0.1))
+    kit.ai_card(c, "“According to the study…”", T, -1.0, y=250, size=66)
+    kit.sticker(c, "heart", 930, 560, 0.55, T, 0.25, rot=12)
     hx.soft_focus(st.arr, 0.55)
     return st.arr
 
@@ -60,11 +66,11 @@ def s_eaten(T, t, d):
     c.restore()
     c.drawPath(hx.path([(250, burn_y)] + [(250 + i * 36, burn_y + (18 if i % 2 else -10)) for i in range(17)] + [(830, burn_y)], closed=False),
                paint((40, 10, 10), stroke=16))
-    for i in range(7):
-        hx.flame(c, 280 + i * 85, burn_y + 30, 230 + 60 * math.sin(i * 1.7), T, seed=i)
-    cast.cat(c, 540, 1560, 0.7, T, eyes="red", pose="hiss")
+    cast.cat(c, 850, 1270, 0.55, T, eyes="red", pose="hiss", flip=True)
     kit.top_drips(c, T, grow=0.5 + k)
     hx.horror(st.arr, 0.85)
+    for i in range(7):
+        hx.flame(c, 280 + i * 85, burn_y + 30, 230 + 60 * math.sin(i * 1.7), T, seed=i)
     return st.arr
 
 
@@ -128,30 +134,42 @@ def s_sure(T, t, d):
 # ------------------------------------------------------------------ 3. the album: kinds of wrong
 
 ALBUM = [("facts", 0), ("quote", 1), ("math", 2), ("court", 3), ("medical", 4), ("history", 5), ("code", 6), ("cite", 7), ("docs", 8)]
-SLOTS = [(310, 480, -5), (760, 770, 4), (330, 1080, -3)]
+STICK = [("heart", 170, 380, -12), ("star", 900, 1250, 10), ("lips", 190, 1250, 8), ("eye", 890, 380, -6),
+         ("star", 160, 390, 14), ("heart", 900, 1240, -8), ("eye", 170, 1250, 6), ("lips", 900, 390, -10), ("heart", 880, 1250, 12)]
 
 
 def _album(T, t, d, page):
+    """Still-photo inserts: each kind of wrong slapped down as a big print on top of the last one."""
     st = hx.Stage()
     c = st.c
     kit.backdrop(st, "album_page", page)
-    for j in range(3):
+    shown = [j for j in range(3) if T >= C["items"][ALBUM[page * 3 + j][1]] - 0.05]
+    newest = None
+    for n, j in enumerate(shown):
         name, i = ALBUM[page * 3 + j]
         t0 = C["items"][i] - 0.05
-        k = hx.pop(T, t0, 0.16, 0.18)
-        if k <= 0:
-            continue
-        x, y, rot = SLOTS[j]
+        depth = len(shown) - 1 - n
+        k = hx.pop(T, t0, 0.14, 0.22)
+        x = 540 + depth * (-70 if (j + page) % 2 else 70)
+        y = 770 + depth * 36
+        rot = (-3, 3, -2)[j] + depth * (-4 if j % 2 else 5)
+        sc = (1 - 0.05 * depth) * k
         c.save()
         c.translate(x, y)
-        c.scale(k, k)
+        c.scale(sc, sc)
         c.translate(-x, -y)
-        hx.photo(c, kit.mini(name), x, y, 440, 330, rot=rot)
+        hx.photo(c, kit.mini(name, sc=2), x, y, 800, 600, rot=rot, border=26, bottom=90)
         c.restore()
-    cast.cat(c, 850, 1150, 0.45, T, eyes="gold")
+        if depth == 0:
+            newest = t0
+        kind, sx, sy, srot = STICK[page * 3 + j]
+        kit.sticker(c, kind, sx, sy, 0.75, T, t0 + 0.12, rot=srot)
+    cast.cat(c, 540, 1290, 0.4, T, eyes="gold")
     for j in range(3):
-        hx.sparkle(c, 120 + j * 380, 280 + (j % 2) * 700, 26, T, seed=j + page * 3)
+        hx.sparkle(c, 140 + j * 400, 300 + (j % 2) * 30, 26, T, seed=j + page * 3)
     hx.soft_focus(st.arr, 0.3)
+    if newest is not None:                                           # each print lands with a jolt
+        return hx.crash_zoom(st.arr, 1 + 0.1 * (1 - ramp(T, newest, newest + 0.12)))
     return st.arr
 
 
@@ -246,7 +264,7 @@ def s_ticket(T, t, d):
     else:
         hx.scribble(c, 0, 0, 140, T, seed=4, color=BLOOD, w=8)
     c.restore()
-    cast.cat(c, 880, 1640, 0.5, T, eyes="red" if flip > 0.5 else "gold")
+    cast.cat(c, 140, 850, 0.45, T, eyes="red" if flip > 0.5 else "gold")
     hx.soft_focus(st.arr, 0.3 if flip < 0.5 else 0.0)
     if flip >= 0.5:
         hx.horror(st.arr, 0.55)
@@ -267,10 +285,12 @@ def _exam(c, T, graded):
         c.drawRect(skia.Rect.MakeLTRB(220, y - 110, 860, y + 60), paint(INK, stroke=4))
         hx.text(c, ans, 250 if j else 540, y, 70 if j else 110, "caveat-700", (40, 60, 160), align="left" if j else "center", tag="exam")
     if graded:
-        kit.stamp(c, "0", 800, 700, 110, T, C["star"], color=BLOOD, rot=10, box=False, tag="grade")
-        kit.stamp(c, "+1", 820, 1150, 90, T, C["star"] + 0.35, color=BLOOD, rot=-8, box=False, tag="grade")
-        if T >= C["star"] + 0.35:
-            hx.sparkle(c, 700, 1140, 70, T, seed=9, color=GOLD)
+        kit.stamp(c, "0", 800, 720, 110, T, C["star"], color=BLOOD, rot=10, box=False, tag="grade")
+        k = hx.pop(T, C["star"] + 0.35, 0.14, 0.4)
+        if k > 0:
+            hx.star(c, 560, 1165, 78 * k, GOLD, rot=-8)
+            hx.sparkle(c, 470, 1110, 40, T, seed=9, color=GOLD)
+        kit.stamp(c, "+1", 760, 1190, 96, T, C["star"] + 0.35, color=BLOOD, rot=-8, box=False, tag="grade")
 
 
 def s_exam(T, t, d):
@@ -278,21 +298,32 @@ def s_exam(T, t, d):
     c = st.c
     kit.backdrop(st, "kitchen")
     _exam(c, T, False)
-    cast.helper(c, 830, 1170, 0.5, T, mood="eerie", look=(-0.8, -0.3), halo=False)
+    cast.helper(c, 880, 330, 0.42, T, mood="eerie", look=(-0.8, 0.6), halo=False)
+    kit.sticker(c, "star", 150, 1200, 0.6, T, T - t + 0.2, rot=-10)
     hx.soft_focus(st.arr, 0.3)
     return st.arr
 
 
+GRADE_FREEZE = 0.7
+
+
 def s_grade(T, t, d):
-    """Freeze frame: the teacher's red pen. Blank scores zero; a confident guess scores."""
+    """The teacher's red pen: blank scores zero; the confident wrong guess gets the point and a gold star.
+    Then a true freeze frame (the film itself stops) on the reward."""
+    frozen = t >= GRADE_FREEZE
+    Tf = T - t + GRADE_FREEZE if frozen else T
     st = hx.Stage()
     c = st.c
     kit.backdrop(st, "kitchen")
-    _exam(c, T, True)
-    cast.helper(c, 830, 1170, 0.5, C["star"] - 0.1, mood="eerie", look=(-0.8, -0.3), halo=False)
-    if t < 2 / 24:
-        c.drawRect(skia.Rect.MakeWH(W, H), paint(CREAM, 0.7))
-    hx.freeze_look(st.arr, 0.8)
+    _exam(c, Tf, True)
+    cast.helper(c, 880, 330, 0.42, Tf, mood="eerie" if not frozen else "sweet", look=(-0.8, 0.6), halo=False)
+    kit.sticker(c, "star", 150, 1200, 0.6, Tf, -9, rot=-10)
+    if frozen:
+        if t - GRADE_FREEZE < 2 / 24:
+            c.drawRect(skia.Rect.MakeWH(W, H), paint(CREAM, 0.75))
+        hx.freeze_look(st.arr, 1.0)
+    else:
+        hx.soft_focus(st.arr, 0.3)
     return st.arr
 
 

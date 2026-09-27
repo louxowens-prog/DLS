@@ -373,12 +373,14 @@ def cuckoo_clock(c, x, y, s, T, count, mood="sweet", bird=0.0, glow=0.0):
     c.drawLine(0, 0, 80 * math.cos(hand), 80 * math.sin(hand), paint(INK, stroke=6))
     c.drawLine(0, 0, 50 * math.cos(hand / 12), 50 * math.sin(hand / 12), paint(INK, stroke=9))
     # the counter plaque
-    plq = skia.Rect.MakeLTRB(-170, 140, 170, 234)
+    big = 1.0 if s >= 1.0 else 1.0 + 0.5 * min(1.0, (1.0 - s) / 0.6)    # small clocks get a bigger, readable counter
+    plq = skia.Rect.MakeLTRB(-170 * big, 140, 170 * big, 140 + 94 * big)
     c.drawRect(plq, paint(INK))
+    c.drawRect(plq, paint((230, 190, 90), stroke=6))
     if glow > 0:
         c.drawRect(plq, paint(BLOOD, 0.5 * glow, blur=16))
     s_ = f"{int(count):,}"
-    hx.text(c, s_, 0, 210, 66, "fell-sc-400", (255, 90, 80) if mood == "horror" else (255, 230, 170), tag="counter")
+    hx.text(c, s_, 0, 140 + 70 * big, 66 * big, "fell-sc-400", (255, 90, 80) if mood == "horror" else (255, 230, 170), tag="counter")
     c.restore()
 
 

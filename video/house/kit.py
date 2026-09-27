@@ -53,7 +53,7 @@ def ai_card(c, s, T, t0, y=250, size=62, w=880, tag="aicard", horror=False):
     return (x0, y, x0 + w, y + h)
 
 
-def stamp(c, s, x, y, size, T, t0, color=BLOOD, rot=-12, fname="shrikhand-400", tag="stamp", box=True):
+def stamp(c, s, x, y, size, T, t0, color=BLOOD, rot=-12, fname="shrikhand-400", tag="stamp", box=True, fill=None):
     """A rubber stamp slammed onto the picture."""
     k = hx.pop(T, t0, 0.14, 0.35)
     if k <= 0:
@@ -66,6 +66,8 @@ def stamp(c, s, x, y, size, T, t0, color=BLOOD, rot=-12, fname="shrikhand-400", 
     c.scale(k, k)
     if box:
         r = skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-w / 2 - 26, -size * 0.95, w / 2 + 26, size * 0.35), 16, 16)
+        if fill is not None:
+            c.drawRRect(r, paint(fill, 0.95))
         c.drawRRect(r, paint(color, 0.9, stroke=10))
     c.drawString(s, -w / 2, 0, f, paint(color, 0.95))
     hx.reg_local(c, -w / 2, -size * 0.78, w / 2, size * 0.22, tag)
@@ -113,24 +115,113 @@ def top_drips(c, T, n=9, color=BLOOD, grow=1.0, seed=3):
         hx.drip(c, x, 40, rng.uniform(14, 30), L % (700 * grow + 1), color)
 
 
+def sticker(c, kind, x, y, s, T, t0=-9.0, rot=0.0):
+    """A collage sticker slapped onto the picture (heart, star, lips, eye), cut out with a white paper edge."""
+    k = hx.pop(T, t0, 0.14, 0.4)
+    if k <= 0:
+        return
+    jx, jy, jr = hx.jit(T, 1.5, seed=int(x * 7 + y), fps=8)
+    c.save()
+    c.translate(x + jx, y + jy)
+    c.rotate(rot + jr * 2)
+    c.scale(s * k, s * k)
+    with hx.figure(c, border=9, fringe=(-6, -3), shadow=(8, 10, 6, 0.45)) as F:
+        if kind == "heart":
+            p = skia.Path()
+            p.moveTo(0, 60)
+            p.cubicTo(-90, 0, -40, -70, 0, -25)
+            p.cubicTo(40, -70, 90, 0, 0, 60)
+            F.fill(p, (255, 80, 130))
+        elif kind == "star":
+            pts = []
+            for i in range(10):
+                a = -math.pi / 2 + math.pi / 5 * i
+                q = 70 if i % 2 == 0 else 30
+                pts.append((q * math.cos(a), q * math.sin(a)))
+            F.poly(pts, GOLD)
+        elif kind == "lips":
+            F.poly([(-80, 0), (-40, -34), (0, -20), (40, -34), (80, 0), (40, 36), (-40, 36)], (230, 20, 60))
+        elif kind == "eye":
+            F.oval(-80, -44, 80, 44, (255, 255, 255))
+    if kind == "lips":
+        c.drawPath(path([(-70, 2), (0, 8), (70, 2)], closed=False), paint((120, 0, 30), stroke=6))
+        c.drawOval(skia.Rect.MakeLTRB(-30, -24, 0, -14), paint(WHITE_, 0.6))
+    elif kind == "eye":
+        c.drawCircle(0, 0, 32, paint((60, 140, 220)))
+        c.drawCircle(0, 0, 15, paint(INK))
+        c.drawCircle(-9, -9, 6, paint(WHITE_))
+        c.drawOval(skia.Rect.MakeLTRB(-80, -44, 80, 44), paint(INK, stroke=5))
+    elif kind == "heart":
+        c.drawOval(skia.Rect.MakeLTRB(-50, -30, -24, -8), paint(WHITE_, 0.6))
+    c.restore()
+
+
+def dramatized(c, x, y, T=0.0):
+    """An honest label on the reconstructed chat: this is a dramatization, not the real log."""
+    f = hx.font("special-elite-400", 30)
+    s = "DRAMATIZATION"
+    w = f.measureText(s)
+    c.save()
+    c.translate(x, y)
+    c.rotate(4)
+    c.drawRect(skia.Rect.MakeLTRB(-w / 2 - 18, -34, w / 2 + 18, 14), paint(INK, 0.85))
+    c.drawRect(skia.Rect.MakeLTRB(-w / 2 - 18, -34, w / 2 + 18, 14), paint(CREAM, stroke=3))
+    c.drawString(s, -w / 2, 0, f, paint(CREAM))
+    hx.reg_local(c, -w / 2, -26, w / 2, 8, "tag")
+    c.restore()
+
+
+def odometer(c, x, y, value, digits=8, cw=96, ch=150, T=0.0, roll=0.0, color=(255, 236, 190), bg=(20, 10, 16)):
+    """A mechanical tally counter: brass case, drum digits rolling over (with commas), the last drum mid-roll."""
+    groups = digits + (digits - 1) // 3
+    w = groups * cw * 0.86 + 60
+    with hx.figure(c) as F:
+        F.rrect(x - w / 2, y - ch / 2 - 34, x + w / 2, y + ch / 2 + 34, 22, (200, 150, 60))
+    c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(x - w / 2 + 10, y - ch / 2 - 24, x + w / 2 - 10, y + ch / 2 + 24), 16, 16),
+                paint((150, 100, 30), stroke=5))
+    sv = f"{int(value):0{digits}d}"
+    f = hx.font("fell-sc-400", int(ch * 0.78))
+    xx = x - w / 2 + 30
+    left = x - w / 2 + 30
+    for i, dch in enumerate(sv):
+        if i and (digits - i) % 3 == 0:
+            c.drawString(",", xx + 2, y + ch * 0.36, f, paint(INK))
+            xx += cw * 0.3
+        c.drawRect(skia.Rect.MakeLTRB(xx, y - ch / 2, xx + cw * 0.84, y + ch / 2), paint(bg))
+        off = roll * ch if i == digits - 1 else 0.0
+        c.save()
+        c.clipRect(skia.Rect.MakeLTRB(xx, y - ch / 2, xx + cw * 0.84, y + ch / 2))
+        dw = f.measureText(dch)
+        c.drawString(dch, xx + cw * 0.42 - dw / 2, y + ch * 0.28 - off, f, paint(color))
+        if off:
+            nd = str((int(dch) + 1) % 10)
+            c.drawString(nd, xx + cw * 0.42 - f.measureText(nd) / 2, y + ch * 0.28 - off + ch, f, paint(color))
+        c.drawRect(skia.Rect.MakeLTRB(xx, y - ch / 2, xx + cw * 0.84, y - ch / 2 + ch * 0.22), paint(INK, 0.45))
+        c.drawRect(skia.Rect.MakeLTRB(xx, y + ch / 2 - ch * 0.22, xx + cw * 0.84, y + ch / 2), paint(INK, 0.45))
+        c.restore()
+        xx += cw * 0.86
+    hx.reg(left, y - ch / 2, xx, y + ch / 2, "odometer")
+    return w
+
+
 def count_now(T):
     return count(T)
 
 
 # ------------------------------------------------------------------ the album's little pictures (cached)
 
-def _mini(w, h, fn, bgcol):
-    st = hx.Stage(bgcol)
-    arr = np.zeros((h, w, 4), np.uint8)
+def _mini(w, h, fn, bgcol, sc=1):
+    arr = np.zeros((h * sc, w * sc, 4), np.uint8)
     arr[..., :3] = bgcol
     arr[..., 3] = 255
     s = skia.Surface(arr)
     c = s.getCanvas()
+    c.scale(sc, sc)
     fn(c, w, h)
     return arr
 
 
-def mini(name, w=440, h=330):
+def mini(name, w=440, h=330, sc=1):
     """Nine little pictures for 'the kinds of wrong', each a gag drawn in the film's collage style."""
     def facts(c, w, h):
         c.drawImage(hx.image(hx.painted_sky(w, h, seed=51)), 0, 0)
@@ -260,7 +351,7 @@ def mini(name, w=440, h=330):
 
     fns = {"facts": facts, "quote": quote, "math": math_, "court": court, "medical": medical, "history": history,
            "code": code, "cite": cite, "docs": docs, "news": news}
-    return hx.cached("mini_" + name, lambda: _mini(w, h, fns[name], (250, 240, 230)))
+    return hx.cached(f"mini_{name}_{sc}", lambda: _mini(w, h, fns[name], (250, 240, 230), sc))
 
 
 WHITE_ = (255, 255, 255)

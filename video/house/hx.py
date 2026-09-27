@@ -196,6 +196,22 @@ def cached(name, fn):
     return _cache[name]
 
 
+class layer:
+    """with layer(c, 0.2): ... -> everything inside is composited at that opacity (a double exposure)."""
+
+    def __init__(self, c, a):
+        self.c, self.a = c, a
+
+    def __enter__(self):
+        p = skia.Paint()
+        p.setAlphaf(self.a)
+        self.c.saveLayer(None, p)
+        return self.c
+
+    def __exit__(self, *a):
+        self.c.restore()
+
+
 # ------------------------------------------------------------------ paper cut-outs
 
 class Fig:
@@ -355,32 +371,82 @@ def sparkle(c, x, y, r, t, seed=0, color=(255, 250, 220), a=1.0):
     """A four-point star, drawn by hand: it boils (redrawn slightly different every drawing) and twinkles."""
     jx, jy, jr = jit(t, 1.0, seed, 12)
     k = 0.75 + 0.25 * math.sin(stop(t, 12) * 9 + seed)
-    rr = r * k * (1 + jr * 0.1)
+    rr = 1.45 * r * k * (1 + jr * 0.1)
     pts = []
     for i in range(8):
         ang = math.pi / 4 * i + jr * 0.05
         q = rr if i % 2 == 0 else rr * 0.18
         pts.append((x + jx * 2 + q * math.cos(ang), y + jy * 2 + q * math.sin(ang)))
-    c.drawCircle(x, y, rr * 0.9, paint(color, 0.25 * a, blur=rr * 0.4))
+    c.drawCircle(x, y, rr * 0.9, paint(color, 0.3 * a, blur=rr * 0.4))
+    for i in range(4):                                                  # long thin glints between the points
+        ang = math.pi / 4 + math.pi / 2 * i + jr * 0.05
+        c.drawLine(x, y, x + rr * 0.75 * math.cos(ang), y + rr * 0.75 * math.sin(ang), paint(color, 0.8 * a, stroke=max(1.5, rr * 0.05)))
     c.drawPath(path(pts), paint(color, a))
+    c.drawCircle(x, y, rr * 0.12, paint(WHITE, a))
 
 
-def flame(c, x, y, h, t, seed=0, a=1.0):
-    """A hand-drawn cartoon flame (three tongues, yellow core), cycling through drawings on twos."""
-    k = int(stop(t, 12) * 12) + seed
-    rng = np.random.default_rng(k % 997 + seed * 31)
-    for layer, (colr, s) in enumerate(((EMBER, 1.0), (SUNSET, 0.75), (GOLD, 0.48))):
-        pts = []
-        n = 7
-        for i in range(n + 1):
-            u = i / n
-            ang = math.pi * u
-            rr = h * 0.32 * s * (1 + rng.uniform(-0.12, 0.12))
-            pts.append((x - math.cos(ang) * rr, y - math.sin(ang) * rr * 0.4))
-        tips = [(x - h * 0.22 * s, y - h * 0.55 * s), (x + rng.uniform(-10, 10) * s, y - h * s), (x + h * 0.24 * s, y - h * 0.6 * s)]
-        body = [pts[0]] + [tips[0], (x - h * 0.08 * s, y - h * 0.4 * s), tips[1], (x + h * 0.1 * s, y - h * 0.42 * s), tips[2]] + [pts[-1]]
-        body += list(reversed(pts[1:-1]))[::-1]
-        c.drawPath(path([(px + rng.uniform(-3, 3), py + rng.uniform(-3, 3)) for px, py in body]), paint(colr, a))
+def _tongue(x, y, bw, h, lean, curl, wob):
+    """One inked flame tongue: a fat bulb at the base, S-curved sides, a tip that curls over."""
+    tx, ty = x + lean * h, y - h
+    p = skia.Path()
+    p.moveTo(x - bw, y)
+    p.cubicTo(x - bw * 1.45, y - h * 0.3, x - bw * 0.2 + wob[0] * bw + lean * h * 0.3, y - h * 0.55,
+              tx - curl * bw * 0.9, ty + h * 0.12)
+    p.quadTo(tx - curl * bw * 0.2, ty - h * 0.02, tx, ty)
+    p.cubicTo(tx + bw * 0.25 + curl * bw * 0.3, ty + h * 0.3, x + bw * 0.9 + wob[1] * bw, y - h * 0.35, x + bw, y)
+    p.cubicTo(x + bw * 0.7, y + bw * 0.55, x - bw * 0.7, y + bw * 0.55, x - bw, y)
+    p.close()
+    return p
+
+
+def flame(c, x, y, h, t, seed=0, a=1.0, ink=True):
+    """A hand-drawn cartoon flame scratched onto the film: five curling tongues with a fat inked outline, an orange
+    body, a yellow heart and a white-hot core, plus sparks flying off. Redrawn on twos, so it boils."""
+    k = int(stop(t, 12) * 12)
+    rng = np.random.default_rng((seed * 7717 + k * 131) % (2 ** 32))
+    bw = h * 0.17
+    spec = [(-1.1, 0.55, -0.22), (-0.55, 0.8, -0.1), (0.0, 1.0, 0.04), (0.55, 0.78, 0.14), (1.1, 0.5, 0.25)]
+    tongues = []
+    for dx, hh, lean in spec:
+        hk = hh * (1 + rng.uniform(-0.16, 0.16))
+        lk = lean + rng.uniform(-0.12, 0.12)
+        curl = (1 if lk > 0 else -1) * rng.uniform(0.3, 1.0)
+        tongues.append((x + dx * bw * 1.1, hk, lk, curl, (rng.uniform(-0.3, 0.3), rng.uniform(-0.3, 0.3))))
+    outer = None
+    for tx_, hk, lk, curl, wob in tongues:
+        p = _tongue(tx_, y, bw, h * hk, lk, curl, wob)
+        outer = p if outer is None else (skia.Op(outer, p, skia.PathOp.kUnion_PathOp) or outer)
+    if ink:
+        c.drawPath(outer, paint(INK, a, stroke=max(3.0, h * 0.028)))
+    c.drawPath(outer, paint(EMBER, a))
+    for colr, sc in ((SUNSET, 0.72), (GOLD, 0.48), ((255, 250, 225), 0.24)):
+        for i, (tx_, hk, lk, curl, wob) in enumerate(tongues[1:4] if sc < 0.7 else tongues):
+            if sc < 0.4 and i != 1:
+                continue
+            c.drawPath(_tongue(x + (tx_ - x) * sc, y - bw * 0.1, bw * sc, h * hk * sc * 1.05, lk, curl, wob), paint(colr, a))
+    for i in range(3):                                                   # sparks and loose drops flying off
+        u = (k * 0.17 + i * 0.37 + seed * 0.11) % 1.0
+        sx = x + (rng.uniform(-1, 1) * bw * 2.2) + (i - 1) * bw * 0.6
+        sy = y - h * (0.9 + 0.7 * u)
+        r = h * 0.05 * (1 - u * 0.6)
+        drop = path([(sx, sy - r * 2.4), (sx + r, sy), (sx, sy + r), (sx - r, sy)])
+        if ink:
+            c.drawPath(drop, paint(INK, a * (1 - u), stroke=2.5))
+        c.drawPath(drop, paint(GOLD if i % 2 else SUNSET, a * (1 - u)))
+
+
+def star(c, x, y, r, color=GOLD, a=1.0, rot=0.0, n=5, inner=0.45, outline=INK, ow=5):
+    """A fat five-point star (the teacher's gold star; a sticker)."""
+    pts = []
+    for i in range(n * 2):
+        ang = math.radians(rot - 90) + math.pi / n * i
+        q = r if i % 2 == 0 else r * inner
+        pts.append((x + q * math.cos(ang), y + q * math.sin(ang)))
+    p = path(pts)
+    if outline is not None:
+        c.drawPath(p, paint(outline, a, stroke=ow))
+    c.drawPath(p, paint(color, a))
+    return p
 
 
 def scribble(c, x, y, r, t, seed=0, color=INK, w=6, a=1.0, loops=5):
@@ -620,6 +686,19 @@ def split(frames, layout="v", gap=10, color=INK, texts=None):
             y0 = i * (ch + gap)
             s0 = (H - ch) // 2
             out[y0:y0 + ch] = f[s0:s0 + ch]
+    return out
+
+
+def crash_zoom(arr, z, cx=W / 2, cy=H / 2):
+    """A crash zoom: the frame punched in by z (>1) around (cx, cy); registered lettering is moved to match."""
+    if z <= 1.001:
+        return arr
+    im = Image.fromarray(np.ascontiguousarray(arr[..., :3]))
+    w, h = W / z, H / z
+    x0, y0 = min(max(0, cx - w / 2), W - w), min(max(0, cy - h / 2), H - h)
+    out = arr.copy()
+    out[..., :3] = np.asarray(im.resize((W, H), Image.BILINEAR, box=(x0, y0, x0 + w, y0 + h)))
+    TEXT[:] = [((a - x0) * z, (b - y0) * z, (c_ - x0) * z, (d - y0) * z, tg) for a, b, c_, d, tg in TEXT]
     return out
 
 

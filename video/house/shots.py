@@ -22,6 +22,8 @@ for mod in (sc1, sc2, sc3, sc4):
 
 HORROR = {"eaten", "neighbor", "visions", "clones_red", "burn", "count", "cateyes", "hold", "run"}
 CAPS = [c for c in TL.captions() if TL.who(c[3]) != AI]
+FREEZE = {"grade": sc1.GRADE_FREEZE, "nowarning": 0.0, "casezoom": 0.0}   # true freeze frames: the film stops too
+CRASH = 0.18                                                              # horror cuts punch in from 1.55x
 CAP_BOTTOM, CAP_SIZE, CAP_W = 1486, 52, 860
 STRIPS = [(255, 196, 214), (190, 240, 216), (255, 214, 176), (196, 222, 255), (230, 206, 255)]
 
@@ -117,9 +119,15 @@ def render_frame(T, idx=None, captions=True, film=True):
     if out is None:
         out = shot_frame(i, T)
     out = np.ascontiguousarray(out)
-    name = EDIT[shot_at(T)][1]
+    t0, name, tr = EDIT[shot_at(T)]
+    if name in HORROR and tr == "cut" and T - t0 < CRASH:
+        out = hx.crash_zoom(out, 1 + 0.55 * (1 - (T - t0) / CRASH))
+    fT, fidx = T, idx
+    if name in FREEZE and T - t0 >= FREEZE[name]:
+        fT = t0 + FREEZE[name] + 3 / FPS                                   # (past the flash frames)
+        fidx = int(round(fT * FPS))
     if film:
-        hx.film(out, T, idx, grain=1.0 if name != "end" else 0.8, fade=0.55 if name in HORROR else 1.0)
+        hx.film(out, fT, fidx, grain=1.0 if name != "end" else 0.8, fade=0.55 if name in HORROR else 1.0)
     if captions:
         caption(out, T, name)
     return out

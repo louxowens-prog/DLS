@@ -124,15 +124,21 @@ def s_hundred(T, t, d):
 
 
 def s_counter(T, t, d):
-    """The clock close: its counter spun forward through one whole day of it."""
+    """One whole day of it, sped up on a tally counter: 25,000,000 (the little clock keeps its own count)."""
     st = hx.Stage()
     c = st.c
-    kit.backdrop(st, "parlor")
-    k = ease(ramp(t, 0.1, 1.6))
-    n = 25_000_000 * k
-    cast.cuckoo_clock(c, 540, 720, 1.5, T, n, bird=abs(math.sin(stop(T, 12) * 8)), glow=k)
+    kit.backdrop(st, "sky_full", 14)
+    k = ease(ramp(stop(t, 12), 0.1, 1.5))
+    n = int(25_000_000 * k)
+    hx.text(c, "ONE DAY", 540, 470, 96, "shrikhand-400", CREAM, tag="odo", outline=PLUM, ow=14)
+    kit.odometer(c, 540, 700, n, digits=8, cw=100, ch=160, T=T, roll=(stop(t, 24) * 7) % 1.0 if k < 1 else 0.0)
+    hx.text(c, "confident wrong answers", 540, 930, 52, "fell-400-italic", CREAM, tag="odo", outline=INK, ow=10)
+    hx.text(c, "(if just 1 in 100 is wrong)", 540, 1010, 46, "fell-400-italic", CREAM, tag="odo", outline=INK, ow=8)
+    cast.cuckoo_clock(c, 820, 1170, 0.4, T, count(T), bird=abs(math.sin(stop(T, 12) * 8)))
+    cast.cat(c, 230, 1250, 0.5, T, eyes="gold")
     if k >= 1:
-        hx.text(c, "in one day", 540, 1230, 50, "fell-400-italic", CREAM, tag="clock", outline=INK, ow=10)
+        for i in range(6):
+            hx.sparkle(c, 140 + i * 160, 590 + (i % 2) * 230, 30, T, seed=i + 60)
     hx.soft_focus(st.arr, 0.25)
     return st.arr
 
@@ -142,15 +148,23 @@ def s_tick(T, t, d):
     st = hx.Stage()
     c = st.c
     kit.backdrop(st, "parlor")
-    cast.cuckoo_clock(c, 540, 700, 1.5, T, count(T), glow=0.5)
+    cast.cuckoo_clock(c, 540, 640, 1.3, T, count(T), glow=0.5)
     base = C["second"] - 0.1
-    for j in range(3):
-        tj = base + 0.3 + j * 0.62
-        if T >= tj:
-            k = ramp(T, tj, tj + 0.6)
-            kit.stamp(c, "+289", 840, 380 + j * 130 - 40 * k, 64, T, tj, color=BLOOD, rot=-8 + j * 6, box=False, tag="tick")
     hx.soft_focus(st.arr, 0.2)
     hx.horror(st.arr, 0.2)
+    for j, (px, py) in enumerate(((270, 1150), (810, 1150), (270, 1270))):   # every second: another +289
+        tj = base + 0.3 + j * 0.62
+        k = hx.pop(T, tj, 0.14, 0.35)
+        if k <= 0:
+            continue
+        c.save()
+        c.translate(px, py)
+        c.rotate(-5 + j * 5)
+        c.scale(k, k)
+        c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-135, -58, 135, 50), 16, 16), paint(INK))
+        c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-135, -58, 135, 50), 16, 16), paint(BLOOD, stroke=6))
+        hx.text(c, "+289", 0, 22, 76, "shrikhand-400", (255, 90, 80), tag="tick")
+        c.restore()
     return st.arr
 
 
@@ -166,22 +180,36 @@ def s_thatclock(T, t, d):
     c.translate(-170, -470)
     cast.cuckoo_clock(c, 170, 470, 0.42, T, count(T), glow=ease(ramp(t, 0.8, 1.5)))
     c.restore()
-    cast.cat(c, 700, 1540, 0.8, T, eyes="gold")
+    cast.cat(c, 820, 1250, 0.55, T, eyes="gold", flip=True)
     hx.soft_focus(st.arr, 0.4)
     return st.arr
 
 
 def _book(c, x, y, s, T, open_=0.0):
+    """The report. open_ 0..1: the cover swings open on its spine (a squash in x, stop-motion), pages inside."""
     c.save()
     c.translate(x, y)
     c.scale(s, s)
     with hx.figure(c) as F:
-        F.rrect(-300, -400, 300, 400, 14, (40, 60, 110))
-    c.drawRect(skia.Rect.MakeLTRB(-300, -400, -250, 400), paint((30, 40, 80)))
-    for j, ln in enumerate(("INTERNATIONAL", "AI SAFETY", "REPORT")):
-        hx.text(c, ln, 20, -230 + j * 90, 64, "fell-sc-400", CREAM, tag="book")
-    hx.text(c, "2026", 20, 120, 90, "shrikhand-400", GOLD, tag="book")
-    hx.text(c, "100+ experts · 30+ countries", 20, 260, 34, "fell-400-italic", CREAM, tag="book")
+        F.rrect(-300, -400, 300, 400, 14, (40, 60, 110) if open_ > 0.5 else (40, 60, 110))
+        if open_ > 0:
+            F.rrect(-282, -385, 282, 385, 8, (252, 248, 236))
+    if open_ > 0:
+        for k in range(12):
+            c.drawRect(skia.Rect.MakeLTRB(-240, -300 + k * 52, 240 - (k * 53) % 110, -290 + k * 52), paint(INK, 0.45))
+    cov = 1 - 2 * open_ if open_ < 0.5 else 0.0
+    if cov > 0:
+        c.save()
+        c.translate(-300, 0)
+        c.scale(cov, 1)
+        c.translate(300, 0)
+        with hx.figure(c, fringe=None) as F:
+            F.rrect(-300, -400, 300, 400, 14, (40, 60, 110))
+        c.drawRect(skia.Rect.MakeLTRB(-300, -400, -250, 400), paint((30, 40, 80)))
+        for j, ln in enumerate(("INTERNATIONAL", "AI SAFETY", "REPORT")):
+            hx.text(c, ln, 20, -230 + j * 90, 64, "fell-sc-400", CREAM, tag="book")
+        hx.text(c, "2026", 20, 120, 90, "shrikhand-400", GOLD, tag="book")
+        c.restore()
     c.restore()
 
 
@@ -190,10 +218,34 @@ def s_report(T, t, d):
     c = st.c
     kit.backdrop(st, "courtroom")
     c.drawRect(skia.Rect.MakeLTRB(0, 1180, W, H), paint((110, 64, 40)))
-    _book(c, 540, 760, 1.0, T)
+    t_open = Wd("r1", "Safety")
+    op = ramp(stop(T, 12), t_open, t_open + 0.35)
+    k = hx.pop(T, T - t, 0.16, 0.3)
+    c.save()
+    c.translate(540, 760)
+    c.scale(k, k)
+    c.translate(-540, -760)
+    _book(c, 540, 760, 1.0, T, open_=op)
+    c.restore()
+    kit.stamp(c, "100+ EXPERTS", 520, 1000, 60, T, Wd("r1", "International") - 0.05, color=BLOOD, rot=-7, tag="stamp", fill=CREAM)
+    kit.stamp(c, "30+ COUNTRIES", 560, 1150, 60, T, Wd("r1", "A.I.") - 0.05, color=BLOOD, rot=5, tag="stamp", fill=CREAM)
+    if op > 0:                                                         # pages fly up out of the open book, sped up
+        tt = stop(T, 12) - t_open
+        for i in range(7):
+            u = tt * 1.8 - i * 0.12
+            if u <= 0:
+                continue
+            px = 540 + (i - 3) * 90 + u * 260 * math.sin(i * 1.7)
+            py = 760 - u * 700
+            c.save()
+            c.translate(px, py)
+            c.rotate(u * 260 * (1 if i % 2 else -1))
+            c.drawRect(skia.Rect.MakeLTRB(-90, -120, 90, 120), paint((252, 248, 236)))
+            c.drawRect(skia.Rect.MakeLTRB(-90, -120, 90, 120), paint(INK, 0.4, stroke=3))
+            c.restore()
     for i in range(6):
         a = i * 2 * math.pi / 6 + stop(T, 8)
-        hx.sparkle(c, 540 + 420 * math.cos(a), 760 + 480 * math.sin(a), 30, T, seed=i)
+        hx.sparkle(c, 540 + 440 * math.cos(a), 760 + 480 * math.sin(a), 30, T, seed=i)
     hx.soft_focus(st.arr, 0.45)
     return st.arr
 
@@ -218,10 +270,10 @@ def _prints(T, burn=0.0):
         hx.photo(c, kit.mini(name), x, y, 440, 330, rot=rot)
         c.restore()
     if burn > 0:
-        for i in range(7):
-            hx.flame(c, 120 + i * 140, 1280, 420 * burn, T, seed=i)
         kit.top_drips(c, T, grow=burn)
         hx.horror(st.arr, 0.9 * burn)
+        for i in range(7):
+            hx.flame(c, 120 + i * 140, 1300, 460 * burn, T, seed=i)
     else:
         hx.soft_focus(st.arr, 0.35)
     return st.arr
@@ -260,8 +312,8 @@ def s_crack(T, t, d):
         c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-110, -34, 110, 34), 30, 30), paint((245, 200, 170)))
         c.drawRect(skia.Rect.MakeLTRB(-34, -30, 34, 30), paint((230, 180, 150)))
         c.restore()
-    kit.flood(c, 200 * ramp(t, 0.8, d), T)
     hx.horror(st.arr, 0.5 * ramp(t, 0.8, d))
+    kit.flood(c, 520 * ease(ramp(t, 0.8, d)), T, color=(225, 0, 25))
     return st.arr
 
 
@@ -342,7 +394,7 @@ def s_doors(T, t, d):
     for i, (icon, tk) in enumerate(zip(("heart", "coins", "law"), times)):
         _door(c, 190 + i * 350, 820, icon, T, T >= tk)
     cast.helper(c, 540, 330 + 20 * math.sin(stop(T, 8) * 6), 0.4, T, mood="eerie", look=(0.0, 0.8))
-    cast.cat(c, 540, 1560, 0.6, T, eyes="gold")
+    cast.cat(c, 540, 1290, 0.48, T, eyes="gold")
     hx.soft_focus(st.arr, 0.35)
     return st.arr
 
@@ -355,9 +407,10 @@ def s_payoff(T, t, d):
     bird = abs(math.sin(stop(T, 8) * 5))
     cast.cuckoo_clock(c, 540, 700, 1.25, T, count(T), bird=0.0, glow=ramp(t, 0, d))
     cast.helper(c, 540 + 120 * bird, 700 - 262 * 1.25, 0.2 + 0.08 * bird, T, halo=False, fringe=False)
-    cast.cat(c, 820, 1600, 0.62, T, eyes="gold" if t < d * 0.6 else "red")
+    cast.cat(c, 850, 1280, 0.55, T, eyes="gold" if t < d * 0.6 else "red", flip=True)
     hx.soft_focus(st.arr, 0.3 * (1 - ramp(t, 0, d)))
     hx.horror(st.arr, 0.6 * ramp(t, 0.5, d))
+    kit.flood(c, 420 * ease(ramp(t, d * 0.55, d)), T, color=(225, 0, 25))
     return st.arr
 
 
@@ -367,10 +420,11 @@ def s_count(T, t, d):
     c = st.c
     kit.backdrop(st, "parlor")
     cast.cuckoo_clock(c, 540, 560, 2.1, T, count(T), mood="horror", glow=1.0)
-    for i in range(5):
-        hx.flame(c, 160 + i * 190, 1290, 220, T, seed=i)
-    kit.flood(c, 380 + 160 * ramp(t, 0, d), T)
     hx.horror(st.arr, 0.75)
+    lvl = 470 + 330 * ease(ramp(t, 0, d))
+    kit.flood(c, lvl, T, color=(225, 0, 25))
+    for i in range(5):
+        hx.flame(c, 160 + i * 190, H - lvl + 30, 240, T, seed=i)
     return st.arr
 
 

@@ -64,8 +64,9 @@ def sections():
         (f("title"), f("always"), "band"), (f("always"), f("court"), "thin"),
         (f("court"), f("fine"), "band"), (f("fine"), f("pile"), "silent"), (f("pile"), f("mirror"), "band"),
         (f("mirror"), f("kitchen"), "box"), (f("kitchen"), f("nowarning"), "thin"), (f("nowarning"), f("parcel"), "silent"),
-        (f("parcel"), f("neighbor"), "thin"), (f("neighbor"), f("doctor"), "horror"), (f("doctor"), f("realcase"), "clinic"),
-        (f("realcase"), f("onedoc"), "box"), (f("onedoc"), f("clones_red"), "band"), (f("clones_red"), f("globe"), "horror"),
+        (f("parcel"), E("p6") + 0.08, "thin"), (E("p6") + 0.08, f("neighbor"), "silent"),
+        (f("neighbor"), E("p8") + 0.1, "horror"), (E("p8") + 0.1, f("doctor"), "silent"), (f("doctor"), f("realcase"), "clinic"),
+        (f("realcase"), S("p11") + 0.05, "silent"), (S("p11") + 0.05, f("onedoc"), "box"), (f("onedoc"), f("clones_red"), "band"), (f("clones_red"), f("globe"), "horror"),
         (f("globe"), f("thatclock"), "band"), (f("thatclock"), f("report"), "box"), (f("report"), f("burn"), "band"),
         (f("burn"), f("rumor"), "horror"), (f("rumor"), f("payoff"), "band"), (f("payoff"), f("trust"), "horror"),
         (f("trust"), TL.total + 1, "silent"),
@@ -165,12 +166,22 @@ def music_boxes(box):
 
 # ------------------------------------------------------------------ sound effects
 
+HITS = []                                               # scare-hit times: the music ducks out under each one
+
+
+def hit(fx, t, gain=1.0, seed=0, notes=None, body=1.5):
+    """A scare hit, ~5 dB hotter than the old ones and with a longer tail; the band drops away beneath it."""
+    kw = {} if notes is None else {"notes": notes}
+    fx.add(P.scare(1.0, seed=seed, body=body, **kw), t, 1.45 * gain)
+    HITS.append(t)
+
+
 def sfx(fx):
     # a hit on every transition
     horror_shots = {"eaten", "neighbor", "visions", "run", "hold", "clones_red", "burn", "count"}
     for i, (t, name, tr) in enumerate(EDIT[1:], 1):
         if name in horror_shots:
-            fx.add(P.scare(1.0, seed=i), t, 0.8)
+            hit(fx, t, 1.0, seed=i)
         elif tr == "iris":
             fx.add(P.glock(84, 1.0), t - 0.2, 0.35, pan=0.4)
             fx.add(P.glock(89, 1.0), t - 0.12, 0.35, pan=0.6)
@@ -201,12 +212,12 @@ def sfx(fx):
     fx.add(P.meow(1.0), W("w1", "isn't") + 0.25, 0.35, pan=0.7)
     fx.add(P.stamp(1.0), C["star"], 0.55)
     fx.add(P.glock(96, 1.0), C["star"] + 0.35, 0.4)
-    fx.add(P.scare(1.0, seed=31), E("w3") + 0.02, 0.7)
+    hit(fx, E("w3") + 0.02, 0.85, seed=31, body=1.2)
     # the court
     fx.add(P.meow(1.0), first("brief") + 0.8, 0.3, pan=0.7)
     for k in range(3):
         fx.add(P.pop(1.0), W("c1", "real?") + k * 0.12, 0.4, pan=0.4 + 0.1 * k)
-    fx.add(P.scare(1.0, seed=33), C["yes"] - 0.02, 0.6)
+    hit(fx, C["yes"] - 0.02, 0.75, seed=33, body=1.2)
     fx.add(P.woodblock(1.0, 400), C["gavel"], 0.9)
     fx.add(P.woodblock(1.0, 380), C["gavel"] + 0.2, 0.7)
     fx.add(P.whoosh(1.8, up=False, seed=3), C["pile"] + 0.1, 0.35)
@@ -229,17 +240,16 @@ def sfx(fx):
     fx.add(P.whoosh(1.0, up=True, seed=5), first("calendar"), 0.35)
     for k in range(6):
         fx.add(P.tick(1.0, tock=k % 2 == 1), first("bed") + k * 0.3, 0.5)
-    fx.add(P.honk(1.0, 2), first("neighbor") + 0.8, 0.45, pan=0.7)
     fx.add(P.hiss(1.0), first("neighbor") + 0.3, 0.4, pan=0.3)
-    fx.add(P.slide_whistle(False, 0.6), C["see"], 0.4, pan=0.3)
-    fx.add(P.boing(1.0), C["see"] + 0.6, 0.4, pan=0.7)
+    fx.add(P.slide_whistle(False, 0.6), first("visions") + 0.05, 0.3, pan=0.3)      # a sagging cartoon slide as the room floods
     fx.add(P.reverse_swell(1.0), C["hear"] - 0.9, 0.6)
     fx.add(P.heartbeat(8, 80), first("neighbor"), 0.7)
     fx.add(P.heartbeat(4, 130), first("run"), 0.7)
     for k in range(8):
         fx.add(P.woodblock(0.8, 300 + 40 * (k % 2)), first("run") + k * 0.13, 0.4, pan=0.3 + 0.4 * (k % 2))
     fx.add(P.stamp(1.5), first("hold") + 0.02, 0.9)
-    fx.add(P.scare(0.8, seed=51, notes=(38, 39, 45)), C["level"] + 0.4, 0.5)
+    hit(fx, E("p8") + 0.04, 0.9, seed=49, notes=(36, 37, 43, 48), body=2.0)     # then the room goes silent
+    hit(fx, C["level"] + 0.4, 0.6, seed=51, notes=(38, 39, 45))
     for k in range(21):
         fx.add(P.stamp(0.5), first("weeks") + 0.05 + k * 0.07, 0.25, pan=0.3 + 0.02 * k)
     fx.add(P.click(1.0), first("casefile"), 0.5)
@@ -267,7 +277,7 @@ def sfx(fx):
     fx.add(P.whoosh(1.4, up=False, seed=11), first("burn"), 0.4)
     fx.add(P.boing(1.0), first("crack") + 0.2, 0.35, pan=0.3)
     fx.add(P.boing(1.0), first("crack") + 1.2, 0.35, pan=0.7)
-    fx.add(P.scare(0.7, seed=61), first("crack") + 1.1, 0.45)
+    hit(fx, first("crack") + 1.1, 0.6, seed=61)
     fx.add(P.page(1.0, seed=7), first("source") + 0.1, 0.5)
     fx.add(P.sting((77, 81, 84, 89), 1.0), first("source") + 1.2, 0.4)
     for k, wd in enumerate(("health,", "money,", "law.")):
@@ -281,10 +291,10 @@ def sfx(fx):
         fx.add(P.cuckoo(1.0), first("payoff") + 0.4 + k * 0.9, 0.45)
     fx.add(P.meow(1.0), first("payoff") + 0.6 * (first("count") - first("payoff")), 0.4, pan=0.7)
     fx.add(P.drone(first("trust") - first("count"), root=27, amp=1.0, seed=2), first("count"), 0.7)
-    fx.add(P.scare(1.2, seed=71), E("e2") + 0.02, 0.9)
+    hit(fx, E("e2") + 0.02, 1.2, seed=71, body=2.0)
     fx.add(P.meow(1.0), E("e2") + 0.4, 0.6)
     fx.add(P.projector(TL.total - first("end")), first("end"), 0.6)
-    fx.add(P.scare(0.6, seed=81, notes=(29, 30, 36)), TL.total - 2.2, 0.35)
+    hit(fx, TL.total - 2.2, 0.4, seed=81, notes=(29, 30, 36))
 
 
 def horror_layers(hz):
@@ -354,6 +364,7 @@ def reverb(x, wet=0.1, rt60=0.8, seed=8):
 
 def build():
     SECTIONS[:] = sections()
+    HITS.clear()
     band_bus, keys_bus, box_bus, fx, hz = Bus(), Bus(), Bus(), Bus(), Bus()
     band(band_bus, keys_bus, hz)
     music_boxes(box_bus)
@@ -375,8 +386,15 @@ def build():
         if m == "silent":
             gate[int(a * SR):int(b * SR)] = 0.0
     gate = np.convolve(gate, np.ones(int(0.02 * SR)) / int(0.02 * SR), "same")
+    for t in HITS:                                     # the band falls away under every scare hit, then creeps back
+        i0, i1 = int((t - 0.01) * SR), int((t + 0.5) * SR)
+        gate[max(0, i0):min(N, i1)] *= 0.3
+        rec = np.linspace(0.3, 1.0, int(0.6 * SR))
+        j1 = min(N, i1 + len(rec))
+        gate[i1:j1] *= rec[: j1 - i1]
     music = music * gate
-    music = music + reverb(fx.x, 0.15, 1.0) * db(0.5) + reverb(hz.x, 0.3, 2.0)
+    hzx = hz.x * gate
+    music = music + reverb(fx.x, 0.15, 1.0) * db(0.5) + reverb(hzx, 0.3, 2.0)
     music = signal.lfilter(*signal.butter(2, 35 / (SR / 2), "high"), music)
 
     vo = reverb(voices(), 0.06, 0.5)

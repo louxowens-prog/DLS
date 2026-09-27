@@ -19,7 +19,8 @@ def s_mirror(T, t, d):
     st = hx.Stage()
     c = st.c
     kit.backdrop(st, "parlor")
-    cx, cy, rx, ry = 540, 760, 300, 420
+    cast.cuckoo_clock(c, 165, 600, 0.52, T, count(T))
+    cx, cy, rx, ry = 610, 760, 270, 400
     c.drawOval(skia.Rect.MakeLTRB(cx - rx - 40, cy - ry - 40, cx + rx + 40, cy + ry + 40), paint((200, 150, 60)))
     for i in range(24):                                              # carved gilt beads
         a = i * 2 * math.pi / 24
@@ -29,10 +30,11 @@ def s_mirror(T, t, d):
     c.clipPath(mirror, doAntiAlias=True)
     c.drawRect(skia.Rect.MakeWH(W, H), paint(shader=hx.lin((cx - rx, cy - ry), (cx + rx, cy + ry), [(210, 220, 235), (160, 170, 190), (220, 226, 236)])))
     k = ease(ramp(t, 0.6, 1.6))
-    cast.you(c, cx, cy - 120 + 60 * (1 - k), 0.62, T, pose="stand")
+    cast.you(c, cx, cy - 120 + 60 * (1 - k), 0.58, T, pose="stand")
     c.drawPath(path([(cx - 200, cy - 300), (cx - 120, cy - 330), (cx + 180, cy + 300), (cx + 100, cy + 330)]), paint(WHITE_, 0.18))
     c.restore()
-    cast.cat(c, 830, 1600, 0.62, T, eyes="gold")
+    cast.cat(c, 175, 1260, 0.52, T, eyes="gold")
+    kit.sticker(c, "heart", 900, 1250, 0.6, T, T - t + 0.9, rot=10)
     hx.soft_focus(st.arr, 0.6)
     return st.arr
 
@@ -47,13 +49,14 @@ def s_kitchen(T, t, d):
     cast.shaker(c, 820, 1210, 0.8, T)
     if T >= Wd("p2", "salt") - 0.05:                                  # 'salt is bad for you': a pencil scribble over it
         hx.scribble(c, 820, 1150, 110, T, seed=2, color=BLOOD, w=7)
+    cast.cuckoo_clock(c, 830, 590, 0.5, T, count(T))
     cast.you(c, 330, 700, 0.78, T, pose="phone")
-    cast.cat(c, 900, 1660, 0.5, T, eyes="gold")
+    cast.cat(c, 560, 1290, 0.42, T, eyes="gold")
     hx.soft_focus(st.arr, 0.55)
     return st.arr
 
 
-QUESTION = "What can I use instead of salt?"
+QUESTION = "What can I replace chloride with?"
 ANSWER = "Chloride? You can swap it for bromide! ✨"
 
 
@@ -64,6 +67,7 @@ def s_typing(T, t, d):
     n = int(len(QUESTION) * ease(ramp(t, 0.15, 1.6)))
     typed = QUESTION[:n] + ("|" if int(stop(T, 4) * 4) % 2 == 0 and n < len(QUESTION) else "")
     cast.phone(c, 540, 860, 1.25, T, lines=[(typed or " ", "you")])
+    kit.dramatized(c, 540, 290, T)
     hx.soft_focus(st.arr, 0.45)
     return st.arr
 
@@ -80,6 +84,7 @@ def s_answer(T, t, d):
     cast.helper(c, 540, 470, 0.72, T, talk=kit.ai_talk(T), mood="sweet")
     for i in range(5):
         hx.sparkle(c, 200 + i * 170, 1320 - (i % 2) * 40, 26, T, seed=i + 20)
+    kit.dramatized(c, 830, 290, T)
     hx.soft_focus(st.arr, 0.5)
     return st.arr
 
@@ -97,17 +102,21 @@ def s_nowarning(T, t, d):
     st = hx.Stage()
     c = st.c
     kit.backdrop(st, "kitchen")
-    cast.phone(c, 540, 1000, 1.18, S("p3") + 1.0, lines=[(QUESTION, "you"), (ANSWER.replace(" ✨", ""), "ai")])
-    # the empty space where a warning should have been: a dashed pencil outline that won't stay drawn
-    k = 1 - ramp(t, 0.9, 2.0)
-    if k > 0:
-        rng = np.random.default_rng(int(stop(T, 6) * 6))
-        for i in range(18):
-            u = i / 18
-            x0 = 330 + 420 * u
-            c.drawLine(x0, 1230, x0 + 14, 1230 + rng.uniform(-2, 2), paint(INK, 0.7 * k, stroke=4))
-            c.drawLine(x0, 1370, x0 + 14, 1370 + rng.uniform(-2, 2), paint(INK, 0.7 * k, stroke=4))
-        c.drawPath(path([(540, 1250), (500, 1330), (580, 1330)]), paint(INK, 0.7 * k, stroke=5))
+    Tf = S("p3") + 1.0
+    cast.phone(c, 540, 1000, 1.18, Tf, lines=[(QUESTION, "you"), (ANSWER.replace(" ✨", ""), "ai")])
+    # the empty space where a warning should have been: a dashed pencil outline around nothing
+    rng = np.random.default_rng(6)
+    for i in range(18):
+        x0 = 330 + 420 * i / 18
+        c.drawLine(x0, 1172, x0 + 14, 1172 + rng.uniform(-2, 2), paint(BLOOD, 0.8, stroke=5))
+        c.drawLine(x0, 1296, x0 + 14, 1296 + rng.uniform(-2, 2), paint(BLOOD, 0.8, stroke=5))
+    for y0 in range(1172, 1296, 28):
+        c.drawLine(330, y0, 330, y0 + 14, paint(BLOOD, 0.8, stroke=5))
+        c.drawLine(764, y0, 764, y0 + 14, paint(BLOOD, 0.8, stroke=5))
+    c.drawPath(path([(547, 1190), (507, 1270), (587, 1270)]), paint(BLOOD, 0.8, stroke=6))
+    c.drawLine(547, 1214, 547, 1244, paint(BLOOD, 0.8, stroke=6))
+    c.drawCircle(547, 1257, 4, paint(BLOOD, 0.8))
+    kit.dramatized(c, 540, 420, Tf)
     if t < 2 / 24:
         c.drawRect(skia.Rect.MakeWH(W, H), paint(CREAM, 0.8))
     hx.freeze_look(st.arr, 1.0)
@@ -119,6 +128,7 @@ def s_parcel(T, t, d):
     st = hx.Stage()
     c = st.c
     kit.backdrop(st, "parlor")
+    cast.cuckoo_clock(c, 170, 1120, 0.42, T, count(T))
     tt = stop(t, 8) * 2.5
     drop = min(1.0, tt / 0.8)
     by = -300 + 1500 * drop
@@ -198,7 +208,9 @@ def s_bed(T, t, d):
     cast.you(c, 0, -330, 0.62, T, pose="stand")
     c.restore()
     c.drawRect(skia.Rect.MakeLTRB(80, 1130, 1000, 1460), paint((255, 150, 190)))      # the blanket over the doll
-    cast.cuckoo_clock(c, 860, 470, 0.4, T, count(T))
+    cast.cuckoo_clock(c, 860, 520, 0.45, T, count(T))
+    with hx.layer(c, 0.22):
+        cast.helper(c, 480, 640, 1.6, T, mood="eerie", halo=False, fringe=False, look=(0.3, 0.5))
     hx.soft_focus(st.arr, 0.3)
     return st.arr
 
@@ -249,11 +261,11 @@ def s_visions(T, t, d):
         else:
             cast.neighbor(c, 540 + r * math.cos(a), 760 + r * math.sin(a) * 0.9, 0.45, T + i, mood="horror")
     cast.you(c, 540, 820, 0.8, T, pose="clutch", shake=1.0, mirror_red=True)
-    for i in range(4):
-        hx.flame(c, 160 + i * 250, 1290, 200, T, seed=i)
-    kit.flood(c, 260 + 300 * ramp(t, 0, d), T)
-    hx.scribble(c, 540, 700, 200, T, seed=7, color=INK, w=7, a=0.8)
     hx.horror(st.arr, 1.0)
+    kit.flood(c, 380 + 420 * ease(ramp(t, 0, d)), T, color=(225, 0, 25))
+    for i in range(4):
+        hx.flame(c, 160 + i * 250, H - 380 - 420 * ease(ramp(t, 0, d)) + 30, 230, T, seed=i)
+    hx.scribble(c, 540, 700, 200, T, seed=7, color=INK, w=7, a=0.8)
     return st.arr
 
 
@@ -367,7 +379,7 @@ def s_casefile(T, t, d):
     c.scale(k * 0.95, k * 0.95)
     _journal(c, 0, 0, 1.0, T)
     c.restore()
-    cast.cat(c, 880, 1560, 0.5, T, eyes="gold")
+    cast.cat(c, 560, 1290, 0.42, T, eyes="gold")
     hx.soft_focus(st.arr, 0.3)
     return st.arr
 
@@ -377,7 +389,7 @@ def s_casezoom(T, t, d):
     st = hx.Stage()
     c = st.c
     kit.backdrop(st, "album_page", 2)
-    z = 1.1 + 0.2 * ease(t / d)
+    z = 1.22
     c.save()
     c.translate(540, 800)
     c.scale(z, z)

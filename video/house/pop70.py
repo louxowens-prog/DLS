@@ -210,19 +210,19 @@ def drone(dur, root=29, amp=1.0, seed=0):
     return amp * out * env * 0.25
 
 
-def scare(amp=1.0, seed=0, notes=(41, 42, 47, 53, 54, 60, 61)):
-    """The scare hit: a dissonant orchestra stab, a timpani, a cymbal crash and a low boom."""
-    t = tx(2.2)
+def scare(amp=1.0, seed=0, notes=(41, 42, 47, 53, 54, 60, 61), body=1.0):
+    """The scare hit: a dissonant orchestra stab, a timpani, a cymbal crash and a low boom. body stretches the tail."""
+    t = tx(2.2 * body)
     rng = np.random.default_rng(seed)
     st = np.zeros(len(t))
     for m in notes:
         for d in (-9, 0, 8):
             f = midi(m) * 2 ** (d / 1200)
             st += 2 * ((f * t + rng.uniform()) % 1.0) - 1
-    st = _lp(st, 3200) * np.exp(-t / 0.6) * 0.08
-    timp = np.sin(2 * np.pi * np.cumsum(70 + 40 * np.exp(-t / 0.05)) / SR) * np.exp(-t / 0.5) * 0.9
-    crash = _hp(rng.normal(0, 1, len(t)), 4000) * np.exp(-t / 0.7) * 0.25
-    boom = np.sin(2 * np.pi * np.cumsum(45 + 30 * np.exp(-t / 0.1)) / SR) * np.exp(-t / 0.9) * 0.7
+    st = _lp(st, 3200) * np.exp(-t / (0.6 * body)) * 0.08
+    timp = np.sin(2 * np.pi * np.cumsum(70 + 40 * np.exp(-t / 0.05)) / SR) * np.exp(-t / (0.5 * body)) * 0.9
+    crash = _hp(rng.normal(0, 1, len(t)), 4000) * np.exp(-t / (0.7 * body)) * 0.25
+    boom = np.sin(2 * np.pi * np.cumsum(45 + 30 * np.exp(-t / 0.1)) / SR) * np.exp(-t / (0.9 * body)) * 0.7
     return amp * np.tanh(1.3 * (st + timp + crash + boom))
 
 

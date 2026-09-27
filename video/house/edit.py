@@ -45,13 +45,13 @@ EDIT = [
     (W("p5", "Every") - 0.1, "calendar", "cut"),
     (S("p6") - 0.1, "bed", "cut"),
     (W("p6", "Your") - 0.1, "skin", "cut"),
-    (C["neighbor"] - 0.1, "neighbor", "cut"),
+    (C["neighbor"] - 0.45, "neighbor", "cut"),        # the horror cut lands in silence, before a word is said
     (C["see"] - 0.25, "visions", "cut"),
     (S("p8") - 0.1, "run", "cut"),
     (C["hold"] - 0.1, "hold", "iris"),
     (S("p9") - 0.15, "doctor", "cut"),
     (S("p10") - 0.12, "weeks", "cut"),
-    (C["real"] - 0.15, "realcase", "card"),
+    (E("p10") + 0.35, "realcase", "card"),            # a black card held in silence, then 'This isn't a story.'
     (W("p11", "It") - 0.1, "casefile", "cut"),
     (W("p11", "doctors") - 0.3, "casezoom", "cut"),
     (S("s1") - 0.12, "onedoc", "iris"),
@@ -71,7 +71,7 @@ EDIT = [
     (S("t2") - 0.12, "doors", "cut"),
     (S("e1") - 0.15, "payoff", "iris"),
     (W("e1", "about") - 0.1, "count", "cut"),
-    (C["trust"] - 0.12, "trust", "cut"),
+    (E("e1") + 0.3, "trust", "cut"),
     (C["end"], "end", "card"),
 ]
 IRIS = 0.42          # an iris: 0.21 s closing on the old shot, 0.21 s opening on the new

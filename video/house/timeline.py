@@ -4,14 +4,14 @@ The film runs at 24 fps; the paper cut-outs move like stop-motion (a new drawing
 import os
 import re
 
-from script import LINES, NAR, VOICES, WRONG_PER_SEC
+from script import AI, LINES, NAR, VOICES, WRONG_PER_SEC
 from voice import SR, speak, word_times
 
 FPS = 24
 TWOS = 12
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-PRE = {}
+PRE = {"p7": 0.6, "p11": 0.9, "e2": 0.5}     # true silences before the heaviest beats
 TAIL = 4.5
 
 
@@ -76,7 +76,7 @@ class Timeline:
                 "it's", "was", "that", "what", "by", "over", "every", "not", "can", "must", "we", "about", "be", "calls"}
         for key in self.order:
             L = self.lines[key]
-            if L["who"] != NAR:                       # characters talk in speech bubbles, one bubble per line
+            if L["who"] == AI:                        # the chatbot talks in intertitle cards, one card per line
                 out.append((L["start"] - 0.08, L["end"] + 0.35, L["caption"], key))
                 continue
             raw = L["breaks"].split()                  # a word ending in '|' forces a caption break there

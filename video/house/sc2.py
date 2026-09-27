@@ -21,6 +21,8 @@ def s_court(T, t, d):
     cast.judge(c, 540, 660, 0.62, T, gavel=0.0)
     cast.suit_man(c, 270, 1050, 0.72, T, seed=0)
     cast.suit_man(c, 810, 1060, 0.7, T, suit=(110, 90, 60), tie=(160, 60, 40), hair=(40, 30, 20), seed=1)
+    with hx.layer(c, 0.2 * ramp(t, 0.2, 1.0)):                        # a double exposure: the chatbot's face over the court
+        cast.helper(c, 540, 820, 1.9, T, mood="eerie", halo=False, fringe=False, look=(0.0, 0.3))
     hx.soft_focus(st.arr, 0.25)
     return st.arr
 
@@ -117,8 +119,9 @@ def s_pile(T, t, d):
         c.scale(k, k)
         c.drawRect(skia.Rect.MakeLTRB(-400, -90, 400, 60), paint((24, 10, 20)))
         hx.ornate_frame(c, -390, -80, 390, 50, CREAM, w=3)
-        hx.text(c, "AI Hallucination Cases database · June 2026", 0, -4, 36, "fell-400-italic", CREAM, tag="plaque")
+        hx.text(c, "AI Hallucination Cases database · Sept 2026", 0, -4, 36, "fell-400-italic", CREAM, tag="plaque")
         c.restore()
+    kit.stamp(c, "2,000+", 540, 1240, 110, T, Wd("c2", "two") - 0.05, color=BLOOD, rot=-6, tag="stamp")
     hx.soft_focus(st.arr, 0.2)
     return st.arr
 
@@ -152,9 +155,9 @@ def s_plane(T, t, d):
         c.rotate(-4 + 2 * math.sin(stop(T, 8) * 6))
         c.scale(k, k)
         with hx.figure(c) as F:
-            F.rrect(-320, -160, 320, 160, 12, (255, 236, 170))
-        hx.text(c, "REFUND POLICY", 0, -55, 58, "shrikhand-400", PLUM, tag="ticket")
-        hx.text(c, "apply up to 90 days after you fly", 0, 75, 36, "special-elite-400", INK, tag="ticket")
+            F.rrect(-360, -160, 360, 160, 12, (255, 236, 170))
+        hx.text(c, "BEREAVEMENT REFUND", 0, -45, 52, "shrikhand-400", PLUM, tag="ticket")
+        hx.text(c, "claim it after your trip!", 0, 75, 40, "special-elite-400", INK, tag="ticket")
         c.restore()
         hx.sparkle(c, 250, 950, 40, T, seed=2)
         hx.sparkle(c, 860, 1180, 34, T, seed=3)
