@@ -26,6 +26,8 @@ def main():
         out.append(f"{t:7.2f}  {nx - t:5.2f}s  {n:11s} {tr}")
     f = first
     out += ["", "WHERE THE DEVICES ARE",
+            f"  COLD OPEN (flash-forward): 0.0 the red chat reply (crash zoom, scare hit on frame 1), {f('cold2'):.1f} the barred door",
+            f"           slams; dead air; then the sweet parlour at {f('hook'):.1f}. The same door returns at {f('hold'):.1f}.",
             "  PAINTED SKIES / WINDOWS: every set (parlour, kitchen, courtroom, bedroom, street) looks out on a garish painted sunset;",
             f"           full painted skies at {f('title'):.1f}, {f('sure'):.1f}, {f('machine'):.1f}, {f('always'):.1f}, {f('plane'):.1f}, {f('clones'):.1f}, {f('three'):.1f}",
             "  FAKE COMPOSITING: every figure is a paper cut-out with a white scissor edge, a drop shadow and a green-blue matte",

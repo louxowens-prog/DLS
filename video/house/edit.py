@@ -14,7 +14,9 @@ from timeline import TL
 S, E, W = TL.s, TL.e, TL.word
 
 EDIT = [
-    (0.0, "hook", "cut"),
+    (0.0, "cold1", "cut"),                            # cold open: a flash-forward to the end of the true story
+    (C["cold2"] - 0.1, "cold2", "cut"),
+    (S("h1") - 0.08, "hook", "cut"),
     (C["eaten"], "eaten", "cut"),
     (S("h3") - 0.12, "title", "iris"),
     (W("h3", "And") - 0.1, "sure", "cut"),
@@ -45,7 +47,7 @@ EDIT = [
     (W("p5", "Every") - 0.1, "calendar", "cut"),
     (S("p6") - 0.1, "bed", "cut"),
     (W("p6", "Your") - 0.1, "skin", "cut"),
-    (C["neighbor"] - 0.45, "neighbor", "cut"),        # the horror cut lands in silence, before a word is said
+    (C["neighbor"] - 0.3, "neighbor", "cut"),        # the horror cut lands in silence, before a word is said
     (C["see"] - 0.25, "visions", "cut"),
     (S("p8") - 0.1, "run", "cut"),
     (C["hold"] - 0.1, "hold", "iris"),
@@ -54,6 +56,7 @@ EDIT = [
     (E("p10") + 0.35, "realcase", "card"),            # a black card held in silence, then 'This isn't a story.'
     (W("p11", "It") - 0.1, "casefile", "cut"),
     (W("p11", "doctors") - 0.3, "casezoom", "cut"),
+    (S("p12") - 0.1, "doctest", "cut"),
     (S("s1") - 0.12, "onedoc", "iris"),
     (S("s2") - 0.12, "clones", "cut"),
     (C["atonce"] - 0.1, "clones_red", "cut"),

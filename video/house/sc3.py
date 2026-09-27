@@ -35,7 +35,7 @@ def s_mirror(T, t, d):
     c.restore()
     cast.cat(c, 175, 1260, 0.52, T, eyes="gold")
     kit.sticker(c, "heart", 900, 1250, 0.6, T, T - t + 0.9, rot=10)
-    hx.soft_focus(st.arr, 0.6)
+    hx.soft_focus(st.arr, 0.85, bloom=0.5)
     return st.arr
 
 
@@ -52,12 +52,12 @@ def s_kitchen(T, t, d):
     cast.cuckoo_clock(c, 830, 590, 0.5, T, count(T))
     cast.you(c, 330, 700, 0.78, T, pose="phone")
     cast.cat(c, 560, 1290, 0.42, T, eyes="gold")
-    hx.soft_focus(st.arr, 0.55)
+    hx.soft_focus(st.arr, 0.85, bloom=0.5)
     return st.arr
 
 
 QUESTION = "What can I replace chloride with?"
-ANSWER = "Chloride? You can swap it for bromide! ✨"
+ANSWER = "You can replace chloride with bromide! Context matters. ✨"
 
 
 def s_typing(T, t, d):
@@ -103,20 +103,25 @@ def s_nowarning(T, t, d):
     c = st.c
     kit.backdrop(st, "kitchen")
     Tf = S("p3") + 1.0
-    cast.phone(c, 540, 1000, 1.18, Tf, lines=[(QUESTION, "you"), (ANSWER.replace(" ✨", ""), "ai")])
+    n0 = len(hx.TEXT)
+    cast.phone(c, 540, 850, 1.12, Tf, lines=[(QUESTION, "you"), (ANSWER.replace(" ✨", ""), "ai")])
+    y0 = max(b[3] for b in hx.TEXT[n0:]) + 34                        # just under the reply
+    y1 = y0 + 110
     # the empty space where a warning should have been: a dashed pencil outline around nothing
     rng = np.random.default_rng(6)
     for i in range(18):
         x0 = 330 + 420 * i / 18
-        c.drawLine(x0, 1172, x0 + 14, 1172 + rng.uniform(-2, 2), paint(BLOOD, 0.8, stroke=5))
-        c.drawLine(x0, 1296, x0 + 14, 1296 + rng.uniform(-2, 2), paint(BLOOD, 0.8, stroke=5))
-    for y0 in range(1172, 1296, 28):
-        c.drawLine(330, y0, 330, y0 + 14, paint(BLOOD, 0.8, stroke=5))
-        c.drawLine(764, y0, 764, y0 + 14, paint(BLOOD, 0.8, stroke=5))
-    c.drawPath(path([(547, 1190), (507, 1270), (587, 1270)]), paint(BLOOD, 0.8, stroke=6))
-    c.drawLine(547, 1214, 547, 1244, paint(BLOOD, 0.8, stroke=6))
-    c.drawCircle(547, 1257, 4, paint(BLOOD, 0.8))
-    kit.dramatized(c, 540, 420, Tf)
+        c.drawLine(x0, y0, x0 + 14, y0 + rng.uniform(-2, 2), paint(BLOOD, 0.8, stroke=5))
+        c.drawLine(x0, y1, x0 + 14, y1 + rng.uniform(-2, 2), paint(BLOOD, 0.8, stroke=5))
+    for yy in range(int(y0), int(y1), 28):
+        c.drawLine(330, yy, 330, yy + 14, paint(BLOOD, 0.8, stroke=5))
+        c.drawLine(764, yy, 764, yy + 14, paint(BLOOD, 0.8, stroke=5))
+    ym = (y0 + y1) / 2
+    c.drawPath(path([(547, ym - 40), (507, ym + 38), (587, ym + 38)]), paint(BLOOD, 0.8, stroke=6))
+    c.drawLine(547, ym - 16, 547, ym + 14, paint(BLOOD, 0.8, stroke=6))
+    c.drawCircle(547, ym + 27, 4, paint(BLOOD, 0.8))
+    hx.reg(330, y0, 764, y1, "warnbox")
+    kit.dramatized(c, 540, 330, Tf)
     if t < 2 / 24:
         c.drawRect(skia.Rect.MakeWH(W, H), paint(CREAM, 0.8))
     hx.freeze_look(st.arr, 1.0)
@@ -181,12 +186,14 @@ def s_calendar(T, t, d):
     st = hx.Stage()
     c = st.c
     kit.backdrop(st, "kitchen")
-    day = 1 + int(89 * min(1.0, stop(t, 12) / max(0.1, d - 0.15)))
+    day = 1 + int(89 * min(1.0, stop(t, 12) / max(0.1, 0.7 * d)))
     with hx.figure(c) as F:
         F.rrect(250, 360, 830, 1180, 14, WHITE_)
         F.rrect(250, 360, 830, 520, 14, BLOOD)
     hx.text(c, "DAY", 540, 480, 90, "shrikhand-400", CREAM, tag="calendar")
     hx.text(c, str(day), 540, 950, 330, "shrikhand-400", PLUM, tag="calendar")
+    if day >= 90:
+        kit.stamp(c, "3 MONTHS", 540, 1110, 70, T, T - t + 0.7 * d, color=BLOOD, rot=-8, tag="stamp")
     for i in range(3):                                                # pages flying away
         a = stop(T, 12) * 9 + i * 2.1
         c.save()
@@ -276,29 +283,60 @@ def s_run(T, t, d):
     k = ease(ramp(stop(t, 8) * 2, 0, 1.6))
     s = 0.95 - 0.55 * k
     cast.you(c, 540, 760 + 200 * (1 - k), s, T * 2.5, pose="run")
-    hx.horror(st.arr, 0.35)
+    hx.horror(st.arr, 0.9)
+    kit.flood(c, 120 + 160 * ramp(t, 0, d), T, color=(225, 0, 25))
     return st.arr
 
 
-def s_hold(T, t, d):
-    """The door with the little barred window. You are held."""
+def _hold(T, t, d, zoom=0.35, flood=260.0):
+    """The door with the little barred window. You are held. The camera creeps in on the bars; the floor floods."""
     st = hx.Stage()
     c = st.c
+    z = 1 + zoom * ease(ramp(stop(t, 8), 0.2, d))
+    c.save()
+    c.translate(540, 560)
+    c.scale(z, z)
+    c.translate(-540, -560)
     kit.backdrop(st, "hospital")
     with hx.figure(c) as F:
-        F.rrect(190, 260, 890, 1320, 16, (236, 236, 226))
+        F.rrect(190, 260, 890, 1320, 16, (186, 176, 172))                 # a dull institutional door: the grade turns it blood red
         F.rrect(380, 420, 700, 700, 10, (40, 30, 40))
+    for k in range(3):
+        c.drawRect(skia.Rect.MakeLTRB(240, 800 + k * 160, 840, 810 + k * 160), paint((150, 140, 138)))
     c.save()
     c.clipRect(skia.Rect.MakeLTRB(380, 420, 700, 700))
     cast.you(c, 540, 620, 0.55, T, pose="clutch", shake=0.6, mirror_red=True)
     c.restore()
     for k in range(5):
-        c.drawLine(410 + k * 64, 420, 410 + k * 64, 700, paint((120, 120, 130), stroke=14))
-    c.drawCircle(800, 900, 26, paint((120, 120, 130)))
-    slam = ramp(t, 0.0, 0.08)
+        c.drawLine(410 + k * 64, 420, 410 + k * 64, 700, paint((70, 70, 80), stroke=14))
+    c.drawCircle(800, 900, 26, paint((70, 70, 80)))
+    c.restore()
+    hx.horror(st.arr, 0.95)
     if t < 0.12:
-        c.drawRect(skia.Rect.MakeWH(W, H), paint(CREAM, 0.6 * (1 - slam)))
-    hx.horror(st.arr, 0.45)
+        c.drawRect(skia.Rect.MakeWH(W, H), paint(CREAM, 0.6 * (1 - ramp(t, 0.0, 0.08))))
+    kit.flood(c, flood * ease(ramp(t, 0.3, d)), T, color=(225, 0, 25))
+    return st.arr
+
+
+def s_hold(T, t, d):
+    return _hold(T, t, d)
+
+
+def s_cold2(T, t, d):
+    """Cold open, 2: three months later - the barred door slams."""
+    return _hold(T, t, d, zoom=0.25, flood=200.0)
+
+
+def s_cold1(T, t, d):
+    """Cold open, 1: the chat reply, glowing on a phone in a red kitchen. The cat already knows."""
+    st = hx.Stage()
+    c = st.c
+    kit.backdrop(st, "kitchen")
+    cast.phone(c, 540, 860, 1.25, T, lines=[(QUESTION, "you"), (ANSWER.replace(" ✨", ""), "ai")])
+    cast.cat(c, 170, 1260, 0.5, T, eyes="red", pose="hiss")
+    kit.top_drips(c, T, grow=0.4 + 0.6 * t)
+    hx.horror(st.arr, 0.85)
+    kit.dramatized(c, 540, 290, T)
     return st.arr
 
 
@@ -344,6 +382,43 @@ def s_weeks(T, t, d):
             c.drawLine(x + 10, y + 10, x + 80, y + 160, paint(BLOOD, stroke=10))
             c.drawLine(x + 80, y + 10, x + 10, y + 160, paint(BLOOD, stroke=10))
     hx.horror(st.arr, 0.3)
+    return st.arr
+
+
+DOC_Q = "What can chloride be replaced with?"
+DOC_A = "Chloride can be replaced with bromide... context matters."
+
+
+def s_doctest(T, t, d):
+    """His doctors asked the chatbot themselves: it offered bromide too, and no health warning."""
+    st = hx.Stage()
+    c = st.c
+    kit.backdrop(st, "hospital")
+    f = hx.font("special-elite-400", 38)
+    lab = "HIS DOCTORS' OWN TEST (paraphrased)"
+    w = f.measureText(lab)
+    c.drawRect(skia.Rect.MakeLTRB(540 - w / 2 - 24, 262, 540 + w / 2 + 24, 330), paint(INK, 0.9))
+    c.drawRect(skia.Rect.MakeLTRB(540 - w / 2 - 24, 262, 540 + w / 2 + 24, 330), paint(CREAM, stroke=3))
+    hx.text(c, lab, 540, 310, 38, "special-elite-400", CREAM, tag="label")
+    lines = [(DOC_Q, "you")]
+    if T >= Wd("p12", "asked") + 0.3:
+        lines.append((DOC_A, "ai"))
+    n0 = len(hx.TEXT)
+    cast.phone(c, 540, 870, 1.08, T, lines=lines)
+    red = T >= Wd("p12", "bromide")
+    if red:
+        ai = [b for b in hx.TEXT[n0:] if b[0] < 420]                     # the reply's lines (left-aligned bubble)
+        x0, y0 = min(b[0] for b in ai), min(b[1] for b in ai)
+        x1, y1 = max(b[2] for b in ai), max(b[3] for b in ai)
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        c.drawPath(hx.path(hx.ellipse(cx, cy, (x1 - x0) / 2 * 1.5 + 10, (y1 - y0) / 2 * 1.5 + 10), closed=True),
+                   paint(BLOOD, stroke=9))
+    cast.cat(c, 175, 1270, 0.45, T, eyes="red" if red else "gold")
+    cast.helper(c, 860, 1230, 0.36, T, mood="horror" if red else "sweet", halo=not red, look=(-0.6, -0.4))
+    if red:
+        hx.horror(st.arr, 0.3)
+    else:
+        hx.soft_focus(st.arr, 0.3)
     return st.arr
 
 

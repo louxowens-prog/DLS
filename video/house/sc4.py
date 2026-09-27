@@ -132,8 +132,8 @@ def s_counter(T, t, d):
     n = int(25_000_000 * k)
     hx.text(c, "ONE DAY", 540, 470, 96, "shrikhand-400", CREAM, tag="odo", outline=PLUM, ow=14)
     kit.odometer(c, 540, 700, n, digits=8, cw=100, ch=160, T=T, roll=(stop(t, 24) * 7) % 1.0 if k < 1 else 0.0)
-    hx.text(c, "confident wrong answers", 540, 930, 52, "fell-400-italic", CREAM, tag="odo", outline=INK, ow=10)
-    hx.text(c, "(if just 1 in 100 is wrong)", 540, 1010, 46, "fell-400-italic", CREAM, tag="odo", outline=INK, ow=8)
+    hx.text(c, "confident wrong answers", 540, 925, 56, "shrikhand-400", CREAM, tag="odo", outline=INK, ow=10)
+    _caveat(c, 540, 1030, 52)
     cast.cuckoo_clock(c, 820, 1170, 0.4, T, count(T), bird=abs(math.sin(stop(T, 12) * 8)))
     cast.cat(c, 230, 1250, 0.5, T, eyes="gold")
     if k >= 1:
@@ -141,6 +141,20 @@ def s_counter(T, t, d):
             hx.sparkle(c, 140 + i * 160, 590 + (i % 2) * 230, 30, T, seed=i + 60)
     hx.soft_focus(st.arr, 0.25)
     return st.arr
+
+
+def _caveat(c, x, y, size=52, rot=-2):
+    """The honest small print, made big: a cream paper strip saying the rate is a hypothetical."""
+    s = "if just 1 in 100 is wrong"
+    f = hx.font("shrikhand-400", size)
+    w = f.measureText(s)
+    c.save()
+    c.translate(x, y)
+    c.rotate(rot)
+    with hx.figure(c, border=5, fringe=None, shadow=(6, 8, 5, 0.5)) as F:
+        F.rrect(-w / 2 - 28, -size * 0.95, w / 2 + 28, size * 0.45, 8, (255, 240, 214))
+    hx.text(c, s, 0, 0, size, "shrikhand-400", BLOOD, tag="caveat")
+    c.restore()
 
 
 def s_tick(T, t, d):
@@ -407,6 +421,7 @@ def s_payoff(T, t, d):
     bird = abs(math.sin(stop(T, 8) * 5))
     cast.cuckoo_clock(c, 540, 700, 1.25, T, count(T), bird=0.0, glow=ramp(t, 0, d))
     cast.helper(c, 540 + 120 * bird, 700 - 262 * 1.25, 0.2 + 0.08 * bird, T, halo=False, fringe=False)
+    _caveat(c, 540, 1090, 46)
     cast.cat(c, 850, 1280, 0.55, T, eyes="gold" if t < d * 0.6 else "red", flip=True)
     hx.soft_focus(st.arr, 0.3 * (1 - ramp(t, 0, d)))
     hx.horror(st.arr, 0.6 * ramp(t, 0.5, d))
@@ -419,12 +434,13 @@ def s_count(T, t, d):
     st = hx.Stage((40, 0, 10))
     c = st.c
     kit.backdrop(st, "parlor")
-    cast.cuckoo_clock(c, 540, 560, 2.1, T, count(T), mood="horror", glow=1.0)
+    cast.cuckoo_clock(c, 540, 520, 2.0, T, count(T), mood="horror", glow=1.0)
     hx.horror(st.arr, 0.75)
-    lvl = 470 + 330 * ease(ramp(t, 0, d))
+    lvl = 380 + 200 * ease(ramp(t, 0, d))                          # the flood stops short of the numbers
     kit.flood(c, lvl, T, color=(225, 0, 25))
     for i in range(5):
-        hx.flame(c, 160 + i * 190, H - lvl + 30, 240, T, seed=i)
+        hx.flame(c, 160 + i * 190, H - lvl + 30, 150, T, seed=i)
+    _caveat(c, 540, 1110, 46)
     return st.arr
 
 

@@ -20,11 +20,11 @@ for mod in (sc1, sc2, sc3, sc4):
         if name.startswith("s_"):
             SHOTS[name[2:]] = getattr(mod, name)
 
-HORROR = {"eaten", "neighbor", "visions", "clones_red", "burn", "count", "cateyes", "hold", "run"}
+HORROR = {"cold1", "cold2", "eaten", "neighbor", "visions", "clones_red", "burn", "count", "cateyes", "hold", "run"}
 CAPS = [c for c in TL.captions() if TL.who(c[3]) != AI]
 FREEZE = {"grade": sc1.GRADE_FREEZE, "nowarning": 0.0, "casezoom": 0.0}   # true freeze frames: the film stops too
 CRASH = 0.18                                                              # horror cuts punch in from 1.55x
-CAP_BOTTOM, CAP_SIZE, CAP_W = 1486, 52, 860
+CAP_BOTTOM, CAP_SIZE, CAP_W = 1486, 52, 830
 STRIPS = [(255, 196, 214), (190, 240, 216), (255, 214, 176), (196, 222, 255), (230, 206, 255)]
 
 

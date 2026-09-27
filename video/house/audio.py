@@ -60,7 +60,8 @@ class Bus:
 def sections():
     f = first
     return [
-        (0.0, f("eaten"), "box"), (f("eaten"), f("title"), "silent"),
+        (0.0, E("c0") + 0.3, "horror"), (E("c0") + 0.3, f("hook"), "silent"),
+        (f("hook"), f("eaten"), "box"), (f("eaten"), f("title"), "silent"),
         (f("title"), f("always"), "band"), (f("always"), f("court"), "thin"),
         (f("court"), f("fine"), "band"), (f("fine"), f("pile"), "silent"), (f("pile"), f("mirror"), "band"),
         (f("mirror"), f("kitchen"), "box"), (f("kitchen"), f("nowarning"), "thin"), (f("nowarning"), f("parcel"), "silent"),
@@ -74,6 +75,18 @@ def sections():
 
 
 SECTIONS = []
+
+
+def dead_air():
+    """Windows of true silence: every bus (music, effects, horror layers) is cut; only a voice may speak."""
+    f = first
+    return [(E("c0") + 0.3, f("hook") - 0.02),                 # after the cold open's door slam
+            (E("p6") + 0.1, f("neighbor") + 0.0),              # before the horror cut
+            (E("p8") + 0.3, f("doctor") - 0.02),               # after 'psychiatric hold' and its slam
+            (f("realcase") + 0.2, S("p11") - 0.05),            # the black card
+            (f("nowarning") + 0.25, E("p4") + 0.2),            # the frozen chat
+            (f("fine") + 0.35, f("pile") - 0.02),              # the sanction card
+            (f("trust") + 0.15, S("e2") - 0.02)]               # before 'Trust me.'
 
 
 def section(t):
@@ -167,18 +180,38 @@ def music_boxes(box):
 # ------------------------------------------------------------------ sound effects
 
 HITS = []                                               # scare-hit times: the music ducks out under each one
+HITBUS = []                                             # the hits get their own bus: never carved out under the voice
+
+
+def _speaking(t):
+    return any(TL.s(k) + 0.05 < t < TL.e(k) - 0.05 for k in TL.order)
+
+
+def _voice_soon(t, after=0.7):
+    return any(t - 0.05 < TL.s(k) < t + after for k in TL.order)
 
 
 def hit(fx, t, gain=1.0, seed=0, notes=None, body=1.5):
-    """A scare hit, ~5 dB hotter than the old ones and with a longer tail; the band drops away beneath it."""
+    """A scare hit: driven hard so it lands hot even after the limiter, and the band drops away beneath it.
+    When a line is about to start, the hit keeps its slam but loses its tail; only a hit that lands in the middle
+    of a sentence is pulled back."""
     kw = {} if notes is None else {"notes": notes}
-    fx.add(P.scare(1.0, seed=seed, body=body, **kw), t, 1.45 * gain)
+    talking, soon = _speaking(t), _voice_soon(t)
+    g = 4.5 * gain * (0.4 if talking else 1.0)
+    b = 0.45 if (talking or soon) else body
+    HITBUS[0].add(P.scare(1.0, seed=seed, body=b, drive=3.2, **kw), t, g)
     HITS.append(t)
 
 
 def sfx(fx):
     # a hit on every transition
     horror_shots = {"eaten", "neighbor", "visions", "run", "hold", "clones_red", "burn", "count"}
+    # the cold open: a hit on the very first frame, the door slamming, a last slam, then nothing
+    hit(fx, 0.02, 1.0, seed=2, body=1.0)
+    fx.add(P.heartbeat(2, 90), 0.4, 0.4)
+    fx.add(P.stamp(1.5), C["cold2"] - 0.08, 0.7)
+    hit(fx, E("c0") + 0.02, 1.0, seed=3, body=0.8)
+    fx.add(P.meow(1.0), W("c0", "salt.") + 0.1, 0.35, pan=0.3)
     for i, (t, name, tr) in enumerate(EDIT[1:], 1):
         if name in horror_shots:
             hit(fx, t, 1.0, seed=i)
@@ -254,6 +287,9 @@ def sfx(fx):
         fx.add(P.stamp(0.5), first("weeks") + 0.05 + k * 0.07, 0.25, pan=0.3 + 0.02 * k)
     fx.add(P.click(1.0), first("casefile"), 0.5)
     fx.add(P.click(1.0), first("casezoom"), 0.5)
+    fx.add(P.keys(24, 0.05, seed=4), first("doctest") + 0.3, 0.3)
+    fx.add(P.sting((77, 78, 84), 1.0), W("p12", "bromide") - 0.05, 0.4)
+    fx.add(P.meow(1.0), W("p12", "bromide") + 0.5, 0.45, pan=0.3)
     # the scale
     fx.add(P.stamp(1.0), W("s1", "one", 1) - 0.1, 0.5)
     for k, a in enumerate((0.55, 1.2, 1.9)):
@@ -366,6 +402,7 @@ def build():
     SECTIONS[:] = sections()
     HITS.clear()
     band_bus, keys_bus, box_bus, fx, hz = Bus(), Bus(), Bus(), Bus(), Bus()
+    HITBUS[:] = [Bus()]
     band(band_bus, keys_bus, hz)
     music_boxes(box_bus)
     sfx(fx)
@@ -395,6 +432,11 @@ def build():
     music = music * gate
     hzx = hz.x * gate
     music = music + reverb(fx.x, 0.15, 1.0) * db(0.5) + reverb(hzx, 0.3, 2.0)
+    dead = np.ones(N)                                  # true dead air: everything but the voice drops out
+    for a, b in dead_air():
+        dead[int(a * SR):int(b * SR)] = 0.0
+    dead = np.convolve(dead, np.ones(int(0.015 * SR)) / int(0.015 * SR), "same")
+    music = music * dead
     music = signal.lfilter(*signal.butter(2, 35 / (SR / 2), "high"), music)
 
     vo = reverb(voices(), 0.06, 0.5)
@@ -415,7 +457,8 @@ def build():
     music = widen(music, 0.7)
     ref = music[:, int(S("l1") * SR):int(E("w2") * SR)]
     g_mu = db(-23.5) / (np.sqrt((ref ** 2).mean()) + 1e-12)
-    mix = music * g_mu + vo
+    hits = reverb(HITBUS[0].x, 0.12, 0.9) * dead
+    mix = music * g_mu + hits * g_mu + vo
     mix = loudness(mix, -14.0)
     tail = int(0.4 * SR)
     mix[:, -tail:] *= np.linspace(1, 0, tail) ** 2
@@ -435,8 +478,12 @@ def loudness(x, target):
 
 
 def limit(x, ceil, look=0.005, rel=0.12):
+    """A look-ahead peak limiter that watches the true (4x oversampled) peak, so hard hits don't overshoot."""
     from scipy.ndimage import minimum_filter1d
-    pk = np.max(np.abs(x), axis=0)
+    up = signal.resample_poly(x, 4, 1, axis=1)
+    pk = np.max(np.abs(up), axis=0).reshape(-1, 4).max(axis=1)[: x.shape[1]]
+    if len(pk) < x.shape[1]:
+        pk = np.pad(pk, (0, x.shape[1] - len(pk)), mode="edge")
     need = np.minimum(1.0, ceil / (pk + 1e-12))
     la = int(look * SR)
     g = minimum_filter1d(need, size=2 * la + 1)

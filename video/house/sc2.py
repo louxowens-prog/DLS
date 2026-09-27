@@ -21,8 +21,8 @@ def s_court(T, t, d):
     cast.judge(c, 540, 660, 0.62, T, gavel=0.0)
     cast.suit_man(c, 270, 1050, 0.72, T, seed=0)
     cast.suit_man(c, 810, 1060, 0.7, T, suit=(110, 90, 60), tie=(160, 60, 40), hair=(40, 30, 20), seed=1)
-    with hx.layer(c, 0.2 * ramp(t, 0.2, 1.0)):                        # a double exposure: the chatbot's face over the court
-        cast.helper(c, 540, 820, 1.9, T, mood="eerie", halo=False, fringe=False, look=(0.0, 0.3))
+    with hx.layer(c, 0.45 * ramp(t, 0.2, 0.9)):                       # a double exposure: the chatbot's face over the court
+        cast.helper(c, 540, 400, 1.35, T, mood="eerie", halo=False, fringe=True, look=(0.0, 0.3))
     hx.soft_focus(st.arr, 0.25)
     return st.arr
 

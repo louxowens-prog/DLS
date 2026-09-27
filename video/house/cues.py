@@ -11,9 +11,10 @@ def count(T):
 
 
 C = {
+    "cold2": W("c0", "Three"),
     "eaten": S("h2") - 0.08,
-    "items": [W("l1", w) for w in ("Made-up", "Fake", "Wrong", "Invented", "Bad", "history", "Broken", "Citations", "Documents")],
-    "fake_hist": W("l1", "Fake", 1),
+    "items": [W("l1", w) for w in ("Made-up", "fake", "wrong", "invented", "bad", "history", "broken", "citations", "documents")],
+    "fake_hist": W("l1", "fake", 1),
     "reels": W("w1", "the"),
     "ticket": W("w1", "And"),
     "star": W("w2", "over"),

@@ -122,20 +122,20 @@ def kitchen():
 
 
 def courtroom():
-    """Wood panelling, the bench, tall windows onto a painted sky."""
+    """A candy-box courtroom: pink lacquered panelling, a blood-red bench, tall windows onto a painted sky."""
     def f(c):
-        c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((120, 70, 44)))
+        c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((240, 150, 180)))
         for x in range(0, W, 180):
-            c.drawRect(skia.Rect.MakeLTRB(x + 14, 80, x + 166, 1300), paint((140, 86, 56)))
-            c.drawRect(skia.Rect.MakeLTRB(x + 14, 80, x + 166, 1300), paint((90, 50, 30), stroke=6))
-        hx.brushwork(c, 0, 0, W, 1300, (130, 78, 50), spread=14, n=900, seed=5, a=0.15, angle=math.pi / 2, jitter_a=0.05)
+            c.drawRect(skia.Rect.MakeLTRB(x + 14, 80, x + 166, 1300), paint((255, 184, 206)))
+            c.drawRect(skia.Rect.MakeLTRB(x + 14, 80, x + 166, 1300), paint((196, 80, 130), stroke=6))
+        hx.brushwork(c, 0, 0, W, 1300, (250, 170, 196), spread=14, n=900, seed=5, a=0.15, angle=math.pi / 2, jitter_a=0.05)
         for k, x in enumerate((110, 810)):
             _window(c, x, 180, x + 160, 700, sky_seed=10 + k)
-        c.drawRect(skia.Rect.MakeLTRB(0, 1300, W, H), paint((70, 40, 26)))
-        c.drawRect(skia.Rect.MakeLTRB(200, 880, 880, 1300), paint((96, 54, 32)))          # the bench
-        c.drawRect(skia.Rect.MakeLTRB(180, 860, 900, 900), paint((150, 96, 60)))
-        c.drawCircle(540, 1050, 90, paint((200, 160, 60)))
-        c.drawCircle(540, 1050, 70, paint((150, 110, 40)))
+        c.drawRect(skia.Rect.MakeLTRB(0, 1300, W, H), paint((110, 10, 40)))
+        c.drawRect(skia.Rect.MakeLTRB(200, 880, 880, 1300), paint((196, 10, 30)))          # the bench, blood-red lacquer
+        c.drawRect(skia.Rect.MakeLTRB(180, 860, 900, 900), paint((255, 118, 40)))
+        c.drawCircle(540, 1050, 90, paint((255, 206, 90)))
+        c.drawCircle(540, 1050, 70, paint((230, 160, 50)))
     return hx.cached("courtroom", lambda: _paint(f))
 
 
@@ -187,15 +187,21 @@ def street():
     return hx.cached("street", lambda: _paint(f))
 
 
+PAGES = [((255, 186, 206), (240, 150, 182), (140, 40, 90)), ((176, 8, 30), (206, 30, 52), (255, 200, 200)),
+         ((170, 206, 250), (140, 178, 236), (60, 60, 140)), ((170, 236, 206), (140, 210, 180), (40, 110, 90))]
+
+
 def album_page(seed=0):
-    """A scrapbook page: dark card with a paper grain, a little doodled border."""
+    """A scrapbook page in candy colours (pink, blood red, powder blue, mint), brushy, with a doodled border."""
+    base, brush, dots = PAGES[seed % len(PAGES)]
+
     def f(c):
-        c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((44, 26, 34)))
-        hx.brushwork(c, 0, 0, W, H, (54, 32, 42), spread=10, n=1800, seed=31 + seed, size=(10, 30), a=0.3)
+        c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint(base))
+        hx.brushwork(c, 0, 0, W, H, brush, spread=14, n=1800, seed=31 + seed, size=(10, 40), a=0.3)
         for k in range(40):
             x = 40 + k * 26
-            c.drawCircle(x, 60, 6, paint((255, 200, 220), 0.5))
-            c.drawCircle(x, H - 60, 6, paint((255, 200, 220), 0.5))
+            c.drawCircle(x, 60, 6, paint(dots, 0.6))
+            c.drawCircle(x, H - 60, 6, paint(dots, 0.6))
     return hx.cached(f"album{seed}", lambda: _paint(f))
 
 

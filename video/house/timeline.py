@@ -11,7 +11,8 @@ FPS = 24
 TWOS = 12
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-PRE = {"p7": 0.6, "p11": 0.9, "e2": 0.5}     # true silences before the heaviest beats
+PRE = {"c0": 0.7, "p7": 0.9, "p11": 0.9, "e2": 0.9}     # the opening slam, and true silences before the heaviest beats
+SPEED = {"l1": 1.12}                         # the list of kinds of wrong, rattled off a little quicker
 TAIL = 4.5
 
 
@@ -42,6 +43,7 @@ class Timeline:
                 spoken, caption = spoken.replace("{N}", number_words(n)), caption.replace("{n}", f"{n:,}")
                 self.count_said = n
             v, sp = VOICES[who]
+            sp = SPEED.get(key, sp)
             wav = speak(spoken, v, sp)
             d = len(wav) / SR
             words = word_times(spoken, wav)

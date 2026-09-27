@@ -14,6 +14,10 @@ VOICES = {NAR: ("af_heart", 1.06), AI: ("af_nicole", 0.94), DOC: ("am_michael", 
 WRONG_PER_SEC = 2.5e9 * 0.01 / 86400
 
 LINES = [
+    # ---- cold open: a flash-forward to where the true story ends
+    ("c0", NAR, "He asked a chatbot about his salt. Three months later: a psychiatric hold.",
+     "He asked a chatbot about his salt.| Three months later: a psychiatric hold.", 1.1),
+
     # ---- the hook: a sweet voice citing a study that isn't there
     ("h1", AI, "According to the study...", "“According to the study…”", 0.25),
     ("h2", NAR, "The study doesn't exist.", "The study doesn’t exist.", 0.35),
@@ -21,10 +25,10 @@ LINES = [
      "AI can simply be wrong.| And it sounds just as sure as when it’s right.", 0.35),
 
     # ---- what it gets wrong (the photo album says each one)
-    ("l1", NAR, "Made-up facts. Fake quotes. Wrong math. Invented court cases. Bad medical advice. "
-                "Fake history. Broken code. Citations to nowhere. Documents it misreads.",
-     "Made-up facts.| Fake quotes.| Wrong math.| Invented court cases.| Bad medical advice.| "
-     "Fake history.| Broken code.| Citations to nowhere.| Documents it misreads.", 0.3),
+    ("l1", NAR, "Made-up facts, fake quotes, wrong math, invented court cases, bad medical advice, "
+                "fake history, broken code, citations to nowhere, documents it misreads.",
+     "Made-up facts,| fake quotes,| wrong math,| invented court cases,| bad medical advice,| "
+     "fake history,| broken code,| citations to nowhere,| documents it misreads.", 0.3),
 
     # ---- why it sounds so sure
     ("w1", NAR, "Why so sure? At its core, it predicts the words that sound most likely. And sounding right isn't being right.",
@@ -34,8 +38,8 @@ LINES = [
     ("w3", AI, "I always have an answer!", None, 0.35),
 
     # ---- it has already happened
-    ("c1", NAR, "In New York, lawyers filed court cases a chatbot had invented. They asked it: are these real? It said yes.",
-     "In New York, lawyers filed court cases| a chatbot had invented.| They asked it: are these real?| It said yes.", 0.45),
+    ("c1", NAR, "In New York, lawyers cited court cases a chatbot had invented. They asked it: are these real? It said yes.",
+     "In New York, lawyers cited court cases| a chatbot had invented.| They asked it: are these real?| It said yes.", 0.45),
     ("c2", NAR, "Judges have now caught A.I.-invented material in more than two thousand cases. And counting.",
      "Judges have now caught AI-invented material| in more than 2,000 cases.| And counting.", 0.2),
     ("c3", NAR, "An airline's chatbot made up a refund policy. The airline had to pay.",
@@ -45,19 +49,21 @@ LINES = [
     ("p1", NAR, "Now, let's make it personal. Imagine it's you.", "Now, let’s make it personal.| Imagine it’s you.", 0.3),
     ("p2", NAR, "You want to eat healthier. You've read that the chloride in salt is bad for you. So you ask a chatbot what to replace it with.",
      "You want to eat healthier.| You’ve read that the chloride in salt is bad for you.| So you ask a chatbot what to replace it with.", 0.15),
-    ("p3", AI, "Chloride? You can swap it for bromide!", None, 0.25),
+    ("p3", AI, "You can replace chloride with bromide! Context matters.", None, 0.25),
     ("p4", NAR, "No health warning. No question about why you're asking.", "No health warning.| No question about why you’re asking.", 0.3),
     ("p5", NAR, "So you buy sodium bromide online, and use it like salt. Every day. For three months.",
      "So you buy sodium bromide online,| and use it like salt.| Every day. For three months.", 0.2),
     ("p6", NAR, "You can't sleep. Your skin breaks out.", "You can’t sleep.| Your skin breaks out.", 0.15),
     ("p7", NAR, "Then you're sure your neighbor is poisoning you. You see things. You hear things.",
      "Then you’re sure| your neighbor is poisoning you.| You see things. You hear things.", 0.2),
-    ("p8", NAR, "You try to leave. They put you on a psychiatric hold.", "You try to leave.| They put you on a psychiatric hold.", 1.0),
+    ("p8", NAR, "You try to leave. They put you on a psychiatric hold.", "You try to leave.| They put you on a psychiatric hold.", 1.3),
     ("p9", DOC, "Your bromide level is over two hundred times the upper limit.",
      "Your bromide level is| over 200 times the upper limit.", 0.25),
     ("p10", NAR, "Three weeks in hospital.", None, 0.5),
     ("p11", NAR, "This isn't a story. It happened to a sixty-year-old man with no history of mental illness. His doctors published it in 2025.",
-     "This isn’t a story.| It happened to a 60-year-old man| with no history of mental illness.| His doctors published it in 2025.", 0.45),
+     "This isn’t a story.| It happened to a 60-year-old man| with no history of mental illness.| His doctors published it in 2025.", 0.3),
+    ("p12", NAR, "He said a chatbot suggested it. So his doctors asked it themselves. It offered bromide too, with no health warning.",
+     "He said a chatbot suggested it.| So his doctors asked it themselves.| It offered bromide too,| with no health warning.", 0.45),
 
     # ---- the scale: the same mistake, millions of times
     ("s1", NAR, "Humans make mistakes too. But one bad doctor misleads one patient at a time.",

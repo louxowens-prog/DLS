@@ -458,7 +458,9 @@ def scribble(c, x, y, r, t, seed=0, color=INK, w=6, a=1.0, loops=5):
         ang = i * 0.63 + rng.normal(0, 0.2)
         rr = r * (0.4 + 0.6 * rng.uniform())
         pts.append((x + rr * math.cos(ang), y + rr * math.sin(ang) * 0.7))
-    c.drawPath(path(pts, closed=False), paint(color, a, stroke=w))
+    p = path(pts, closed=False)
+    c.drawPath(p, paint(color, a, stroke=w * 1.9))                   # a fat grease-pencil line, re-scratched every drawing
+    c.drawPath(p, paint(WHITE, 0.35 * a, stroke=w * 0.45))
 
 
 def heart(c, x, y, s, color=PINK, a=1.0):
@@ -698,7 +700,9 @@ def crash_zoom(arr, z, cx=W / 2, cy=H / 2):
     x0, y0 = min(max(0, cx - w / 2), W - w), min(max(0, cy - h / 2), H - h)
     out = arr.copy()
     out[..., :3] = np.asarray(im.resize((W, H), Image.BILINEAR, box=(x0, y0, x0 + w, y0 + h)))
-    TEXT[:] = [((a - x0) * z, (b - y0) * z, (c_ - x0) * z, (d - y0) * z, tg) for a, b, c_, d, tg in TEXT]
+    moved = [((a - x0) * z, (b - y0) * z, (c_ - x0) * z, (d - y0) * z, tg) for a, b, c_, d, tg in TEXT]
+    TEXT[:] = [(max(0.0, a), max(0.0, b), min(W, c_), min(H, d), tg) for a, b, c_, d, tg in moved
+               if c_ > 0 and d > 0 and a < W and b < H]                  # pushed out of frame: gone
     return out
 
 

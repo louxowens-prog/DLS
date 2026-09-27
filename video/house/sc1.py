@@ -35,8 +35,8 @@ def s_hook(T, t, d):
     cast.cat(c, 175, 1255, 0.55, T, eyes="gold")
     cast.helper(c, 650, 990, 0.95, T, talk=kit.ai_talk(T), mood="sweet", look=(0.0, 0.1))
     kit.ai_card(c, "“According to the study…”", T, -1.0, y=250, size=66)
-    kit.sticker(c, "heart", 930, 560, 0.55, T, 0.25, rot=12)
-    hx.soft_focus(st.arr, 0.55)
+    kit.sticker(c, "heart", 930, 560, 0.55, T, T - t + 0.25, rot=12)
+    hx.soft_focus(st.arr, 0.85, bloom=0.5)
     return st.arr
 
 
@@ -81,7 +81,7 @@ def s_title(T, t, d):
     c = st.c
     kit.backdrop(st, "sky_full", 2)
     f = hx.font("shrikhand-400", 150)
-    for j, (word, y) in enumerate((("IT SOUNDS", 700), ("SO SURE", 890))):
+    for j, (word, y) in enumerate((("IT SOUNDS", 690), ("SO SURE", 915))):
         k = hx.pop(T, S("h3") + 0.1 + 0.35 * j, 0.25, 0.3)
         if k <= 0:
             continue
@@ -149,13 +149,20 @@ def _album(T, t, d, page):
         name, i = ALBUM[page * 3 + j]
         t0 = C["items"][i] - 0.05
         depth = len(shown) - 1 - n
-        k = hx.pop(T, t0, 0.14, 0.22)
         x = 540 + depth * (-70 if (j + page) % 2 else 70)
         y = 770 + depth * 36
         rot = (-3, 3, -2)[j] + depth * (-4 if j % 2 else 5)
-        sc = (1 - 0.05 * depth) * k
+        move = (j + page) % 3
+        u = ramp(stop(T, 12), t0, t0 + 0.25)
+        if move == 0:                                                # slammed down
+            sc, dx, spin = (1 - 0.05 * depth) * hx.pop(T, t0, 0.14, 0.22), 0.0, 0.0
+        elif move == 1:                                              # skids in from the side, sped up
+            sc, dx, spin = 1 - 0.05 * depth, (1 - ease(u)) * (1150 if page % 2 else -1150), (1 - u) * 25
+        else:                                                        # tumbles in, like a toss run backwards
+            sc, dx, spin = (1 - 0.05 * depth) * (0.25 + 0.75 * ease(u)), 0.0, (1 - u) * -540
         c.save()
-        c.translate(x, y)
+        c.translate(x + dx, y)
+        c.rotate(spin)
         c.scale(sc, sc)
         c.translate(-x, -y)
         hx.photo(c, kit.mini(name, sc=2), x, y, 800, 600, rot=rot, border=26, bottom=90)
