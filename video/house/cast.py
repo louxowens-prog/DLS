@@ -395,7 +395,7 @@ def phone(c, x, y, s, T, lines=(), who=(), rot=0.0, typed=1.0):
     y0 = -250
     for i, (t, w) in enumerate(lines):
         f = hx.font("special-elite-400", 40)
-        ls = hx.wrap(t, f, 300)
+        ls = hx.wrap(t, f, 300) or [" "]
         bh = 50 * len(ls) + 28
         x0 = -180 if w == "ai" else 180 - max(f.measureText(l) for l in ls) - 30
         bw = max(f.measureText(l) for l in ls) + 30

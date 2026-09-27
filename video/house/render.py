@@ -46,6 +46,7 @@ def main():
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--start", type=float, default=0.0)
     ap.add_argument("--end", type=float, default=None)
+    ap.add_argument("--resume", action="store_true")
     args = ap.parse_args()
     sys.path.insert(0, HERE)
     from timeline import FPS, TL
@@ -58,7 +59,16 @@ def main():
     bounds = [f0 + round(n * i / nch) for i in range(nch + 1)]
     parts = [os.path.join(BUILD, "chunks", f"part_{i:02d}.mp4") for i in range(nch)]
     t0 = time.time()
-    jobs = list(range(nch))
+    def done(i):
+        """A chunk already rendered in full (for --resume)."""
+        if not os.path.exists(parts[i]):
+            return False
+        r = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-count_packets", "-show_entries",
+                            "stream=nb_read_packets", "-of", "csv=p=0", parts[i]], capture_output=True, text=True)
+        return r.stdout.strip() == str(bounds[i + 1] - bounds[i])
+
+    jobs = [i for i in range(nch) if not (args.resume and done(i))]
+    print("chunks to render:", jobs, flush=True)
     running = []
     while jobs or running:
         while jobs and len(running) < args.workers:
