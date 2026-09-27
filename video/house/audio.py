@@ -333,8 +333,8 @@ def sfx(fx):
     fx.add(P.drone(first("trust") - first("count"), root=27, amp=1.0, seed=2), first("count"), 0.7)
     hit(fx, E("e2") + 0.02, 1.2, seed=71, body=2.0)
     fx.add(P.meow(1.0), E("e2") + 0.4, 0.6)
-    fx.add(P.projector(TL.total - first("end")), first("end"), 0.6)
-    hit(fx, TL.total - 2.2, 0.4, seed=81, notes=(29, 30, 36))
+    fx.add(P.projector(TL.total - first("end")), first("end"), 0.2)
+    hit(fx, TL.total - 2.2, 0.15, seed=81, notes=(29, 30, 36))
 
 
 def horror_layers(hz):

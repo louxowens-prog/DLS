@@ -30,7 +30,7 @@ C = {
     "hear": W("p7", "hear"),
     "hold": W("p8", "They"),
     "level": W("p9", "two"),
-    "real": S("p11"),
+    "real": W("p11", "This"),
     "atonce": W("s2", "millions"),
     "second": W("s4", "Almost"),
     "clock": W("s5", "clock?"),

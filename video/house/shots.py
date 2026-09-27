@@ -24,7 +24,7 @@ HORROR = {"cold1", "cold2", "eaten", "neighbor", "visions", "clones_red", "burn"
 CAPS = [c for c in TL.captions() if TL.who(c[3]) != AI]
 FREEZE = {"grade": sc1.GRADE_FREEZE, "nowarning": 0.0, "casezoom": 0.0}   # true freeze frames: the film stops too
 CRASH = 0.18                                                              # horror cuts punch in from 1.55x
-CAP_BOTTOM, CAP_SIZE, CAP_W = 1486, 52, 830
+CAP_BOTTOM, CAP_SIZE, CAP_W = 1486, 52, 860
 STRIPS = [(255, 196, 214), (190, 240, 216), (255, 214, 176), (196, 222, 255), (230, 206, 255)]
 
 
@@ -59,9 +59,9 @@ def caption(arr, T, name):
     lines = hx.wrap(s, f, CAP_W - 80)
     lh = CAP_SIZE * 1.16
     bh = lh * len(lines) + 46
-    bw = max(f.measureText(l) for l in lines) + 90
+    bw = max(f.measureText(l) for l in lines) + 70
     y0 = CAP_BOTTOM - bh
-    cx = 520
+    cx = 505
     horror = name in HORROR
     strip = (246, 236, 220) if horror else STRIPS[idx % len(STRIPS)]
     ink = hx.BLOOD if horror else hx.PLUM
@@ -86,6 +86,7 @@ def caption(arr, T, name):
         pts.append((-bw / 2 + rng.uniform(-8, 10), -bh / 2 + i * bh / 6))
     with hx.figure(c, border=5, fringe=None, shadow=(8, 10, 6, 0.5)) as F:
         F.poly(pts, strip)
+    hx.reg_local(c, -bw / 2 - 6, -bh / 2 - 6, bw / 2 + 6, bh / 2 + 6, "capstrip")   # the paper itself hides what's under it
     y = -bh / 2 + 23 + CAP_SIZE * 0.86
     for ln in lines:
         hx.text(c, ln, 0, y, CAP_SIZE, "shrikhand-400", ink, tag="caption")
@@ -120,7 +121,7 @@ def render_frame(T, idx=None, captions=True, film=True):
         out = shot_frame(i, T)
     out = np.ascontiguousarray(out)
     t0, name, tr = EDIT[shot_at(T)]
-    if name in HORROR and tr == "cut" and T - t0 < CRASH:
+    if name in HORROR and tr == "cut" and t0 > 0 and T - t0 < CRASH:
         out = hx.crash_zoom(out, 1 + 0.55 * (1 - (T - t0) / CRASH))
     fT, fidx = T, idx
     if name in FREEZE and T - t0 >= FREEZE[name]:
@@ -140,6 +141,8 @@ def lint(boxes, ignore=("prop",)):
     for i in range(len(bx)):
         for j in range(i + 1, len(bx)):
             a, b = bx[i], bx[j]
+            if {a[4], b[4]} <= {"caption", "capstrip"}:                # the strip and its own lines
+                continue
             ox = min(a[2], b[2]) - max(a[0], b[0])
             oy = min(a[3], b[3]) - max(a[1], b[1])
             if ox > 6 and oy > 6:

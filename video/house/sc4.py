@@ -27,7 +27,7 @@ def s_onedoc(T, t, d):
     for i in range(3):                                                # the queue, waiting
         cast.you(c, 620 + i * 150, 1080, 0.3, T + i * 0.3, pose="stand", fringe=False)
     if T >= Wd("s1", "one", 1) - 0.1:
-        kit.stamp(c, "ONE AT A TIME", 540, 1235, 54, T, Wd("s1", "one", 1) - 0.1, color=PLUM, rot=-4, tag="stamp")
+        kit.stamp(c, "ONE AT A TIME", 540, 330, 54, T, Wd("s1", "one", 1) - 0.1, color=PLUM, rot=-4, tag="stamp", fill=CREAM)
     hx.soft_focus(st.arr, 0.35)
     return st.arr
 
@@ -132,9 +132,8 @@ def s_counter(T, t, d):
     n = int(25_000_000 * k)
     hx.text(c, "ONE DAY", 540, 470, 96, "shrikhand-400", CREAM, tag="odo", outline=PLUM, ow=14)
     kit.odometer(c, 540, 700, n, digits=8, cw=100, ch=160, T=T, roll=(stop(t, 24) * 7) % 1.0 if k < 1 else 0.0)
-    hx.text(c, "confident wrong answers", 540, 925, 56, "shrikhand-400", CREAM, tag="odo", outline=INK, ow=10)
+    hx.text(c, "confident  wrong  answers", 540, 925, 56, "shrikhand-400", CREAM, tag="odo", outline=INK, ow=10)
     _caveat(c, 540, 1030, 52)
-    cast.cuckoo_clock(c, 820, 1170, 0.4, T, count(T), bird=abs(math.sin(stop(T, 12) * 8)))
     cast.cat(c, 230, 1250, 0.5, T, eyes="gold")
     if k >= 1:
         for i in range(6):
@@ -187,9 +186,10 @@ def s_thatclock(T, t, d):
     st = hx.Stage()
     c = st.c
     kit.backdrop(st, "parlor")
-    z = 1.0 + 0.9 * ease(ramp(t, 0.2, 1.5))
+    k = ease(ramp(t, 0.2, 1.5))
+    z = 1.0 + 1.1 * k
     c.save()
-    c.translate(170, 470)
+    c.translate(170 + (540 - 170) * k, 470 + (700 - 470) * k)            # the push-in pulls the clock to the centre
     c.scale(z, z)
     c.translate(-170, -470)
     cast.cuckoo_clock(c, 170, 470, 0.42, T, count(T), glow=ease(ramp(t, 0.8, 1.5)))
@@ -221,7 +221,7 @@ def _book(c, x, y, s, T, open_=0.0):
             F.rrect(-300, -400, 300, 400, 14, (40, 60, 110))
         c.drawRect(skia.Rect.MakeLTRB(-300, -400, -250, 400), paint((30, 40, 80)))
         for j, ln in enumerate(("INTERNATIONAL", "AI SAFETY", "REPORT")):
-            hx.text(c, ln, 20, -230 + j * 90, 64, "fell-sc-400", CREAM, tag="book")
+            hx.text(c, ln, 20, -230 + j * 90, 52, "fell-sc-400", CREAM, tag="book")
         hx.text(c, "2026", 20, 120, 90, "shrikhand-400", GOLD, tag="book")
         c.restore()
     c.restore()

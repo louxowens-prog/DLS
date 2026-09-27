@@ -31,7 +31,7 @@ EDIT = [
     (S("w3") - 0.12, "always", "cut"),
     (S("c1") - 0.15, "court", "iris"),
     (W("c1", "chatbot") - 0.2, "brief", "cut"),
-    (W("c1", "They") - 0.1, "ask", "cut"),
+    (W("c1", "One") - 0.1, "ask", "cut"),
     (C["gavel"], "fine", "card"),
     (C["pile"], "pile", "cut"),
     (S("c3") - 0.12, "plane", "iris"),
@@ -55,7 +55,7 @@ EDIT = [
     (S("p10") - 0.12, "weeks", "cut"),
     (E("p10") + 0.35, "realcase", "card"),            # a black card held in silence, then 'This isn't a story.'
     (W("p11", "It") - 0.1, "casefile", "cut"),
-    (W("p11", "doctors") - 0.3, "casezoom", "cut"),
+    (W("p11", "published") - 0.2, "casezoom", "cut"),
     (S("p12") - 0.1, "doctest", "cut"),
     (S("s1") - 0.12, "onedoc", "iris"),
     (S("s2") - 0.12, "clones", "cut"),

@@ -104,9 +104,9 @@ def s_nowarning(T, t, d):
     kit.backdrop(st, "kitchen")
     Tf = S("p3") + 1.0
     n0 = len(hx.TEXT)
-    cast.phone(c, 540, 850, 1.12, Tf, lines=[(QUESTION, "you"), (ANSWER.replace(" ✨", ""), "ai")])
+    cast.phone(c, 540, 810, 1.05, Tf, lines=[(QUESTION, "you"), (ANSWER.replace(" ✨", ""), "ai")])
     y0 = max(b[3] for b in hx.TEXT[n0:]) + 34                        # just under the reply
-    y1 = y0 + 110
+    y1 = y0 + 96
     # the empty space where a warning should have been: a dashed pencil outline around nothing
     rng = np.random.default_rng(6)
     for i in range(18):
@@ -121,7 +121,7 @@ def s_nowarning(T, t, d):
     c.drawLine(547, ym - 16, 547, ym + 14, paint(BLOOD, 0.8, stroke=6))
     c.drawCircle(547, ym + 27, 4, paint(BLOOD, 0.8))
     hx.reg(330, y0, 764, y1, "warnbox")
-    kit.dramatized(c, 540, 330, Tf)
+    kit.dramatized(c, 540, 300, Tf)
     if t < 2 / 24:
         c.drawRect(skia.Rect.MakeWH(W, H), paint(CREAM, 0.8))
     hx.freeze_look(st.arr, 1.0)
@@ -354,11 +354,12 @@ def s_doctor(T, t, d):
     c.drawRect(skia.Rect.MakeLTRB(600, base - 8, 700, base), paint((60, 170, 90)))
     hx.text(c, "normal: up to 7.3 mg/L", 760, base + 60, 30, "special-elite-400", INK, tag="chart")
     k = ease(ramp(T, C["level"] - 0.3, C["level"] + 0.8))
-    top = base - (base - 470) * k
+    top = base - (base - 560) * k
     c.drawRect(skia.Rect.MakeLTRB(830, top, 950, base), paint(BLOOD))
     if k >= 1:
         for i in range(3):
-            hx.flame(c, 860 + i * 40, 480, 120, T, seed=i)
+            hx.flame(c, 860 + i * 40, 570, 95, T, seed=i)
+        kit.stamp(c, "233×", 700, 890, 76, T, C["level"] + 0.9, color=BLOOD, rot=-8, tag="chart")
         hx.text(c, "yours:", 700, 640, 44, "fell-400-italic", BLOOD, tag="chart")
         hx.text(c, "1,700", 700, 710, 56, "shrikhand-400", BLOOD, tag="chart")
         hx.text(c, "mg/L", 700, 766, 38, "special-elite-400", BLOOD, tag="chart")

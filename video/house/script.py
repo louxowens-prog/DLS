@@ -38,8 +38,8 @@ LINES = [
     ("w3", AI, "I always have an answer!", None, 0.35),
 
     # ---- it has already happened
-    ("c1", NAR, "In New York, lawyers cited court cases a chatbot had invented. They asked it: are these real? It said yes.",
-     "In New York, lawyers cited court cases| a chatbot had invented.| They asked it: are these real?| It said yes.", 0.45),
+    ("c1", NAR, "In New York, lawyers cited court cases a chatbot had invented. One of them asked it: are these real? It said yes.",
+     "In New York, lawyers cited court cases| a chatbot had invented.| One of them asked it: are these real?| It said yes.", 0.45),
     ("c2", NAR, "Judges have now caught A.I.-invented material in more than two thousand cases. And counting.",
      "Judges have now caught AI-invented material| in more than 2,000 cases.| And counting.", 0.2),
     ("c3", NAR, "An airline's chatbot made up a refund policy. The airline had to pay.",
@@ -60,8 +60,8 @@ LINES = [
     ("p9", DOC, "Your bromide level is over two hundred times the upper limit.",
      "Your bromide level is| over 200 times the upper limit.", 0.25),
     ("p10", NAR, "Three weeks in hospital.", None, 0.5),
-    ("p11", NAR, "This isn't a story. It happened to a sixty-year-old man with no history of mental illness. His doctors published it in 2025.",
-     "This isn’t a story.| It happened to a 60-year-old man| with no history of mental illness.| His doctors published it in 2025.", 0.3),
+    ("p11", NAR, "Remember the man at the very start? This isn't a story. It happened to him: a sixty-year-old man with no history of mental illness. His doctors published it in 2025.",
+     "Remember the man at the very start?| This isn’t a story.| It happened to him: a 60-year-old man| with no history of mental illness.| His doctors published it in 2025.", 0.3),
     ("p12", NAR, "He said a chatbot suggested it. So his doctors asked it themselves. It offered bromide too, with no health warning.",
      "He said a chatbot suggested it.| So his doctors asked it themselves.| It offered bromide too,| with no health warning.", 0.45),
 
