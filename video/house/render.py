@@ -87,12 +87,12 @@ def main():
         for p in parts:
             f.write(f"file '{p}'\n")
     video = os.path.join(BUILD, "video.mp4")
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", lst, "-c", "copy", video], check=True)
+    subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", lst, "-c", "copy", video], check=True)
     audio = os.path.join(BUILD, "audio.wav")
     tag = "" if args.scale == 1.0 else "_proof"
     master = os.path.join(BUILD, f"final{tag}.mp4")
     af = "anull"                          # loudness is set in audio.py with a static gain, so dynamics survive
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", video, "-ss", str(args.start), "-i", audio, "-map", "0:v", "-map", "1:a",
+    subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", video, "-ss", str(args.start), "-i", audio, "-map", "0:v", "-map", "1:a",
                     "-c:v", "libx264", "-preset", "slow", "-crf", "14", "-profile:v", "high", "-pix_fmt", "yuv420p",
                     "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
                     "-r", str(FPS), "-af", af, "-ar", "48000", "-c:a", "aac", "-b:a", "256k", "-shortest",

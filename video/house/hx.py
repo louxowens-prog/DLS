@@ -461,7 +461,7 @@ def _grain_pool():
     if not _GRAIN:
         rng = np.random.default_rng(1977)
         for i in range(24):
-            n = rng.normal(0, 1, (H // 3, W // 3)).astype(np.float32)
+            n = rng.normal(0, 1, (H // 4, W // 4)).astype(np.float32)
             g = np.asarray(Image.fromarray(np.clip(n * 42 + 128, 0, 255).astype(np.uint8)).resize((W, H), Image.BILINEAR))
             _GRAIN.append(g.astype(np.int16) - 128)
     return _GRAIN
@@ -493,8 +493,8 @@ def film(arr, T, idx, grain=1.0, dust=1.0, weave=1.0, fade=1.0):
     # the lamp flickers
     rgb *= 1.0 + rng.normal(0, 0.018) * weave
     rgb *= _vignette()
-    g = _grain_pool()[int(rng.integers(0, 24))]
-    rgb += g[..., None] * (0.16 * grain)
+    g = _grain_pool()[int(np.random.default_rng(idx // 2 * 5 + 1).integers(0, 24))]   # grain changes every 2 frames
+    rgb += g[..., None] * (0.19 * grain)
     out = np.clip(rgb, 0, 255).astype(np.uint8)
     # gate weave: the whole picture drifts and jumps a pixel or two
     dx = int(round(math.sin(T * 5.3) * 1.5 * weave + rng.normal(0, 0.6) * weave))
