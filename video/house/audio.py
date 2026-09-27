@@ -199,7 +199,11 @@ def hit(fx, t, gain=1.0, seed=0, notes=None, body=1.5):
     talking, soon = _speaking(t), _voice_soon(t)
     g = 4.5 * gain * (0.4 if talking else 1.0)
     b = 0.45 if (talking or soon) else body
-    HITBUS[0].add(P.scare(1.0, seed=seed, body=b, drive=3.2, **kw), t, g)
+    x = P.scare(1.0, seed=seed, body=b, drive=3.2, **kw)
+    x = signal.sosfilt(signal.butter(4, 7000 / (SR / 2), "low", output="sos"), x)     # band-limited: no codec overshoot
+    x = signal.sosfilt(signal.butter(2, 22 / (SR / 2), "high", output="sos"), x)
+    x[: int(0.004 * SR)] *= np.linspace(0, 1, int(0.004 * SR))
+    HITBUS[0].add(x, t, g * 1.7)
     HITS.append(t)
 
 
@@ -471,7 +475,7 @@ STEMS = {}
 
 def loudness(x, target):
     import pyloudnorm as pyln
-    for _ in range(2):
+    for _ in range(3):
         lufs = pyln.Meter(SR).integrated_loudness(x.T)
         x = limit(x * db(target - lufs), db(-2.4))
     return x
