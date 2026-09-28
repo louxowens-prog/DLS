@@ -128,7 +128,7 @@ def _card(c, T, t0, y, big, small, col, w=440, bigsize=84):
     D.shade(c, D.rrect(-w, -130, w, 130, 16), CREAM, k=0.08, a=k)
     D.text(c, big, 0, -26, bigsize, "fraunces-900", col, tag="card", a=k)
     for q, ln in enumerate(small):
-        base = 38 if q == 0 else 28
+        base = 38 if q == 0 else 31
         f = D.font("oldstandard-700", base)
         sz = min(base, base * (2 * w - 80) / max(1, f.measureText(ln)))
         D.text(c, ln, 0, 44 + q * 46 + (10 if len(small) == 1 else 0), sz, "oldstandard-700", INK if q == 0 else (90, 70, 50),
@@ -172,7 +172,8 @@ def s_lesson_study(T, t, d):
         c.drawLine(860, y0, 900, y0, paint(LEMON, stroke=8))
         c.drawLine(860, y1, 900, y1, paint(LEMON, stroke=8))
         D.text(c, "−19", 880, y1 + 70, 60, "fraunces-900", LEMON, tag="bar2", outline=INK, ow=8)
-    D.text(c, "share who got it right (illustrative scale)", 540, 1262, 26, "oldstandard-700", (230, 220, 200), tag="bar3")
+    D.text(c, "share who got it right (illustrative scale)", 540, 1268, 34, "oldstandard-700", (245, 236, 215), tag="bar3",
+           outline=INK, ow=6)
     return st.arr
 
 

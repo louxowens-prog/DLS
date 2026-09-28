@@ -37,8 +37,8 @@ LINES = [
 
     # ---- the newsreel: the world goes mad for thinking machines
     ("n1", ANN, "Extra! Extra! Thinking machines in every pocket!", None, 0.1),
-    ("n2", ANN, "On tasks it's good at, consultants do forty percent better work! Writers: forty percent faster! And beginners gain the most!",
-     "On tasks it's good at,| consultants do 40% better work!| Writers: 40% faster!| And beginners gain the most!", 0.15),
+    ("n2", ANN, "On tasks it's good at, consultants do forty percent better work! Writers take forty percent less time! And beginners gain the most!",
+     "On tasks it's good at,| consultants do 40% better work!| Writers take 40% less time!| And beginners gain the most!", 0.15),
     ("n3", FARMER, "It read my loan papers to me in plain English.", None, 0.1),
     ("n4", STUDENT, "It argues with my essay before my teacher does.", None, 0.4),
 

@@ -122,6 +122,8 @@ def telop(arr, T, horror=False, oncard=False):
     if not cap or TL.song_at(T) is not None or oncard:
         return
     t0, t1, s, key = cap
+    if key in ("x3", "z1"):                                             # the same words are already big on screen
+        return
     f = kk.font("fraunces-900", CAP_SIZE)
     lines = kk.wrap_balanced(s, f, MAX_W)
     size = CAP_SIZE

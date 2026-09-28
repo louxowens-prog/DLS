@@ -309,7 +309,7 @@ def voices():
         who = L["who"]
         up = signal.resample_poly(L["wav"].astype(np.float64), SR, VSR)
         r = np.sqrt((up ** 2).mean()) + 1e-12
-        lvl = {NAR: -17.0, HOST: -17.0, ANN: -17.5, WORKERS: -18.0, MIRROR: -17.0}.get(who, -17.0) + (1.5 if L["song"] else 0.0)
+        lvl = {NAR: -17.0, HOST: -17.0, ANN: -17.5, WORKERS: -16.5, MIRROR: -17.0}.get(who, -17.0) + (1.5 if L["song"] else 0.0)
         if key == "x1":
             lvl += 3.0
         up = up * db(lvl) / r
@@ -454,7 +454,7 @@ def build():
     mix = music + vo
     mix = signal.sosfilt(signal.butter(4, 35 / (SR / 2), "high", output="sos"), mix, axis=1)
     dyn = np.zeros(N)                                                    # the shape of the evening: bigger, and quieter
-    for a, b, g in ((C["door_open"], ls("s1_1"), 2.5), (f("tunnel_in"), E("t1c"), 3.5), (S("x1") - 0.3, E("x1") + 0.1, 2.0),
+    for a, b, g in ((C["door_open"], ls("s1_1"), 2.5), (f("tunnel_in"), E("t1c"), 2.0), (S("x1") - 0.3, E("x1") + 0.1, 0.5),
                     (S("y1") - 0.5, TL.total, -3.0), (S("x2") - 0.1, S("z1"), -1.5)):
         dyn[int(a * SR):int(b * SR)] = g
     k = int(0.5 * SR)

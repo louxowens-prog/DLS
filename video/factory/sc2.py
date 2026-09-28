@@ -585,7 +585,7 @@ def s_room4_plan(T, t, d):
                      paint((255, 200, 230), 0.7 * (1 - bake)))
     k = ease(ramp(t, 0.8, 1.6))
     if k > 0:
-        P.plan_card(c, 540, 820, 0.95, T, k)
+        P.plan_card(c, 540, 845, 1.08, T, k)
     use_tag(c, T)
     return st.arr
 

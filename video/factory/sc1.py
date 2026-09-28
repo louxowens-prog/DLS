@@ -222,7 +222,7 @@ def s_office_clock(T, t, d):
     P.clock(c, 540, 700, 260, hrs, T)
     if t < d - 0.05:
         title_words(c, "3 HOURS GONE", 540, 1120, 96, Wd("a1", "no") + 0.2, T)
-        chip(c, "office workers spend 1.8 hours a day just searching · McKinsey", 540, 1250, 26)
+        chip(c, "workers spend 1.8 hours a day just searching · McKinsey, 2012", 540, 1250, 26)
     return st.arr
 
 
@@ -332,7 +332,7 @@ def s_news2(T, t, d):
     c.drawRect(skia.Rect.MakeWH(W, H), paint(shader=D.rad((540, 960), 1100, [(170, 170, 170), (60, 60, 60)])))
     _news_frame(c, T)
     heads = [(C["h_better"], "CONSULTANTS: 40% BETTER WORK", "on tasks AI is good at|Harvard Business School & BCG study, 2023"),
-             (C["h_faster"], "WRITERS: 40% FASTER, 18% BETTER", "on professional writing tasks|Noy & Zhang, Science, 2023"),
+             (C["h_faster"], "WRITERS: 40% LESS TIME, 18% BETTER", "on professional writing tasks|Noy & Zhang, Science, 2023"),
              (C["h_beginners"], "BEGINNERS GAIN MOST: +34%", "customer support agents|Brynjolfsson et al., QJE, 2025")]
     cur = [h for h in heads if T >= h[0] - 0.3]
     if cur:

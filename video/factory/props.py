@@ -13,7 +13,7 @@ import draw as D
 from draw import (CARAMEL, CHERRY, CHOC, CHOC2, CREAM, GOLD, GOLD2, GOLD3, INK, LEMON, LILAC, MINT, PAPER, PINK, TEAL,
                   WHITE, mix, paint, path, shade)
 
-JARGON = [("peripheral neuropathy", "damaged nerves in the feet"), ("bilateral", "on both sides"), ("idiopathic", "no known cause"),
+JARGON = [("peripheral neuropathy", "damaged nerves in the feet"), ("bilateral", "on both sides"), ("etiology unconfirmed", "cause not confirmed yet"),
           ("paresthesia", "pins and needles"), ("prognosis", "what happens next"), ("benign", "not cancer")]
 
 
