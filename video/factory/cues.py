@@ -59,6 +59,8 @@ C = {
     "grab": S("k4") + 0.2,
     "drop": E("k4") + 0.1,
     "right_q": W("p2", "exactly"),
+    "b12_low": W("p3", "low."),
+    "spring": W("p3", "spring,"),
     "flip": S("x3"),
     "suggested": W("y1", "suggested"),
     "agreed": W("y2", "agreed."),

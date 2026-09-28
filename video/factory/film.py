@@ -38,15 +38,15 @@ def _luts():
         _cache["news"] = _lut(lambda ch, x: ((x - 0.5) * 1.3 + 0.52) * (1.0, 0.98, 0.93)[ch])
         _cache["hot"] = _lut(lambda ch, x: max(0.0, (x - 0.8) / 0.2) * x * (0.42, 0.18, 0.09)[ch])
         _cache["hotbw"] = _lut(lambda ch, x: max(0.0, (x - 0.8) / 0.2) * x * 0.25)
-        _cache["bloom"] = _lut(lambda ch, x: x * 0.05)
+        _cache["bloom"] = _lut(lambda ch, x: x * 0.085)
     return _cache
 
 
 def weave(idx):
     """The gate weave: a slow wander plus a tiny per-frame judder (pixels)."""
     t = idx / 24.0
-    dx = 1.3 * math.sin(t * 2.1 + 0.4) + 0.7 * math.sin(t * 5.3 + 1.9) + 0.35 * math.sin(idx * 12.9898)
-    dy = 1.6 * math.sin(t * 1.7 + 2.2) + 0.6 * math.sin(t * 4.1 + 0.3) + 0.35 * math.sin(idx * 78.233)
+    dx = 1.9 * math.sin(t * 2.1 + 0.4) + 1.0 * math.sin(t * 5.3 + 1.9) + 0.6 * math.sin(idx * 12.9898)
+    dy = 2.6 * math.sin(t * 1.7 + 2.2) + 1.0 * math.sin(t * 4.1 + 0.3) + 0.7 * math.sin(idx * 78.233)
     return dx, dy
 
 
@@ -54,7 +54,7 @@ def _grain(idx, amp, lum):
     """Clumpy luminance grain, new every frame, strongest in the mid-tones (int16, full size, one channel).
     lum: the frame's luminance at half size (PIL 'L')."""
     rng = np.random.default_rng(idx * 7 + 11)
-    g = rng.normal(0, 1, (H // 2, W // 2)).astype(np.float32)
+    g = rng.normal(0, 1, (H // 3, W // 3)).astype(np.float32)             # clumpy: grains ~3 px across
     l = np.asarray(lum, np.float32) / 255.0
     g = g * (0.35 + 2.6 * l * (1 - l))
     im = Image.fromarray(np.clip(g * 40 + 128, 0, 255).astype(np.uint8)).resize((W, H), Image.BILINEAR)
@@ -94,7 +94,9 @@ def look(arr, idx, mode="color", strength=1.0):
     dx, dy = weave(idx)
     im = im.transform((W, H), Image.AFFINE, (1, 0, -dx * strength, 0, 1, -dy * strength), resample=Image.BILINEAR,
                       fillcolor=(20, 14, 10))
-    im = Image.blend(im, im.filter(ImageFilter.GaussianBlur(1.2)), 0.55)          # the lens and the print are soft
+    im = Image.blend(im, im.filter(ImageFilter.GaussianBlur(1.4)), 0.6)           # the lens and the print are soft
+    r_, g_, b_ = im.split()                                                        # a touch of lateral colour fringing
+    im = Image.merge("RGB", (ImageChops.offset(r_, 1, 0), g_, ImageChops.offset(b_, -1, 0)))
     if mode == "newsreel":
         g = im.convert("L")
         im = Image.merge("RGB", (g, g, g)).point(L["news"])
@@ -103,7 +105,7 @@ def look(arr, idx, mode="color", strength=1.0):
     else:
         im = ImageEnhance.Color(im).enhance(1.2).point(L["grade"])               # saturated dye, warm lifted blacks
         hot = im.point(L["hot"])
-        gamt, dirt, flick = 0.032, 1.0, 0.016
+        gamt, dirt, flick = 0.04, 1.2, 0.02
     small = (W // 4, H // 4)
     hal = hot.resize(small, Image.BILINEAR).filter(ImageFilter.GaussianBlur(7)).resize((W, H), Image.BILINEAR)
     bloom = im.resize(small, Image.BILINEAR).filter(ImageFilter.GaussianBlur(9)).resize((W, H), Image.BILINEAR)
@@ -112,7 +114,7 @@ def look(arr, idx, mode="color", strength=1.0):
     rng = np.random.default_rng(idx * 3 + 1)
     f = 1 + flick * strength * rng.normal()
     im = im.point([min(255, int(v * f)) for v in range(256)] * 3)
-    a = np.asarray(im, np.int16) + _grain(idx, gamt * strength, im.convert("L").resize((W // 2, H // 2), Image.BILINEAR))
+    a = np.asarray(im, np.int16) + _grain(idx, gamt * strength, im.convert("L").resize((W // 3, H // 3), Image.BILINEAR))
     a = np.clip(a, 0, 255).astype(np.uint8)
     _dirt(a, idx, dirt * strength)
     arr[..., :3] = a

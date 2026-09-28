@@ -48,6 +48,10 @@ def render_frame(T, idx=None, overlays=True, post=True):
     if out is None:
         out = shot_frame(i, T, idx, post)
     out = np.ascontiguousarray(out)
+    if post and tr == "cut" and 0 <= T - t0 < 1.0 / FPS and i > 0:             # a splice bump: the frame jumps as the join passes
+        out = np.roll(out, 9, axis=0)
+        out[:9] = (14, 10, 8, 255)
+        out[..., :3] = np.clip(out[..., :3].astype(np.int16) + 12, 0, 255).astype(np.uint8)
     if overlays:
         ov.karaoke(out, T)
         ov.telop(out, T)

@@ -318,15 +318,22 @@ def voices():
         if key == "x1":
             up = np.tanh(1.8 * up / (np.abs(up).max() + 1e-9)) * np.abs(up).max()
         sig = np.stack([up, up])
-        if who == WORKERS:                                               # a tiny chorus: the same voice, layered
+        if who == WORKERS:                                               # a chorus of three different little voices
+            from voice import speak_fx
             refrain = "Think" in L["spoken"] or "thinking's up" in L["spoken"]
-            layers = [(0, 1.0, 0.5)] + ([(0.012, 0.8, 0.2), (0.021, 0.8, 0.8), (0.03, 0.6, 0.35)] if refrain else [(0.015, 0.4, 0.3)])
-            sig = np.zeros((2, int(len(up) * 1.05) + int(0.05 * SR)))
-            for k, (dl, g, pan) in enumerate(layers):
+            others = [("af_sky", 0.95, 3.0, 0.014, 0.75, 0.2), ("am_adam", 0.95, 6.5, 0.026, 0.7, 0.8)]
+            if refrain:
+                others += [("af_nicole", 0.95, 2.0, 0.035, 0.55, 0.35), ("bm_fable", 0.95, 5.0, 0.02, 0.55, 0.65)]
+            sig = np.zeros((2, len(up) + int(0.06 * SR)))
+            sig[:, :len(up)] += np.stack([up, up]) * np.sqrt(0.5) * 1.1
+            for v, sp, pt, dl, g, pan in others:
+                w = speak_fx(L["spoken"], v, sp, pt).astype(np.float64)
+                w = signal.resample_poly(w, SR, VSR)
+                w = signal.resample(w, len(up))                          # matched to the lead's length, so they land together
+                w = w * np.sqrt((up ** 2).mean()) / (np.sqrt((w ** 2).mean()) + 1e-12)
                 o = int(dl * SR)
-                v = signal.resample(up, int(len(up) * (1 + 0.012 * k))) if k else up
-                sig[0, o:o + len(v)] += v * g * np.sqrt(1 - pan) * 1.2
-                sig[1, o:o + len(v)] += v * g * np.sqrt(pan) * 1.2
+                sig[0, o:o + len(w)] += w * g * np.sqrt(1 - pan) * 1.1
+                sig[1, o:o + len(w)] += w * g * np.sqrt(pan) * 1.1
         if who in (MIRROR, HOST) and (who == MIRROR or key in ("t1a", "t1b", "t1c", "t2", "g3")):
             tail = np.zeros((2, int(1.0 * SR)))
             sig = np.concatenate([sig, tail], axis=1)
@@ -353,8 +360,8 @@ def reverb(x, wet=0.1, rt60=0.8, seed=8):
 def vintage(x):
     """Tape warmth: gentle saturation, a soft top-end roll-off, a little wow."""
     x = np.tanh(1.3 * x) / 1.3
-    x = signal.sosfilt(signal.butter(2, 10500 / (SR / 2), "low", output="sos"), x, axis=1)
-    x = signal.sosfilt(signal.butter(2, 40 / (SR / 2), "high", output="sos"), x, axis=1)
+    x = signal.sosfilt(signal.butter(2, 12500 / (SR / 2), "low", output="sos"), x, axis=1)
+    x = signal.sosfilt(signal.butter(4, 55 / (SR / 2), "high", output="sos"), x, axis=1)
     n = x.shape[1]
     t = np.arange(n) / SR
     d = 0.0009 * SR * (0.5 + 0.5 * np.sin(2 * np.pi * 0.45 * t))
@@ -363,6 +370,16 @@ def vintage(x):
     fr = idx - i0
     i1 = np.clip(i0 + 1, 0, n - 1)
     return x[:, i0] * (1 - fr) + x[:, i1] * fr
+
+
+def presence(x, f0=3000, gain_db=2.5, q=0.9):
+    """A peaking EQ bell (RBJ cookbook): a little lift where speech is understood."""
+    A = 10 ** (gain_db / 40)
+    w0 = 2 * np.pi * f0 / SR
+    al = np.sin(w0) / (2 * q)
+    b = np.array([1 + al * A, -2 * np.cos(w0), 1 - al * A])
+    a = np.array([1 + al / A, -2 * np.cos(w0), 1 - al / A])
+    return signal.lfilter(b / a[0], a / a[0], x, axis=1)
 
 
 def mono_safe(x, max_ratio=0.45, hop=1024):
@@ -391,7 +408,7 @@ def build():
     dead = np.convolve(dead, np.ones(int(0.015 * SR)) / int(0.015 * SR), "same")
     music = music * dead
 
-    vo = reverb(voices(), 0.07, 0.6) * dead                              # echoes don't ring into the silences
+    vo = presence(reverb(voices(), 0.07, 0.6), 3000, 2.5) * dead         # echoes don't ring into the silences
     from scipy.ndimage import maximum_filter1d
     raw = np.convolve(np.abs(vo.mean(axis=0)), np.ones(SR // 20) / (SR // 20), mode="same")
     raw = np.clip(raw / (np.percentile(raw[raw > 1e-5], 80) + 1e-9), 0, 1)
@@ -426,8 +443,9 @@ def build():
                 ride[max(0, a - int(0.12 * SR)):min(N, b + int(0.18 * SR))], db(margin - target))
     k = int(0.15 * SR)
     ride = np.convolve(np.pad(ride, k, mode="edge"), np.ones(k) / k, "same")[k:-k]
-    music = music * ride
+    music = presence(music * ride, 3000, 1.0)
     mix = music + vo
+    mix = signal.sosfilt(signal.butter(4, 35 / (SR / 2), "high", output="sos"), mix, axis=1)
     mix = loudness(mix, -14.0)
     tail = int(0.5 * SR)
     mix[:, -tail:] *= np.linspace(1, 0, tail) ** 2

@@ -29,6 +29,57 @@ def chip(c, s, x, y, size=30, fg=INK, bg=(236, 226, 200), a=1.0, tag="chip"):
     D.text(c, s, x, y, size, "special-elite-400", fg, tag=tag, a=a)
 
 
+def use_tag(c, T):
+    """The running count of the thirteen uses: a stamped label slams in as each one is shown, with 13 dots filling."""
+    cur = [u for u in USES() if u[0] - 0.05 <= T < u[1]]
+    if not cur:
+        return
+    t0, t1, n, lab = cur[-1]
+    k = ease(ramp(T, t0 - 0.05, t0 + 0.12))
+    fade = 1 - ramp(T, t1 - 0.15, t1)
+    a = k * fade
+    if a <= 0.01:
+        return
+    size = 50
+    f = D.font("fraunces-900", size)
+    if f.measureText(lab) > 800:
+        size = 50 * 800 / f.measureText(lab)
+    w = max(560, D.font("fraunces-900", size).measureText(lab) + 90)
+    c.save()
+    c.translate(540, 335)
+    c.rotate(-2)
+    z = 1.35 - 0.35 * k
+    c.scale(z, z)
+    D.shade(c, D.rrect(-w / 2, -82, w / 2, 82, 14), (246, 236, 212), k=0.06, a=a)
+    c.drawPath(D.rrect(-w / 2 + 10, -72, w / 2 - 10, 72, 10), paint(CHERRY, a, stroke=5))
+    c.drawPath(D.rrect(-w / 2 + 18, -64, w / 2 - 18, 64, 8), paint(CHERRY, a * 0.6, stroke=2))
+    D.text(c, f"USE {n} OF 13", 0, -32, 30, "special-elite-400", (120, 30, 40), tag="usetag", a=a)
+    D.text(c, lab, 0, 26, size, "fraunces-900", CHERRY, tag="usetag", a=a)
+    for j in range(13):                                                 # the tally: thirteen dots, filling
+        x = (j - 6) * 30
+        c.drawCircle(x, 52, 9, paint(CHERRY if j < n else (220, 200, 180), a))
+    c.restore()
+
+
+def USES():
+    """(from, to, number, use) - when each of the thirteen uses is being shown in the rooms."""
+    return [
+        (S("r1") - 0.1, Wd("r1", "It") - 0.1, 1, "EXPLAIN UNFAMILIAR SUBJECTS"),
+        (Wd("r1", "It") - 0.1, E("r1") + 0.15, 2, "TRANSLATE JARGON"),
+        (S("r2") - 0.1, Wd("r2", "with") - 0.1, 3, "SUMMARIZE DOCUMENTS"),
+        (Wd("r2", "with") - 0.1, S("r2b") - 0.1, 4, "FIND INCONSISTENCIES"),
+        (S("r3") - 0.1, Wd("r3", "each") + 0.1, 5, "SIMULATE OPPOSING VIEWS"),
+        (Wd("r3", "each") + 0.1, Wd("r3", "hole") - 0.25, 6, "COMPARE COMPETING IDEAS"),
+        (Wd("r3", "hole") - 0.25, E("r3") + 0.15, 7, "CRITIQUE AN ARGUMENT"),
+        (S("r4") - 0.1, Wd("r4", "happens") - 0.25, 8, "GENERATE HYPOTHESES"),
+        (Wd("r4", "happens") - 0.25, Wd("r4", "Ideas") - 0.1, 9, "EXPLORE CONSEQUENCES"),
+        (Wd("r4", "Ideas") - 0.1, Wd("r4", "worry") - 0.15, 10, "BRAINSTORM"),
+        (Wd("r4", "worry") - 0.15, C["plan"] - 0.1, 11, "ORGANIZE THOUGHTS"),
+        (C["plan"] - 0.1, C["three_q"] - 0.15, 12, "TURN A VAGUE IDEA INTO A PLAN"),
+        (C["three_q"] - 0.15, E("r4") + 0.25, 13, "IDENTIFY MISSING QUESTIONS"),
+    ]
+
+
 def title_words(c, s, x, y, size, t0, T, color=CREAM, edge=(110, 40, 20), tag="title", fname="fraunces-900"):
     """Big 1971 main-title lettering with a soft drop shadow; it settles in with a small push."""
     k = ease(ramp(T, t0, t0 + 0.35))
@@ -169,7 +220,7 @@ def s_office_clock(T, t, d):
     c.drawRect(skia.Rect.MakeWH(W, H), paint((40, 44, 40), 0.35))
     hrs = 9 + 3 * ease(ramp(t, 0.1, 1.6))
     P.clock(c, 540, 700, 260, hrs, T)
-    title_words(c, "3 HOURS GONE", 540, 1120, 96, S("a2") + 1.0, T)
+    title_words(c, "3 HOURS GONE", 540, 1120, 96, Wd("a1", "no") + 0.2, T)
     chip(c, "office workers spend 1.8 hours a day just searching · McKinsey", 540, 1250, 26)
     return st.arr
 
@@ -179,8 +230,14 @@ def s_kitchen(T, t, d):
     c = st.c
     D.backdrop(st, "kitchen", sets.kitchen)
     P.rain(c, T, 0.3, 50, 110, 450, 280, 740)
-    cast.person(c, "you", 540, 1700, 1.0, T, pose="hold2", mood="worry")
-    P.letter(c, 540, 1160, 0.44, T, plain=0.0, rot=-4)
+    cast.person(c, "dad", 770, 1560, 0.7, T, pose="clasp", mood="worry", look=-0.6)               # your dad, at the table
+    c.drawPath(path([(40, 1220), (1040, 1220), (1080, 1340), (0, 1340)]), paint((150, 110, 76)))       # the table, over him
+    c.drawRect(skia.Rect.MakeLTRB(0, 1340, 1080, 1370), paint((110, 80, 56)))
+    c.drawRect(skia.Rect.MakeLTRB(560, 1370, 1080, 1600), paint(shader=D.lin((0, 1370), (0, 1600), [(66, 56, 52), (58, 50, 46)])))
+    D.shade(c, D.rrect(820, 1150, 880, 1225, 10), (230, 226, 216), k=0.2)                           # his pill bottle
+    D.shade(c, D.rrect(815, 1132, 885, 1156, 6), (240, 120, 60), k=0.2)
+    cast.person(c, "you", 330, 1760, 0.95, T, pose="hold2", mood="worry")
+    P.letter(c, 330, 1180, 0.42, T, plain=0.0, rot=-4)
     return st.arr
 
 
@@ -195,7 +252,7 @@ def s_letter_close(T, t, d):
     for i in range(3):
         k = ramp(t, 0.4 + i * 0.4, 0.7 + i * 0.4)
         if k > 0:
-            D.text(c, "?", [110, 970, 120][i], [520, 760, 1150][i], 140 * k, "fraunces-900", (200, 60, 50), tag="q")
+            D.text(c, "?", [95, 985, 100][i], [470, 450, 1260][i], 140 * k, "fraunces-900", (200, 60, 50), tag="q")
     return st.arr
 
 
@@ -273,18 +330,18 @@ def s_news2(T, t, d):
     c = st.c
     c.drawRect(skia.Rect.MakeWH(W, H), paint(shader=D.rad((540, 960), 1100, [(170, 170, 170), (60, 60, 60)])))
     _news_frame(c, T)
-    heads = [(C["h_better"], "40% BETTER WORK", "Harvard & BCG consultant study, 2023"),
-             (C["h_faster"], "40% FASTER · 18% BETTER", "writing study, Science, 2023"),
-             (C["h_beginners"], "BEGINNERS GAIN MOST: +34%", "customer support study, QJE, 2025")]
-    cur = [h for h in heads if T >= h[0] - 0.15]
+    heads = [(C["h_better"], "CONSULTANTS: 40% BETTER WORK", "on tasks AI is good at · HBS & BCG study, 2023"),
+             (C["h_faster"], "WRITERS: 40% FASTER, 18% BETTER", "professional writing tasks · Science, 2023"),
+             (C["h_beginners"], "BEGINNERS GAIN MOST: +34%", "customer support agents · QJE, 2025")]
+    cur = [h for h in heads if T >= h[0] - 0.3]
     if cur:
         t0, big, small = cur[-1]
-        k = ease(ramp(T, t0 - 0.15, t0 + 0.3))
-        P.headline(c, 540, 900, 0.3 + 0.95 * k, (1 - k) * 720 * (1 if len(cur) % 2 else -1), big, small)
+        k = ease(ramp(T, t0 - 0.3, t0))
+        P.headline(c, 540, 900, 0.3 + 0.8 * k, (1 - k) * 720 * (1 if len(cur) % 2 else -1), big, small)
     return st.arr
 
 
-def _interview(st, T, who, where, caption, spk):
+def _interview(st, T, who, where, caption, spk, use=None):
     c = st.c
     c.drawRect(skia.Rect.MakeWH(W, H), paint(shader=D.lin((0, 0), (0, H), [(190, 190, 190), (120, 120, 120)])))
     if where == "field":
@@ -300,17 +357,19 @@ def _interview(st, T, who, where, caption, spk):
     D.shade(c, D.rrect(740, 820, 800, 900, 20), (60, 60, 60), k=0.3)
     chip(c, caption, 540, 300, 32, fg=WHITE, bg=(40, 40, 40))
     chip(c, "RE-ENACTMENT", 540, 360, 24, fg=(200, 200, 200), bg=(40, 40, 40))
+    if use:
+        chip(c, use, 540, 450, 34, fg=INK, bg=(230, 230, 230), tag="usechip")
 
 
 def s_news_farmer(T, t, d):
     st = D.Stage()
-    _interview(st, T, "farmer", "field", "A FARMER", "FARMER")
+    _interview(st, T, "farmer", "field", "A FARMER", "FARMER", "EXPLAIN  ·  TRANSLATE JARGON")
     return st.arr
 
 
 def s_news_student(T, t, d):
     st = D.Stage()
-    _interview(st, T, "student", "class", "A STUDENT", "STUDENT")
+    _interview(st, T, "student", "class", "A STUDENT", "STUDENT", "CRITIQUE AN ARGUMENT")
     return st.arr
 
 

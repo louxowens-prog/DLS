@@ -234,33 +234,89 @@ def wonder(c):
 
 
 def river(c, T, y0=1180, amp=1.0):
-    """The chocolate river (drawn per frame): a waterfall on the left, the current sliding through the lawn."""
+    """The chocolate river (drawn per frame): a great waterfall on the left, the glossy current sliding through the lawn,
+    glints on the surface and a bank of froth where the fall hits."""
     p = skia.Path()
     p.moveTo(0, y0 + 60)
     p.cubicTo(300, y0 - 40, 600, y0 + 230, 1080, y0 + 120)
     p.lineTo(1080, y0 + 330)
     p.cubicTo(600, y0 + 420, 300, y0 + 180, 0, y0 + 300)
     p.close()
-    shade(c, p, CHOC, k=0.25, edge=0.3)
+    c.drawPath(p, paint(shader=D.lin((0, y0), (0, y0 + 360), [(120, 66, 34), (92, 50, 26), (70, 38, 20)])))
+    c.drawPath(p, paint((60, 30, 14), 0.8, stroke=5))
     c.save()
     c.clipPath(p, doAntiAlias=True)
-    for i in range(18):                                                 # the current: glossy streaks sliding along
-        u = ((T * 0.18 + i / 18) % 1.0)
-        x = -200 + u * 1500
-        y = y0 + 120 + 90 * math.sin(i * 2.1) + 60 * math.sin(x / 300)
-        c.drawOval(skia.Rect.MakeXYWH(x, y, 160, 14), paint(CHOC2, 0.8))
-        c.drawOval(skia.Rect.MakeXYWH(x + 30, y + 2, 60, 5), paint((200, 150, 110), 0.5))
+    for i in range(26):                                                 # the current: glossy streaks sliding along
+        u = ((T * 0.16 + i / 26) % 1.0)
+        x = -240 + u * 1560
+        y = y0 + 110 + 110 * math.sin(i * 2.1) + 60 * math.sin(x / 300)
+        c.drawOval(skia.Rect.MakeXYWH(x, y, 190, 16), paint(CHOC2, 0.8))
+        c.drawOval(skia.Rect.MakeXYWH(x + 30, y + 2, 90, 6), paint((226, 176, 128), 0.65))
+    for i in range(14):                                                 # glints of light on the gloss
+        u = ((T * 0.22 + i / 14 * 1.7) % 1.0)
+        x = -60 + u * 1200
+        y = y0 + 150 + 80 * math.sin(i * 3.3) + 50 * math.sin(x / 260)
+        tw = 0.5 + 0.5 * math.sin(T * 7 + i * 1.9)
+        c.drawOval(skia.Rect.MakeXYWH(x, y, 26 + 20 * tw, 5), paint((255, 236, 200), 0.75 * tw))
     c.restore()
-    fall = D.rrect(40, y0 - 500, 220, y0 + 150, 30)                     # the waterfall
-    shade(c, fall, CHOC2, k=0.25, edge=0.2)
+    cliff = D.smooth([(-40, y0 - 760), (160, y0 - 800), (400, y0 - 750), (470, y0 - 560), (500, y0 - 200), (540, y0 + 120),
+                      (-40, y0 + 140)])                                 # a cliff of chocolate cake, cream frosting on top
+    shade(c, cliff, (66, 36, 22), k=0.3, edge=0.3)
+    for j in range(3):
+        c.drawLine(-40, y0 - 520 + j * 220, 480 + j * 20, y0 - 540 + j * 220, paint((236, 214, 180), 0.7, stroke=16))
+    for j in range(9):
+        x = -20 + j * 58
+        c.drawPath(D.smooth([(x - 30, y0 - 790), (x + 30, y0 - 790), (x + 22, y0 - 700 + (j % 3) * 30), (x, y0 - 680 + (j % 3) * 30),
+                             (x - 22, y0 - 700 + (j % 3) * 30)]), paint((250, 240, 225)))
+    fall = D.smooth([(190, y0 - 700), (260, y0 - 712), (330, y0 - 700), (344, y0 - 300), (372, y0 + 150), (150, y0 + 150),
+                     (176, y0 - 300)])                                  # the falling sheet, narrower than the cliff
+    c.drawPath(fall, paint(shader=D.lin((150, 0), (370, 0), [(130, 74, 38), (190, 126, 74), (214, 156, 100), (140, 80, 40)])))
     c.save()
     c.clipPath(fall, doAntiAlias=True)
-    for i in range(10):
-        yy = y0 - 520 + ((T * 520 + i * 70) % 700)
-        c.drawLine(60 + i * 16, yy, 60 + i * 16, yy + 90, paint((200, 150, 100), 0.55, stroke=6))
+    for i in range(24):                                                 # the pour, streaking down fast
+        yy = y0 - 760 + ((T * 900 + i * 173) % 1000)
+        xx = 156 + i * 9
+        c.drawLine(xx, yy, xx + 2, yy + 180, paint((96, 50, 24), 0.35, stroke=5))
+        c.drawLine(xx + 4, yy + 40, xx + 5, yy + 150, paint((250, 224, 184), 0.85, stroke=4))
     c.restore()
-    for i in range(6):                                                  # froth at the foot
-        c.drawCircle(80 + i * 30, y0 + 150 + 10 * math.sin(T * 6 + i), 26, paint((210, 170, 130), 0.8))
+    p2 = skia.Path()                                                    # the curl of the pour over the lip
+    p2.moveTo(180, y0 - 700)
+    p2.quadTo(260, y0 - 750, 340, y0 - 700)
+    c.drawPath(p2, paint((226, 176, 124), stroke=22))
+    for i in range(16):                                                 # froth at the foot, churning
+        fx = 80 + i * 24 + 8 * math.sin(T * 5 + i)
+        fy = y0 + 140 + 16 * math.sin(T * 6 + i * 1.3) - 20 * (1 - abs(i - 7.5) / 7.5)
+        c.drawCircle(fx, fy, 36 + 8 * math.sin(T * 4 + i), paint((240, 214, 176), 0.92))
+        c.drawCircle(fx - 6, fy - 8, 10, paint(WHITE, 0.55))
+    for i in range(10):                                                 # spray drifting up off it
+        u = (T * 0.8 + i / 10) % 1.0
+        c.drawCircle(80 + i * 34 + 20 * math.sin(i + T), y0 + 130 - 200 * u, 12 * (1 - u) + 2, paint((244, 220, 190), 0.55 * (1 - u)))
+
+
+def spring(c):
+    """Spring in the town: the same streets, washed and blossoming (the dad's walk)."""
+    _grad(c, 0, 1250, [(150, 196, 236), (220, 230, 226), (255, 226, 190)])
+    c.drawCircle(820, 330, 110, paint((255, 236, 170)))
+    c.drawCircle(820, 330, 230, paint((255, 230, 160), 0.3, blur=60))
+    for i, (x, h, col) in enumerate(((180, 380, (140, 196, 120)), (620, 460, (120, 186, 110)), (1000, 360, (150, 200, 126)))):
+        p = skia.Path()
+        p.moveTo(x - 560, 1250)
+        p.cubicTo(x - 260, 1250 - h, x + 260, 1250 - h, x + 560, 1250)
+        p.close()
+        shade(c, p, col, k=0.15, edge=0.15)
+    rng = np.random.default_rng(12)
+    for x, y, r in ((150, 900, 170), (930, 860, 190), (560, 980, 120)):  # blossom trees
+        c.drawLine(x, y + r * 0.2, x, 1260, paint((110, 76, 60), stroke=26))
+        for k in range(46):
+            a, d = rng.uniform(0, 2 * math.pi), r * math.sqrt(rng.uniform(0, 1))
+            c.drawCircle(x + d * math.cos(a), y + d * math.sin(a) * 0.8, rng.uniform(22, 40),
+                         paint([(255, 200, 220), (250, 176, 206), (255, 230, 236)][k % 3]))
+    _grad(c, 1240, H, [(130, 190, 110), (96, 160, 90)])
+    c.drawPath(path([(420, 1240), (660, 1240), (1000, H), (80, H)]), paint((226, 206, 170)))              # the path
+    for i in range(60):
+        x, y = rng.uniform(0, W), rng.uniform(1280, H)
+        col = [(255, 240, 120), WHITE, (250, 180, 210)][i % 3]
+        c.drawCircle(x, y, 7, paint(col))
 
 
 def room(c, n):

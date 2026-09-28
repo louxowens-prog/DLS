@@ -291,7 +291,7 @@ def capsule(x0, y0, x1, y1, w0, w1=None):
     return p
 
 
-def brush_tex(w, h, seed=0, streak=24, amp=0.08):
+def brush_tex(w, h, seed=0, streak=24, amp=0.14):
     """Streaky scenic-paint texture as a multiplier image (mean 1): the brush marks on a painted flat."""
     def make():
         from PIL import Image, ImageFilter
@@ -302,7 +302,10 @@ def brush_tex(w, h, seed=0, streak=24, amp=0.08):
         a = np.asarray(im, np.float32) / 255 - 0.5
         k = np.ones(streak, np.float32) / streak
         a = np.apply_along_axis(lambda r: np.convolve(r, k, "same"), 1, a)
-        return 1 + amp * a / (np.abs(a).max() + 1e-6)
+        canvas = rng.normal(0, 1, (h // 2, w // 2)).astype(np.float32)          # the weave of the scenic canvas
+        cv = np.asarray(Image.fromarray(((canvas - canvas.min()) / (np.ptp(canvas) + 1e-6) * 255).astype(np.uint8)).resize((w, h), Image.NEAREST),
+                        np.float32) / 255 - 0.5
+        return 1 + amp * a / (np.abs(a).max() + 1e-6) + 0.05 * cv
     return cached(f"brush{w}x{h}s{seed}", make)
 
 

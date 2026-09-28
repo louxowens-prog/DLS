@@ -107,14 +107,15 @@ def s_tunnel_calm(T, t, d):
 
 
 def s_lesson(T, t, d):
-    """A 1971 classroom card, held up by the workers: trust it blindly -> think less; used well -> think more."""
+    """A 1971 classroom card, held up by the workers: trust it blindly -> check less; used well -> think more."""
     st = D.Stage()
     c = st.c
     D.backdrop(st, "room4", lambda cc: sets.room(cc, 4))
-    c.drawRect(skia.Rect.MakeWH(W, H), paint(INK, 0.3))
-    cards = [(S("e1"), "TRUST IT BLINDLY", "→ think less · Microsoft & CMU, 2025", (160, 40, 50)),
-             (Wd("e1", "Harvard's"), "19 POINTS WORSE", "on the wrong task · Harvard & BCG, 2023", (120, 60, 30)),
-             (Wd("e1", "Used"), "USE IT WELL", "→ think more", (30, 110, 70))]
+    c.drawRect(skia.Rect.MakeWH(W, H), paint(INK, 0.35))
+    cards = [(S("e1"), "TRUST IT BLINDLY", ["→ you check less", "Microsoft & Carnegie Mellon survey, 2025"], (160, 40, 50)),
+             (Wd("e1", "nineteen") - 0.2, "19 POINTS", ["less likely to be right, on a task AI was bad at",
+                                                      "Harvard Business School & BCG study, 2023"], (120, 60, 30)),
+             (Wd("e1", "Used"), "USE IT WELL", ["→ you think more"], (30, 110, 70))]
     for j, (t0, big, small, col) in enumerate(cards):
         k = ease(ramp(T, t0 - 0.2, t0 + 0.3))
         if k <= 0:
@@ -123,12 +124,16 @@ def s_lesson(T, t, d):
         c.save()
         c.translate(540, y)
         c.scale(0.8 + 0.2 * k, 0.8 + 0.2 * k)
-        D.shade(c, D.rrect(-420, -110, 420, 110, 16), CREAM, k=0.08, a=k)
-        D.text(c, big, 0, -10, 76, "fraunces-900", col, tag="card", a=k)
-        D.text(c, small, 0, 66, 34, "oldstandard-700", INK, tag="card", a=k)
+        D.shade(c, D.rrect(-440, -125, 440, 125, 16), CREAM, k=0.08, a=k)
+        D.text(c, big, 0, -30, 76, "fraunces-900", col, tag="card", a=k)
+        for q, ln in enumerate(small):
+            f = D.font("oldstandard-700", 34)
+            sz = min(34 if q == 0 else 28, (34 if q == 0 else 28) * 800 / max(1, f.measureText(ln) * (1 if q == 0 else 28 / 34)))
+            D.text(c, ln, 0, 34 + q * 44 + (12 if len(small) == 1 else 0), sz, "oldstandard-700", INK if q == 0 else (90, 70, 50),
+                   tag="card", a=k)
         c.restore()
     for i in range(4):
-        cast.worker(c, 200 + i * 230, 1270, 0.6, T, pose="cheer" if i % 2 else "stand", bob=10 * abs(math.sin(T * 3 + i)))
+        cast.worker(c, 170 + i * 240, 1330, 0.42, T, pose="cheer" if i % 2 else "stand", bob=8 * abs(math.sin(T * 3 + i)))
     return st.arr
 
 
@@ -136,11 +141,21 @@ def s_clinic(T, t, d):
     st = D.Stage()
     c = st.c
     D.backdrop(st, "clinic", sets.clinic)
-    hand = cast.person(c, "you", 280 + 120 * ease(ramp(t, 0, 1.5)), 1290, 0.66, T, pose="hold", mood="smile",
+    cast.person(c, "dad", 190, 1290, 0.6, T, pose="stand", mood="worry", look=0.6)
+    hand = cast.person(c, "you", 300 + 110 * ease(ramp(t, 0, 1.5)), 1290, 0.64, T, pose="hold", mood="smile",
                        walk=t * 1.5 if t < 1.5 else 0)
     D.shade(c, D.rrect(hand[0] - 70, hand[1] - 100, hand[0] + 70, hand[1] + 90, 4), (40, 90, 160), k=0.1)   # one page
     D.text(c, "PLAN", hand[0], hand[1] - 40, 30, "fraunces-900", WHITE, tag="page")
-    cast.person(c, "doctor", 800, 1290, 0.64, T, pose="clasp", mood="flat")
+    cast.person(c, "doctor", 780, 1290, 0.62, T, pose="clasp", mood="flat", look=-0.6)
+    k = ease(ramp(T, Wd("p1", "Could") - 0.1, Wd("p1", "Could") + 0.3))
+    if k > 0:                                                           # the question, on the page in her hand
+        c.save()
+        c.translate(540, 470)
+        c.scale(0.85 + 0.15 * k, 0.85 + 0.15 * k)
+        D.shade(c, D.rrect(-420, -120, 420, 120, 14), (40, 90, 160), k=0.1, a=k)
+        D.text(c, "Could his diabetes pill", 0, -22, 50, "fraunces-900", WHITE, tag="q", a=k)
+        D.text(c, "be lowering his B12?", 0, 46, 50, "fraunces-900", LEMON, tag="q", a=k)
+        c.restore()
     return st.arr
 
 
@@ -153,6 +168,43 @@ def s_doctor(T, t, d):
     c.restore()
     k = ramp(T, C["right_q"] - 0.2, C["right_q"] + 0.3)
     cast.person(c, "doctor", 540, 2500, 1.7, T, pose="clasp", mood="wow" if k < 1 else "smile", talk=talk("DOCTOR", T))
+    return st.arr
+
+
+def s_dad_home(T, t, d):
+    """By spring: your dad, walking easy on the grass beside you. The lab slip first: B12 low."""
+    st = D.Stage()
+    c = st.c
+    u = t / max(d, 0.1)
+    c.save()
+    cam(c, 1.08 - 0.08 * u, 540, 1100)
+    D.backdrop(st, "spring", sets.spring)
+    c.restore()
+    x = 420 + 90 * u
+    cast.person(c, "dad", x, 1520, 0.6, T, pose="stand", mood="smile", walk=t * 1.1, look=0.5)
+    cast.person(c, "you", x + 190, 1540, 0.58, T, pose="stand", mood="smile", walk=t * 1.1, look=-0.5)
+    rng = np.random.default_rng(3)
+    for i in range(24):                                                 # blossom drifting
+        px = (rng.uniform(0, W) + t * 40 * rng.uniform(0.5, 1.5)) % W
+        py = (rng.uniform(0, 1400) + t * 90 * rng.uniform(0.6, 1.4)) % 1300 + 250
+        c.drawCircle(px, py, rng.uniform(6, 11), paint((255, 206, 226), 0.9))
+    k = ease(ramp(T, S("p3") + 0.1, S("p3") + 0.5)) * (1 - ease(ramp(T, C["spring"] + 0.3, C["spring"] + 0.8)))
+    if k > 0:                                                           # the lab slip
+        c.save()
+        c.translate(540, 560)
+        c.rotate(-3)
+        D.shade(c, D.rrect(-340, -160, 340, 160, 8), (250, 246, 236), k=0.05, a=k)
+        D.text(c, "BLOOD TEST", 0, -95, 40, "oldstandard-700", INK, tag="slip", a=k)
+        D.text(c, "VITAMIN B12", 0, -15, 58, "fraunces-900", INK, tag="slip", a=k)
+        stamp = ease(ramp(T, C["b12_low"] - 0.1, C["b12_low"] + 0.1)) * k
+        if stamp > 0:
+            c.drawPath(D.rrect(-250, 35, -50, 125, 8), paint(CHERRY, stamp, stroke=6))
+            D.text(c, "LOW", -150, 108, 70, "fraunces-900", CHERRY, tag="slip", a=stamp)
+        tr = ease(ramp(T, Wd("p3", "supplement") - 0.1, Wd("p3", "supplement") + 0.2)) * k
+        if tr > 0:
+            D.text(c, "→ supplement", 150, 100, 42, "oldstandard-700", (30, 110, 70), tag="slip", a=tr)
+        c.restore()
+    chip(c, "DRAMATIZATION", 540, 300, 26)
     return st.arr
 
 
@@ -267,12 +319,13 @@ def s_end(T, t, d):
     c = st.c
     c.drawRect(skia.Rect.MakeWH(W, H), paint(shader=D.rad((540, 700), 1300, [(255, 214, 140), (120, 60, 30)])))
     P.ticket(c, 540, 560, 820, rot=-3, lines=("ADMIT ONE MIND", "BRING A QUESTION"), T=T, glow=1.0)
-    srcs = ["Hofmann family: TODAY, Sept 2023",
+    srcs = ["True story: TODAY, Sept 2023 · NEJM AI Grand Rounds",
             "Dell'Acqua et al. (Harvard & BCG), 2023",
             "Noy & Zhang, Science, 2023",
             "Brynjolfsson, Li & Raymond, QJE, 2025",
             "McKinsey Global Institute, 2012",
-            "Lee et al. (Microsoft & CMU), CHI 2025"]
+            "Lee et al. (Microsoft & CMU), CHI 2025",
+            "Metformin & B12: ADA Standards of Care, 2025"]
     D.text(c, "SOURCES", 540, 920, 36, "rye-400", (80, 40, 10), tag="src")
     for i, s in enumerate(srcs):
         D.text(c, s, 540, 980 + i * 50, 30, "oldstandard-700", (60, 30, 10), tag="src")

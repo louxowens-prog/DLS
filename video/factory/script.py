@@ -27,9 +27,8 @@ LINES = [
     ("c1", NAR, "Then, one night, she found a way to think bigger.", None, 0.8),
 
     # ---- the grey town
-    ("a1", NAR, "This is the grey town, where thinking is slow work.", None, 0.2),
-    ("a2", NAR, "A researcher here spends three hours digging through fifty reports, and has no time left to think about them.",
-     "A researcher spends 3 hours| digging through 50 reports,| and has no time left to think about them.", 0.3),
+    ("a1", NAR, "In the grey town, thinking is slow work. Three hours digging through fifty reports, and no time left to think.",
+     "In the grey town, thinking is slow work.| 3 hours digging through 50 reports,| and no time left to think.", 0.3),
     ("a3", NAR, "And today, you got a letter. Your dad's test results. Four pages of words you don't understand.",
      "And today, you got a letter.| Your dad's test results.| 4 pages of words you don't understand.", 0.3),
     ("b1", NAR, "Then, inside a chocolate wrapper: a golden ticket.", None, 0.25),
@@ -38,8 +37,8 @@ LINES = [
 
     # ---- the newsreel: the world goes mad for thinking machines
     ("n1", ANN, "Extra! Extra! Thinking machines in every pocket!", None, 0.1),
-    ("n2", ANN, "Forty percent better work! Forty percent faster! And beginners gain the most!",
-     "40% better work!| 40% faster!| And beginners gain the most!", 0.15),
+    ("n2", ANN, "Consultants: forty percent better work! Writers: forty percent faster! And beginners gain the most!",
+     "Consultants: 40% better work!| Writers: 40% faster!| And beginners gain the most!", 0.15),
     ("n3", FARMER, "It read my loan papers to me in plain English.", None, 0.1),
     ("n4", STUDENT, "It argues with my essay before my teacher does.", None, 0.4),
 
@@ -94,13 +93,15 @@ LINES = [
      "A study that isn't. A quote no one said.| A number invented, so polished, so sure.", 0.05),
     ("t1c", HOST, "Is it true, is it true, is it true, is it true?", None, 1.5),
     ("t2", HOST, "It can be wrong. Beautifully. So you check.", None, 0.35),
-    ("e1", NAR, "Trust it blindly, and you think less: Harvard's consultants did nineteen points worse on the wrong task. Used well, you think more.",
-     "Trust it blindly, and you think less:| Harvard's consultants did 19 points worse| on the wrong task.| Used well, you think more.", 0.5),
+    ("e1", NAR, "Trust it blindly, and you stop checking. In one study, consultants using AI on a task it was bad at were nineteen points less likely to get it right. Used well, you think more.",
+     "Trust it blindly, and you stop checking.| In one study, consultants using AI on a task it was bad at| were 19 points less likely to get it right.| Used well, you think more.", 0.5),
 
     # ---- the real-life scenario, at full strength
-    ("p1", NAR, "Next morning, you walk in with one page, and ask the question nobody had asked.",
-     "Next morning, you walk in with one page,| and ask the question nobody had asked.", 0.25),
-    ("p2", DOCTOR, "That's... exactly the right question.", None, 0.6),
+    ("p1", NAR, "Next morning, you walk in with one page, and ask the question nobody had asked: could his diabetes pill be lowering his B twelve?",
+     "Next morning, you walk in with one page,| and ask the question nobody had asked:| “Could his diabetes pill be lowering his B12?”", 0.25),
+    ("p2", DOCTOR, "That's... exactly the right question.", None, 0.3),
+    ("p3", NAR, "One blood test. His B twelve was low. A supplement, and by spring, the numbness is fading.",
+     "One blood test. His B12 was low.| A supplement, and by spring,| the numbness is fading.", 0.6),
 
     # ---- the host explodes; then the warm reveal
     ("x1", HOST, "You questioned my machines! You argued with them! You checked every single drop!",
@@ -122,7 +123,7 @@ LINES = [
 REFRAIN = ("Think it through, think it through;", "the thinking's up to you!")
 SONGS = {
     # the wistful ballad, half-sung by the host as the door opens
-    "s1": dict(style="ballad", bpm=96, intro=4, outro=2, lines=[
+    "s1": dict(style="ballad", bpm=104, intro=4, outro=2, lines=[
         (HOST, "Step inside, and see"),
         (HOST, "how far a mind can go,"),
         (HOST, "past every book you'll never read,"),
@@ -130,16 +131,16 @@ SONGS = {
         (HOST, "the door stays open,"),
         (HOST, "if the thinking's done by you.")]),
     # the little workers' moral chants: a verse for the guest, then the same refrain every time
-    "w1": dict(style="chant", bpm=128, intro=2, outro=1, lines=[
+    "w1": dict(style="chant", bpm=140, intro=2, outro=1, lines=[
         (WORKERS, "He swallowed it whole,"), (WORKERS, "and he hasn't a clue!"),
         (WORKERS, REFRAIN[0]), (WORKERS, REFRAIN[1])]),
-    "w2": dict(style="chant", bpm=128, intro=2, outro=1, lines=[
+    "w2": dict(style="chant", bpm=140, intro=2, outro=1, lines=[
         (WORKERS, "She never once checked,"), (WORKERS, "so up the pipe she flew!"),
         (WORKERS, REFRAIN[0]), (WORKERS, REFRAIN[1])]),
-    "w3": dict(style="chant", bpm=128, intro=2, outro=1, lines=[
+    "w3": dict(style="chant", bpm=140, intro=2, outro=1, lines=[
         (WORKERS, "He only asked 'Am I right?'"), (WORKERS, "so his small world shrank too!"),
         (WORKERS, REFRAIN[0]), (WORKERS, REFRAIN[1])]),
-    "w4": dict(style="chant", bpm=128, intro=2, outro=1, lines=[
+    "w4": dict(style="chant", bpm=140, intro=2, outro=1, lines=[
         (WORKERS, "She grabbed the first bubble;"), (WORKERS, "fast isn't far, it's true!"),
         (WORKERS, REFRAIN[0]), (WORKERS, REFRAIN[1])]),
 }
@@ -147,9 +148,9 @@ LYRIC_SHOWN = {}
 
 # the thirteen uses, grouped by room (shown on each room's door plaque)
 ROOMS = {
-    1: ("THE UNTANGLER", ["explain unfamiliar subjects", "translate jargon into plain words"]),
-    2: ("THE PRESS", ["summarize complex documents", "find the parts that matter", "find inconsistencies"]),
-    3: ("THE ARGUING MIRROR", ["critique an argument", "simulate opposing views", "compare competing ideas"]),
-    4: ("THE KITCHEN OF WHAT-IF", ["brainstorm possibilities", "generate hypotheses", "explore consequences",
-                                   "organize thoughts", "turn vague ideas into plans", "find the missing questions"]),
+    1: ("THE UNTANGLER", ["explain unfamiliar subjects", "translate jargon"]),
+    2: ("THE PRESS", ["summarize documents", "find inconsistencies"]),
+    3: ("THE ARGUING MIRROR", ["critique an argument", "opposing views", "compare ideas"]),
+    4: ("KITCHEN OF WHAT-IF", ["brainstorm", "generate hypotheses", "explore consequences",
+                               "organize thoughts", "vague ideas into plans", "missing questions"]),
 }

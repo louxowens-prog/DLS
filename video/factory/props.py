@@ -13,8 +13,8 @@ import draw as D
 from draw import (CARAMEL, CHERRY, CHOC, CHOC2, CREAM, GOLD, GOLD2, GOLD3, INK, LEMON, LILAC, MINT, PAPER, PINK, TEAL,
                   WHITE, mix, paint, path, shade)
 
-JARGON = [("idiopathic", "no known cause"), ("bilateral", "on both sides"), ("contraindicated", "not safe with"),
-          ("T2 hyperintensity", "a bright spot on the scan"), ("benign", "not cancer"), ("prognosis", "what happens next")]
+JARGON = [("peripheral neuropathy", "damaged nerves in the feet"), ("bilateral", "on both sides"), ("idiopathic", "no known cause"),
+          ("paresthesia", "pins and needles"), ("prognosis", "what happens next"), ("benign", "not cancer")]
 
 
 def ticket(c, x, y, w, rot=0.0, lines=("ADMIT ONE MIND", "BRING A QUESTION"), glow=0.6, T=0.0, flip=0.0, tag="ticket", head="GOLDEN TICKET"):
@@ -82,11 +82,12 @@ def letter(c, x, y, s, T=0.0, plain=0.0, rot=0.0, title="TEST RESULTS"):
         k = min(1.0, max(0.0, plain * 5 - i))
         yy = -160 + i * 100
         if k < 0.5:                                                     # struck through ...
-            wj = D.text(c, jar, 0, yy, 44, "special-elite-400", INK, tag="letter")
+            sz = min(44, 44 * 440 / D.font("special-elite-400", 44).measureText(jar))
+            wj = D.text(c, jar, 0, yy, sz, "special-elite-400", INK, tag="letter")
             if k > 0:
                 c.drawLine(-wj / 2, yy - 14, -wj / 2 + wj * k * 2, yy - 14, paint((190, 40, 40), stroke=5))
         else:                                                           # ... and swapped for plain words
-            D.text(c, pl, 0, yy, 44, "fraunces-700", (30, 110, 60), tag="letter")
+            D.text(c, pl, 0, yy, min(44, 44 * 440 / D.font("fraunces-700", 44).measureText(pl)), "fraunces-700", (30, 110, 60), tag="letter")
     c.restore()
 
 
@@ -269,29 +270,36 @@ def kettle(c, x, y, s, T, fizz=1.0):
 SLOTS = [(250, 420), (560, 330), (850, 440), (330, 700), (760, 720), (540, 560)]
 
 
-def bubbles(c, T, words, x=540, y=1100, spread=380, t0=0.0, gold=None, popped=()):
-    """Idea bubbles fizzing up out of the kettle into a cloud of possibilities; most pop, the gold one stays."""
+def bubbles(c, T, words, x=540, y=1100, spread=380, t0=0.0, gold=None, popped=(), dy=0):
+    """Idea bubbles fizzing up out of the kettle into a cloud of possibilities; most pop, the gold one stays.
+    A "|" in a word breaks it over two lines."""
     for i, w in enumerate(words):
         age = T - t0 - i * 0.35
         if age < 0:
             continue
         sx, sy = SLOTS[i % len(SLOTS)]
+        sy += dy
         u = min(1.0, age / 0.7)
         bx = x + (sx - x) * u + 14 * math.sin(T * 2 + i)
         by = y + (sy - y) * u + 12 * math.cos(T * 1.7 + i)
-        r = 70 + 40 * u
+        isg = gold is not None and i == gold
+        r = (70 + 40 * u) * (1.25 if isg else 1.0)
         if i in popped and age > 1.6:
             for k in range(8):
                 a = k * math.pi / 4
                 c.drawLine(bx + r * 0.6 * math.cos(a), by + r * 0.6 * math.sin(a), bx + r * 0.95 * math.cos(a),
                            by + r * 0.95 * math.sin(a), paint(WHITE, max(0.0, 1 - (age - 1.6) * 3), stroke=5))
             continue
-        isg = gold is not None and i == gold
         col = (255, 220, 120) if isg else (220, 240, 255)
-        c.drawCircle(bx, by, r, paint(col, 0.45 if not isg else 0.7))
-        c.drawCircle(bx, by, r, paint(WHITE, 0.8, stroke=4))
+        c.drawCircle(bx, by, r, paint(col, 0.45 if not isg else 0.8))
+        c.drawCircle(bx, by, r, paint(GOLD3 if isg else WHITE, 0.8, stroke=6 if isg else 4))
         c.drawOval(skia.Rect.MakeLTRB(bx - r * 0.6, by - r * 0.7, bx - r * 0.1, by - r * 0.35), paint(WHITE, 0.6))
-        D.text(c, w, bx, by + 12, 34, "fraunces-900", (70, 40, 20) if isg else (40, 50, 80), tag="bubble")
+        lines = w.split("|")
+        f = D.font("fraunces-900", 34)
+        sz = min(34 * (1.15 if isg else 1.0), min(34 * r * 1.6 / max(1, f.measureText(l)) for l in lines))
+        for j, l in enumerate(lines):
+            D.text(c, l, bx, by + 12 + (j - (len(lines) - 1) / 2) * sz * 1.05, sz, "fraunces-900",
+                   (70, 40, 20) if isg else (40, 50, 80), tag="bubble")
 
 
 def plan_card(c, x, y, s, T, k=1.0):
@@ -304,13 +312,15 @@ def plan_card(c, x, y, s, T, k=1.0):
         c.drawLine(-300, -380 + j * 64, 300, -380 + j * 64, paint(WHITE, 0.12, stroke=2))
         c.drawLine(-300 + j * 55, -380, -300 + j * 55, 380, paint(WHITE, 0.12, stroke=2))
     D.text(c, "THE PLAN", 0, -300, 54, "fraunces-900", WHITE, tag="plan")
-    rows = [("WE KNOW", "a spot on both sides"), ("WE DON'T", "the cause"), ("WHAT IF", "we wait 3 months?"),
-            ("ASK", "1. which test rules it out?"), ("", "2. what if it's his spine?"), ("", "3. who has seen this before?")]
+    rows = [("WE KNOW", "numb feet, both sides"), ("WE DON'T", "the cause"), ("WHAT IF", "we wait? (it can become permanent)"),
+            ("ASK", "1. could his diabetes pill lower his B12?"), ("", "2. which blood test would show it?"), ("", "3. what else could it be?")]
     for j, (a, b) in enumerate(rows):
         yy = -200 + j * 96
         if a:
             D.text(c, a, -270, yy, 32, "fraunces-900", LEMON, tag="plan", align="left")
-        D.text(c, b, -270 + (0 if not a else 0), yy + 40, 30, "oldstandard-700", WHITE, tag="plan", align="left")
+        f = D.font("oldstandard-700", 30)
+        sz = min(30, 30 * 540 / max(1, f.measureText(b)))
+        D.text(c, b, -270, yy + 40, sz, "oldstandard-700", WHITE, tag="plan", align="left")
     c.restore()
 
 
@@ -327,17 +337,23 @@ def oven(c, x, y, s, T, glow=0.0):
 
 
 def plaque(c, x, y, n, name, uses, a=1.0):
-    """A brass door plaque: the room number, its name, and the kinds of thinking it helps with."""
+    """A brass door plaque: the room number, its name, and the kinds of thinking it helps with (one column when they fit)."""
     c.save()
     c.translate(x, y)
-    w, h = 820, 190 + 44 * math.ceil(len(uses) / 2)
+    cols = 1 if len(uses) <= 3 else 2
+    rows = math.ceil(len(uses) / cols)
+    w, h = 860, 200 + 58 * rows
     shade(c, D.rrect(-w / 2, 0, w / 2, h, 24), GOLD, k=0.3, a=a)
     c.drawPath(D.rrect(-w / 2 + 14, 14, w / 2 - 14, h - 14, 16), paint(GOLD3, a, stroke=5))
     D.text(c, f"ROOM {n}", 0, 72, 44, "rye-400", (100, 60, 10), tag="plaque", a=a)
-    D.text(c, name, 0, 140, 56, "fraunces-900", (70, 40, 10), tag="plaque", a=a)
+    ns = min(60, 60 * (w - 90) / D.font("fraunces-900", 60).measureText(name))
+    D.text(c, name, 0, 142, ns, "fraunces-900", (70, 40, 10), tag="plaque", a=a)
+    cw = (w - 100) / cols
+    us = min(42, min(42 * (cw - 20) / D.font("fraunces-700", 42).measureText("· " + u) for u in uses))
     for j, u in enumerate(uses):
-        col, row = j % 2, j // 2
-        D.text(c, "· " + u, -w / 4 + col * w / 2, 200 + row * 44, 30, "oldstandard-700", (90, 55, 15), tag="plaque", a=a)
+        col, row = j % cols, j // cols
+        cx = 0 if cols == 1 else -w / 4 + col * w / 2
+        D.text(c, "· " + u, cx, 210 + row * 58, us, "fraunces-700", (90, 55, 15), tag="plaque", a=a)
     c.restore()
 
 
@@ -356,7 +372,8 @@ def headline(c, x, y, s, rot, big, small, a=1.0):
             break
     for j, ln in enumerate(lines):
         D.text(c, ln, 0, -60 + j * size * 1.08 - (size * 0.54 if len(lines) == 1 else 0), size, "fraunces-900", INK, tag="headline", a=a)
-    D.text(c, small, 0, 205, 30, "oldstandard-700", (60, 60, 60), tag="headline", a=a)
+    sz = min(36, 36 * 740 / max(1, D.font("oldstandard-700", 36).measureText(small)))
+    D.text(c, small, 0, 205, sz, "oldstandard-700", (50, 50, 50), tag="headline", a=a)
     c.restore()
 
 

@@ -37,6 +37,8 @@ LOOKS = {
                    shoes=(40, 34, 30), specs="thin", stetho=True, lips=True),
     "farmer": dict(h=1.0, coat=(110, 110, 120), coat_len=-470, hair="cap", hair_c=(90, 80, 70), legs=(80, 90, 120),
                    shoes=(50, 40, 34), overalls=True, tash=True),
+    "dad": dict(h=0.98, coat=(150, 110, 80), coat_len=-420, hair="slick", hair_c=(190, 190, 190), legs=(90, 90, 100),
+                shoes=(60, 40, 30), specs="thin", tash=True),
     "student": dict(h=0.94, coat=(150, 110, 150), coat_len=-470, hair="curls", hair_c=(50, 36, 30), legs=(60, 70, 110),
                     shoes=(50, 40, 34), specs="round", lips=True),
 }

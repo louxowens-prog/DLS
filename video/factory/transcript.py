@@ -35,7 +35,8 @@ def main():
     out += ["", "WHERE THE DEVICES ARE",
             f"  THE TWO WORLDS: the grey rainy industrial town {f('town'):.1f}-{f('news1'):.1f} (you in a yellow raincoat, the only colour);"
             f" the great door opens slowly in dead silence {f('door'):.1f}, onto the candy wonderland {f('wonder_wide'):.1f}"
-            f" (sugar hills, lollipop trees, candy mushrooms, a chocolate river and waterfall)",
+            f" (sugar hills, lollipop trees, candy mushrooms, a chocolate river and waterfall; a slow pull-back from one flower to the"
+            f" whole place, then the river, a tracking shot past giant candy canes, the guests at a giant lollipop and a sugar rose)",
             f"  THE HOST: gentle welcome in rhyme {S('g1'):.1f}; the rule {S('g2'):.1f}; quietly menacing {S('g3'):.1f}; "
             f"a rhyme at every room door; the tunnel {f('tunnel'):.1f}; rage {S('x1'):.1f}; warm {S('x2'):.1f}",
             "  THE ROOMS (one invention each, each a chapter, the uses on a brass door plaque): " +
@@ -53,8 +54,12 @@ def main():
             "  1971 FILM LOOK: warm soft Technicolor-like grade, clumpy grain, red-orange halation, gate weave, flicker, dust, "
             "hairs and scratches, vignette; slow 70s zooms; iris and dissolve transitions; painted flats",
             f"  TONE WHIPLASH: the host explodes {S('x1'):.1f}, dead silence, then the warm reveal {S('x2'):.1f}",
-            f"  THE REAL-LIFE SCENARIO AT 100%: your dad's letter through every room ({f('room1'):.1f}-{f('rusher'):.1f}), "
-            f"the appointment {f('clinic'):.1f}; the true story (TODAY, 2023) {f('cold_kitchen'):.1f} and {f('story1'):.1f}",
+            f"  THE REAL-LIFE SCENARIO AT 100%: your dad (on metformin, numb feet) and his letter: at the kitchen table "
+            f"{f('kitchen'):.1f}; the letter goes through every room ({f('room1'):.1f}-{f('rusher'):.1f}); the appointment with "
+            f"the question on one page {f('clinic'):.1f}; the outcome (B12 low, supplement, walking by spring) {f('dad_home'):.1f}; "
+            f"the true story (TODAY, 2023) {f('cold_kitchen'):.1f} and {f('story1'):.1f}",
+            f"  THE THIRTEEN USES: each is stamped on screen with a running count (USE n OF 13) as it is acted out in the rooms "
+            f"{f('room1'):.1f}-{f('room4_plan'):.1f}; also on each room's door plaque; the newsreel interviews are tagged with theirs",
             f"  THE BALLAD: {TL.songs['s1']['start']:.1f} (harp, strings, celesta, choir); the march {f('news1'):.1f}; "
             f"the tunnel cue {f('tunnel_in'):.1f}",
             "  SILENCES (every bus cut): the door, after the tunnel, after the host's outburst",

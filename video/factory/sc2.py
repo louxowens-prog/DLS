@@ -11,7 +11,7 @@ import sets
 from cues import C, ls, talk
 from draw import (CHERRY, CHOC, CREAM, GOLD, GOLD2, GOLD3, H, INK, LEMON, LILAC, MINT, PINK, W, WHITE, ease, mix, paint,
                   path, ramp)
-from sc1 import cam, chip, title_words
+from sc1 import cam, chip, title_words, use_tag
 from script import ROOMS
 from timeline import TL
 
@@ -23,13 +23,16 @@ def s_door(T, t, d):
     c = st.c
     D.backdrop(st, "hall", sets.hall)
     k = ease(ramp(T, C["door_open"], C["door_open"] + 3.0))
+    push = ease(ramp(T, C["door_open"] + 1.0, C["door_open"] + 2.7))
     c.save()
-    cam(c, 1.0 + 0.25 * k, 540, 1000)
+    cam(c, 1.0 + 0.25 * k + 1.6 * push, 540, 1000)
     sets.door(c, 540, 1560, 1.0, k, T)
     c.restore()
     for who, x in (("copier", 170), ("believer", 360), ("you", 540), ("yesman", 720), ("rusher", 900)):
         cast.person(c, who, x, 2050, 0.62, T, pose="stand", mood="wow", alpha=0.95)     # backs to us, in silhouette
-    c.drawRect(skia.Rect.MakeLTRB(0, 1500, W, H), paint(INK, 0.55))
+    c.drawRect(skia.Rect.MakeLTRB(0, 1500, W, H), paint(INK, 0.55 * (1 - push)))
+    if push > 0:                                                        # through the doorway: the light floods in
+        c.drawRect(skia.Rect.MakeWH(W, H), paint((255, 236, 200), 0.75 * push))
     return st.arr
 
 
@@ -55,32 +58,106 @@ def _sparkle(c, T, n=30, seed=1, a=0.8):
 
 
 def s_wonder_wide(T, t, d):
+    """The big slow reveal: from a close-up of one candy mushroom, the camera pulls all the way back to the whole place;
+    the guests wander in below."""
     st = D.Stage()
-    z = 1.35 - 0.3 * ease(t / max(d, 0.1))                             # the slow zoom back to reveal it all
-    _wonder(st, T, z, 540, 1050)
     c = st.c
-    for who, x in (("copier", 250), ("believer", 400), ("you", 540), ("yesman", 680), ("rusher", 820)):
-        cast.person(c, who, x, 1860, 0.3, T, pose="stand", mood="wow")
-    _sparkle(c, T)
+    u = ease(ramp(t, 0.0, max(0.5, d - 0.6)))
+    z = 2.6 - 1.6 * u
+    walk = ramp(t, 0.5, d)
+    c.save()
+    cam(c, z, 700 - 180 * u, 1110 - 110 * u)
+    D.backdrop(st, "wonder", sets.wonder)
+    sets.river(c, T)
+    for who, x in (("copier", 330), ("believer", 450), ("you", 560), ("yesman", 670), ("rusher", 780)):
+        cast.person(c, who, x + (x - 560) * 0.3 * walk, 1830 - 60 * walk, 0.34, T,
+                    pose="arms_up" if who in ("copier", "rusher") else "stand", mood="wow", walk=walk * 2)
+    c.restore()
+    _sparkle(c, T, 40, 1, a=0.9)
     return st.arr
 
 
 def s_wonder_river(T, t, d):
+    """The chocolate river: the cake-cliff waterfall roaring, a pink swan boat drifting down the current."""
     st = D.Stage()
-    _wonder(st, T, 1.7, 220, 1150)
     c = st.c
-    cast.person(c, "copier", 760, 1850, 0.62, T, pose="reach", mood="wow")
-    cast.person(c, "believer", 980, 1900, 0.62, T, pose="clasp", mood="wow")
+    c.save()
+    cam(c, 1.1 + 0.06 * ease(t / max(d, 0.1)), 420, 900)
+    D.backdrop(st, "wonder", sets.wonder)
+    sets.river(c, T, y0=860)
+    c.restore()
+    u = t / max(d, 0.1)
+    c.save()
+    c.translate(880 - 480 * u, 1180 + 10 * math.sin(T * 2))
+    c.rotate(2 * math.sin(T * 1.5))
+    c.scale(-1, 1)
+    P.boat(c, 0, 0, 0.45, T)
+    c.restore()
     _sparkle(c, T, 20, 3)
+    return st.arr
+
+
+def s_wonder_pan(T, t, d):
+    """A tracking shot along the sugar lawn: giant candy slides past in the foreground; you and the host stroll."""
+    st = D.Stage()
+    u = t / max(d, 0.1)
+    _wonder(st, T, 1.5, 330 + 420 * u, 1080)
+    c = st.c
+    for i, (x0, kind) in enumerate(((150, "cane"), (620, "gum"), (1050, "cane"), (1480, "gum"), (1900, "cane"))):
+        x = x0 - 900 * u                                                # the foreground slides faster: parallax
+        if kind == "cane":
+            c.drawLine(x, 1920, x, 1080, paint(WHITE, stroke=90))
+            for j in range(12):
+                c.drawLine(x - 45, 1120 + j * 70, x + 45, 1080 + j * 70, paint(CHERRY, stroke=26))
+            c.drawArc(skia.Rect.MakeLTRB(x, 900, x + 260, 1160), 180, 180, False, paint(WHITE, stroke=90))
+            c.drawArc(skia.Rect.MakeLTRB(x, 900, x + 260, 1160), 200, 40, False, paint(CHERRY, stroke=90))
+        else:
+            D.shade(c, D.rrect(x - 160, 1500, x + 160, 1860, 150), [PINK, MINT, LEMON][i % 3], k=0.3)
+            for j in range(18):
+                a = j * 2.4
+                c.drawCircle(x + 120 * math.cos(a) * (j % 3) / 2.5, 1640 + 100 * math.sin(a) * (j % 3) / 2.5, 7, paint(WHITE, 0.8))
+    cast.person(c, "host", 610, 1500, 0.5, T, pose="cane", mood="smile", walk=t * 1.1, talk=talk("HOST", T))
+    cast.person(c, "you", 430, 1520, 0.46, T, pose="stand", mood="wow", walk=t * 1.1, look=0.6)
+    _sparkle(c, T, 24, 7)
+    return st.arr
+
+
+def s_wonder_guests(T, t, d):
+    """The guests can't help themselves: the Copier licks a lollipop bigger than he is; the Believer sniffs a sugar rose."""
+    st = D.Stage()
+    _wonder(st, T, 1.45, 540, 1150, riv=False)
+    c = st.c
+    lx, ly = 250, 1000                                                  # the giant lollipop
+    c.drawLine(lx, ly, lx, 1760, paint(WHITE, stroke=34))
+    D.shade(c, D.circle(lx, ly, 200), (255, 80, 160), k=0.25)
+    for k in range(5):
+        r = 200 * (0.2 + k * 0.18)
+        c.drawArc(skia.Rect.MakeLTRB(lx - r, ly - r, lx + r, ly + r), k * 70 + t * 40, 250, False, paint(WHITE, 0.75, stroke=16))
+    lick = abs(math.sin(t * 3.2))
+    cast.person(c, "copier", 470 - 14 * lick, 1560, 0.72, T, pose=(150, 30, 10, 0), mood="wow", tilt=-10 * lick, look=-1)
+    c.drawOval(skia.Rect.MakeLTRB(420 - 14 * lick, 1182, 450 - 14 * lick, 1204 + 16 * lick), paint((240, 110, 130)))   # the tongue
+    fx, fy = 850, 1000                                                  # the sugar rose, head-high
+    c.drawLine(fx, fy, fx - 10, 1760, paint((70, 170, 90), stroke=24))
+    D.shade(c, D.oval(fx - 150, 1300, fx - 10, 1360), (90, 190, 100), k=0.2)
+    for j in range(8):
+        a = j * math.pi / 4 + t * 0.4
+        D.shade(c, D.circle(fx + 62 * math.cos(a), fy + 62 * math.sin(a), 60), (255, 150, 190), k=0.25, edge=0.2)
+    D.shade(c, D.circle(fx, fy, 56), (250, 110, 160), k=0.3)
+    sniff = ease(ramp(t, 0.3, 1.2))
+    cast.person(c, "believer", 650 + 20 * sniff, 1640, 0.72, T, pose="clasp", mood="wow" if sniff > 0.8 else "smile",
+                lean=10 * sniff, look=1)
+    _sparkle(c, T, 20, 9)
     return st.arr
 
 
 def s_wonder_host(T, t, d):
     st = D.Stage()
-    _wonder(st, T, 1.4, 700, 900, riv=False)
+    _wonder(st, T, 1.4 + 0.12 * ease(t / max(d, 0.1)), 700, 900, riv=False)
     c = st.c
     sway = 6 * math.sin(T * 1.8)
-    cast.person(c, "host", 540, 1900, 1.02, T, pose="arms_out", mood="smile", tilt=sway, talk=talk("HOST", T))
+    look = ramp(t, d * 0.6, d * 0.8)                                    # on the last line, he turns and looks at us
+    cast.person(c, "host", 540, 1900, 1.02, T, pose="arms_out" if look < 0.5 else "clasp", mood="smile" if look < 0.5 else "sly",
+                tilt=sway * (1 - look), talk=talk("HOST", T))
     _sparkle(c, T, 36, 5)
     return st.arr
 
@@ -129,7 +206,7 @@ def _plaque(n, T, t, d):
     cam(c, 0.9 + 0.1 * k, 540, 500)
     P.plaque(c, 540, 330, n, name, uses, a=k)
     c.restore()
-    cast.person(c, "host", 940, 1820, 0.6, T, pose="present", mood="sly", talk=talk("HOST", T))
+    cast.person(c, "host", 790, 1560, 0.52, T, pose="present", mood="sly", talk=talk("HOST", T))
     return st.arr
 
 
@@ -158,9 +235,10 @@ def s_room1(T, t, d):
     c = st.c
     _room(st, 1)
     k = ease(ramp(t, 0.6, d))
-    P.taffy_puller(c, 480, 1180, 1.25, T, untangle=k)
-    P.letter(c, 170 - 40 * k, 560, 0.34, T, plain=0.0, rot=-8)
-    cast.person(c, "you", 880, 1860, 0.62, T, pose="clasp", mood="wow")
+    P.taffy_puller(c, 420, 1180, 1.15, T, untangle=k)
+    P.letter(c, 150 - 40 * k, 620, 0.3, T, plain=0.0, rot=-8)
+    cast.person(c, "you", 790, 1560, 0.52, T, pose="clasp", mood="wow", look=-0.7)
+    use_tag(c, T)
     return st.arr
 
 
@@ -169,10 +247,11 @@ def s_room1_letter(T, t, d):
     c = st.c
     _room(st, 1)
     c.drawRect(skia.Rect.MakeWH(W, H), paint(INK, 0.3))
-    P.letter(c, 540, 860, 1.35, T, plain=ease(ramp(t, 0.1, max(0.5, d - 0.4))), rot=-1)
+    P.letter(c, 540, 900, 1.3, T, plain=ease(ramp(t, 0.1, max(0.5, d - 0.4))), rot=-1)
     k = ramp(t, 1.2, 1.6)
     if k > 0:
-        chip(c, "“explain it simpler”  ·  “and again”", 540, 1280, 30, a=k)
+        chip(c, "“explain it simpler”  ·  “and again”", 540, 1300, 30, a=k)
+    use_tag(c, T)
     return st.arr
 
 
@@ -211,29 +290,60 @@ def s_copier(T, t, d):
     return st.arr
 
 
-def _workers(st, T, n, sk, verse_pose="cheer"):
-    """The little workers in a chorus line, bobbing on the beat; the verse from the leader, the refrain from all."""
+def _workers(st, T, n, sk, form="line", cx=540, cy=1150):
+    """The little workers, bobbing on the beat; the verse from the leader, the refrain from all. Each chant is staged
+    differently: a chorus line, a low-angle close-up of three, a ring around the tiny guest, a conga line."""
     c = st.c
     S_ = TL.songs[sk]
     beat = S_["beat"]
     lines = [TL.lines[l["key"]] for l in S_["lines"]]
-    on_refrain = T >= lines[-1]["start"] - 0.1
-    for i in range(5):
-        x = 140 + i * 200
-        ph = ((T - S_["start"]) / beat + i * 0.5) % 2
-        hop = 22 * abs(math.sin(ph * math.pi))
-        pose = ("cheer" if int((T - S_["start"]) / beat) % 2 == 0 else "fists") if on_refrain else ("point" if i % 2 else "stand")
-        tk = talk("WORKERS", T) if (on_refrain or i == 2) else 0.0
-        cast.worker(c, x, 1260, 0.82, T, pose=pose, bob=hop, talk=tk)
+    on_refrain = T >= lines[2]["start"] - 0.1
+    b = (T - S_["start"]) / beat
+    even = int(b) % 2 == 0
+
+    def pose_for(i):
+        if on_refrain:
+            return "cheer" if even else "fists"
+        return ("point" if i % 2 else "stand") if form != "ring" else ("point" if even else (150, 20, 115, 0))
+
+    if form == "line":
+        for i in range(5):
+            ph = (b + i * 0.5) % 2
+            hop = 22 * abs(math.sin(ph * math.pi))
+            tk = talk("WORKERS", T) if (on_refrain or i == 2) else 0.0
+            cast.worker(c, 140 + i * 200, 1260, 0.82, T, pose=pose_for(i), bob=hop, talk=tk)
+    elif form == "close":                                               # low angle: three big bulbs against the ceiling
+        for i, x in enumerate((180, 520, 820)):
+            hop = 30 * abs(math.sin((b + i * 0.66) * math.pi / 2))
+            tk = talk("WORKERS", T) if (on_refrain or i == 1) else 0.0
+            c.save()
+            c.translate(x, 1700)
+            c.rotate((i - 1) * 6)
+            cast.worker(c, 0, 0, 1.75 if i == 1 else 1.45, T, pose=pose_for(i + 1), bob=hop, talk=tk)
+            c.restore()
+    elif form == "ring":                                                # a ring of wagging fingers around the middle
+        _workers_subset(c, T, sk, range(8))
+    else:                                                               # a conga line marching across
+        for i in range(7):
+            x = (i * 190 + (T - S_["start"]) * 260) % 1520 - 220
+            hop = 20 * abs(math.sin((b + i * 0.5) * math.pi))
+            kick = (40, -20, 70, 10) if int(b + i) % 2 else (10, 0, 90, 10)
+            cast.worker(c, x, 1300, 0.7, T, pose=kick if not on_refrain else pose_for(i), bob=hop,
+                        talk=talk("WORKERS", T) if (on_refrain or i == 3) else 0.0)
 
 
-def _chant(n, sk, T, t, d, gag):
+def _chant(n, sk, T, t, d, gag, form="line", after=None, z=1.0, cy=960):
     st = D.Stage()
     c = st.c
+    c.save()
+    cam(c, z, 540, cy)
     _room(st, n)
+    c.restore()
     c.drawRect(skia.Rect.MakeWH(W, H), paint((255, 220, 160), 0.12))
     gag(c, T, t)
-    _workers(st, T, n, sk)
+    _workers(st, T, n, sk, form)
+    if after:
+        after(c, T, t)
     return st.arr
 
 
@@ -261,7 +371,8 @@ def s_room2(T, t, d):
     cnt = 50 - int(44 * ease(ramp(T, C["fifty_in"] + 0.5, C["six_out"])))
     P.press(c, 540, 1240, 1.0, T, down=down, count=cnt)
     P.reports(c, 540, 1180, max(6, cnt), 0.8, seed=4)
-    cast.person(c, "you", 930, 1880, 0.55, T, pose="clasp", mood="wow")
+    cast.person(c, "you", 800, 1600, 0.5, T, pose="clasp", mood="wow", look=-0.7)
+    use_tag(c, T)
     return st.arr
 
 
@@ -271,7 +382,7 @@ def s_room2_flag(T, t, d):
     _room(st, 2)
     c.drawRect(skia.Rect.MakeWH(W, H), paint(INK, 0.25))
     for i in range(6):                                                  # the six pages that matter, glowing
-        x, y = 200 + (i % 3) * 340, 500 + (i // 3) * 380
+        x, y = 200 + (i % 3) * 340, 600 + (i // 3) * 370
         c.drawRect(skia.Rect.MakeLTRB(x - 120, y - 150, x + 120, y + 150), paint((255, 230, 150), 0.35, blur=20))
         D.shade(c, D.rrect(x - 110, y - 140, x + 110, y + 140, 6), CREAM, k=0.08)
         D.text(c, f"STUDY {[3, 12, 17, 24, 31, 44][i]}", x, y - 90, 30, "oldstandard-700", INK, tag="page")
@@ -279,10 +390,12 @@ def s_room2_flag(T, t, d):
             c.drawLine(x - 80, y - 40 + j * 40, x + 80, y - 40 + j * 40, paint((150, 140, 120), stroke=5))
     k = ease(ramp(T, C["disagree"] - 0.3, C["disagree"] + 0.2))
     if k > 0:                                                           # the red flag where two disagree
-        for x, y in ((540, 500), (540, 880)):
+        for x, y in ((540, 600), (540, 970)):
             c.drawCircle(x, y, 150, paint(CHERRY, k, stroke=10))
-        c.drawLine(540, 650, 540, 730, paint(CHERRY, k, stroke=8))
-        chip(c, "STUDY 12 SAYS 30%   ·   STUDY 31 SAYS 3%", 540, 1180, 30, fg=WHITE, bg=(160, 30, 40), a=k)
+        c.drawLine(540, 750, 540, 820, paint(CHERRY, k, stroke=8))
+        chip(c, "STUDY 12: COMMON   ·   STUDY 31: RARE", 540, 1215, 32, fg=WHITE, bg=(160, 30, 40), a=k)
+        chip(c, "(illustrative)", 540, 1275, 24, a=k)
+    use_tag(c, T)
     return st.arr
 
 
@@ -308,7 +421,9 @@ def s_believer(T, t, d):
     _room(st, 2)
     D.shade(c, D.rrect(700, 0, 820, 700, 40), (200, 150, 70), k=0.35)                                  # the pipe
     D.shade(c, D.rrect(620, 640, 900, 760, 40), (200, 150, 70), k=0.35)
-    chip(c, "SOUNDS-SURE SYRUP", 760, 820, 28, fg=(80, 40, 10), bg=GOLD2)
+    chip(c, "SOUNDS-SURE SYRUP", 380, 560, 30, fg=(80, 40, 10), bg=GOLD2)
+    c.drawLine(560, 548, 640, 640, paint(GOLD2, stroke=6))
+    c.drawPath(path([(640, 640), (610, 628), (630, 606)]), paint(GOLD2))
     up = ease(ramp(T, C["sucked"], C["sucked"] + 1.0))
     stretch = 1 + 1.6 * up
     y = 1800 - 1300 * up
@@ -334,7 +449,7 @@ def s_chant2(T, t, d):
         for j in range(6):
             c.drawCircle(-80 + j * 32, -20, 12, paint([LEMON, PINK, WHITE][j % 3]))
         c.restore()
-    return _chant(2, "w2", T, t, d, gag)
+    return _chant(2, "w2", T, t, d, gag, form="close", z=1.3, cy=700)
 
 
 def s_room3(T, t, d):
@@ -342,15 +457,16 @@ def s_room3(T, t, d):
     c = st.c
     _room(st, 3)
     P.mirror(c, 300, 1250, 0.95, T, mood="sly", talk=0.0)
-    P.scales(c, 740, 1180, 0.72, T, tip=math.sin(t * 1.2))
+    P.scales(c, 690, 1240, 0.66, T, tip=math.sin(t * 1.2))
     k = ease(ramp(T, C["hole"] - 0.3, C["hole"] + 0.3))
     if k > 0:                                                           # the hole in your own reasoning, ringed in red
-        D.shade(c, D.rrect(560, 300, 980, 700, 10), CREAM, k=0.08)
-        D.text(c, "MY PLAN", 770, 380, 40, "fraunces-900", INK, tag="plan")
-        for j, ln in enumerate(["wait and see", "because he's young", "so it's probably fine"]):
-            D.text(c, ln, 770, 450 + j * 70, 34, "oldstandard-700", INK, tag="plan")
-        c.drawOval(skia.Rect.MakeLTRB(600, 500 + 0, 950, 620), paint(CHERRY, k, stroke=9))
-        chip(c, "ASSUMPTION!", 770, 680, 28, fg=WHITE, bg=CHERRY, a=k)
+        D.shade(c, D.rrect(540, 470, 1000, 830, 10), CREAM, k=0.08, a=k)
+        D.text(c, "MY THINKING", 770, 540, 40, "fraunces-900", INK, tag="plan", a=k)
+        for j, ln in enumerate(["blame the diabetes,", "so nothing to do:", "just live with it"]):
+            D.text(c, ln, 770, 610 + j * 62, 34, "oldstandard-700", INK, tag="plan", a=k)
+        c.drawOval(skia.Rect.MakeLTRB(575, 562, 965, 630), paint(CHERRY, k, stroke=8))
+        chip(c, "ASSUMPTION!", 770, 800, 28, fg=WHITE, bg=CHERRY, a=k)
+    use_tag(c, T)
     return st.arr
 
 
@@ -369,29 +485,65 @@ def s_yesman(T, t, d):
 
 
 def s_chant3(T, t, d):
-    def gag(c, T, t):                                                   # the tiny yes-man, pacing on a footstool
-        D.shade(c, D.rrect(720, 560, 960, 640, 12), GOLD3, k=0.3)
-        D.shade(c, D.rrect(740, 640, 770, 800, 6), GOLD3, k=0.3)
-        D.shade(c, D.rrect(910, 640, 940, 800, 6), GOLD3, k=0.3)
-        cast.person(c, "yesman", 840 + 50 * math.sin(t * 2), 560, 0.2, T, pose="shrug", mood="worry", walk=t)
-    return _chant(3, "w3", T, t, d, gag)
+    """The tiny yes-man, pacing in a spotlight, ringed by wagging fingers."""
+    def tiny(c, T, t):
+        cast.person(c, "yesman", 540 + 30 * math.sin(t * 2.5), 1150, 0.17, T, pose="shrug", mood="worry", walk=t * 1.5)
+    return _ring3(T, t, d, tiny)
 
 
-HYP = ["his spine?", "a nerve?", "an old fall?", "his posture?", "a vitamin?", "genetics?"]
+def _ring3(T, t, d, tiny):
+    st = D.Stage()
+    c = st.c
+    _room(st, 3)
+    c.drawRect(skia.Rect.MakeWH(W, H), paint((255, 220, 160), 0.1))
+    c.drawCircle(540, 1150, 330, paint((255, 240, 200), 0.18, blur=40))    # a spotlight on him
+    S_ = TL.songs["w3"]
+    b = (T - S_["start"]) / S_["beat"]
+    back = []
+    front = []
+    for i in range(8):                                                  # split the ring: those behind him, those in front
+        a = i / 8 * 2 * math.pi + b * 0.12
+        (back if math.sin(a) < 0 else front).append(i)
+    _workers_subset(c, T, "w3", back)
+    tiny(c, T, t)
+    _workers_subset(c, T, "w3", front)
+    return st.arr
+
+
+def _workers_subset(c, T, sk, which):
+    S_ = TL.songs[sk]
+    beat = S_["beat"]
+    b = (T - S_["start"]) / beat
+    on_refrain = T >= TL.lines[S_["lines"][2]["key"]]["start"] - 0.1
+    even = int(b) % 2 == 0
+    pts = []
+    for i in which:
+        a = i / 8 * 2 * math.pi + b * 0.12
+        pts.append((math.sin(a), 540 + 400 * math.cos(a), 1150 + 150 * math.sin(a), i))
+    for sa, x, y, i in sorted(pts):
+        hop = 16 * abs(math.sin((b + i * 0.5) * math.pi / 2))
+        pose = ("cheer" if even else "fists") if on_refrain else ("point" if even else (150, 20, 115, 0))
+        cast.worker(c, x, y, 0.5 + 0.2 * (sa + 1) / 2, T, pose=pose, bob=hop,
+                    talk=talk("WORKERS", T) if (on_refrain or i == 0) else 0.0)
+
+
+HYP = ["his diabetes|pill?", "an old|injury?", "his shoes?", "his back?", "genetics?", "something|else?"]
 
 
 def s_room4_fizz(T, t, d):
     st = D.Stage()
     c = st.c
     _room(st, 4)
-    P.kettle(c, 540, 1300, 1.0, T)
+    P.kettle(c, 640, 1320, 0.85, T)
     popped = (1, 2, 3, 4, 5) if T >= C["pop"] else ()
-    P.bubbles(c, T, HYP, 540, 1050, 380, t0=T - t + 0.2, gold=0 if T >= C["pop"] else None, popped=popped)
-    k = ease(ramp(T, C["wait"] - 0.4, C["wait"] + 0.1))
-    if k > 0:                                                           # the what-if chalk branches
-        c.drawLine(120, 360, 250, 300, paint(WHITE, k, stroke=5))
-        c.drawLine(120, 360, 250, 420, paint(WHITE, k, stroke=5))
-        D.text(c, "WAIT →", 140, 330, 30, "special-elite-400", WHITE, tag="chalk", a=k, align="left")
+    P.bubbles(c, T, HYP, 640, 1060, 380, t0=T - t + 0.2, gold=0 if T >= C["pop"] else None, popped=popped, dy=200)
+    k = ease(ramp(T, C["wait"] - 0.4, C["wait"] + 0.1)) * (1 - ramp(T, C["pop"] - 0.3, C["pop"]))
+    if k > 0:                                                           # what if you wait? a chalk fork in the road
+        D.shade(c, D.rrect(30, 1110, 430, 1300, 12), (50, 60, 56), k=0.1, a=k)
+        D.text(c, "IF YOU WAIT:", 230, 1165, 32, "special-elite-400", WHITE, tag="chalk", a=k)
+        D.text(c, "nerve damage can", 230, 1215, 30, "special-elite-400", WHITE, tag="chalk", a=k)
+        D.text(c, "become permanent", 230, 1260, 30, "special-elite-400", WHITE, tag="chalk", a=k)
+    use_tag(c, T)
     return st.arr
 
 
@@ -407,7 +559,8 @@ def s_room4_plan(T, t, d):
                      paint((255, 200, 230), 0.7 * (1 - bake)))
     k = ease(ramp(t, 0.8, 1.6))
     if k > 0:
-        P.plan_card(c, 540, 700, 0.95, T, k)
+        P.plan_card(c, 540, 820, 0.95, T, k)
+    use_tag(c, T)
     return st.arr
 
 
@@ -438,4 +591,4 @@ def s_chant4(T, t, d):
         c.drawRect(skia.Rect.MakeLTRB(620, 1180, 900, 1220), paint(INK, 0.9))
         for i in range(4):
             c.drawCircle(760 + 30 * math.sin(t * 4 + i), 1150 - i * 40 - t * 20 % 40, 26 - i * 4, paint(WHITE, 0.4))
-    return _chant(4, "w4", T, t, d, gag)
+    return _chant(4, "w4", T, t, d, gag, form="conga")
