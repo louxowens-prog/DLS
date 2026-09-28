@@ -506,7 +506,7 @@ def hit_signal(gain, body, seed, t):
     x = signal.sosfilt(signal.butter(4, 7000 / (SR / 2), "low", output="sos"), x)
     x = signal.sosfilt(signal.butter(2, 22 / (SR / 2), "high", output="sos"), x)
     x = np.tanh(2.5 * x) / np.tanh(2.5)                                 # squeezed dense: loud for its whole first 50 ms
-    x = signal.sosfilt(signal.butter(2, 12000 / (SR / 2), "low", output="sos"), x)
+    x = signal.sosfilt(signal.butter(4, 6000 / (SR / 2), "low", output="sos"), x)   # band-limited again: no codec overshoot
     x[: int(0.004 * SR)] *= np.linspace(0, 1, int(0.004 * SR))
     return x * g * 1.7
 
