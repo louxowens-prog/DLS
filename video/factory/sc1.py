@@ -220,8 +220,9 @@ def s_office_clock(T, t, d):
     c.drawRect(skia.Rect.MakeWH(W, H), paint((40, 44, 40), 0.35))
     hrs = 9 + 3 * ease(ramp(t, 0.1, 1.6))
     P.clock(c, 540, 700, 260, hrs, T)
-    title_words(c, "3 HOURS GONE", 540, 1120, 96, Wd("a1", "no") + 0.2, T)
-    chip(c, "office workers spend 1.8 hours a day just searching · McKinsey", 540, 1250, 26)
+    if t < d - 0.05:
+        title_words(c, "3 HOURS GONE", 540, 1120, 96, Wd("a1", "no") + 0.2, T)
+        chip(c, "office workers spend 1.8 hours a day just searching · McKinsey", 540, 1250, 26)
     return st.arr
 
 
@@ -330,9 +331,9 @@ def s_news2(T, t, d):
     c = st.c
     c.drawRect(skia.Rect.MakeWH(W, H), paint(shader=D.rad((540, 960), 1100, [(170, 170, 170), (60, 60, 60)])))
     _news_frame(c, T)
-    heads = [(C["h_better"], "CONSULTANTS: 40% BETTER WORK", "on tasks AI is good at · HBS & BCG study, 2023"),
-             (C["h_faster"], "WRITERS: 40% FASTER, 18% BETTER", "professional writing tasks · Science, 2023"),
-             (C["h_beginners"], "BEGINNERS GAIN MOST: +34%", "customer support agents · QJE, 2025")]
+    heads = [(C["h_better"], "CONSULTANTS: 40% BETTER WORK", "on tasks AI is good at|Harvard Business School & BCG study, 2023"),
+             (C["h_faster"], "WRITERS: 40% FASTER, 18% BETTER", "on professional writing tasks|Noy & Zhang, Science, 2023"),
+             (C["h_beginners"], "BEGINNERS GAIN MOST: +34%", "customer support agents|Brynjolfsson et al., QJE, 2025")]
     cur = [h for h in heads if T >= h[0] - 0.3]
     if cur:
         t0, big, small = cur[-1]
@@ -375,22 +376,26 @@ def s_news_student(T, t, d):
 
 # ------------------------------------------------------------------ the gates and the host
 
-GUESTS = (("copier", 150, "THE COPIER"), ("believer", 330, "THE BELIEVER"), ("you", 540, None),
-          ("yesman", 750, "THE YES-MAN"), ("rusher", 930, "THE RUSHER"))
+GUESTS = (("copier", 110, "THE COPIER", 1045), ("believer", 250, "THE BELIEVER", 905), ("you", 390, None, 0),
+          ("yesman", 690, "THE YES-MAN", 905), ("rusher", 840, "THE RUSHER", 1030))
 
 
 def s_gates(T, t, d):
     st = D.Stage()
     c = st.c
+    c.save()
+    cam(c, 1.0 + 0.06 * ease(t / max(d, 0.1)), 540, 1100)
     D.backdrop(st, "gates", sets.gates)
     k = ease(ramp(t, 0.2, 1.4))
-    cast.person(c, "host", 540, 1180, 0.52, T, pose="arms_out" if k > 0.8 else "cane", mood="smile",
+    cast.person(c, "host", 540, 1330, 0.46, T, pose="wave" if k > 0.8 else "cane", mood="smile",
                 talk=talk("HOST", T), walk=0 if k >= 1 else t)
-    for who, x, name in GUESTS:
-        hand = cast.person(c, who, x, 1760, 0.5, T, pose="hold", mood="wow")
-        P.ticket(c, hand[0], hand[1] - 10, 90, rot=-10, T=T, glow=0.3, lines=("", ""), head="")
+    for who, x, name, cy in GUESTS:
+        hand = cast.person(c, who, x, 1330, 0.42, T, pose="hold", mood="wow", look=0.8 if x < 540 else -0.8)
+        P.ticket(c, hand[0], hand[1] - 8, 70, rot=-10, T=T, glow=0.3, lines=("", ""), head="")
+    c.restore()
+    for who, x, name, cy in GUESTS:
         if name:
-            chip(c, name, min(860, max(220, x)), 1190 + (46 if x in (330, 750) else 0), 22)
+            chip(c, name, min(880, max(200, x)), cy, 22)
     return st.arr
 
 

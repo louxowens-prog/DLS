@@ -37,8 +37,8 @@ LINES = [
 
     # ---- the newsreel: the world goes mad for thinking machines
     ("n1", ANN, "Extra! Extra! Thinking machines in every pocket!", None, 0.1),
-    ("n2", ANN, "Consultants: forty percent better work! Writers: forty percent faster! And beginners gain the most!",
-     "Consultants: 40% better work!| Writers: 40% faster!| And beginners gain the most!", 0.15),
+    ("n2", ANN, "On tasks it's good at, consultants do forty percent better work! Writers: forty percent faster! And beginners gain the most!",
+     "On tasks it's good at,| consultants do 40% better work!| Writers: 40% faster!| And beginners gain the most!", 0.15),
     ("n3", FARMER, "It read my loan papers to me in plain English.", None, 0.1),
     ("n4", STUDENT, "It argues with my essay before my teacher does.", None, 0.4),
 
@@ -65,10 +65,10 @@ LINES = [
     ("h2", HOST, "Fifty reports in, and what comes out? Just what matters. And what's in doubt.",
      "50 reports in, and what comes out?| Just what matters. And what's in doubt.", 0.15),
     ("r2", NAR, "Fifty studies on his condition go in. Out come the six that matter, with a flag where two disagree.",
-     "50 studies on his condition go in.| Out come the 6 that matter,| with a flag where 2 disagree.", 0.15),
+     "50 studies on his condition go in.| Out come the 6 that matter,| with a flag where 2 disagree.", 1.3),
     ("r2b", NAR, "Three hours of searching become three hours of thinking.",
      "3 hours of searching| become 3 hours of thinking.", 0.2),
-    ("k2", BELIEVER, "It sounds so sure! I'll believe every word!", None, 1.0),
+    ("k2", BELIEVER, "It sounds so sure! I'll believe every word!", "It sounds so sure!| I'll believe every word!", 1.0),
     ("w2", SONG, None, None, 0.3),
 
     # ---- room 3: the mirror that argues back
@@ -81,7 +81,7 @@ LINES = [
 
     # ---- room 4: the kitchen of what-if
     ("h4", HOST, "A fog goes in. A plan comes out. With every question you forgot about.",
-     "A fog goes in. A plan comes out.| With every question you forgot about.", 0.15),
+     "A fog goes in.| A plan comes out.| With every question you forgot about.", 0.15),
     ("r4", NAR, "What else could explain his symptoms? What happens if you wait? Ideas fizz, most pop, and your worry becomes a plan, with three questions nobody has asked.",
      "What else could explain his symptoms?| What happens if you wait?| Ideas fizz, most pop,| and your worry becomes a plan,| with 3 questions nobody has asked.", 0.2),
     ("k4", RUSHER, "First idea! Done! Next!", None, 1.0),
@@ -90,11 +90,11 @@ LINES = [
     # ---- the tunnel (the horror peak)
     ("t1a", HOST, "Is it true? Is it sure? Did anybody check?", None, 0.1),
     ("t1b", HOST, "A study that isn't. A quote no one said. A number invented, so polished, so sure.",
-     "A study that isn't. A quote no one said.| A number invented, so polished, so sure.", 0.05),
+     "A study that isn't.| A quote no one said.| A number invented, so polished, so sure.", 0.05),
     ("t1c", HOST, "Is it true, is it true, is it true, is it true?", None, 1.5),
     ("t2", HOST, "It can be wrong. Beautifully. So you check.", None, 0.35),
-    ("e1", NAR, "Trust it blindly, and you stop checking. In one study, consultants using AI on a task it was bad at were nineteen points less likely to get it right. Used well, you think more.",
-     "Trust it blindly, and you stop checking.| In one study, consultants using AI on a task it was bad at| were 19 points less likely to get it right.| Used well, you think more.", 0.5),
+    ("e1", NAR, "Trust it blindly, and you check less. In one study, consultants using AI on a task it was bad at were nineteen points less likely to get it right. Used well, you think more.",
+     "Trust it blindly, and you check less.| In one study, consultants using AI| on a task it was bad at| were 19 points less likely to get it right.| Used well, you think more.", 0.5),
 
     # ---- the real-life scenario, at full strength
     ("p1", NAR, "Next morning, you walk in with one page, and ask the question nobody had asked: could his diabetes pill be lowering his B twelve?",

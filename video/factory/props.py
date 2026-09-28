@@ -372,8 +372,15 @@ def headline(c, x, y, s, rot, big, small, a=1.0):
             break
     for j, ln in enumerate(lines):
         D.text(c, ln, 0, -60 + j * size * 1.08 - (size * 0.54 if len(lines) == 1 else 0), size, "fraunces-900", INK, tag="headline", a=a)
-    sz = min(36, 36 * 740 / max(1, D.font("oldstandard-700", 36).measureText(small)))
-    D.text(c, small, 0, 205, sz, "oldstandard-700", (50, 50, 50), tag="headline", a=a)
+    parts = small.split("|")
+    if len(parts) == 1:
+        sz = min(36, 36 * 740 / max(1, D.font("oldstandard-700", 36).measureText(small)))
+        D.text(c, small, 0, 205, sz, "oldstandard-700", (50, 50, 50), tag="headline", a=a)
+    else:                                                               # the condition, large; the source beneath
+        sz = min(50, 50 * 720 / max(1, D.font("fraunces-900", 50).measureText(parts[0].upper())))
+        D.text(c, parts[0].upper(), 0, 172, sz, "fraunces-900", (140, 30, 30), tag="headline", a=a)
+        sz2 = min(30, 30 * 740 / max(1, D.font("oldstandard-700", 30).measureText(parts[1])))
+        D.text(c, parts[1], 0, 226, sz2, "oldstandard-700", (50, 50, 50), tag="headline", a=a)
     c.restore()
 
 

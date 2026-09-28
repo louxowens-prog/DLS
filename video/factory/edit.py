@@ -63,6 +63,8 @@ EDIT = [
     (E("t1c") + 0.08, "tunnel_black", "cut"),
     (S("t2") - 0.15, "tunnel_calm", "cut"),
     (S("e1") - 0.2, "lesson", "dissolve"),
+    (Wx("e1", "In") - 0.1, "lesson_study", "cut"),
+    (Wx("e1", "Used") - 0.15, "lesson_well", "cut"),
     (S("p1") - 0.35, "clinic", "iris"),
     (S("p2") - 0.1, "doctor", "cut"),
     (S("p3") - 0.15, "dad_home", "dissolve"),

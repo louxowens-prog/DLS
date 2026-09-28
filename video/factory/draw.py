@@ -163,6 +163,12 @@ def wrap_balanced(s, f, maxw):
         if wa > maxw or wb > maxw:
             continue
         cost = max(wa, wb) + (400 if i == len(words) - 1 or i == 1 else 0)
+        if a[-1] in ".!?;:":                                            # break at a sentence end ...
+            cost -= 350
+        elif a[-1] == ",":
+            cost -= 150
+        if i >= 2 and words[i - 2][-1:] in (".", "!", "?"):             # ... never just after a new sentence begins
+            cost += 400
         if best is None or cost < best[0]:
             best = (cost, [a, b])
     return fix(best[1]) if best else fix(wrap(s, f, maxw))

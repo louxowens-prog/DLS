@@ -9,7 +9,7 @@ import cast
 import draw as D
 import props as P
 import sets
-from cues import C, talk
+from cues import C, Wx, talk
 from draw import (CHERRY, CREAM, GOLD, GOLD2, GOLD3, H, INK, LEMON, LILAC, MINT, PINK, W, WHITE, ease, mix, paint, path,
                   ramp)
 from sc1 import cam, chip, title_words
@@ -106,34 +106,89 @@ def s_tunnel_calm(T, t, d):
     return st.arr
 
 
+def _lesson_bg(st, T, t, d, tint=None):
+    c = st.c
+    c.save()
+    cam(c, 1.0 + 0.1 * ease(t / max(d, 0.1)), 540, 900)                  # a slow 70s push-in
+    D.backdrop(st, "room4", lambda cc: sets.room(cc, 4))
+    c.restore()
+    c.drawRect(skia.Rect.MakeWH(W, H), paint(INK, 0.35))
+    if tint:
+        c.drawRect(skia.Rect.MakeWH(W, H), paint(tint, 0.18))
+
+
+def _card(c, T, t0, y, big, small, col, w=440, bigsize=84):
+    k = ease(ramp(T, t0 - 0.2, t0 + 0.25))
+    if k <= 0:
+        return
+    c.save()
+    c.translate(540, y)
+    c.scale(0.8 + 0.2 * k, 0.8 + 0.2 * k)
+    c.rotate(-2 + 2 * k)
+    D.shade(c, D.rrect(-w, -130, w, 130, 16), CREAM, k=0.08, a=k)
+    D.text(c, big, 0, -26, bigsize, "fraunces-900", col, tag="card", a=k)
+    for q, ln in enumerate(small):
+        base = 38 if q == 0 else 28
+        f = D.font("oldstandard-700", base)
+        sz = min(base, base * (2 * w - 80) / max(1, f.measureText(ln)))
+        D.text(c, ln, 0, 44 + q * 46 + (10 if len(small) == 1 else 0), sz, "oldstandard-700", INK if q == 0 else (90, 70, 50),
+               tag="card", a=k)
+    c.restore()
+
+
 def s_lesson(T, t, d):
-    """A 1971 classroom card, held up by the workers: trust it blindly -> check less; used well -> think more."""
+    """Trust it blindly: the workers wag their fingers."""
     st = D.Stage()
     c = st.c
-    D.backdrop(st, "room4", lambda cc: sets.room(cc, 4))
-    c.drawRect(skia.Rect.MakeWH(W, H), paint(INK, 0.35))
-    cards = [(S("e1"), "TRUST IT BLINDLY", ["→ you check less", "Microsoft & Carnegie Mellon survey, 2025"], (160, 40, 50)),
-             (Wd("e1", "nineteen") - 0.2, "19 POINTS", ["less likely to be right, on a task AI was bad at",
-                                                      "Harvard Business School & BCG study, 2023"], (120, 60, 30)),
-             (Wd("e1", "Used"), "USE IT WELL", ["→ you think more"], (30, 110, 70))]
-    for j, (t0, big, small, col) in enumerate(cards):
-        k = ease(ramp(T, t0 - 0.2, t0 + 0.3))
-        if k <= 0:
-            continue
-        y = 360 + j * 290
+    _lesson_bg(st, T, t, d, (160, 40, 50))
+    _card(c, T, S("e1"), 520, "TRUST IT BLINDLY", ["→ you check less", "Microsoft & Carnegie Mellon survey of 319 workers, 2025"],
+          (160, 40, 50))
+    for i in range(3):                                                  # no, no, no: fingers wagging
         c.save()
-        c.translate(540, y)
-        c.scale(0.8 + 0.2 * k, 0.8 + 0.2 * k)
-        D.shade(c, D.rrect(-440, -125, 440, 125, 16), CREAM, k=0.08, a=k)
-        D.text(c, big, 0, -30, 76, "fraunces-900", col, tag="card", a=k)
-        for q, ln in enumerate(small):
-            f = D.font("oldstandard-700", 34)
-            sz = min(34 if q == 0 else 28, (34 if q == 0 else 28) * 800 / max(1, f.measureText(ln) * (1 if q == 0 else 28 / 34)))
-            D.text(c, ln, 0, 34 + q * 44 + (12 if len(small) == 1 else 0), sz, "oldstandard-700", INK if q == 0 else (90, 70, 50),
-                   tag="card", a=k)
+        c.translate(270 + i * 270, 1260)
+        c.rotate(6 * math.sin(T * 8 + i))
+        cast.worker(c, 0, 0, 0.62, T, pose=(8, 0, 150 + 12 * math.sin(T * 12 + i), 20), mood="flat")
         c.restore()
-    for i in range(4):
-        cast.worker(c, 170 + i * 240, 1330, 0.42, T, pose="cheer" if i % 2 else "stand", bob=8 * abs(math.sin(T * 3 + i)))
+    return st.arr
+
+
+def s_lesson_study(T, t, d):
+    """19 points: two bars, with and without AI, on the task AI was bad at."""
+    st = D.Stage()
+    c = st.c
+    _lesson_bg(st, T, t, d)
+    _card(c, T, S("e1") - 1, 440, "19 POINTS", ["less likely to be right, on a task AI was bad at",
+                                                "Harvard Business School & BCG study of 758 consultants, 2023"], (140, 60, 20))
+    g = ease(ramp(T, Wx("e1", "nineteen") - 0.8, Wx("e1", "nineteen") + 0.1))
+    base, top = 1140, 640
+    for j, (lab, frac, col) in enumerate((("WITHOUT AI", 1.0, (60, 150, 90)), ("WITH AI", 0.77, (190, 60, 60)))):
+        x = 360 + j * 360
+        h = (base - top) * frac * g
+        D.shade(c, D.rrect(x - 110, base - h, x + 110, base, 10), col, k=0.25)
+        D.text(c, lab, x, base + 60, 40, "fraunces-900", CREAM, tag="bar", outline=INK, ow=8)
+    if g > 0.95:                                                        # the gap, bracketed
+        y0, y1 = base - (base - top), base - (base - top) * 0.77
+        c.drawLine(880, y0, 880, y1, paint(LEMON, stroke=8))
+        c.drawLine(860, y0, 900, y0, paint(LEMON, stroke=8))
+        c.drawLine(860, y1, 900, y1, paint(LEMON, stroke=8))
+        D.text(c, "−19", 880, y1 + 70, 60, "fraunces-900", LEMON, tag="bar2", outline=INK, ow=8)
+    D.text(c, "share who got it right (illustrative scale)", 540, 1262, 26, "oldstandard-700", (230, 220, 200), tag="bar3")
+    return st.arr
+
+
+def s_lesson_well(T, t, d):
+    """Used well, you think more: the workers cheer in a warm light."""
+    st = D.Stage()
+    c = st.c
+    _lesson_bg(st, T, t, d, (255, 200, 120))
+    _card(c, T, Wx("e1", "Used"), 560, "USE IT WELL", ["→ you think more"], (30, 110, 70))
+    for i in range(5):
+        cast.worker(c, 140 + i * 200, 1270, 0.55, T, pose="cheer" if (int(T * 4) + i) % 2 else "fists",
+                    bob=18 * abs(math.sin(T * 5 + i)), talk=0.0)
+    rng = np.random.default_rng(6)
+    for i in range(30):
+        x, y = rng.uniform(0, W), (rng.uniform(300, 1300) - t * 200) % 1000 + 300
+        c.drawCircle(x, y, 6, paint([LEMON, PINK, WHITE][i % 3], 0.8))
     return st.arr
 
 
@@ -209,19 +264,34 @@ def s_dad_home(T, t, d):
 
 
 def s_anger(T, t, d):
-    """The host explodes: red light, the frame shakes, a crash zoom - then, in the silence, everything freezes."""
+    """The host explodes: a snap zoom and a slam of red light on every 'You!', the frame shaking - then, in the silence,
+    everything freezes."""
     st = D.Stage((60, 10, 10))
     c = st.c
     frozen = T >= E("x1") + 0.05
     tt = min(T, E("x1") + 0.05)
-    c.drawRect(skia.Rect.MakeWH(W, H), paint(shader=D.rad((540, 800), 1200, [(200, 40, 30), (40, 0, 0)])))
-    sh = 0 if frozen else 18
+    hits = [Wx("x1", "You", i) for i in range(3)]
+    n = sum(1 for h in hits if tt >= h - 0.03)
+    zs = [1.0, 1.18, 1.4, 1.66]
+    kz = ease(ramp(tt, hits[n - 1] - 0.03, hits[n - 1] + 0.07)) if n else 1.0
+    z = zs[max(0, n - 1)] + (zs[n] - zs[max(0, n - 1)]) * kz if n else 1.0
+    since = tt - hits[n - 1] if n else 9.0
+    slam = max(0.0, 1 - since / 0.3) if n else 0.0
+    c.drawRect(skia.Rect.MakeWH(W, H), paint(shader=D.rad((540, 800), 1200, [mix((200, 40, 30), (255, 90, 40), slam), (40, 0, 0)])))
+    for i in range(10):                                                 # hot light rays behind him
+        a = i / 10 * 2 * math.pi + tt * 0.6
+        c.drawPath(path([(540, 700), (540 + 1600 * math.cos(a - 0.08), 700 + 1600 * math.sin(a - 0.08)),
+                         (540 + 1600 * math.cos(a + 0.08), 700 + 1600 * math.sin(a + 0.08))]), paint((255, 120, 60), 0.12 + 0.2 * slam))
+    sh = 0 if frozen else 10 + 26 * slam
     rng = np.random.default_rng(int(tt * 24))
     c.save()
     c.translate(rng.uniform(-sh, sh), rng.uniform(-sh, sh))
-    cam(c, 1.0 + 0.35 * ease(ramp(tt, S("x1"), E("x1"))), 540, 700)
-    cast.person(c, "host", 540, 2500, 1.7, tt, pose="fists", mood="shout" if not frozen else "angry", talk=talk("HOST", tt) if not frozen else 0.9)
+    cam(c, z, 540, 620)
+    cast.person(c, "host", 540, 2500, 1.7, tt, pose="fists", mood="shout" if not frozen else "angry",
+                talk=talk("HOST", tt) if not frozen else 0.9, tilt=4 * math.sin(tt * 11) if not frozen else 0)
     c.restore()
+    if slam > 0 and not frozen:
+        c.drawRect(skia.Rect.MakeWH(W, H), paint((255, 230, 200), 0.35 * slam))
     return st.arr
 
 
@@ -242,7 +312,8 @@ def s_ticket_flip(T, t, d):
     f = ease(ramp(t, 0.2, 1.0))
     lines = ("ADMIT ONE MIND", "BRING A QUESTION") if f < 0.5 else ("ADMIT ONE MIND", "NO LIMIT")
     P.ticket(c, 540, 760, 860, rot=-3 + 3 * f, lines=lines, T=T, glow=1.0, flip=f)
-    title_words(c, "THE FACTORY IS YOURS", 540, 1150, 62, S("x3") + 0.2, T)
+    if t < d - 0.05:
+        title_words(c, "THE FACTORY IS YOURS", 540, 1150, 56, S("x3") + 0.2, T)
     return st.arr
 
 

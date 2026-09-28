@@ -105,7 +105,7 @@ def look(arr, idx, mode="color", strength=1.0):
     else:
         im = ImageEnhance.Color(im).enhance(1.2).point(L["grade"])               # saturated dye, warm lifted blacks
         hot = im.point(L["hot"])
-        gamt, dirt, flick = 0.04, 1.2, 0.02
+        gamt, dirt, flick = 0.03, 1.2, 0.02
     small = (W // 4, H // 4)
     hal = hot.resize(small, Image.BILINEAR).filter(ImageFilter.GaussianBlur(7)).resize((W, H), Image.BILINEAR)
     bloom = im.resize(small, Image.BILINEAR).filter(ImageFilter.GaussianBlur(9)).resize((W, H), Image.BILINEAR)

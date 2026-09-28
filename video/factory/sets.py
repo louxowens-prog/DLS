@@ -178,14 +178,28 @@ def door(c, x, y, s, openk, T):
         a = -math.pi / 2 + (i - 5.5) * 0.12
         c.drawPath(path([(0, -300), (900 * math.cos(a - 0.03), -300 + 900 * math.sin(a - 0.03)),
                          (900 * math.cos(a + 0.03), -300 + 900 * math.sin(a + 0.03))]), paint([PINK, MINT, LEMON, LILAC][i % 4], 0.35))
-    w = 460 * (1 - openk)
-    if w > 1:                                                           # the door leaf swinging in
-        leaf = D.rrect(-230, -1100, -230 + w, 0, 230 if openk < 0.05 else 40)
-        shade(c, leaf, (236, 226, 200), k=0.2)
-        for j in range(3):
-            c.drawRect(skia.Rect.MakeLTRB(-190, -900 + j * 280, -190 + w * 0.8, -700 + j * 280), paint((200, 188, 160), 0.6, stroke=6))
-        c.drawCircle(-230 + w - 40, -520, 22, paint(GOLD))
-        c.drawCircle(-230 + w - 40, -520, 22, paint(GOLD3, stroke=4))
+    th = openk * math.radians(84)                                       # the heavy leaf swings in on its left hinge
+    xf = -230 + 460 * math.cos(th)
+    shrink = 1 / (1 + 0.55 * math.sin(th))                              # its free edge recedes as it swings away
+    if xf > -226:
+        leaf = path([(-230, -1110), (xf, -550 - 560 * shrink), (xf, -550 + 550 * shrink), (-230, 0)])
+        col = mix((150, 36, 48), (70, 16, 24), math.sin(th) * 0.8)
+        shade(c, leaf, col, k=0.2)
+        for j in range(3):                                              # panels and brass studs, foreshortened
+            y0p = -900 + j * 300
+            qa = (-230 + (xf + 230) * 0.14, -550 + (y0p + 550) * (1 - 0.14 * (1 - shrink)))
+            qb = (-230 + (xf + 230) * 0.86, -550 + (y0p + 550) * (1 - 0.86 * (1 - shrink)))
+            qc = (qb[0], -550 + (y0p + 220 + 550) * (1 - 0.86 * (1 - shrink)))
+            qd = (qa[0], -550 + (y0p + 220 + 550) * (1 - 0.14 * (1 - shrink)))
+            c.drawPath(path([qa, qb, qc, qd]), paint(mix(col, INK, 0.35), 0.8, stroke=7))
+            for q in range(5):
+                u = 0.1 + q * 0.2
+                sx = -230 + (xf + 230) * u
+                sy = -550 + (y0p - 30 + 550) * (1 - u * (1 - shrink))
+                c.drawCircle(sx, sy, 9 * (1 - u * (1 - shrink)), paint(GOLD))
+        hx = -230 + (xf + 230) * 0.88
+        c.drawCircle(hx, -520, 24 * (1 - 0.88 * (1 - shrink)), paint(GOLD))
+        c.drawCircle(hx, -520, 24 * (1 - 0.88 * (1 - shrink)), paint(GOLD3, stroke=4))
     c.restore()
     c.drawPath(frame, paint((70, 50, 40), stroke=26))
     c.restore()
@@ -231,6 +245,113 @@ def wonder(c):
             b = q * 2 * math.pi / 5
             c.drawCircle(x + 10 * math.cos(b), y + 10 * math.sin(b), 9, paint(col))
         c.drawCircle(x, y, 6, paint((240, 150, 60)))
+
+
+# ------------------------------------------------------------------ the establishing wide: the whole candy land
+
+def _vk(u):
+    """Down the river from the far falls (u=0) to the foreground (u=1): (y, centre x, width) in perspective."""
+    ks = [(0.0, 540, 18), (0.15, 600, 70), (0.35, 520, 190), (0.55, 420, 330), (0.8, 470, 560), (1.0, 640, 860)]
+    y = 860 + 1060 * u ** 1.5
+    us = [k[0] for k in ks]
+    return y, float(np.interp(u, us, [k[1] for k in ks])), float(np.interp(u, us, [k[2] for k in ks]))
+
+
+def _vriver_path():
+    L, R = [], []
+    for i in range(41):
+        y, cx, w = _vk(i / 40)
+        L.append((cx - w / 2, y))
+        R.append((cx + w / 2, y))
+    return D.smooth(L + R[::-1] + [(L[0][0], L[0][1] - 4)])
+
+
+def vista(c):
+    _grad(c, 0, 880, [(80, 140, 250), (230, 120, 210), (255, 196, 140)])
+    for i in range(7):                                                  # painted clouds
+        x, y = 60 + i * 170, 150 + (i % 3) * 80
+        for k in range(4):
+            c.drawCircle(x + k * 36, y + (k % 2) * 14, 44 + (k % 2) * 14, paint(WHITE, 0.8))
+    for i, (x, h, col) in enumerate(((120, 330, (250, 170, 210)), (330, 420, (200, 170, 250)), (760, 460, (170, 230, 210)),
+                                     (980, 340, (255, 200, 170)), (560, 300, (255, 220, 240)))):
+        p = path([(x - 260, 880), (x, 880 - h), (x + 260, 880)])        # far candy mountains, iced
+        shade(c, p, col, k=0.15, edge=0.15)
+        c.drawPath(D.smooth([(x - 70, 880 - h + 80), (x, 880 - h - 2), (x + 70, 880 - h + 80), (x + 40, 880 - h + 100),
+                             (x, 880 - h + 76), (x - 40, 880 - h + 104)]), paint(WHITE, 0.95))
+    shade(c, D.smooth([(400, 880), (420, 700), (540, 650), (660, 700), (690, 880)]), (66, 36, 22), k=0.25)   # the falls' cake cliff
+    for j in range(2):
+        c.drawLine(410, 760 + j * 60, 680, 760 + j * 60, paint((236, 214, 180), 0.6, stroke=7))
+    c.drawPath(D.smooth([(418, 704), (480, 664), (540, 652), (600, 664), (662, 704), (640, 722), (610, 700), (580, 726),
+                         (540, 698), (500, 728), (470, 702), (440, 724)]), paint((250, 240, 225)))       # frosting
+    c.drawPath(path([(508, 690), (574, 690), (590, 874), (492, 874)]), paint(shader=D.lin((492, 0), (590, 0),
+                                                                                       [(150, 90, 48), (220, 160, 104), (160, 96, 50)])))
+    _grad(c, 860, H, [(120, 220, 130), (70, 180, 100), (50, 150, 80)])  # the sugar lawn
+    rng = np.random.default_rng(9)
+    for i in range(500):
+        y = 880 + 1040 * rng.uniform(0, 1) ** 1.2
+        x = rng.uniform(0, W)
+        sc = 0.3 + 0.7 * (y - 860) / 1060
+        c.drawCircle(x, y, 5 * sc, paint([PINK, LEMON, WHITE, LILAC][i % 4], 0.9))
+    c.drawPath(_vriver_path(), paint(shader=D.lin((0, 860), (0, H), [(120, 70, 40), (100, 56, 30), (84, 46, 24)])))
+    c.drawPath(_vriver_path(), paint((60, 34, 18), 0.9, stroke=6))
+    items = []                                                          # lollipop trees and mushrooms, far to near
+    for j, u in enumerate((0.06, 0.14, 0.24, 0.36, 0.5, 0.66, 0.84)):
+        y, cx, w = _vk(u)
+        sc = 0.12 + 0.95 * u ** 1.3
+        for side in (-1, 1):
+            x = cx + side * (w / 2 + (60 + 180 * rng.uniform(0.3, 1)) * sc)
+            if -60 < x < W + 60:
+                items.append((y, x, sc, (j + (side > 0)) % 3))
+    for y, x, sc, kind in sorted(items):
+        col = [(255, 70, 150), (255, 210, 40), (160, 90, 240), (40, 200, 180), (255, 110, 60)][int(x) % 5]
+        if kind < 2:
+            c.drawLine(x, y, x, y - 380 * sc, paint(WHITE, stroke=max(2, 14 * sc)))
+            shade(c, D.circle(x, y - 380 * sc, 90 * sc), col, k=0.25)
+            for k in range(3):
+                r = 90 * sc * (0.3 + k * 0.25)
+                c.drawArc(skia.Rect.MakeLTRB(x - r, y - 380 * sc - r, x + r, y - 380 * sc + r), k * 70, 250, False,
+                          paint(WHITE, 0.7, stroke=max(1.5, 9 * sc)))
+        else:
+            shade(c, D.rrect(x - 24 * sc, y - 110 * sc, x + 24 * sc, y, 14 * sc), CREAM, k=0.2)
+            shade(c, D.oval(x - 100 * sc, y - 180 * sc, x + 100 * sc, y - 90 * sc), CHERRY, k=0.25)
+            for k in range(4):
+                c.drawCircle(x - 60 * sc + k * 40 * sc, y - 140 * sc, 11 * sc, paint(WHITE))
+    y, cx, w = _vk(0.55)                                                # a striped candy bridge over the river
+    p = skia.Path()
+    p.moveTo(cx - w / 2 - 90, y + 10)
+    p.quadTo(cx, y - 120, cx + w / 2 + 90, y + 10)
+    c.drawPath(p, paint(WHITE, stroke=34))
+    for k in range(14):
+        a = k / 13
+        bx = (1 - a) ** 2 * (cx - w / 2 - 90) + 2 * a * (1 - a) * cx + a ** 2 * (cx + w / 2 + 90)
+        by = (1 - a) ** 2 * (y + 10) + 2 * a * (1 - a) * (y - 120) + a ** 2 * (y + 10)
+        c.drawCircle(bx, by, 12, paint(CHERRY))
+    for x, yy, sc in ((880, 1640, 1.0), (140, 1760, 1.2)):              # giant candy flowers in the foreground
+        c.drawLine(x, yy, x, yy + 400, paint((70, 170, 90), stroke=26 * sc))
+        for j in range(8):
+            a = j * math.pi / 4
+            shade(c, D.circle(x + 70 * sc * math.cos(a), yy + 70 * sc * math.sin(a), 64 * sc), (255, 150, 190), k=0.25, edge=0.2)
+        shade(c, D.circle(x, yy, 58 * sc), LEMON, k=0.3)
+
+
+def vista_flow(c, T):
+    """The river moving toward us, in perspective, and the far falls pouring."""
+    c.save()
+    c.clipPath(_vriver_path(), doAntiAlias=True)
+    for i in range(70):
+        u = (T * 0.07 + i / 70) % 1.0
+        y, cx, w = _vk(u)
+        off = ((i * 0.618) % 1.0 - 0.5) * 0.8
+        x = cx + w * off
+        L = 10 + 90 * w / 860
+        c.drawOval(skia.Rect.MakeXYWH(x - L / 2, y - 3 * w / 860 - 1, L, 2 + 8 * w / 860), paint((212, 160, 110), 0.7))
+    c.restore()
+    for i in range(10):
+        yy = 690 + ((T * 260 + i * 37) % 170)
+        x = 512 + i * 7.5 + (yy - 690) * 0.08 * (i - 4.5) / 4.5
+        c.drawLine(x, yy, x, yy + 34, paint((252, 226, 190), 0.85, stroke=3))
+    for i in range(9):
+        c.drawCircle(490 + i * 13, 874 + 4 * math.sin(T * 6 + i), 11, paint((244, 222, 190), 0.95))
 
 
 def river(c, T, y0=1180, amp=1.0):

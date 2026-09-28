@@ -34,7 +34,8 @@ def main():
     f = first
     out += ["", "WHERE THE DEVICES ARE",
             f"  THE TWO WORLDS: the grey rainy industrial town {f('town'):.1f}-{f('news1'):.1f} (you in a yellow raincoat, the only colour);"
-            f" the great door opens slowly in dead silence {f('door'):.1f}, onto the candy wonderland {f('wonder_wide'):.1f}"
+            f" the great red door swings open slowly in dead silence {f('door'):.1f}, the camera pushing through into the light;"
+            f" the big slow reveal - a pull-back from one candy flower to the whole candy land (iced mountains, the far chocolate falls, the river winding toward us, the guests on a striped bridge) {f('wonder_wide'):.1f}; onto the candy wonderland {f('wonder_wide'):.1f}"
             f" (sugar hills, lollipop trees, candy mushrooms, a chocolate river and waterfall; a slow pull-back from one flower to the"
             f" whole place, then the river, a tracking shot past giant candy canes, the guests at a giant lollipop and a sugar rose)",
             f"  THE HOST: gentle welcome in rhyme {S('g1'):.1f}; the rule {S('g2'):.1f}; quietly menacing {S('g3'):.1f}; "
@@ -45,7 +46,8 @@ def main():
             f"in every guest's hand at the gates {f('gates'):.1f}; flips to 'NO LIMIT' {C['flip']:.1f}; the end card {f('end'):.1f}",
             f"  THE GUESTS, dealt with: the Copier inflates and floats away {C['gulp']:.1f}; the Believer is sucked up a pipe "
             f"{C['sucked']:.1f}; the Yes-Man shrinks {C['shrink']:.1f}; the Rusher drops down a trapdoor chute {C['drop']:.1f}",
-            "  THE WORKERS' CHANTS (small identical light-bulb workers; a verse, then the same refrain every time: "
+            "  THE WORKERS' CHANTS (small identical light-bulb workers; call and response: one worker calls each line, the whole "
+            "chorus of different little voices answers; a verse, then the same refrain every time: "
             "'Think it through, think it through; the thinking's up to you!'): " +
             ", ".join(f"{sk} {TL.songs[sk]['start']:.1f}" for sk in ('w1', 'w2', 'w3', 'w4')),
             f"  THE NIGHTMARE TUNNEL: {f('tunnel'):.1f}-{E('t1c'):.1f} strobing rings, projected fake citation / invented number / "

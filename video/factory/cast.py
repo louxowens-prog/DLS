@@ -39,6 +39,17 @@ LOOKS = {
                    shoes=(50, 40, 34), overalls=True, tash=True),
     "dad": dict(h=0.98, coat=(150, 110, 80), coat_len=-420, hair="slick", hair_c=(190, 190, 190), legs=(90, 90, 100),
                 shoes=(60, 40, 30), specs="thin", tash=True),
+    # the experts in the portraits (nobody from the tour)
+    "x_engineer": dict(h=1.0, coat=(220, 130, 40), coat_len=-420, hair="cap", hair_c=(240, 200, 40), legs=(60, 70, 100),
+                       shoes=(50, 40, 34), tash=True),
+    "x_prof": dict(h=1.0, coat=(120, 92, 70), coat_len=-420, hair="wild", hair_c=(226, 226, 220), legs=(70, 60, 50),
+                   shoes=(40, 30, 26), specs="round", tie=(140, 40, 40)),
+    "x_lawyer": dict(h=0.98, coat=(40, 50, 90), coat_len=-420, hair="bun", hair_c=(30, 24, 22), legs=(40, 50, 90),
+                     shoes=(30, 26, 26), lips=True, pearls=True),
+    "x_scientist": dict(h=0.98, coat=(236, 238, 232), coat_len=-300, hair="curls", hair_c=(30, 24, 20), legs=(60, 70, 90),
+                        shoes=(40, 34, 30), specs="round"),
+    "x_teacher": dict(h=0.96, coat=(90, 140, 96), coat_len=-420, hair="bob", hair_c=(170, 80, 40), legs=(80, 70, 60),
+                      shoes=(120, 50, 40), lips=True),
     "student": dict(h=0.94, coat=(150, 110, 150), coat_len=-470, hair="curls", hair_c=(50, 36, 30), legs=(60, 70, 110),
                     shoes=(50, 40, 34), specs="round", lips=True),
 }
@@ -77,20 +88,33 @@ def face(c, L, mood="smile", look=0.0, blink=False, talk=0.0, r=60):
             c.drawCircle(ex + look * 3 * k + 2 * k, ey - 1 * k, 1.4 * k, paint(WHITE))
             if mood == "sly":
                 c.drawLine(ex - 11 * k, ey - 4 * k, ex + 11 * k, ey - 3 * k, paint(mix(SKIN, INK, 0.5), stroke=3 * k))
-        tilt = {"angry": 14, "shout": 14, "worry": -12, "wow": -4, "sly": 6}.get(mood, 0) * sx
-        by = ey - 16 * k - (6 * k if mood == "wow" else 0)
+        tilt = {"angry": 30, "shout": 30, "worry": -12, "wow": -4, "sly": 6}.get(mood, 0) * sx
+        mad = mood in ("angry", "shout")
+        by = ey - 16 * k - (6 * k if mood == "wow" else 0) + (5 * k if mad else 0)
         c.save()
         c.translate(ex, by)
         c.rotate(tilt)
-        c.drawLine(-10 * k, 0, 10 * k, 0, paint(mix(L.get("hair_c", (80, 60, 50)), INK, 0.3), stroke=4 * k))
+        c.drawLine(-12 * k if mad else -10 * k, 0, 12 * k if mad else 10 * k, 0,
+                   paint(mix(L.get("hair_c", (80, 60, 50)), INK, 0.5 if mad else 0.3), stroke=(7 if mad else 4) * k))
         c.restore()
     c.drawLine(lx * 0.8, 2 * k, lx * 0.8 - 3 * k, 14 * k, paint(mix(SKIN, INK, 0.35), 0.8, stroke=2.4 * k))   # nose
     for sx in (-1, 1):
-        c.drawCircle(sx * 30 * k + lx, 14 * k, 9 * k, paint((240, 120, 110), 0.28, blur=4 * k))            # cheeks
+        mad = mood in ("angry", "shout")
+        c.drawCircle(sx * 30 * k + lx, 14 * k, (14 if mad else 9) * k, paint((230, 60, 50) if mad else (240, 120, 110),
+                                                                           0.6 if mad else 0.28, blur=4 * k))  # cheeks
+    if mood in ("angry", "shout"):                                      # a furrow between the brows
+        c.drawLine(lx - 3 * k, -34 * k, lx - 1 * k, -24 * k, paint(mix(SKIN, INK, 0.4), stroke=2.5 * k))
+        c.drawLine(lx + 3 * k, -34 * k, lx + 1 * k, -24 * k, paint(mix(SKIN, INK, 0.4), stroke=2.5 * k))
     my = 28 * k
     lip = (190, 60, 70) if L.get("lips") else mix(SKIN, INK, 0.45)
     o = max(talk, {"wow": 0.8, "shout": 1.0}.get(mood, 0.0))
-    if o > 0.05:
+    if mood == "shout":                                                 # a wide, square-ish bellow, teeth showing
+        h1 = 8 * k + 14 * k * talk
+        r = skia.Rect.MakeLTRB(lx - 20 * k, my - 6 * k, lx + 20 * k, my + h1)
+        c.drawRRect(skia.RRect.MakeRectXY(r, 8 * k, 8 * k), paint((70, 14, 20)))
+        c.drawRect(skia.Rect.MakeLTRB(lx - 16 * k, my - 6 * k, lx + 16 * k, my - 1 * k), paint(WHITE))
+        c.drawRRect(skia.RRect.MakeRectXY(r, 8 * k, 8 * k), paint(lip, stroke=2.5 * k))
+    elif o > 0.05:
         c.drawOval(skia.Rect.MakeLTRB(lx - 11 * k, my - 5 * k * o, lx + 11 * k, my + 9 * k * o), paint((80, 20, 30)))
         c.drawOval(skia.Rect.MakeLTRB(lx - 11 * k, my - 5 * k * o, lx + 11 * k, my + 9 * k * o), paint(lip, stroke=2.5 * k))
     else:

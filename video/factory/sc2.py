@@ -58,20 +58,21 @@ def _sparkle(c, T, n=30, seed=1, a=0.8):
 
 
 def s_wonder_wide(T, t, d):
-    """The big slow reveal: from a close-up of one candy mushroom, the camera pulls all the way back to the whole place;
-    the guests wander in below."""
+    """The big slow reveal: from a close-up of one candy flower, the camera pulls all the way back to the whole candy
+    land - the far falls, the river winding toward us, the guests tiny on the striped bridge."""
     st = D.Stage()
     c = st.c
-    u = ease(ramp(t, 0.0, max(0.5, d - 0.6)))
-    z = 2.6 - 1.6 * u
-    walk = ramp(t, 0.5, d)
+    u = ease(ramp(t, 0.0, max(0.5, d - 0.4)))
+    z = 2.4 - 1.4 * u
     c.save()
-    cam(c, z, 700 - 180 * u, 1110 - 110 * u)
-    D.backdrop(st, "wonder", sets.wonder)
-    sets.river(c, T)
-    for who, x in (("copier", 330), ("believer", 450), ("you", 560), ("yesman", 670), ("rusher", 780)):
-        cast.person(c, who, x + (x - 560) * 0.3 * walk, 1830 - 60 * walk, 0.34, T,
-                    pose="arms_up" if who in ("copier", "rusher") else "stand", mood="wow", walk=walk * 2)
+    cam(c, z, 830 - 290 * u, 1560 - 600 * u)
+    D.backdrop(st, "vista", sets.vista)
+    sets.vista_flow(c, T)
+    y, cx, w = sets._vk(0.55)
+    for i, who in enumerate(("copier", "believer", "you", "yesman", "rusher")):
+        x = cx - 150 + i * 75
+        cast.person(c, who, x, y - 20 - 60 * (1 - abs(i - 2) / 2) * 0.5, 0.2, T, pose="arms_up" if who in ("copier", "rusher") else "stand",
+                    mood="wow", shadow=False)
     c.restore()
     _sparkle(c, T, 40, 1, a=0.9)
     return st.arr
@@ -168,24 +169,27 @@ def s_wonder_you(T, t, d):
     _wonder(st, T, 1.25, 540, 1000)
     c = st.c
     c.drawRect(skia.Rect.MakeWH(W, H), paint((255, 220, 170), 0.12))
-    experts = ["doctor", "farmer", "student", "yesman", "believer", "host"]
+    experts = ["doctor", "x_engineer", "x_prof", "x_lawyer", "x_scientist", "x_teacher"]
     labels = ["DOCTOR", "ENGINEER", "PROFESSOR", "LAWYER", "SCIENTIST", "TEACHER"]
     for i, (who, lab) in enumerate(zip(experts, labels)):
         a = i / 6 * 2 * math.pi + t * 0.5
-        x, y = 540 + 380 * math.cos(a), 760 + 250 * math.sin(a)
-        D.shade(c, D.rrect(x - 90, y - 120, x + 90, y + 110, 12), GOLD, k=0.3)
-        c.drawRect(skia.Rect.MakeLTRB(x - 72, y - 102, x + 72, y + 70), paint((250, 240, 220)))
+        x, y = 540 + 370 * math.cos(a), 790 + 285 * math.sin(a)
+        D.shade(c, D.rrect(x - 85, y - 112, x + 85, y + 128, 12), GOLD, k=0.3)
+        c.drawRect(skia.Rect.MakeLTRB(x - 70, y - 97, x + 70, y + 80), paint((250, 240, 220)))
         c.save()
-        c.clipRect(skia.Rect.MakeLTRB(x - 72, y - 102, x + 72, y + 70))
-        cast.person(c, who, x, y + 480, 0.52, T, pose="stand", mood="smile", shadow=False)
+        c.clipRect(skia.Rect.MakeLTRB(x - 70, y - 97, x + 70, y + 80))
+        s_ = 0.56
+        h = cast.LOOKS[who]["h"]
+        cast.person(c, who, x, y - 15 + 820 * s_ * h, s_, T, pose="stand", mood="smile", shadow=False,
+                    talk=0.5 + 0.5 * math.sin(T * 9 + i) if i == int(t * 1.5) % 6 else 0.0)
         c.restore()
-        D.text(c, lab, x, y + 100, 22, "fraunces-900", (80, 50, 10), tag="portrait")
-    hand = cast.person(c, "you", 540, 1850, 0.78, T, pose="arms_out", mood="wow")
+        D.text(c, lab, x, y + 113, 22, "fraunces-900", (80, 50, 10), tag="portrait")
+    hand = cast.person(c, "you", 540, 1900, 0.78, T, pose="arms_out", mood="wow")
     k = ease(ramp(T, Wd("r0", "patient") - 0.2, Wd("r0", "patient") + 0.4))
     if k > 0:
-        P.clock(c, 540, 330 + 0 * k, 110 * k + 1, 2.0, T, face=(240, 236, 210))
-        c.drawCircle(700, 290, 50 * k, paint((250, 246, 220)))
-        c.drawCircle(724, 276, 44 * k, paint((255, 214, 150)))
+        P.clock(c, 540, 290, 100 * k + 1, 2.0, T, face=(240, 236, 210))
+        c.drawCircle(690, 260, 46 * k, paint((250, 246, 220)))
+        c.drawCircle(712, 247, 40 * k, paint((255, 214, 150)))
     return st.arr
 
 
@@ -290,6 +294,18 @@ def s_copier(T, t, d):
     return st.arr
 
 
+def _li(sk, T):
+    """Which lyric line of song sk is being sung (-1 before the first)."""
+    ls_ = [TL.lines[l["key"]]["start"] for l in TL.songs[sk]["lines"]]
+    return max([i for i, a in enumerate(ls_) if T >= a - 0.1], default=-1)
+
+
+def _chant_zoom(sk, T, t, d):
+    """A slow push, and a 70s snap zoom when the refrain starts."""
+    r0 = TL.lines[TL.songs[sk]["lines"][2]["key"]]["start"]
+    return (1 + 0.06 * t / max(d, 0.1)) * (1 + 0.16 * ease(ramp(T, r0 - 0.1, r0 + 0.06)))
+
+
 def _workers(st, T, n, sk, form="line", cx=540, cy=1150):
     """The little workers, bobbing on the beat; the verse from the leader, the refrain from all. Each chant is staged
     differently: a chorus line, a low-angle close-up of three, a ring around the tiny guest, a conga line."""
@@ -297,29 +313,32 @@ def _workers(st, T, n, sk, form="line", cx=540, cy=1150):
     S_ = TL.songs[sk]
     beat = S_["beat"]
     lines = [TL.lines[l["key"]] for l in S_["lines"]]
-    on_refrain = T >= lines[2]["start"] - 0.1
+    li = _li(sk, T)
+    resp = li in (1, 3)                                                 # call (one worker) and response (all of them)
+    on_refrain = resp
     b = (T - S_["start"]) / beat
     even = int(b) % 2 == 0
 
-    def pose_for(i):
-        if on_refrain:
+    def pose_for(i, lead=False):
+        if resp:
             return "cheer" if even else "fists"
-        return ("point" if i % 2 else "stand") if form != "ring" else ("point" if even else (150, 20, 115, 0))
+        return "point" if lead else "stand"
 
     if form == "line":
         for i in range(5):
             ph = (b + i * 0.5) % 2
             hop = 22 * abs(math.sin(ph * math.pi))
-            tk = talk("WORKERS", T) if (on_refrain or i == 2) else 0.0
-            cast.worker(c, 140 + i * 200, 1260, 0.82, T, pose=pose_for(i), bob=hop, talk=tk)
+            tk = talk("WORKERS", T) if (resp or i == 2) else 0.0
+            cast.worker(c, 140 + i * 200, 1260 + (40 if i == 2 and not resp else 0), 0.82 * (1.12 if i == 2 and not resp else 1.0),
+                        T, pose=pose_for(i, i == 2), bob=hop, talk=tk)
     elif form == "close":                                               # low angle: three big bulbs against the ceiling
         for i, x in enumerate((180, 520, 820)):
             hop = 30 * abs(math.sin((b + i * 0.66) * math.pi / 2))
-            tk = talk("WORKERS", T) if (on_refrain or i == 1) else 0.0
+            tk = talk("WORKERS", T) if (resp or i == 1) else 0.0
             c.save()
             c.translate(x, 1700)
             c.rotate((i - 1) * 6)
-            cast.worker(c, 0, 0, 1.75 if i == 1 else 1.45, T, pose=pose_for(i + 1), bob=hop, talk=tk)
+            cast.worker(c, 0, 0, 1.75 if i == 1 else 1.45, T, pose=pose_for(i + 1, i == 1), bob=hop, talk=tk)
             c.restore()
     elif form == "ring":                                                # a ring of wagging fingers around the middle
         _workers_subset(c, T, sk, range(8))
@@ -328,8 +347,8 @@ def _workers(st, T, n, sk, form="line", cx=540, cy=1150):
             x = (i * 190 + (T - S_["start"]) * 260) % 1520 - 220
             hop = 20 * abs(math.sin((b + i * 0.5) * math.pi))
             kick = (40, -20, 70, 10) if int(b + i) % 2 else (10, 0, 90, 10)
-            cast.worker(c, x, 1300, 0.7, T, pose=kick if not on_refrain else pose_for(i), bob=hop,
-                        talk=talk("WORKERS", T) if (on_refrain or i == 3) else 0.0)
+            cast.worker(c, x, 1300, 0.7, T, pose=kick if not resp else pose_for(i), bob=hop,
+                        talk=talk("WORKERS", T) if (resp or i == 3) else 0.0)
 
 
 def _chant(n, sk, T, t, d, gag, form="line", after=None, z=1.0, cy=960):
@@ -340,10 +359,13 @@ def _chant(n, sk, T, t, d, gag, form="line", after=None, z=1.0, cy=960):
     _room(st, n)
     c.restore()
     c.drawRect(skia.Rect.MakeWH(W, H), paint((255, 220, 160), 0.12))
+    c.save()
+    cam(c, _chant_zoom(sk, T, t, d), 540, 1150)
     gag(c, T, t)
     _workers(st, T, n, sk, form)
     if after:
         after(c, T, t)
+    c.restore()
     return st.arr
 
 
@@ -393,8 +415,9 @@ def s_room2_flag(T, t, d):
         for x, y in ((540, 600), (540, 970)):
             c.drawCircle(x, y, 150, paint(CHERRY, k, stroke=10))
         c.drawLine(540, 750, 540, 820, paint(CHERRY, k, stroke=8))
-        chip(c, "STUDY 12: COMMON   ·   STUDY 31: RARE", 540, 1215, 32, fg=WHITE, bg=(160, 30, 40), a=k)
-        chip(c, "(illustrative)", 540, 1275, 24, a=k)
+        chip(c, "STUDY 12: “B12 loss on his pill is common”", 540, 1175, 30, fg=WHITE, bg=(160, 30, 40), a=k)
+        chip(c, "STUDY 31: “it's rare”", 540, 1232, 30, fg=WHITE, bg=(160, 30, 40), a=k)
+        chip(c, "(illustrative)", 540, 1284, 22, a=k)
     use_tag(c, T)
     return st.arr
 
@@ -496,6 +519,8 @@ def _ring3(T, t, d, tiny):
     c = st.c
     _room(st, 3)
     c.drawRect(skia.Rect.MakeWH(W, H), paint((255, 220, 160), 0.1))
+    c.save()
+    cam(c, _chant_zoom("w3", T, t, d), 540, 1150)
     c.drawCircle(540, 1150, 330, paint((255, 240, 200), 0.18, blur=40))    # a spotlight on him
     S_ = TL.songs["w3"]
     b = (T - S_["start"]) / S_["beat"]
@@ -507,6 +532,7 @@ def _ring3(T, t, d, tiny):
     _workers_subset(c, T, "w3", back)
     tiny(c, T, t)
     _workers_subset(c, T, "w3", front)
+    c.restore()
     return st.arr
 
 
@@ -514,7 +540,7 @@ def _workers_subset(c, T, sk, which):
     S_ = TL.songs[sk]
     beat = S_["beat"]
     b = (T - S_["start"]) / beat
-    on_refrain = T >= TL.lines[S_["lines"][2]["key"]]["start"] - 0.1
+    on_refrain = _li(sk, T) in (1, 3)
     even = int(b) % 2 == 0
     pts = []
     for i in which:

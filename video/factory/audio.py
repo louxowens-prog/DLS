@@ -320,12 +320,11 @@ def voices():
         sig = np.stack([up, up])
         if who == WORKERS:                                               # a chorus of three different little voices
             from voice import speak_fx
-            refrain = "Think" in L["spoken"] or "thinking's up" in L["spoken"]
-            others = [("af_sky", 0.95, 3.0, 0.014, 0.75, 0.2), ("am_adam", 0.95, 6.5, 0.026, 0.7, 0.8)]
-            if refrain:
-                others += [("af_nicole", 0.95, 2.0, 0.035, 0.55, 0.35), ("bm_fable", 0.95, 5.0, 0.02, 0.55, 0.65)]
+            answer = int(key.split("_")[1]) % 2 == 1                     # call (one little voice) and response (all)
+            others = [] if not answer else [("af_sky", 0.95, 3.0, 0.014, 0.75, 0.2), ("am_adam", 0.95, 6.5, 0.026, 0.7, 0.8),
+                                            ("af_nicole", 0.95, 2.0, 0.035, 0.55, 0.35), ("bm_fable", 0.95, 5.0, 0.02, 0.55, 0.65)]
             sig = np.zeros((2, len(up) + int(0.06 * SR)))
-            sig[:, :len(up)] += np.stack([up, up]) * np.sqrt(0.5) * 1.1
+            sig[:, :len(up)] += np.stack([up, up]) * (np.sqrt(0.5) * 1.1 if answer else 1.0)
             for v, sp, pt, dl, g, pan in others:
                 w = speak_fx(L["spoken"], v, sp, pt).astype(np.float64)
                 w = signal.resample_poly(w, SR, VSR)
@@ -418,10 +417,14 @@ def build():
     for Sg in TL.songs.values():
         insong[int(Sg["start"] * SR):int(Sg["end"] * SR)] = 1.0
     insong = np.convolve(insong, np.ones(SR // 5) / (SR // 5), "same")
+    for Sg in TL.songs.values():                                         # inside a song the duck holds steady, no pumping
+        a = int(TL.lines[Sg["lines"][0]["key"]]["start"] * SR)
+        b = int(TL.lines[Sg["lines"][-1]["key"]]["end"] * SR)
+        env[a:b] = max(0.6, float(np.percentile(env[a:b], 70)))
     low = signal.lfilter(*signal.butter(2, 280 / (SR / 2), "low"), music)
     high = signal.lfilter(*signal.butter(2, 4200 / (SR / 2), "high"), music)
     mid = music - low - high
-    k_mid = 0.85 - 0.2 * insong
+    k_mid = 0.85 - 0.3 * insong
     music = low * (1 - 0.35 * env) + mid * (1 - k_mid * env) + high * (1 - 0.5 * env)
     music = mono_safe(music)
     ref = music[:, int(f("town") * SR):int(f("news1") * SR)]
@@ -441,11 +444,22 @@ def build():
         if margin < target:
             ride[max(0, a - int(0.12 * SR)):min(N, b + int(0.18 * SR))] = np.minimum(
                 ride[max(0, a - int(0.12 * SR)):min(N, b + int(0.18 * SR))], db(margin - target))
+    for Sg in TL.songs.values():                                         # and one level for the whole song
+        a = int(TL.lines[Sg["lines"][0]["key"]]["start"] * SR) - int(0.12 * SR)
+        b = int(TL.lines[Sg["lines"][-1]["key"]]["end"] * SR) + int(0.18 * SR)
+        ride[a:b] = ride[a:b].min()
     k = int(0.15 * SR)
     ride = np.convolve(np.pad(ride, k, mode="edge"), np.ones(k) / k, "same")[k:-k]
     music = presence(music * ride, 3000, 1.0)
     mix = music + vo
     mix = signal.sosfilt(signal.butter(4, 35 / (SR / 2), "high", output="sos"), mix, axis=1)
+    dyn = np.zeros(N)                                                    # the shape of the evening: bigger, and quieter
+    for a, b, g in ((C["door_open"], ls("s1_1"), 2.5), (f("tunnel_in"), E("t1c"), 3.5), (S("x1") - 0.3, E("x1") + 0.1, 2.0),
+                    (S("y1") - 0.5, TL.total, -3.0), (S("x2") - 0.1, S("z1"), -1.5)):
+        dyn[int(a * SR):int(b * SR)] = g
+    k = int(0.5 * SR)
+    dyn = np.convolve(np.pad(dyn, k, mode="edge"), np.ones(k) / k, "same")[k:-k]
+    mix = mix * db(dyn)[None]
     mix = loudness(mix, -14.0)
     tail = int(0.5 * SR)
     mix[:, -tail:] *= np.linspace(1, 0, tail) ** 2
