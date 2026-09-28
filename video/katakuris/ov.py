@@ -47,8 +47,14 @@ def _wipe_frac(key, T):
     return min(1.0, done / tot)
 
 
-def _lyric(c, s, x, y, align, who, frac, alpha=1.0):
-    f, size, w = _fit(s, "rounded-900", LYR_SIZE, MAX_W)
+def song_size(sk):
+    """One lettering size for a whole song (the longest line decides), so the band never changes size."""
+    return min(_fit(TL.lines[l["key"]]["shown"], "rounded-900", LYR_SIZE, MAX_W)[1] for l in TL.songs[sk]["lines"])
+
+
+def _lyric(c, s, x, y, align, who, frac, alpha=1.0, size=LYR_SIZE):
+    f = kk.font("rounded-900", size)
+    w = f.measureText(s)
     x0 = x if align == "left" else x - w
     c.drawString(s, x0, y, f, paint(INK, alpha, stroke=size * 0.34))
     c.drawString(s, x0, y, f, paint((20, 30, 120), alpha, stroke=size * 0.2))
@@ -87,7 +93,7 @@ def karaoke(arr, T):
         key = lines[j]["key"]
         L = TL.lines[key]
         y = 1392 if r == 0 else 1476
-        _lyric(c, L["shown"], 90 if r == 0 else 940, y, "left" if r == 0 else "right", L["who"], fr)
+        _lyric(c, L["shown"], 90 if r == 0 else 940, y, "left" if r == 0 else "right", L["who"], fr, size=SIZES[sk])
     if T < starts[0]:                                                          # the count-in dots
         n = int(max(0, starts[0] - T) / S["beat"]) + 1
         for k in range(min(4, n)):
@@ -100,6 +106,9 @@ def karaoke(arr, T):
         c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(60, 240, 760, 372), 18, 18), paint((20, 10, 60), 0.72 * a))
         kk.text(c, "♪ " + title, 90, 305, 48, "mochiy-400", LEMON, align="left", tag="songtitle", a=a, outline=INK, ow=8)
         kk.text(c, sub, 96, 352, 30, "rounded-800", WHITE, align="left", tag="songtitle", a=a)
+
+
+SIZES = {sk: song_size(sk) for sk in TL.songs}
 
 
 def _caps():
@@ -154,7 +163,7 @@ def chapter(T, t, n, title, sub="A FAMILY MUSICAL", plate=True):
     c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(90, 520, 990, 1120), 60, 60), paint(WHITE))
     c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(90, 520, 990, 1120), 60, 60), paint(INK, stroke=14))
     kk.text(c, "✿ " + sub + " ✿", W / 2, 600, 40, "rounded-900", kk.HOT, tag="card")
-    label = "GRAND FINALE" if n == 6 else f"CHAPTER {n}"
+    label = f"CHAPTER {n}"
     kk.chrome_text(c, label, W / 2, 760, 118, t, max_w=820, tag="card")
     lines = title.split("|")
     for j, ln in enumerate(lines):

@@ -71,7 +71,8 @@ LINES = [
     ("f5b", NAR, "Twenty-eight soldiers died.", "28 soldiers died.", 0.3),
     ("f6", NAR, "Medicine. A radiation machine's software had bugs.",
      "Medicine.| A radiation machine’s software had bugs.", 0.5),
-    ("f6b", NAR, "Six patients got massive overdoses.", "Six patients got massive overdoses.", 0.45),
+    ("f6b", NAR, "Six patients got massive overdoses. At least three died.",
+     "Six patients got massive overdoses.| At least three died.", 0.45),
 
     # ---- finale
     ("g1", NAR, "So here's the rule. The bigger the scale, and the higher the stakes, the smaller the mistake you can afford.",

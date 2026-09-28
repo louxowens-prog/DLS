@@ -53,11 +53,12 @@ def s_translate(T, t, d):
         c.drawCircle(x0 + 100, y0 + 365, 28, paint(INK))
         c.drawCircle(x0 + 210, y0 + 365, 28, paint(INK))
         c.drawRect(skia.Rect.MakeLTRB(x0 + 250, y0 + 250, x0 + 330, y0 + 330), paint((230, 170, 40)))
-        kk.text(c, "original post (Arabic):", (x0 + x1) / 2, y0 + 450, 26, "rounded-800", (120, 120, 140), tag="phone")
+        kk.text(c, "original post (Arabic):", (x0 + x1) / 2, y0 + 450, 34, "rounded-900", (90, 90, 110), tag="phone")
         kk.text(c, "“Good morning!” ☀", (x0 + x1) / 2, y0 + 505, 40, "rounded-900", INK, tag="phone")
-        kk.text(c, "auto-translated:", (x0 + x1) / 2, y0 + 580, 26, "rounded-800", (120, 120, 140), tag="phone")
+        kk.text(c, "auto-translated:", (x0 + x1) / 2, y0 + 580, 34, "rounded-900", (90, 90, 110), tag="phone")
         if flipped:
-            kk.text(c, "“ATTACK THEM”", (x0 + x1) / 2, y0 + 650, 32, "dela-400", BLOOD, tag="phone")
+            fs = min(46, 32 * (x1 - x0 - 50) / kk.font("dela-400", 32).measureText("“ATTACK THEM”"))
+            kk.text(c, "“ATTACK THEM”", (x0 + x1) / 2, y0 + 655, fs, "dela-400", BLOOD, tag="phone")
         else:
             kk.text(c, "…", (x0 + x1) / 2, y0 + 650, 50, "dela-400", (150, 150, 160), tag="phone")
 
@@ -81,12 +82,17 @@ def s_one(T, t, d):
     """But some machines can't afford even one: a single clay X in an empty white room. Then silence."""
     st = kk.Stage(CREAM)
     c = st.c
-    z = 1.0 + 0.25 * ease(t / d)
+    z = 1.0 + 0.9 * ease(min(1.0, t / d))
     c.save()
     c.translate(540, 820)
     c.scale(z, z)
+    c.rotate(4 * math.sin(t * 0.9))
+    for i in range(5):                                                   # it bleeds, slowly, into the white room
+        kk.drip(c, -120 + i * 60, 60 + (i % 2) * 30, 10, 20 + 90 * ease(min(1.0, max(0.0, t - 0.4 - i * 0.3) / 2.5)), BLOOD)
     kit.clay_x(c, 0, 0, 1.2, T, seed=3)
     c.restore()
+    beat = abs(math.sin(t * math.pi / 0.85)) ** 6                        # a heartbeat of red at the edges
+    kk.red(st.arr, 0.06 + 0.12 * beat)
     return st.arr
 
 
@@ -144,11 +150,21 @@ def s_plane(T, t, d):
     t_imp = C["impact_plane"]
     pushes = max(0, int((twos(T) - t_push) / 0.55) + 1) if T >= t_push else 0
     pitch = min(40, pushes * 7) + (4 * math.sin(T * 30) if pushes else 0)
+    ts = C["sensor"] - 0.2
+    if T >= ts and not pushes:                                           # MCAS: nose-down jolt, pull-up, jolt...
+        ph = ((twos(T) - ts) / 0.9) % 1.0
+        pitch += 11 * (1 - ph) ** 2
     u = ramp(T, t_push, t_imp)
+    drift = 40 * math.sin(t * 1.3)
+    for i in range(14):                                                  # wind streaks rushing past
+        sx = (1200 - ((t * 2600 + i * 173) % 1400))
+        sy = 300 + (i * 97) % 800
+        c.drawLine(sx, sy, sx + 160, sy, paint(WHITE, 0.35, stroke=4))
     if T < t_imp:
-        _plane(c, 560 - 80 * u, 700 + 560 * u * u, 1.05, T, pitch, sensor=1.0 if T >= C["sensor"] - 0.2 else 0.0)
+        _plane(c, 560 - 80 * u + drift, 700 + 560 * u * u + 30 * math.sin(t * 2.1), 1.05, T, pitch,
+               sensor=1.0 if T >= C["sensor"] - 0.2 else 0.0)
     if T >= C["sensor"] - 0.2 and T < t_push:
-        kit.tag_label(c, "1 BAD SENSOR", 820, 560, 34, color=BLOOD)
+        kit.tag_label(c, "1 BAD SENSOR", 760, 560, 46, color=BLOOD)
     if pushes and T < t_imp:
         for k in range(min(pushes, 4)):
             ax = 360 + k * 90
@@ -373,7 +389,7 @@ def s_finale_b(T, t, d):
         r = 470 + k2 * 40
         c.drawArc(skia.Rect.MakeLTRB(540 - r, 1180 - r * 0.3, 540 + r, 1180 + r * 0.3), a0, 80, False, paint(WHITE, 0.75, stroke=10))
     cast.person(c, "girl", 540, 1960 + 12 * math.sin(ang * 2), 1.3, T, pose=(96 + 6 * math.sin(ang), 0, 96 - 6 * math.sin(ang), 0),
-                spin=max(0.25, abs(cs_)), back=cs_ < 0, mood="smile")
+                spin=max(0.62, abs(cs_)), back=cs_ < 0, mood="smile")
     for i in range(6):
         a = i * math.pi / 3 + t * 3.0
         kk.cg_star(c, 540 + 470 * math.cos(a), 760 + 170 * math.sin(a), 34, T, seed=i, color=[LEMON, HOT, WHITE, MINT][i % 4])
@@ -430,9 +446,13 @@ def s_payoff(T, t, d):
         w = 118
         for i in range(n):
             x = 540 + (i - (n - 1) / 2) * w
-            kk.clay_poly(c, [(x - 56, y), (x - 56, y - 50), (x + 56, y - 50), (x + 56, y)],
-                         [(170, 30, 50), (40, 90, 170), (200, 120, 40)][(row + i) % 3], twos(T), seed=150 + row * 9 + i, amp=3,
-                         prints=0, marks=1)
+            col = [(170, 30, 50), (40, 90, 170), (200, 120, 40)][(row + i) % 3]
+            kk.clay_poly(c, [(x - 56, y), (x - 56, y - 50), (x + 56, y - 50), (x + 56, y)], col, twos(T), seed=150 + row * 9 + i,
+                         amp=3, prints=0, marks=1)
+            c.drawRect(skia.Rect.MakeLTRB(x - 56, y - 47, x + 56, y - 38), paint((235, 200, 90), 0.9))   # gilt spine bands
+            c.drawRect(skia.Rect.MakeLTRB(x - 56, y - 12, x + 56, y - 4), paint((235, 200, 90), 0.9))
+            c.drawRect(skia.Rect.MakeLTRB(x - 26, y - 33, x + 26, y - 17), paint(CREAM, 0.95))            # the spine label
+            c.drawLine(x - 18, y - 25, x + 18, y - 25, paint(kk.mix(col, INK, 0.3), stroke=3))
     cast.guestbook(c, 540, 950, 0.9, T, marks=16, rot=-4, you=True)
     cast.crow(c, 860, 760, 0.55, T, caw=1.0 if t > 1.0 else 0.0, flip=True)
     kk.red(st.arr, 0.25)

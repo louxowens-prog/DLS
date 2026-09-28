@@ -354,22 +354,22 @@ def s_rule(T, t, d):
         c.drawRect(skia.Rect.MakeLTRB(0, 980, W, 1320), paint((30, 0, 10), 0.45))
     kk.chrome_text(c, "AUTOMATION", 540, 330, 96, T, max_w=900, tag="rule")
     kk.chrome_text(c, "MULTIPLIES", 540, 450, 96, T, max_w=900, tag="rule")
-    k1 = kk.pop(T, C["rule_right"] - 0.2, 0.25, 0.3)
+    k1 = kk.pop(T, C["rule_right"] - 0.2, 0.25, 0.1)
     if k1 > 0:
         c.save()
         c.translate(540, 700)
         c.scale(k1, k1)
-        kk.chrome_text(c, "COMPETENCE", 0, 0, 90, T, max_w=860, tag="rule", face=((255, 255, 220), (255, 210, 60), (180, 110, 0)))
+        kk.chrome_text(c, "COMPETENCE", 0, 0, 90, T, max_w=740, tag="rule", face=((255, 255, 220), (255, 210, 60), (180, 110, 0)))
         kk.text(c, "× 10,000,000", 0, 110, 64, "dela-400", (40, 150, 60), tag="rule", outline=WHITE, ow=10)
         c.restore()
         for i in range(5):
             kk.cg_star(c, 120 + i * 210, 600 + (i % 2) * 260, 40, T, seed=i)
-    k2 = kk.pop(T, C["rule_wrong"] - 0.2, 0.25, 0.3)
+    k2 = kk.pop(T, C["rule_wrong"] - 0.2, 0.25, 0.1)
     if k2 > 0:
         c.save()
         c.translate(540, 1110)
         c.scale(k2, k2)
-        kk.chrome_text(c, "INCOMPETENCE", 0, 0, 84, T, max_w=860, tag="rule", face=((255, 200, 200), (230, 20, 40), (90, 0, 10)))
+        kk.chrome_text(c, "INCOMPETENCE", 0, 0, 84, T, max_w=740, tag="rule", face=((255, 200, 200), (230, 20, 40), (90, 0, 10)))
         kk.text(c, "× 10,000,000", 0, 100, 60, "dela-400", (255, 90, 90), tag="rule", outline=INK, ow=10)
         c.restore()
     return st.arr

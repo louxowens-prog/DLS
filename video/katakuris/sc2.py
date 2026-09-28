@@ -77,9 +77,9 @@ def s_letter(T, t, d):
         _sheet_text(c, [("NOTICE OF", 44, INK, "rounded-900"), ("FRAUD", 90, BLOOD, "dela-400"),
                         ("DETERMINATION", 44, INK, "rounded-900")], x0, y0 + 10, x1)
         if T >= Wd("d2", "computer") - 0.1:
-            _sheet_text(c, [("Decided by: COMPUTER", 36, INK, "special-elite-400")], x0, y0 + 300, x1)
+            _sheet_text(c, [("Decided by: COMPUTER", 46, INK, "special-elite-400")], x0, y0 + 290, x1)
         if T >= C["no_human"]:
-            _sheet_text(c, [("Checked by a person: NO", 36, BLOOD, "special-elite-400")], x0, y0 + 360, x1)
+            _sheet_text(c, [("Checked by a person: NO", 46, BLOOD, "special-elite-400")], x0, y0 + 365, x1)
 
     if opened <= 0:
         cast.envelope(c, 540, 1000 - 40 * math.sin(t * 6), 2.2, T, seed=3, label="OFFICIAL", color=(240, 230, 210))
@@ -97,7 +97,7 @@ def s_owe(T, t, d):
     kit.backdrop(st, bg.dark_table())
     tt = twos(T)
     kk.clay_text(c, "YOU OWE", 540, 400, 80, (150, 160, 255), tt, seed=2, tag="owe")
-    kit.tag_label(c, "ILLUSTRATIVE AMOUNT", 780, 280, 28, color=(90, 60, 110), rot=3)
+    kit.tag_label(c, "ILLUSTRATIVE AMOUNT", 700, 275, 40, color=(90, 60, 110), rot=3)
     kk.clay_text(c, "$8,000", 540, 570, 120, (120, 210, 120), tt, seed=5, tag="owe")
     tp = C["penalty"]
     rows = ((tp, "+ 4× PENALTY", 740, 88, (250, 170, 40), 7), (C["interest"] - 0.05, "+ INTEREST", 880, 80, (250, 120, 200), 11))
@@ -214,10 +214,18 @@ def s_michigan(T, t, d):
     st = kk.Stage()
     c = st.c
     kit.backdrop(st, bg.dark_table())
+    z = 1.0 + 0.12 * ease(min(1.0, t / d))                               # a slow push in on the map
+    c.save()
+    c.translate(540, 900)
+    c.scale(z, z)
+    c.translate(-540, -900)
     _map(c, UPPER, 140, 420, 800, 900, (120, 200, 110), T, 3)
     _map(c, MITTEN, 140, 420, 800, 900, (120, 200, 110), T, 4)
-    _envelope_rain(c, T, T - t, 360, 760, 1060)
-    ov.slam(c, "40,000+", 540, 470, 150, T, C["forty"], sub="DECIDED BY ALGORITHM")
+    _envelope_rain(c, T, T - t, 360, 760, 1060, n=40 + int(max(0.0, T - C["forty"]) * 12))
+    c.restore()
+    if T >= C["forty"]:                                                   # the count ticks up: 40,195 cases, no human
+        n = int(40195 * ease(ramp(T, C["forty"], C["forty"] + 1.6)))
+        ov.slam(c, f"{n:,}", 540, 470, 150, T, C["forty"], sub="DECIDED BY ALGORITHM", max_w=560)
     k = kk.pop(T, C["eightyfive"], 0.18, 0.12)
     if k > 0:
         size = 80

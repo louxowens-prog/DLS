@@ -154,26 +154,46 @@ def s_volcano(T, t, d):
     """Dead silence; the volcano waits. On 'billion' it blows: clay lava and red Xs, a million of them."""
     st = kk.Stage()
     c = st.c
-    kit.backdrop(st, bg.storm())
     erupt = ramp(T, C["erupt"], C["erupt"] + 1.0)
+    age = T - C["erupt"]
+    shake = max(0.0, 1 - age / 1.4) if age >= 0 else 0.0                  # the whole set shakes when it blows
+    rs = np.random.default_rng(int(twos(T) * 12) + 7)
+    c.save()
+    c.translate(540 + rs.uniform(-34, 34) * shake, 960 + rs.uniform(-26, 26) * shake)
+    c.scale(1.06, 1.06)
+    c.translate(-540, -960)
+    kit.backdrop(st, bg.storm())
+    if age >= 0:                                                          # the ash column, billowing up out of the crater
+        tt = twos(T) - C["erupt"]
+        for i in range(9):
+            a = tt - i * 0.12
+            if a <= 0:
+                continue
+            gy = 690 - min(1.0, a / 1.6) * (260 + 60 * i)
+            gx = 540 + (i % 3 - 1) * (60 + 40 * min(1.0, a))
+            r = 70 + 110 * min(1.0, a / 1.2) + 12 * i
+            kk.clay_ellipse(c, gx, gy, r, r * 0.8, (95 - 4 * i, 80 - 3 * i, 95 - 3 * i), twos(T), seed=120 + i, prints=1, marks=1)
     _volcano(c, T, erupt)
     if erupt > 0:
         tt = twos(T) - C["erupt"]
         rng = np.random.default_rng(4)
-        for i in range(60):
-            age = tt - i * 0.06
-            if age < 0:
+        for i in range(80):
+            age_i = tt - i * 0.045
+            if age_i < 0:
                 continue
-            ang = rng.uniform(-2.6, -0.5)
-            sp = rng.uniform(900, 1600)
-            px = 540 + math.cos(ang) * sp * age
-            py = 690 + math.sin(ang) * sp * age + 1300 * age * age
+            ang = rng.uniform(-2.7, -0.45)
+            sp = rng.uniform(1100, 2000)
+            px = 540 + math.cos(ang) * sp * age_i
+            py = 690 + math.sin(ang) * sp * age_i + 1300 * age_i * age_i
             if py > H + 100:
                 continue
             if i % 3 == 0:
                 kit.clay_x(c, px, py, 0.28, T, seed=i)
             else:
                 kk.clay_ellipse(c, px, py, 30, 26, (255, 90 + (i * 7) % 90, 20), twos(T), seed=i, prints=0, marks=0, gloss=0.4)
+    c.restore()
+    if 0 <= age < 0.15:                                                   # the flash of the blast
+        c.drawRect(skia.Rect.MakeWH(W, H), paint((255, 240, 200), 0.85 * (1 - age / 0.15)))
     if T >= C["onemil"]:
         ov.slam(c, "1,000,000", 540, 470, 140, T, C["onemil"], color=(255, 80, 60), edge=INK,
                 sub="FAILURES" if T >= C["failures"] - 0.2 else None)
@@ -253,14 +273,17 @@ def s_disco_c(T, t, d):
     beat = _disco_set(st, T)
     for i in range(5):
         dx, hop, tl = cast.moves(twos(T) - S("s3"), beat, i % 2, 0.8)
-        cast.corpse(c, 120 + i * 210 + dx, 1180, 0.45, T, pose=cast.dance_pose(T - S("s3"), beat, "disco", i % 2), seed=i + 20,
-                    hop=hop, tilt=tl)
+        cast.corpse(c, 120 + i * 210 + dx, 1030, 0.36, T, pose=cast.dance_pose(T - S("s3"), beat, "disco", i % 2), seed=i + 20,
+                    hop=hop * 0.8, tilt=tl)
     ph = ((T - S("s3")) / beat) % 1.0
     dig = abs(math.sin(ph * math.pi))
     for i, (who, x) in enumerate((("grandpa", 200), ("papa", 540), ("girl", 880))):
-        hand = cast.person(c, who, x, 1660, 0.5, T, pose=(40, 60, 70 - 35 * dig, 60), bob=18 * dig, mood="flat")
+        kk.clay_ellipse(c, x + 70, 1290, 120, 26, (70, 50, 40), twos(T), seed=80 + i, prints=0, marks=2)   # the hole they dig
+        hand = cast.person(c, who, x, 1285, 0.4, T, pose=(40, 60, 70 - 35 * dig, 60), bob=14 * dig, mood="flat")
         if hand:
-            cast.shovel(c, hand[0], hand[1], 0.62, ang=-25 + 30 * dig)
+            cast.shovel(c, hand[0], hand[1], 0.5, ang=-25 + 30 * dig)
+            if dig > 0.8:                                                # a clod of earth flies over the shoulder
+                kk.clay_ellipse(c, x - 60 - 80 * dig, 1080 - 60 * dig, 18, 14, (90, 65, 45), twos(T), seed=90 + i, prints=0)
     return st.arr
 
 
