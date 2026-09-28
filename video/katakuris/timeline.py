@@ -10,8 +10,8 @@ from voice import SR, speak, word_times
 FPS = 24
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-PRE = {"c0": 0.6, "a1": 1.15, "b1": 1.15, "d1": 1.1, "f1": 1.4, "g1": 1.2,        # room for a chapter card
-       "d5": 1.25, "e1": 1.4, "f3": 1.3, "g2": 0.5}                        # true dead air before the heaviest beats
+PRE = {"c0": 0.6, "b2": 0.45, "a1": 1.15, "b1": 1.15, "d1": 1.1, "f1": 1.4, "g1": 1.2,        # room for a chapter card
+       "d5": 1.25, "e1": 1.4, "f3": 1.5, "g2": 0.5}                        # true dead air before the heaviest beats
 TAIL = 3.5
 
 

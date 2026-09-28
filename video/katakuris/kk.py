@@ -433,56 +433,56 @@ def _print_arcs(seed):
     return _PRINTS[seed]
 
 
-def clay_path(c, p, color, t=0.0, seed=0, light=(-0.6, -0.8), prints=2, marks=3, gloss=0.18, rim=0.5):
-    """Shade any path as modelling clay: a matte 3D roll-off, a dark rim where it curls away, fingerprints and
-    tool gouges pressed into it (they shift a hair every drawing, like handled clay)."""
+def clay_path(c, p, color, t=0.0, seed=0, light=(-0.6, -0.8), prints=2, marks=2, gloss=0.22, rim=0.55):
+    """Shade any path as solid modelling clay: a strong matte 3D roll-off (lit side, core shadow, reflected light at
+    the far edge), a dark crease where it curls away, a soft waxy sheen, and the handling marks pressed INTO the
+    surface - soft thumb-smoothed fingerprint whorls and short gouges with a lit lip - never thin lines."""
     b = p.computeTightBounds()
     cx, cy = b.centerX(), b.centerY()
     rw, rh = max(4.0, b.width() / 2), max(4.0, b.height() / 2)
     rr = max(rw, rh)
     lx, ly = light
-    hi, lo = mix(color, WHITE, 0.35), mix(color, INK, 0.5)
+    hi, lo, deep = mix(color, WHITE, 0.4), mix(color, INK, 0.42), mix(color, INK, 0.62)
     c.drawPath(p, paint(color))
     c.save()
     c.clipPath(p, doAntiAlias=True)
-    c.drawPath(p, paint(shader=rad((cx + lx * rw * 0.4, cy + ly * rh * 0.4), rr * 1.3,
-                                   [(*hi, 0.5), (*color, 0.0), (*color, 0.0), (*lo, 0.7)], [0.0, 0.4, 0.62, 1.0])))
-    c.drawPath(p, paint(lo, rim, stroke=max(5, rr * 0.12)))                          # the dark curl at the edge
+    c.drawPath(p, paint(shader=rad((cx + lx * rw * 0.35, cy + ly * rh * 0.35), rr * 1.25,
+                                   [(*hi, 0.75), (*color, 0.15), (*lo, 0.55), (*deep, 0.9)], [0.0, 0.38, 0.72, 1.0])))
+    c.drawPath(p, paint(deep, rim, stroke=max(4, rr * 0.1), blur=max(2, rr * 0.03)))       # the crease at the edge
     rng = np.random.default_rng(seed * 17 + 3)
     bx, by, _ = boil(t, 1.0, seed + 5)
-    for i in range(prints):                                                          # fingerprints
-        fx = cx + rng.uniform(-0.45, 0.45) * rw + bx
-        fy = cy + rng.uniform(-0.45, 0.45) * rh + by
-        fs = min(rr * 0.55, 44) * rng.uniform(0.8, 1.15)
-        c.save()
-        c.translate(fx, fy)
-        c.rotate(float(rng.uniform(0, 180)))
-        c.scale(fs, fs)
-        pd, pl = paint(lo, 0.42, stroke=2.3 / fs), paint(hi, 0.3, stroke=1.6 / fs)
-        for arc in _print_arcs(seed * 7 + i):
-            c.drawPath(arc, pd)
-        c.translate(1.2 / fs, 1.4 / fs)
-        for arc in _print_arcs(seed * 7 + i):
-            c.drawPath(arc, pl)
-        c.restore()
-    for i in range(marks):                                                           # tool gouges
-        mx = cx + rng.uniform(-0.6, 0.6) * rw
-        my = cy + rng.uniform(-0.6, 0.6) * rh
-        L = rr * rng.uniform(0.18, 0.4)
+    if rr > 50:
+        for i in range(prints):                                                      # fingerprints, thumbed in
+            fx = cx + rng.uniform(-0.4, 0.4) * rw + bx
+            fy = cy + rng.uniform(-0.4, 0.4) * rh + by
+            fs = min(rr * 0.45, 40) * rng.uniform(0.8, 1.1)
+            c.save()
+            c.translate(fx, fy)
+            c.rotate(float(rng.uniform(0, 180)))
+            c.scale(fs, fs)
+            pd, pl = paint(lo, 0.26, stroke=3.2 / fs), paint(hi, 0.24, stroke=2.4 / fs)
+            for arc in _print_arcs(seed * 7 + i)[:6]:
+                c.drawPath(arc, pd)
+            c.translate(1.6 / fs, 1.8 / fs)
+            for arc in _print_arcs(seed * 7 + i)[:6]:
+                c.drawPath(arc, pl)
+            c.restore()
+    for i in range(marks if rr > 40 else 0):                                         # gouges: a groove with a lit lip
+        mx = cx + rng.uniform(-0.5, 0.5) * rw
+        my = cy + rng.uniform(-0.5, 0.5) * rh
+        L = min(rr * rng.uniform(0.12, 0.22), 40)
         an = rng.uniform(0, math.pi)
-        pts = bez((mx - L * math.cos(an), my - L * math.sin(an)), (mx + rng.uniform(-10, 10), my + rng.uniform(-10, 10)),
+        pts = bez((mx - L * math.cos(an), my - L * math.sin(an)), (mx + rng.uniform(-6, 6), my + rng.uniform(-6, 6)),
                   (mx + L * math.cos(an), my + L * math.sin(an)), 8)
-        c.drawPath(path(pts, closed=False), paint(lo, 0.55, stroke=4.5))
-        c.drawPath(path([(q[0] + 2.2, q[1] + 2.4) for q in pts], closed=False), paint(hi, 0.45, stroke=2.2))
-    for i in range(4):                                                               # thumb dents
-        dx, dy = cx + rng.uniform(-0.6, 0.6) * rw, cy + rng.uniform(-0.6, 0.6) * rh
-        dr = rr * rng.uniform(0.1, 0.2)
-        c.drawOval(skia.Rect.MakeXYWH(dx - dr, dy - dr * 0.7, dr * 2, dr * 1.4), paint(lo, 0.16))
-        c.drawArc(skia.Rect.MakeXYWH(dx - dr, dy - dr * 0.7, dr * 2, dr * 1.4), 20, 140, False, paint(hi, 0.3, stroke=2))
-    if gloss > 0:
-        c.drawOval(skia.Rect.MakeXYWH(cx + lx * rw * 0.5 - rw * 0.16, cy + ly * rh * 0.5 - rh * 0.08, rw * 0.32, rh * 0.16),
-                   paint(WHITE, gloss))
+        c.drawPath(path(pts, closed=False), paint(deep, 0.45, stroke=6, blur=1.2))
+        c.drawPath(path([(q[0] + 2.5, q[1] + 3.0) for q in pts], closed=False), paint(hi, 0.5, stroke=3.5))
+    for i in range(int(6 + rr / 12)):                                                # grit and specks in the clay
+        c.drawCircle(cx + rng.uniform(-rw, rw), cy + rng.uniform(-rh, rh), rng.uniform(1.2, 2.6), paint(deep, 0.35))
+    if gloss > 0:                                                                    # a soft waxy sheen
+        c.drawOval(skia.Rect.MakeXYWH(cx + lx * rw * 0.45 - rw * 0.22, cy + ly * rh * 0.45 - rh * 0.12, rw * 0.44, rh * 0.24),
+                   paint(WHITE, gloss, blur=max(3, rr * 0.08)))
     c.restore()
+    c.drawPath(p, paint(mix(color, INK, 0.7), 0.9, stroke=2.2))                     # a crisp silhouette edge
     return p
 
 
@@ -534,7 +534,7 @@ def clay_text(c, s, x, y, size, color, t=0.0, seed=0, fname="dela-400", tag="cla
     bx, by, br = boil(t, wobble, seed)
     p, w = text_path(s, x + bx, y + by, size, fname, align)
     c.drawPath(p, paint(INK, 0.35, blur=6))
-    clay_path(c, p, color, t, seed, prints=2, marks=2, rim=0.45)
+    clay_path(c, p, color, t, seed, prints=1, marks=1, rim=0.2, gloss=0.3)
     x0 = x - w / 2 if align == "center" else (x - w if align == "right" else x)
     reg_local(c, x0, y - size * 0.78, x0 + w, y + size * 0.22, tag)
     return w
@@ -700,12 +700,13 @@ def drip(c, x, y, w, L, color=BLOOD, a=1.0):
     c.drawCircle(x, y + L, w * 0.9, paint(color, a))
 
 
-def burst_plate(c, cx, cy, r, t, color=LEMON, edge=HOT, spikes=14):
-    """A jagged 'BAM' plate for a telop number."""
+def burst_plate(c, cx, cy, r, t, color=LEMON, edge=HOT, spikes=14, ry=None):
+    """A jagged 'BAM' plate for a telop number (r across, ry up and down)."""
     pts = []
+    ry = ry or r * 0.8
     for i in range(spikes * 2):
         an = i * math.pi / spikes + t * 0.2
-        q = r if i % 2 == 0 else r * 0.78
-        pts.append((cx + q * math.cos(an), cy + q * math.sin(an) * 0.8))
+        q = 1.0 if i % 2 == 0 else 0.8
+        pts.append((cx + r * q * math.cos(an), cy + ry * q * math.sin(an)))
     c.drawPath(path(pts), paint(edge, stroke=16))
     c.drawPath(path(pts), paint(color))

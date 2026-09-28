@@ -32,15 +32,18 @@ def _pile(c, T, t_start, n=70, seed=1, h0=1520):
         rest = h0 + 40 - (i // 9) * 55 - rng.uniform(0, 40) - 180 * math.exp(-((x - 540) / 260) ** 2) * min(1, i / 30)
         y = min(rest, -150 + age * age * 2600)
         rot = rng.uniform(-40, 40) + (0 if y >= rest else age * 300)
-        cast.envelope(c, x, y, 0.62, T, seed=i, rot=rot, label="FRAUD" if i % 3 == 0 else None)
+        cast.envelope(c, x, y, 0.62, T, seed=i, rot=rot, label="FRAUD" if (i % 3 == 0 and y < rest - 40 and (300 < y < 330 or 680 < y < 1120)) else None)
+
+
+PILE_T0 = -1.1                    # the envelopes are already raining down on the very first frame
 
 
 def s_cold1(T, t, d):
     st = kk.Stage()
     c = st.c
     kit.backdrop(st, bg.storm())
-    _pile(c, T, T - t)
-    ov.slam(c, "40,000", 540, 560, 170, T, C["fraud_count"] - 0.05, sub="ACCUSED OF FRAUD")
+    _pile(c, T, PILE_T0)
+    ov.slam(c, "40,000", 540, 560, 170, T, 0.0, sub="FRAUD ACCUSATIONS")
     kk.red(st.arr, 0.25)
     return st.arr
 
@@ -50,7 +53,7 @@ def s_cold2(T, t, d):
     st = kk.Stage()
     c = st.c
     kit.backdrop(st, bg.storm())
-    _pile(c, T, T - t - 3.2)
+    _pile(c, T, PILE_T0)
     tp = C["pop"]
     if T >= tp:
         k = kk.pop(T, tp, 0.25, 0.4)
@@ -70,7 +73,7 @@ def s_cold2(T, t, d):
 FAM = [("grandpa", 175), ("papa", 420), ("mama", 660), ("girl", 900)]
 
 
-def _family(c, T, pose="stand", s=0.55, y=1760, mood="flat", **kw):
+def _family(c, T, pose="stand", s=0.55, y=1650, mood="flat", **kw):
     for i, (who, x) in enumerate(FAM):
         p = pose(i) if callable(pose) else pose
         cast.person(c, who, x, y, s, T, pose=p, mood=mood, **kw)
@@ -171,7 +174,7 @@ def s_machine(T, t, d):
     k = ease(ramp(t, 0.0, 0.9))
     x = 1400 - 860 * k
     cast.machine(c, x, 1380, 0.95, T, face="smile")
-    cast.person(c, "papa", 200, 1800, 0.6, T, pose="point" if t > 0.6 else "stand")
+    cast.person(c, "papa", 190, 1680, 0.55, T, pose="point" if t > 0.6 else "stand")
     for i in range(6):
         a = i * math.pi / 3 + T * 1.4
         kk.cg_star(c, x + 330 * math.cos(a), 1000 + 420 * math.sin(a), 40, T, seed=i, color=[LEMON, HOT, MINT, LILAC, ORANGE, SKY][i])
@@ -195,9 +198,9 @@ def s_song1a(T, t, d):
     hop = abs(math.sin((T - S("s1")) / b * math.pi)) * 26
     cast.machine(c, 540, 1360 - hop, 0.6, T, face="smile", stamp=hop / 26)
     for i, (who, x) in enumerate([("grandpa", 150), ("papa", 330), ("mama", 750), ("girl", 930)]):
-        cast.person(c, who, x, 1780, 0.5, T, pose=cast.dance_pose(T - S("s1"), b, "kayo", i), bob=hop, mood="smile" if who == "mama" else "flat")
+        cast.person(c, who, x, 1640, 0.5, T, pose=cast.dance_pose(T - S("s1"), b, "kayo", i), bob=hop, mood="smile" if who == "mama" else "flat")
     for i in range(5):
-        kk.cg_star(c, 120 + i * 210, 330 + 60 * math.sin(T * 2 + i), 38, T, seed=i, color=[LEMON, HOT, MINT, LILAC, ORANGE][i])
+        kk.cg_star(c, 120 + i * 210, 500 + 60 * math.sin(T * 2 + i), 38, T, seed=i, color=[LEMON, HOT, MINT, LILAC, ORANGE][i])
     return st.arr
 
 
@@ -262,7 +265,7 @@ def s_song1d(T, t, d):
     kit.backdrop(st, bg.meadow(1))
     b = _beat()
     for i, (who, x) in enumerate(FAM):
-        cast.person(c, who, x, 1780, 0.45, T, pose=cast.dance_pose(T - S("s1"), b, "kayo", i), mood="flat")
+        cast.person(c, who, x, 1650, 0.45, T, pose=cast.dance_pose(T - S("s1"), b, "kayo", i), mood="flat")
     n = int(2 ** min(10, 1 + t * 3.2))
     rng = np.random.default_rng(3)
     for i in range(min(n, 400)):
@@ -316,7 +319,7 @@ def s_graves(T, t, d):
             cast.tombstone(c, (i + 0.5 * (row % 2)) * 200 * s, y, s, T, n=row * 97 + i * 13 + 1, seed=row * 10 + i, label=row > 4)
     for i, (who, x) in enumerate([("papa", 260), ("girl", 820)]):
         dig = abs(math.sin(T * 5 + i))
-        hand = cast.person(c, who, x, 1900, 0.55, T, pose=(40, 60, 70 - 30 * dig, 60), mood="flat")
+        hand = cast.person(c, who, x, 1700, 0.5, T, pose=(40, 60, 70 - 30 * dig, 60), mood="flat")
         if hand:
             cast.shovel(c, hand[0], hand[1], 0.6, ang=-20 + 25 * dig)
     cast.crow(c, 540, 1260, 0.6, T, caw=1.0 if t > 0.2 else 0.0)

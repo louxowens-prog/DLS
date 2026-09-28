@@ -32,7 +32,7 @@ def s_ads(T, t, d):
     kit.tv(c, 540, 700, 1.05, T, screen)
     shrug = T >= Wd("f1", "shrug.") - 0.25
     for i, (who, x) in enumerate((("grandpa", 150), ("papa", 390), ("mama", 690), ("girl", 930))):
-        cast.person(c, who, x, 1820, 0.5, T, pose="shrug" if shrug else "stand", mood="flat")
+        cast.person(c, who, x, 1650, 0.48, T, pose="shrug" if shrug else "stand", mood="flat")
     return st.arr
 
 
@@ -57,7 +57,7 @@ def s_translate(T, t, d):
         kk.text(c, "“Good morning!” ☀", (x0 + x1) / 2, y0 + 505, 40, "rounded-900", INK, tag="phone")
         kk.text(c, "auto-translated:", (x0 + x1) / 2, y0 + 580, 26, "rounded-800", (120, 120, 140), tag="phone")
         if flipped:
-            kk.text(c, "“ATTACK THEM”", (x0 + x1) / 2, y0 + 650, 40, "dela-400", BLOOD, tag="phone")
+            kk.text(c, "“ATTACK THEM”", (x0 + x1) / 2, y0 + 650, 32, "dela-400", BLOOD, tag="phone")
         else:
             kk.text(c, "…", (x0 + x1) / 2, y0 + 650, 50, "dela-400", (150, 150, 160), tag="phone")
 
@@ -112,24 +112,50 @@ def _plane(c, x, y, s, T, pitch, sensor=0.0):
     c.restore()
 
 
+def _boom(c, x, y, T, t0, seed=0, scale=1.0):
+    """A clay explosion on twos: fireball lumps flung out, black smoke lumps rising, then settling."""
+    u = twos(T) - t0
+    if u < 0:
+        return
+    rng = np.random.default_rng(seed)
+    k = min(1.0, u / 0.9)
+    for i in range(10):                                                  # smoke
+        a = rng.uniform(-2.8, -0.3)
+        r = (80 + 260 * k) * scale
+        kk.clay_ellipse(c, x + r * math.cos(a) * 0.8, y + r * math.sin(a) - 120 * k * scale, (70 + 50 * k) * scale,
+                        (60 + 40 * k) * scale, (60, 55, 65), twos(T), seed=seed * 50 + i, prints=1, marks=0)
+    for i in range(14):                                                  # fire
+        a = rng.uniform(-3.0, -0.1)
+        r = (40 + 380 * k) * scale * rng.uniform(0.6, 1.0)
+        rr = (60 * (1 - 0.6 * k) + 20) * scale
+        col = [(255, 200, 40), (255, 120, 20), (230, 40, 20)][i % 3]
+        kk.clay_ellipse(c, x + r * math.cos(a), y + r * math.sin(a) * 0.8, rr, rr * 0.85, col, twos(T), seed=seed * 50 + 20 + i,
+                        prints=0, marks=0, gloss=0.35)
+    if u < 0.12:
+        c.drawRect(skia.Rect.MakeWH(W, H), paint(WHITE, 0.75))
+
+
 def s_plane(T, t, d):
-    """Aircraft: one bad sensor, and the automation keeps forcing the nose down - push after push."""
+    """Aircraft: one bad sensor, and the automation keeps forcing the nose down - push after push - into the ground."""
     st = kk.Stage()
     c = st.c
     kit.backdrop(st, bg.storm())
     t_push = C["nose"] - 1.0
+    t_imp = C["impact_plane"]
     pushes = max(0, int((twos(T) - t_push) / 0.55) + 1) if T >= t_push else 0
     pitch = min(40, pushes * 7) + (4 * math.sin(T * 30) if pushes else 0)
-    fall = max(0.0, T - t_push) * 160
-    _plane(c, 560, 700 + fall, 1.05, T, pitch, sensor=1.0 if T >= C["sensor"] - 0.2 else 0.0)
+    u = ramp(T, t_push, t_imp)
+    if T < t_imp:
+        _plane(c, 560 - 80 * u, 700 + 560 * u * u, 1.05, T, pitch, sensor=1.0 if T >= C["sensor"] - 0.2 else 0.0)
     if T >= C["sensor"] - 0.2 and T < t_push:
         kit.tag_label(c, "1 BAD SENSOR", 820, 560, 34, color=BLOOD)
-    if pushes:
+    if pushes and T < t_imp:
         for k in range(min(pushes, 4)):
             ax = 360 + k * 90
             kk.clay_poly(c, [(ax - 18, 400), (ax + 18, 400), (ax + 18, 470), (ax + 40, 470), (ax, 520), (ax - 40, 470), (ax - 18, 470)],
                          BLOOD, twos(T), seed=80 + k, amp=2, prints=0, marks=0)
-    ov.slam(c, "346", 540, 470, 190, T, C["p346"] - 0.1, color=WHITE, edge=BLOOD, sub="PEOPLE DIED")
+    _boom(c, 480, 1260, T, t_imp, seed=1, scale=1.2)
+    ov.slam(c, "346", 540, 420, 190, T, C["p346"] - 0.1, color=WHITE, edge=BLOOD, sub="PEOPLE DIED")
     kit.plaque(c, "737 MAX · Lion Air 610 & Ethiopian 302 · 2018–19", 540, 1270, 26)
     kk.red(st.arr, 0.2)
     return st.arr
@@ -171,51 +197,68 @@ def s_grid(T, t, d):
 
 
 def s_missile(T, t, d):
-    """Weapons: the clock drifts a third of a second; the interceptor misses."""
+    """Weapons: the clock drifts a third of a second; the interceptor goes up where the missile WAS; the barracks."""
     st = kk.Stage()
     c = st.c
     kit.backdrop(st, bg.storm())
     tt = twos(T)
-    kk.clay_ellipse(c, 300, 700, 190, 190, (245, 240, 225), tt, seed=110, amp=0.04, prints=2)
+    cx, cy = 250, 820
+    kk.clay_ellipse(c, cx, cy, 150, 150, (245, 240, 225), tt, seed=110, amp=0.04, prints=2)
     for k in range(12):
         a = k * math.pi / 6
-        c.drawLine(300 + 150 * math.cos(a), 700 + 150 * math.sin(a), 300 + 170 * math.cos(a), 700 + 170 * math.sin(a), paint(INK, stroke=6))
+        c.drawLine(cx + 118 * math.cos(a), cy + 118 * math.sin(a), cx + 134 * math.cos(a), cy + 134 * math.sin(a), paint(INK, stroke=6))
     drift = ramp(T, C["drift"] - 0.2, C["drift"] + 1.0)
     for ghost, a0 in ((0.35, 0.0), (1.0, 0.5 * drift)):
         a = -math.pi / 2 + T * 1.2 + a0
-        c.drawLine(300, 700, 300 + 140 * math.cos(a), 700 + 140 * math.sin(a), paint(BLOOD if ghost > 0.5 else INK, ghost, stroke=10))
+        c.drawLine(cx, cy, cx + 110 * math.cos(a), cy + 110 * math.sin(a), paint(BLOOD if ghost > 0.5 else INK, ghost, stroke=10))
     if drift > 0:
-        kk.clay_text(c, "+0.34 s", 300, 1000, 76, BLOOD, tt, seed=111, tag="missile")
-    sx = 1200 - (tt - (T - t)) * 330                                     # the incoming missile
-    kk.clay_path(c, cast._capsule(sx, 520, sx + 190, 470, 26), (90, 140, 70), tt, seed=112)
-    lt = max(0.0, tt - (T - t) - 1.2)                                  # the interceptor, too late
-    iy = 1250 - lt * 900
-    ix = 820 + lt * 60
-    if iy > 300:
+        c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(cx - 150, cy + 175, cx + 150, cy + 275), 20, 20), paint(INK, 0.85))
+        kk.clay_text(c, "+0.34 s", cx, cy + 250, 70, (255, 230, 60), tt, seed=111, tag="missile")
+    t0 = T - t
+    t_hit = C["impact_missile"]
+    u = ramp(tt, t0, t_hit)                                               # the incoming missile, arcing down
+    sx, sy = -120 + 880 * u, 380 + 800 * u * u
+    kit.clay_house(c, 760, 1265, 0.8, T, seed=33, wall=(190, 180, 150), roof=(120, 110, 90))
+    if T < t_hit:
+        ang = math.atan2(800 * 2 * u, 880)
+        kk.clay_path(c, cast._capsule(sx, sy, sx - 190 * math.cos(ang), sy - 190 * math.sin(ang), 26),
+                     (90, 140, 70), tt, seed=112)
+    lt = max(0.0, tt - (C["drift"] + 0.4))                               # the interceptor, aimed where it was
+    iy = 1250 - lt * 1100
+    ix = 860 + lt * 40
+    if iy > 150 and T > C["drift"] + 0.4:
         kk.clay_path(c, cast._capsule(ix, iy, ix + 20, iy + 150, 20), (220, 220, 230), tt, seed=113)
         c.drawCircle(ix + 22, iy + 175, 26, paint(ORANGE))
-    ov.slam(c, "28", 540, 470, 200, T, C["p28"] - 0.1, color=WHITE, edge=BLOOD, sub="SOLDIERS DIED")
-    kit.plaque(c, "Patriot missile clock drift · Dhahran · 1991", 540, 1270, 28)
+    _boom(c, 760, 1180, T, t_hit, seed=2, scale=0.9)
+    ov.slam(c, "28", 620, 420, 200, T, C["p28"] - 0.1, color=WHITE, edge=BLOOD, sub="SOLDIERS DIED")
+    kit.plaque(c, "Patriot missile clock drift · Dhahran · 1991", 540, 1330, 28)
     kk.red(st.arr, 0.2)
     return st.arr
 
 
 def s_radiation(T, t, d):
-    """Medicine: one software bug, six patients, six massive overdoses."""
+    """Medicine: software bugs; the beam flares a hundred times too hot; six patients, six overdoses."""
     st = kk.Stage()
     c = st.c
-    kit.backdrop(st, bg.tabletop((190, 235, 215)))
+    kit.backdrop(st, bg.dark_table())
     tt = twos(T)
     kk.clay_poly(c, [(300, 1150), (300, 450), (560, 380), (780, 450), (780, 600), (560, 560), (460, 600), (460, 1150)], (230, 230, 240),
                  tt, seed=120, amp=6, prints=2, marks=2)
+    t_fl = C["p6"] - 0.25
+    hot = ramp(T, t_fl, t_fl + 0.2)
     glow = 0.5 + 0.5 * math.sin(T * 12)
-    c.drawPath(path([(620, 600), (700, 600), (820, 1000), (500, 1000)]), paint((255, 60, 200), 0.25 + 0.2 * glow))
+    c.drawPath(path([(620, 600), (700, 600), (820 + 200 * hot, 1060), (500 - 200 * hot, 1060)]),
+               paint((255, 60 + 180 * hot, 200 + 55 * hot), 0.25 + 0.2 * glow + 0.4 * hot))
     for i in range(6):
         x = 170 + i * 150
         lit = T >= C["p6"] + i * 0.12
         kk.clay_ellipse(c, x, 1150, 48, 70, (255, 80, 60) if lit else (140, 170, 230), tt, seed=130 + i, prints=1)
         kk.clay_ellipse(c, x, 1050, 36, 36, (255, 200, 160), tt, seed=140 + i, prints=0)
-    ov.slam(c, "6", 540, 470, 220, T, C["p6"] - 0.05, color=WHITE, edge=BLOOD, sub="MASSIVE OVERDOSES")
+        if lit:
+            c.drawCircle(x, 1100, 90, paint(shader=kk.rad((x, 1100), 90, [(255, 60, 40, 0.5), (255, 60, 40, 0.0)])))
+    if t_fl <= T < t_fl + 0.12:
+        c.drawRect(skia.Rect.MakeWH(W, H), paint(WHITE, 0.7))
+    ov.slam(c, "6", 540, 420, 220, T, C["p6"] - 0.05, color=WHITE, edge=BLOOD, sub="MASSIVE OVERDOSES")
     kit.plaque(c, "Therac-25 radiation machine · 1985–87", 540, 1290, 28)
     return st.arr
 
@@ -261,28 +304,26 @@ def s_finale_a(T, t, d):
         cast.corpse(c, 250 + i * 290, 1300, 0.45, T, pose=cast.dance_pose(T - S("s4"), b, "show", i), seed=40 + i)
     for i, (who, x) in enumerate((("grandpa", 140), ("papa", 380), ("mama", 700), ("girl", 940))):
         kick = abs(math.sin((T - S("s4")) / b * math.pi))
-        cast.person(c, who, x, 1850, 0.5, T, pose=cast.dance_pose(T - S("s4"), b, "show", i), bob=20 * kick, mood="smile" if i == 2 else "flat")
+        cast.person(c, who, x, 1650, 0.5, T, pose=cast.dance_pose(T - S("s4"), b, "show", i), bob=20 * kick, mood="smile" if i == 2 else "flat")
     kit.confetti(c, T, 60, t0=S("s4"))
     return st.arr
 
 
 def s_finale_b(T, t, d):
-    """The meadow moment: she spins, arms out, flowers and sky wheeling behind her."""
+    """The meadow moment: she spins round and round, arms out - face, back, face - the flowers and sky wheel past."""
     st = kk.Stage()
     c = st.c
-    ang = t * 0.35
-    c.save()
-    c.translate(540, 1300)
-    c.rotate(math.degrees(ang) * 0.15)
-    c.translate(-540, -1300)
     kit.backdrop(st, bg.meadow(3))
-    c.restore()
-    cs = math.cos(T * 5.5)
-    spin = math.copysign(0.4 + 0.6 * abs(cs), cs)
-    cast.person(c, "girl", 540, 1800, 0.95, T, pose="arms_out", spin=spin, mood="smile")
+    ang = T * 5.0
+    cs = math.cos(ang)
+    for k in range(3):                                                   # swoosh arcs around her
+        a0 = math.degrees(ang) % 360 + k * 120
+        r = 330 + k * 30
+        c.drawArc(skia.Rect.MakeLTRB(540 - r, 1080 - r * 0.35, 540 + r, 1080 + r * 0.35), a0, 70, False, paint(WHITE, 0.7, stroke=8))
+    cast.person(c, "girl", 540, 1650, 0.8, T, pose="arms_out", spin=max(0.3, abs(cs)), back=cs < 0, mood="smile")
     for i in range(8):
         a = i * math.pi / 4 + T * 1.5
-        kk.cg_star(c, 540 + 440 * math.cos(a), 900 + 300 * math.sin(a), 40, T, seed=i, color=[LEMON, HOT, WHITE, MINT][i % 4])
+        kk.cg_star(c, 540 + 440 * math.cos(a), 700 + 260 * math.sin(a), 40, T, seed=i, color=[LEMON, HOT, WHITE, MINT][i % 4])
     return st.arr
 
 
@@ -322,20 +363,25 @@ def s_finale_d(T, t, d):
 
 
 def s_payoff(T, t, d):
-    """Somewhere in the next billion decisions is yours: the guestbook is a mountain now, open at a line with
-    your name on it. Behind it, the little error - not so little."""
+    """Somewhere in the next billion decisions is yours: a mountain of guestbooks, open at the line with your name,
+    and behind it, rising, the little error - not so little now."""
     st = kk.Stage()
     c = st.c
     kit.backdrop(st, bg.storm())
-    bg.volcano(c, 760, 1250, 1.1, glow=1.0)
-    rise = ease(ramp(t, 0.2, 2.0))
-    cast.creature(c, 700, 1450 - 300 * rise, 2.6, T, mood="open", look=(-0.3, 0.4))
-    for k in range(9):                                                  # the pile of guestbooks
-        y = 1500 - k * 60
-        kk.clay_poly(c, [(250 + k * 6, y), (250 + k * 6, y - 55), (830 - k * 6, y - 55), (830 - k * 6, y)],
-                     [(170, 30, 50), (40, 90, 170), (200, 120, 40)][k % 3], twos(T), seed=150 + k, amp=4, prints=1, marks=1)
-    cast.guestbook(c, 540, 900, 1.12, T, marks=16, rot=-4, you=True)
-    cast.crow(c, 860, 700, 0.6, T, caw=1.0 if t > 1.0 else 0.0, flip=True)
+    bg.volcano(c, 820, 1250, 1.1, glow=1.0)
+    rise = ease(ramp(twos(T), T - t + 0.1, T - t + 1.6))
+    cast.creature(c, 540, 1380 - 480 * rise, 2.8, T, mood="open", look=(0.0, 0.5))
+    for row in range(8):                                                # the mountain of guestbooks
+        y = 1520 - row * 58
+        n = 8 - row
+        w = 118
+        for i in range(n):
+            x = 540 + (i - (n - 1) / 2) * w
+            kk.clay_poly(c, [(x - 56, y), (x - 56, y - 50), (x + 56, y - 50), (x + 56, y)],
+                         [(170, 30, 50), (40, 90, 170), (200, 120, 40)][(row + i) % 3], twos(T), seed=150 + row * 9 + i, amp=3,
+                         prints=0, marks=1)
+    cast.guestbook(c, 540, 950, 0.9, T, marks=16, rot=-4, you=True)
+    cast.crow(c, 860, 760, 0.55, T, caw=1.0 if t > 1.0 else 0.0, flip=True)
     kk.red(st.arr, 0.25)
     return st.arr
 

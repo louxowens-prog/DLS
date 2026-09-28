@@ -94,7 +94,7 @@ def band(bus, lead, choir, style, t0, t1, bpm, level=1.0, drums=True, song=None)
             bus.add(P.bass(root - 24 + (7 if bb in (1, 3) else 0), beat * 0.8), t, 0.55 * level)
             for k in range(2):
                 bus.add(P.twang(ch[(bb * 2 + k) % len(ch)], beat * 0.45, seed=b * 2 + k), t + k * beat / 2, 0.32 * level,
-                        pan=0.3 if k else 0.7)
+                        pan=0.15 if k else 0.85)
             if bb == 0:
                 bus.add(P.organ(lo, beat * 4 * 0.95), t, 0.5 * level, pan=0.45)
                 bus.add(P.strings(ch, beat * 4, 1.0, seed=bar), t, 0.45 * level)
@@ -163,14 +163,14 @@ def band(bus, lead, choir, style, t0, t1, bpm, level=1.0, drums=True, song=None)
         if choir is not None and bb == 0 and style in ("kayo", "duet", "disco", "show"):   # 'ahh' pads on each bar
             v = "a" if style != "disco" else "o"
             for k, m in enumerate(ch[1:3]):
-                choir.add(P.voices(v, m, beat * 3.6, 0.8, seed=bar + k), t, 0.16 * level, pan=0.3 + 0.4 * k)
+                choir.add(P.voices(v, m, beat * 3.6, 0.8, seed=bar + k), t, 0.16 * level, pan=0.08 + 0.84 * k)
 
 
 def la_la(choir, t, beat, style, n=4):
     """A 'la-la-la' pickup from the backing singers."""
     sc = SCALE[style]
     for k in range(n):
-        choir.add(P.voices("a", sc[(k * 2) % len(sc)], beat * 0.4, 0.9, seed=k), t + k * beat / 2, 0.22, pan=0.35 + 0.1 * k)
+        choir.add(P.voices("a", sc[(k * 2) % len(sc)], beat * 0.4, 0.9, seed=k), t + k * beat / 2, 0.22, pan=0.1 + 0.27 * k)
 
 
 def guide(lead, key, style):
@@ -201,7 +201,7 @@ def dead_air():
     """True silence: every bus cut (only a voice may speak; here none does)."""
     return [(E("d4") + 0.22, S("d5") - 0.04),
             (E("s2") + 0.05, S("e1") - 0.04),
-            (E("f2") + 0.22, S("f3") - 0.04)]
+            (E("f2") + 0.22, S("f3") - 0.4)]
 
 
 def arrangement(bus, lead, choir, hz):
@@ -343,10 +343,10 @@ def sfx(fx, hits):
     fx.add(P.siren(2.2), C["arrested"] - 0.1, 0.45)
     fx.add(P.squelch(1.3, seed=700, dur=0.5), f("one") + 0.05, 0.6)
     # the four disasters
-    fx.add(P.dive(E("f3") - C["nose"] + 1.0), C["nose"] - 1.0, 0.7)
+    fx.add(P.dive(C["impact_plane"] - C["nose"] + 1.0), C["nose"] - 1.0, 0.42)
     t_push = C["nose"] - 1.0
-    for k in range(6):
-        fx.add(P.stamp(0.8), t_push + k * 0.55, 0.3)
+    for k in range(int((C["impact_plane"] - t_push) / 0.55) + 1):
+        fx.add(P.stamp(0.8), t_push + k * 0.55, 0.2)
     fx.add(P.alarm_bell(C["alarms"] - f("grid") - 0.2), f("grid") + 0.1, 0.4)
     fx.add(P.power_down(1.8), C["alarms"] + 0.1, 0.8)
     for k in range(9):
@@ -358,8 +358,15 @@ def sfx(fx, hits):
     fx.add(P.geiger(f("card6") - f("radiation"), rate=20), f("radiation"), 0.35)
     for k in range(6):
         fx.add(P.squelch(0.8, seed=800 + k, dur=0.2), C["p6"] + k * 0.12, 0.35, pan=0.15 + 0.14 * k)
-    for key, i in (("p346", 16), ("p55", 17), ("p28", 18), ("p6", 19)):
-        hits.append((C[key] - 0.1, 0.85, 1.0, i))
+    for key, i in (("p55", 17), ("p6", 19)):
+        hits.append((C[key] - 0.1, 0.6, 1.0, i))
+    for key, i in (("impact_plane", 20), ("impact_missile", 21)):              # the crashes land between words
+        hits.append((C[key], 1.3, 0.9, i))
+        fx.add(P.thunder(1.6, seed=i), C[key] + 0.02, 0.7)
+        for k in range(8):
+            fx.add(P.squelch(1.0, seed=1000 + i * 10 + k, dur=0.3), C[key] + 0.05 + k * 0.08, 0.35, pan=0.1 + 0.1 * k)
+    hits.append((C["p6"] - 0.25, 0.7, 0.9, 22))
+    fx.add(P.geiger(1.2, rate=90, seed=9), C["p6"] - 0.25, 0.5)
     # the rule
     for k, key in enumerate(("scale", "stakes", "smaller")):
         fx.add(P.woodblock(1.0, 600 + 150 * k), C[key] - 0.2, 0.45)
@@ -462,7 +469,7 @@ def hit_signal(gain, body, seed, t):
     """A scare hit: dense and loud but band-limited (no codec overshoot); pulled back mid-sentence."""
     talking = any(TL.s(k) + 0.05 < t < TL.e(k) - 0.05 for k in TL.order)
     soon = any(t - 0.05 < TL.s(k) < t + 0.7 for k in TL.order)
-    g = 4.5 * gain * (0.18 if talking else 1.0)
+    g = 6.0 * gain * (0.18 if talking else 1.0)
     b = 0.45 if (talking or soon) else body
     x = P.scare(1.0, seed=seed, body=b, drive=3.2)
     x = signal.sosfilt(signal.butter(4, 7000 / (SR / 2), "low", output="sos"), x)
@@ -489,6 +496,8 @@ def build():
     # the band drops away under every scare hit, then creeps back
     duck = np.ones(N)
     for t, *_ in hits:
+        p0 = int((t - 0.3) * SR)                                         # the suck-out: the band drops away just before
+        duck[max(0, p0):max(0, int((t - 0.01) * SR))] *= np.linspace(1.0, 0.15, max(1, int((t - 0.01) * SR) - max(0, p0)))
         i0, i1 = int((t - 0.01) * SR), int((t + 0.45) * SR)
         duck[max(0, i0):min(N, i1)] *= 0.3
         rec = np.linspace(0.3, 1.0, int(0.5 * SR))
@@ -524,7 +533,7 @@ def build():
     mid = music - low - high
     k_mid = 0.9 - 0.25 * insong                                          # sung lines carve a little less
     music = low * (1 - 0.4 * env) + mid * (1 - k_mid * env) + high * (1 - 0.6 * env)
-    music = widen(music, 0.8)
+    music = widen(music, 1.15)
     ref = music[:, int(S("a1") * SR):int(E("b1") * SR)]
     g_mu = db(-23.0) / (np.sqrt((ref ** 2).mean()) + 1e-12)
     hits_x = reverb(hb.x, 0.12, 0.9) * dead * (1 - 0.6 * env)             # a hit never buries a word

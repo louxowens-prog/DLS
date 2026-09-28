@@ -56,7 +56,7 @@ def _limb(F, x, y, sh, el, L1, L2, side, color, w, hand=SKIN, flip=1):
 
 
 def person(c, who, x, y, s, T, pose="stand", mood="flat", tilt=0.0, bob=0.0, spin=1.0, look=0.0, blink=True, halo=7.0,
-           prop=None, bow=0.0):
+           prop=None, bow=0.0, back=False):
     """A family member keyed into the shot. (x, y) = feet; ~900 px tall at s=1. pose: a name or 4 angles."""
     L = LOOKS[who]
     arms = POSES[pose] if isinstance(pose, str) else pose
@@ -117,6 +117,13 @@ def person(c, who, x, y, s, T, pose="stand", mood="flat", tilt=0.0, bob=0.0, spi
             F.poly([(-118, -680), (-118, -830), (-80, -905), (80, -905), (118, -830), (118, -680), (80, -690), (80, -800),
                     (-80, -800), (-80, -690)], hair)
             F.rrect(-95, -905, 95, -842, 26, hair)
+    if back:                                                         # seen from behind (mid-spin): all hair, no face
+        with kk.keyed(c, halo=halo * 0.6, shadow=False) as F:
+            F.circle(0, -805, 104, L["hair_c"] if L["hair"] != "bald" else mix(SKIN, INK, 0.1))
+            if L["hair"] == "bob":
+                F.rrect(-118, -830, 118, -680, 30, L["hair_c"])
+        c.restore()
+        return None
     if bow > 0.5:                                                    # bowed: we see the top of the head, not the face
         c.drawOval(skia.Rect.MakeLTRB(-100, -860, 100, -760), paint(mix(SKIN, INK, 0.12)))
         if L["hair"] == "bald":
@@ -390,6 +397,7 @@ def envelope(c, x, y, s, T, seed=0, rot=0.0, label="FRAUD", color=(230, 40, 50))
         c.rotate(-8)
         c.drawString(label, -w / 2, 45, f, paint(INK, stroke=10))
         c.drawString(label, -w / 2, 45, f, paint(WHITE))
+        kk.reg_local(c, -w / 2, 10, w / 2, 55, "prop")
         c.restore()
     c.restore()
 
@@ -483,4 +491,48 @@ def money(c, x, y, s, T, seed=0, rot=0.0):
     c.drawCircle(0, 0, 24, paint((70, 150, 70), stroke=5))
     f = kk.font("dela-400", 34)
     c.drawString("$", -10, 12, f, paint((50, 120, 50)))
+    c.restore()
+
+
+def you_clay(c, x, y, s, T, pose="stand", mood="worried", seed=11, sweater=(60, 170, 190), hair=(60, 40, 30)):
+    """You, in clay: a lumpy little person with a worried face. (x, y) = feet; ~640 px tall at s=1.
+    pose: stand | hold (arms out in front, holding something) | empty (arms out, nothing in them) | box | sit | slump"""
+    t = twos(T)
+    bx, by, br = boil(T, 1.5, seed)
+    c.save()
+    c.translate(x + bx, y + by)
+    c.scale(s, s)
+    c.rotate(br * 1.2)
+    skin = (250, 205, 170)
+    sit = pose in ("sit", "slump")
+    clay_shadow(c, 0, 0, 130)
+    if sit:
+        for sx in (-1, 1):
+            clay_path(c, _capsule(sx * 45, -190, sx * 50, -30, 34), (60, 60, 90), t, seed + 1 + sx, prints=0, marks=1)
+            clay_ellipse(c, sx * 55, -18, 48, 22, (40, 30, 30), t, seed + 3 + sx, prints=0, marks=0)
+        body_y = -330
+    else:
+        for sx in (-1, 1):
+            clay_path(c, _capsule(sx * 42, -260, sx * 48, -40, 36), (60, 60, 90), t, seed + 1 + sx, prints=0, marks=1)
+            clay_ellipse(c, sx * 55, -22, 52, 24, (40, 30, 30), t, seed + 3 + sx, prints=0, marks=0)
+        body_y = -390
+    droop = 30 if pose == "slump" else 0
+    hand = {"stand": (150, 120), "hold": (60, -20), "empty": (190, -70), "box": (110, 10), "sit": (120, 110),
+            "slump": (70, 150)}[pose]
+    clay_ellipse(c, 0, body_y, 118, 160, sweater, t, seed, amp=0.07)
+    for sx in (-1, 1):
+        hx_, hy_ = sx * hand[0], body_y + hand[1]
+        clay_path(c, _capsule(sx * 95, body_y - 90, hx_, hy_, 30), sweater, t, seed + 7 + sx, prints=0, marks=1)
+        clay_ellipse(c, hx_, hy_ + 8, 28, 26, skin, t, seed + 9 + sx, prints=0, marks=0)
+    hy = body_y - 240 + droop
+    clay_ellipse(c, 0, hy, 92, 98, skin, t, seed + 20, amp=0.06, prints=1, marks=1)
+    clay_ellipse(c, 0, hy - 62, 96, 52, hair, t, seed + 21, amp=0.08, prints=1, marks=0)
+    for sx in (-1, 1):                                                  # worried eyes and brows
+        c.drawCircle(sx * 32, hy + 4 + droop * 0.2, 11, paint(INK))
+        c.drawCircle(sx * 32 - 3, hy, 3.5, paint(WHITE))
+        c.drawLine(sx * 14, hy - 30, sx * 52, hy - 20 + (0 if mood == "worried" else 6), paint(mix(hair, INK, 0.3), stroke=8))
+    mouth = path(bez((-28, hy + 52), (0, hy + 36), (28, hy + 52)), closed=False)
+    c.drawPath(mouth, paint((110, 30, 40), stroke=8))
+    if mood in ("sad", "cry"):
+        clay_ellipse(c, 40, hy + 40, 10, 16, (140, 200, 255), t, seed + 30, prints=0, marks=0, gloss=0.6)
     c.restore()

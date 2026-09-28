@@ -14,8 +14,8 @@ VOICES = {NAR: ("af_bella", 1.1), MAMA: ("af_heart", 1.0), MACH: ("am_michael", 
 
 LINES = [
     # ---- cold open: the real case, in the first two seconds
-    ("c0", NAR, "A computer accused forty thousand people of fraud. It was wrong about most of them.",
-     "A computer accused 40,000 people of fraud.| It was wrong about most of them.", 0.45),
+    ("c0", NAR, "A computer made forty thousand fraud accusations. Most of them were wrong.",
+     "A computer made 40,000 fraud accusations.| Most of them were wrong.", 0.45),
 
     # ---- chapter 1: one little mistake (family sitcom)
     ("a1", NAR, "This is my family. We run a guesthouse on the mountain, and process insurance claims. Don't ask.",
@@ -58,14 +58,16 @@ LINES = [
     ("f1", NAR, "A million bad ads? You shrug. But one auto-translation turned good morning into attack them, and a man was arrested.",
      "A million bad ads? You shrug.| But one auto-translation turned “good morning”| into “attack them”,| and a man was arrested.", 0.3),
     ("f2", NAR, "But some machines can't afford even one.", "But some machines can’t afford even one.", 0.3),
-    ("f3", NAR, "Aircraft. One bad sensor, and the seven-three-seven MAX's automation kept forcing the nose down. Three hundred forty-six people died.",
-     "Aircraft.| One bad sensor, and the 737 MAX’s automation| kept forcing the nose down.| 346 people died.", 0.25),
-    ("f4", NAR, "Power grids. One software bug silenced the alarms. Fifty-five million people lost power.",
-     "Power grids.| One software bug silenced the alarms.| 55 million people lost power.", 0.25),
-    ("f5", NAR, "Weapons. A missile-defense clock drifted a third of a second. Twenty-eight soldiers died.",
-     "Weapons.| A missile-defense clock drifted a third of a second.| 28 soldiers died.", 0.25),
-    ("f6", NAR, "Medicine. One software bug gave six patients massive radiation overdoses.",
-     "Medicine.| One software bug| gave six patients massive radiation overdoses.", 0.45),
+    ("f3", NAR, "Aircraft. One bad sensor, and the seven-three-seven MAX's automation kept forcing the nose down.",
+     "Aircraft.| One bad sensor, and the 737 MAX’s automation| kept forcing the nose down.", 1.0),
+    ("f3b", NAR, "Three hundred forty-six people died.", "346 people died.", 0.3),
+    ("f4", NAR, "Power grids. A software bug silenced the alarms, and a local fault became a blackout for fifty-five million people.",
+     "Power grids.| A software bug silenced the alarms,| and a local fault became a blackout| for 55 million people.", 0.25),
+    ("f5", NAR, "Weapons. A missile-defense clock drifted a third of a second.",
+     "Weapons.| A missile-defense clock drifted a third of a second.", 1.0),
+    ("f5b", NAR, "Twenty-eight soldiers died.", "28 soldiers died.", 0.3),
+    ("f6", NAR, "Medicine. Software bugs gave six patients massive radiation overdoses.",
+     "Medicine.| Software bugs gave six patients| massive radiation overdoses.", 0.45),
 
     # ---- finale
     ("g1", NAR, "So here's the rule. The bigger the scale, and the higher the stakes, the smaller the mistake you can afford.",
@@ -82,9 +84,11 @@ SONGS = {
         (NAR, "Ten million claims, so quick, so bright!"),
         (NAR, "It learned from Grandpa, line by line..."),
         (NAR, "his one mistake, ten million times!")]),
-    "s2": dict(style="duet", bpm=96, intro=4, outro=2, lines=[
+    "s2": dict(style="duet", bpm=100, intro=4, outro=2, lines=[
         (MAMA, "Ninety-nine point nine percent..."),
-        (MACH, "Trust me, darling. I am almost always right.")]),
+        (MACH, "Trust me, darling. I am almost always right."),
+        (MAMA, "Only one in a thousand wrong..."),
+        (MACH, "What could possibly go wrong?")]),
     "s3": dict(style="disco", bpm=124, intro=4, outro=2, lines=[
         (NAR, "Point one percent, just a tiny bit wrong,"),
         (NAR, "a billion decisions, a million come along!"),

@@ -14,7 +14,7 @@ S, E, W = TL.s, TL.e, TL.word
 
 EDIT = [
     (0.0, "cold1", "cut"),
-    (W("c0", "It") - 0.05, "cold2", "cut"),
+    (W("c0", "Most") - 0.05, "cold2", "cut"),
     (E("c0") + 0.15, "card1", "card"),
     (S("a1") - 0.1, "family", "star"),
     (W("a1", "Don't") - 0.1, "crowsign", "cut"),
@@ -27,8 +27,8 @@ EDIT = [
     (ls("s1_1") - 0.1, "song1b", "cut"),
     (ls("s1_2") - 0.1, "song1c", "cut"),
     (ls("s1_3") - 0.1, "song1d", "cut"),
-    (S("b2") - 0.1, "flood", "flash"),
-    (W("b2", "Millions.") - 0.1, "graves", "cut"),
+    (E("s1"), "flood", "flash"),
+    (W("b2", "Not") - 0.1, "graves", "cut"),
     (S("b3") - 0.1, "rule", "cut"),
     (S("b4") - 0.1, "same", "cut"),
     (E("b4") + 0.25, "card3", "card"),
@@ -50,7 +50,7 @@ EDIT = [
     (S("f1") - 0.1, "ads", "star"),
     (W("f1", "But") - 0.1, "translate", "cut"),
     (S("f2") - 0.1, "one", "cut"),
-    (S("f3") - 0.1, "plane", "flash"),
+    (S("f3") - 0.38, "plane", "flash"),
     (S("f4") - 0.1, "grid", "cut"),
     (S("f5") - 0.1, "missile", "cut"),
     (S("f6") - 0.1, "radiation", "cut"),

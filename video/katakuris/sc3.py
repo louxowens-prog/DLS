@@ -55,9 +55,8 @@ def s_duet(T, t, d):
     cx, cy = 745 - 35 * math.sin(T * 0.9), 1060 + 60 * math.sin(T * 1.3 + 1.5)
     cast.machine(c, cx, cy + 300, 0.62, T, face="smile")
     cast.person(c, "mama", mx, my + 330, 0.62, T, pose=(60, 40, 110, 30), mood="smile", tilt=8 * math.sin(T))
-    for i in range(6):
-        a = i * math.pi / 3 + T * 0.8
-        kk.cg_star(c, 540 + 420 * math.cos(a), 800 + 500 * math.sin(a), 34, T, seed=i, color=[LEMON, WHITE, PINK][i % 3])
+    for i in range(5):
+        kk.cg_star(c, 120 + i * 210, 330 + 50 * math.sin(T * 1.4 + i), 34, T, seed=i, color=[LEMON, WHITE, PINK][i % 3])
     dreamy(st.arr, 0.6)
     return st.arr
 
@@ -186,7 +185,7 @@ def s_disco_c(T, t, d):
     ph = ((T - S("s3")) / beat) % 1.0
     dig = abs(math.sin(ph * math.pi))
     for i, (who, x) in enumerate((("grandpa", 200), ("papa", 540), ("girl", 880))):
-        hand = cast.person(c, who, x, 1720, 0.52, T, pose=(40, 60, 70 - 35 * dig, 60), bob=18 * dig, mood="flat")
+        hand = cast.person(c, who, x, 1660, 0.5, T, pose=(40, 60, 70 - 35 * dig, 60), bob=18 * dig, mood="flat")
         if hand:
             cast.shovel(c, hand[0], hand[1], 0.62, ang=-25 + 30 * dig)
     return st.arr
@@ -200,7 +199,7 @@ def s_disco_d(T, t, d):
     for i in range(6):
         cast.corpse(c, 90 + i * 180, 1200, 0.44, T, pose=cast.dance_pose(T - S("s3"), beat, "disco", i % 2), seed=i + 30)
     for i, (who, x) in enumerate((("grandpa", 150), ("papa", 380), ("mama", 700), ("girl", 930))):
-        cast.person(c, who, x, 1700, 0.46, T, pose=cast.dance_pose(T - S("s3"), beat, "disco", i % 2), mood="flat")
+        cast.person(c, who, x, 1640, 0.46, T, pose=cast.dance_pose(T - S("s3"), beat, "disco", i % 2), mood="flat")
     cast.creature(c, 540, 1260, 0.7, T, mood="grin")
     kit.confetti(c, T, 80, t0=T - t)
     return st.arr

@@ -119,7 +119,7 @@ def inn_sign(c, x, y, s=1.0, t=0.0, tag="sign"):
         c.drawRect(skia.Rect.MakeLTRB(px - 12, -40, px + 12, 200), paint((110, 60, 40)))
     c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-280, -160, 280, 40), 24, 24), paint((255, 250, 235)))
     c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-280, -160, 280, 40), 24, 24), paint((110, 60, 40), stroke=10))
-    kk.text(c, "MOUNTAIN VIEW INN", 0, -85, 50, "mochiy-400", (220, 40, 50), tag=tag)
+    kk.text(c, "MOUNTAIN VIEW INN", 0, -85, 42, "mochiy-400", (220, 40, 50), tag=tag)
     kk.text(c, "claims processed ♥ hot baths", 0, -12, 32, "rounded-800", (110, 60, 40), tag=tag)
     c.restore()
 
@@ -205,6 +205,11 @@ def apartment():
         c.drawRect(skia.Rect.MakeLTRB(140, 250, 940, 900), paint((200, 200, 210), stroke=24))
         c.drawLine(540, 250, 540, 900, paint((200, 200, 210), stroke=14))
         c.drawRect(skia.Rect.MakeLTRB(0, 1300, W, H), paint((90, 80, 90)))
+        for y in range(1320, H, 64):                                                     # floorboards
+            c.drawLine(0, y, W, y, paint((70, 62, 72), stroke=4))
+        c.drawOval(skia.Rect.MakeLTRB(60, 1360, 1020, 1780), paint((130, 40, 60)))        # a worn rug
+        c.drawOval(skia.Rect.MakeLTRB(120, 1400, 960, 1740), paint((200, 150, 90), stroke=14))
+        c.drawOval(skia.Rect.MakeLTRB(220, 1460, 860, 1680), paint((90, 30, 50), stroke=10))
         c.drawRect(skia.Rect.MakeLTRB(100, 1150, 980, 1210), paint((150, 110, 80)))      # a table
         c.drawRect(skia.Rect.MakeLTRB(140, 1210, 180, 1500), paint((120, 85, 60)))
         c.drawRect(skia.Rect.MakeLTRB(900, 1210, 940, 1500), paint((120, 85, 60)))
@@ -239,7 +244,33 @@ def storm():
         for i in range(8):
             cloud(c, rng.uniform(0, W), rng.uniform(150, 700), rng.uniform(1.0, 1.8), (80, 50, 110), 0.95)
         c.drawRect(skia.Rect.MakeLTRB(0, 1250, W, H), paint((30, 70, 40)))
+        rng2 = np.random.default_rng(13)
+        for k, cc in enumerate(((45, 95, 55), (38, 82, 48), (28, 64, 38))):     # lumpy clay-green ground, not a flat slab
+            pts = [(0, H)] + [(i * W / 7, 1250 + k * 170 + rng2.uniform(-40, 50)) for i in range(8)] + [(W, H)]
+            c.drawPath(smooth(pts[1:-1] + [(W, H), (0, H)]), paint(cc))
+        for _ in range(700):                                                   # brushy grass strokes
+            x, y = rng2.uniform(0, W), rng2.uniform(1260, H)
+            L = rng2.uniform(20, 60)
+            cc = tuple(int(np.clip(v + rng2.normal(0, 14), 0, 255)) for v in (50, 100, 60))
+            c.drawLine(x, y, x + L * 0.2, y - L, paint(cc, 0.3, stroke=rng2.uniform(3, 8)))
+        for i in range(26):                                                    # clay pebbles and tufts
+            x, y = rng2.uniform(0, W), rng2.uniform(1300, 1880)
+            r = rng2.uniform(10, 26)
+            c.drawOval(skia.Rect.MakeLTRB(x - r, y - r * 0.6, x + r, y + r * 0.6), paint((70, 70, 80)))
+            c.drawOval(skia.Rect.MakeLTRB(x - r * 0.6, y - r * 0.5, x + r * 0.2, y - r * 0.1), paint((120, 120, 130)))
     return kk.cached("storm", lambda: _paint(f))
+
+
+def dark_table():
+    """A dark craft table under a single hard spotlight: the horror palette for the clay records."""
+    def f(c):
+        c.drawRect(skia.Rect.MakeWH(W, H), paint((34, 20, 44)))
+        rng = np.random.default_rng(6)
+        for _ in range(700):
+            x, y = rng.uniform(0, W), rng.uniform(0, H)
+            c.drawLine(x, y, x + rng.uniform(30, 120), y + rng.uniform(-3, 3), paint((60, 36, 70), 0.35, stroke=3))
+        c.drawOval(skia.Rect.MakeLTRB(-100, 250, 1180, 1500), paint(shader=rad((540, 870), 700, [(255, 220, 170, 0.28), (255, 200, 150, 0.0)])))
+    return kk.cached("darktable", lambda: _paint(f))
 
 
 def tabletop(color=(250, 225, 140)):

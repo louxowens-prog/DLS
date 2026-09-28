@@ -71,7 +71,7 @@ def karaoke(arr, T):
     lines = S["lines"]
     c = skia.Surface(arr).getCanvas()
     band = skia.Rect.MakeLTRB(0, BAND_Y0 - 6, W, BAND_Y1 + 20)                  # a soft dark band behind the lyrics
-    c.drawRect(band, paint(shader=kk.lin((0, BAND_Y0 - 30), (0, BAND_Y1 + 30), [(10, 0, 30, 0.0), (10, 0, 30, 0.45), (10, 0, 30, 0.0)])))
+    c.drawRect(band, paint(shader=kk.lin((0, BAND_Y0 - 30), (0, BAND_Y1 + 30), [(10, 0, 30, 0.0), (10, 0, 30, 0.72), (10, 0, 30, 0.0)])))
     starts = [TL.lines[l["key"]]["start"] for l in lines]
     i = 0
     for j, st in enumerate(starts):
@@ -181,7 +181,7 @@ def slam(c, s, x, y, size, T, t0, color=kk.LEMON, edge=kk.HOT, sub=None, tag="sl
     c.scale(k, k)
     c.rotate(-3)
     if plate:
-        kk.burst_plate(c, 0, -size * 0.25, min(460, max(w * 0.6, size * 0.9)), T, color, edge)
+        kk.burst_plate(c, 0, -size * 0.25, max(w * 0.62 + 60, size * 1.05), T, color, edge, ry=size * 1.15)
     kk.chrome_text(c, s, 0, 0, size, 0, tag=tag, face=((255, 255, 255), (255, 80, 120), (160, 0, 40)), depth=8)
     if sub:
         kk.text(c, sub, 0, size * 0.62 + 40, 40, "rounded-900", INK, tag=tag + "_sub", outline=WHITE, ow=10)

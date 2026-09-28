@@ -65,13 +65,13 @@ def render_frame(T, idx=None, overlays=True, post=True):
         kk.video(out, idx, sat=1.22 if name not in HORROR else 1.1)
     if tr == "flash" and T - t0 < 2 / FPS:
         out[..., :3] = (out[..., :3].astype(np.float32) * 0.3 + 255 * 0.7).astype(np.uint8)
-    if overlays:
+    if overlays and not (tr in WIPE and T - t0 < WIPE[tr] and i > 0):      # nothing rides on a wipe
         ov.karaoke(out, T)
         ov.telop(out, T, horror=name in HORROR)
     return out
 
 
-def lint(boxes, ignore=("prop",)):
+def lint(boxes, ignore=()):
     bad = []
     bx = [b for b in boxes if b[4] not in ignore]
     for i in range(len(bx)):
