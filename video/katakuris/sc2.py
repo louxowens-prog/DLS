@@ -78,7 +78,7 @@ def s_letter(T, t, d):
                         ("DETERMINATION", 44, INK, "rounded-900")], x0, y0 + 10, x1)
         if T >= Wd("d2", "computer") - 0.1:
             _sheet_text(c, [("Decided by: COMPUTER", 36, INK, "special-elite-400")], x0, y0 + 300, x1)
-        if T >= Wd("d2", "No") - 0.1:
+        if T >= C["no_human"]:
             _sheet_text(c, [("Checked by a person: NO", 36, BLOOD, "special-elite-400")], x0, y0 + 360, x1)
 
     if opened <= 0:
@@ -90,37 +90,34 @@ def s_letter(T, t, d):
 
 
 def s_owe(T, t, d):
-    """Pay it all back. Plus a penalty four times as big. Plus interest: the sum builds up in clay, line by line."""
+    """Pay it all back. Plus a penalty four times as big. Plus interest: the sum builds up in clay, line by line,
+    and the total at the bottom keeps climbing."""
     st = kk.Stage()
     c = st.c
     kit.backdrop(st, bg.dark_table())
     tt = twos(T)
-    kk.clay_text(c, "YOU OWE", 540, 430, 80, (150, 160, 255), tt, seed=2, tag="owe")
-    kit.tag_label(c, "ILLUSTRATIVE AMOUNT", 780, 290, 28, color=(90, 60, 110), rot=3)
-    kk.clay_text(c, "$8,000", 540, 610, 130, (120, 210, 120), tt, seed=5, tag="owe")
-    tp = C["penalty"] - 0.1
-    if T >= tp:
-        k = kk.pop(T, tp, 0.2, 0.25)
-        c.save()
-        c.translate(540, 790)
-        c.scale(k, k)
-        kk.clay_text(c, "+ 4× PENALTY", 0, 0, 92, (250, 170, 40), tt, seed=7, tag="owe")
-        c.restore()
+    kk.clay_text(c, "YOU OWE", 540, 400, 80, (150, 160, 255), tt, seed=2, tag="owe")
+    kit.tag_label(c, "ILLUSTRATIVE AMOUNT", 780, 280, 28, color=(90, 60, 110), rot=3)
+    kk.clay_text(c, "$8,000", 540, 570, 120, (120, 210, 120), tt, seed=5, tag="owe")
+    tp = C["penalty"]
+    rows = ((tp, "+ 4× PENALTY", 740, 88, (250, 170, 40), 7), (C["interest"] - 0.05, "+ INTEREST", 880, 80, (250, 120, 200), 11))
+    for t_in, label, y, size, col, sd in rows:
+        if T >= t_in:
+            k = kk.pop(T, t_in, 0.2, 0.25)
+            c.save()
+            c.translate(540, y)
+            c.scale(k, k)
+            kk.clay_text(c, label, 0, 0, size, col, tt, seed=sd, tag="owe")
+            c.restore()
     te = tp + 0.7
     if T >= te:
+        c.drawRect(skia.Rect.MakeLTRB(170, 950, 910, 962), paint((240, 230, 220), 0.85))       # the sum line
         extra = max(0.0, T - C["interest"]) * 3100 if T >= C["interest"] else 0.0
         k = kk.pop(T, te, 0.2, 0.25)
         c.save()
-        c.translate(540, 990)
+        c.translate(540, 1110)
         c.scale(k, k)
-        kk.clay_text(c, f"= ${40000 + int(extra // 7 * 7):,}", 0, 0, 120, (240, 60, 60), tt, seed=9, tag="owe", max_w=780)
-        c.restore()
-    if T >= C["interest"] - 0.05:
-        k = kk.pop(T, C["interest"] - 0.05, 0.2, 0.25)
-        c.save()
-        c.translate(540, 1170)
-        c.scale(k, k)
-        kk.clay_text(c, "+ INTEREST", 0, 0, 76, (250, 120, 200), tt, seed=11, tag="owe")
+        kk.clay_text(c, f"${40000 + int(extra // 7 * 7):,}", 0, 0, 124, (240, 60, 60), tt, seed=9, tag="owe", max_w=760)
         c.restore()
     return st.arr
 
@@ -220,16 +217,19 @@ def s_michigan(T, t, d):
     _map(c, UPPER, 140, 420, 800, 900, (120, 200, 110), T, 3)
     _map(c, MITTEN, 140, 420, 800, 900, (120, 200, 110), T, 4)
     _envelope_rain(c, T, T - t, 360, 760, 1060)
-    ov.slam(c, "40,000+", 540, 470, 150, T, C["forty"] - 0.1, sub="DECIDED BY ALGORITHM")
-    k = kk.pop(T, C["eightyfive"] - 0.1, 0.18, 0.25)
+    ov.slam(c, "40,000+", 540, 470, 150, T, C["forty"], sub="DECIDED BY ALGORITHM")
+    k = kk.pop(T, C["eightyfive"], 0.18, 0.12)
     if k > 0:
+        size = 80
+        hw = kk.font("dela-400", size).measureText("85% WRONG") / 2 + 44
         c.save()
-        c.translate(505, 1010)
+        c.translate(540, 1010)
         c.scale(k, k)
-        c.rotate(-6)
-        c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-300, -100, 300, 42), 24, 24), paint(WHITE, 0.9))
-        c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-300, -100, 300, 42), 24, 24), paint(BLOOD, stroke=18))
-        kk.text(c, "85% WRONG", 0, 0, 86, "dela-400", BLOOD, tag="stamp")
+        c.rotate(-5)
+        box = skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-hw, -size * 1.02, hw, size * 0.5), 24, 24)
+        c.drawRRect(box, paint(WHITE, 0.94))
+        c.drawRRect(box, paint(BLOOD, stroke=16))
+        kk.text(c, "85% WRONG", 0, 0, size, "dela-400", BLOOD, tag="stamp")
         c.restore()
     kit.plaque(c, "Michigan · MiDAS · 2013–2015", 540, 1250)
     return st.arr
@@ -240,7 +240,7 @@ def s_homes(T, t, d):
     st = kk.Stage()
     c = st.c
     kit.backdrop(st, bg.dark_table())
-    if T < C["robodebt"] - 0.1:
+    if T < C["robodebt"]:
         for i, (x, y) in enumerate(((250, 900), (820, 880), (300, 1180))):
             sink = ramp(twos(T), T - t + 0.3 + i * 0.2, T - t + 2.6 + i * 0.2)
             c.save()
@@ -257,6 +257,6 @@ def s_homes(T, t, d):
         _map(c, OZ, 110, 480, 860, 720, (230, 140, 80), T, 8)
         kk.clay_ellipse(c, 760, 1260, 50, 38, (230, 140, 80), twos(T), seed=9)
         _envelope_rain(c, T, C["robodebt"], 250, 850, 900, n=36, seed=5)
-        ov.slam(c, "470,000", 540, 440, 140, T, Wd("d6", "hundreds") - 0.1, sub="WRONG DEBTS")
+        ov.slam(c, "470,000", 540, 440, 140, T, Wd("d6", "hundreds") - 0.1, sub="DEBTS REFUNDED")
         kit.plaque(c, "Australia · Robodebt · 2016–2019", 540, 1250)
     return st.arr

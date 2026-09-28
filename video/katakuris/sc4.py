@@ -41,7 +41,7 @@ def s_translate(T, t, d):
     st = kk.Stage()
     c = st.c
     kit.backdrop(st, bg.lobby())
-    flipped = T >= C["attack"] - 0.1
+    flipped = T >= C["attack"]
     arrested = T >= C["arrested"] - 0.1
 
     def screen(c, x0, y0, x1, y1):
@@ -191,7 +191,7 @@ def s_grid(T, t, d):
     c.restore()
     if T >= C["alarms"] - 0.3:
         kit.clay_x(c, bell_x, bell_y, 0.8, T, seed=7)
-    ov.slam(c, "55,000,000", 540, 470, 120, T, C["p55"] - 0.1, color=LEMON, edge=HOT, sub="LOST POWER")
+    ov.slam(c, "50,000,000", 540, 470, 120, T, C["p50"], color=LEMON, edge=HOT, sub="PEOPLE LOST POWER")
     kit.plaque(c, "Northeast blackout · 2003", 540, 1330)
     return st.arr
 
@@ -244,21 +244,21 @@ def s_radiation(T, t, d):
     tt = twos(T)
     kk.clay_poly(c, [(300, 1150), (300, 450), (560, 380), (780, 450), (780, 600), (560, 560), (460, 600), (460, 1150)], (230, 230, 240),
                  tt, seed=120, amp=6, prints=2, marks=2)
-    t_fl = C["p6"] - 0.25
+    t_fl = C["p6"]
     hot = ramp(T, t_fl, t_fl + 0.2)
     glow = 0.5 + 0.5 * math.sin(T * 12)
     c.drawPath(path([(620, 600), (700, 600), (820 + 200 * hot, 1060), (500 - 200 * hot, 1060)]),
                paint((255, 60 + 180 * hot, 200 + 55 * hot), 0.25 + 0.2 * glow + 0.4 * hot))
     for i in range(6):
         x = 170 + i * 150
-        lit = T >= C["p6"] + i * 0.12
+        lit = T >= C["p6"] + 0.1 + i * 0.12
         kk.clay_ellipse(c, x, 1150, 48, 70, (255, 80, 60) if lit else (140, 170, 230), tt, seed=130 + i, prints=1)
         kk.clay_ellipse(c, x, 1050, 36, 36, (255, 200, 160), tt, seed=140 + i, prints=0)
         if lit:
             c.drawCircle(x, 1100, 90, paint(shader=kk.rad((x, 1100), 90, [(255, 60, 40, 0.5), (255, 60, 40, 0.0)])))
     if t_fl <= T < t_fl + 0.12:
         c.drawRect(skia.Rect.MakeWH(W, H), paint(WHITE, 0.7))
-    ov.slam(c, "6", 540, 420, 220, T, C["p6"] - 0.05, color=WHITE, edge=BLOOD, sub="MASSIVE OVERDOSES")
+    ov.slam(c, "6", 540, 420, 220, T, C["p6"], color=WHITE, edge=BLOOD, sub="MASSIVE OVERDOSES")
     kit.plaque(c, "Therac-25 radiation machine · 1985–87", 540, 1290, 28)
     return st.arr
 
@@ -282,10 +282,42 @@ def s_rule2(T, t, d):
         kk.chrome_text(c, word, -60, 0, 96 if i < 2 else 78, T, max_w=700, tag="rule2")
         kk.text(c, arrow, 400, 0, 120, "rounded-900", col, tag="rule2", outline=WHITE, ow=12)
         c.restore()
+    if T >= C["scale"] - 0.2:                                              # scale: the envelopes multiply
+        n = min(12, 1 + int((T - C["scale"] + 0.2) / 0.12))
+        for i in range(n):
+            cast.envelope(c, 150 + i * 70, 530 + (i % 2) * 14, 0.28, T, seed=i, rot=(i * 23) % 30 - 15, label=None)
+    if T >= C["stakes"] - 0.2:                                             # stakes: what the mistakes land on now
+        tt = twos(T)
+        icons = ((230, "plane"), (420, "bolt"), (610, "cross"), (800, "missile"))
+        for i, (x, kind) in enumerate(icons):
+            k = kk.pop(T, C["stakes"] - 0.2 + i * 0.15, 0.2, 0.25)
+            if k <= 0:
+                continue
+            c.save()
+            c.translate(x, 790)
+            c.scale(k * 0.62, k * 0.62)
+            _icon(c, kind, tt, i)
+            c.restore()
     if T >= C["smaller"]:
         sq = 1 - 0.8 * ease(ramp(T, C["smaller"], C["smaller"] + 1.2))
         kit.clay_x(c, 540, 1180, 0.5 * sq + 0.05, T, seed=5)
     return st.arr
+
+
+def _icon(c, kind, tt, seed):
+    """Little clay icons for the high stakes (drawn around 0,0, ~140 px across)."""
+    if kind == "plane":
+        kk.clay_path(c, cast._capsule(-80, 0, 80, 0, 26), (230, 230, 240), tt, seed + 1, prints=1, marks=1)
+        kk.clay_poly(c, [(-20, -5), (30, -5), (-10, -80), (-35, -80)], (200, 200, 215), tt, seed + 2, amp=3, prints=0)
+        kk.clay_poly(c, [(-20, 5), (30, 5), (-10, 80), (-35, 80)], (200, 200, 215), tt, seed + 3, amp=3, prints=0)
+    elif kind == "bolt":
+        kk.clay_poly(c, [(10, -90), (-50, 10), (-5, 10), (-25, 90), (50, -15), (5, -15)], (255, 210, 40), tt, seed + 4, amp=3)
+    elif kind == "cross":
+        kk.clay_poly(c, [(-24, -80), (24, -80), (24, 80), (-24, 80)], (230, 40, 50), tt, seed + 5, amp=3)
+        kk.clay_poly(c, [(-80, -24), (80, -24), (80, 24), (-80, 24)], (230, 40, 50), tt, seed + 6, amp=3)
+    else:
+        kk.clay_path(c, cast._capsule(-70, 40, 70, -40, 22), (150, 160, 120), tt, seed + 7, prints=1, marks=1)
+        kk.clay_ellipse(c, 70, -40, 26, 26, (230, 60, 40), tt, seed + 8, prints=0)
 
 
 def _show_beat():
@@ -301,29 +333,50 @@ def s_finale_a(T, t, d):
     for i in range(3):
         kit.firework(c, 200 + i * 340, 380 + (i % 2) * 120, (T - S("s4") - i * 0.6) % 1.8, [LEMON, HOT, SKY][i], seed=i)
     for i in range(3):
-        cast.corpse(c, 250 + i * 290, 1300, 0.45, T, pose=cast.dance_pose(T - S("s4"), b, "show", i), seed=40 + i)
+        dx, hop, tl = cast.moves(twos(T) - S("s4"), b, i % 2, 0.8)
+        cast.corpse(c, 250 + i * 290 + dx, 1300, 0.45, T, pose=cast.dance_pose(T - S("s4"), b, "show", i), seed=40 + i, hop=hop, tilt=tl)
     for i, (who, x) in enumerate((("grandpa", 140), ("papa", 380), ("mama", 700), ("girl", 940))):
-        kick = abs(math.sin((T - S("s4")) / b * math.pi))
-        cast.person(c, who, x, 1650, 0.5, T, pose=cast.dance_pose(T - S("s4"), b, "show", i), bob=20 * kick, mood="smile" if i == 2 else "flat")
+        dx, hop, tl = cast.moves(T - S("s4"), b, 0, 0.7)                  # the kick line moves as one
+        cast.person(c, who, x + dx * 0.5, 1650, 0.5, T, pose=cast.dance_pose(T - S("s4"), b, "show", i), bob=hop, tilt=tl,
+                    mood="smile" if i == 2 else "flat")
     kit.confetti(c, T, 60, t0=S("s4"))
     return st.arr
 
 
 def s_finale_b(T, t, d):
-    """The meadow moment: she spins round and round, arms out - face, back, face - the flowers and sky wheel past."""
+    """The meadow moment, close: she spins round and round, arms out - face, back, face - and the camera whips round
+    with her, the mountains, the rainbow and the flowers streaming past."""
     st = kk.Stage()
     c = st.c
-    kit.backdrop(st, bg.meadow(3))
-    ang = T * 5.0
-    cs = math.cos(ang)
-    for k in range(3):                                                   # swoosh arcs around her
-        a0 = math.degrees(ang) % 360 + k * 120
-        r = 330 + k * 30
-        c.drawArc(skia.Rect.MakeLTRB(540 - r, 1080 - r * 0.35, 540 + r, 1080 + r * 0.35), a0, 70, False, paint(WHITE, 0.7, stroke=8))
-    cast.person(c, "girl", 540, 1650, 0.8, T, pose="arms_out", spin=max(0.3, abs(cs)), back=cs < 0, mood="smile")
-    for i in range(8):
-        a = i * math.pi / 4 + T * 1.5
-        kk.cg_star(c, 540 + 440 * math.cos(a), 700 + 260 * math.sin(a), 40, T, seed=i, color=[LEMON, HOT, WHITE, MINT][i % 4])
+    img = bg.meadow(3)
+    ang = t * 5.2
+    off = (t * 1900) % 2160                                             # the world wheels past: meadow | mirror | meadow
+    c.drawImage(img, -off, 0)
+    c.save()
+    c.translate(2160 - off, 0)
+    c.scale(-1, 1)
+    c.drawImage(img, 0, 0)
+    c.restore()
+    c.drawImage(img, 2160 - off, 0)
+    rgb = st.arr[..., :3].astype(np.float32)                              # the whip-pan smear
+    k = 41
+    cs = np.cumsum(np.pad(rgb, ((0, 0), (k // 2 + 1, k // 2), (0, 0)), mode="edge"), axis=1)
+    st.arr[..., :3] = ((cs[:, k:] - cs[:, :-k]) / k).astype(np.uint8)
+    rng = np.random.default_rng(3)
+    for i in range(26):                                                  # petals streaming past the lens
+        x = (rng.uniform(0, 2400) - t * rng.uniform(1600, 2600)) % 1300 - 110
+        y = rng.uniform(300, 1300)
+        c.drawOval(skia.Rect.MakeXYWH(x, y, 36, 14), paint([PINK, WHITE, LEMON, HOT][i % 4], 0.85))
+    cs_ = math.cos(ang)
+    for k2 in range(3):                                                  # swoosh arcs around her
+        a0 = math.degrees(ang) % 360 + k2 * 120
+        r = 470 + k2 * 40
+        c.drawArc(skia.Rect.MakeLTRB(540 - r, 1180 - r * 0.3, 540 + r, 1180 + r * 0.3), a0, 80, False, paint(WHITE, 0.75, stroke=10))
+    cast.person(c, "girl", 540, 1960 + 12 * math.sin(ang * 2), 1.3, T, pose=(96 + 6 * math.sin(ang), 0, 96 - 6 * math.sin(ang), 0),
+                spin=max(0.25, abs(cs_)), back=cs_ < 0, mood="smile")
+    for i in range(6):
+        a = i * math.pi / 3 + t * 3.0
+        kk.cg_star(c, 540 + 470 * math.cos(a), 760 + 170 * math.sin(a), 34, T, seed=i, color=[LEMON, HOT, WHITE, MINT][i % 4])
     return st.arr
 
 

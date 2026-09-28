@@ -109,18 +109,18 @@ def _caps():
 CAPS = _caps()
 
 
-def telop(arr, T, horror=False):
+def telop(arr, T, horror=False, oncard=False):
     cap = next((c for c in CAPS if c[0] <= T < c[1]), None)
-    if not cap or TL.song_at(T) is not None:
+    if not cap or TL.song_at(T) is not None or oncard:
         return
     t0, t1, s, key = cap
     f = kk.font("rounded-900", CAP_SIZE)
-    lines = kk.wrap(s, f, MAX_W)
+    lines = kk.wrap_balanced(s, f, MAX_W)
     size = CAP_SIZE
     if len(lines) > 2:
         size = CAP_SIZE * 0.86
         f = kk.font("rounded-900", size)
-        lines = kk.wrap(s, f, MAX_W)
+        lines = kk.wrap_balanced(s, f, MAX_W)
     k = kk.pop(T, t0, 0.16, 0.12)
     c = skia.Surface(arr).getCanvas()
     lh = size * 1.2
@@ -136,13 +136,16 @@ def telop(arr, T, horror=False):
     c.restore()
 
 
-def chapter(T, t, n, title, sub="A FAMILY MUSICAL"):
-    """A full-frame variety-show chapter card: spinning sunburst, chrome CHAPTER n, the title in pop lettering."""
+def chapter(T, t, n, title, sub="A FAMILY MUSICAL", plate=True):
+    """A full-frame variety-show chapter card: spinning sunburst, chrome CHAPTER n, the title in pop lettering.
+    plate=False: the card has popped off (the star wipe out of it), leaving only the sunburst."""
     st = kk.Stage()
     c = st.c
     cols = [(kk.HOT, kk.LEMON), (kk.SKY, kk.MINT), (kk.ORANGE, kk.LEMON), (kk.LILAC, kk.PINK), (kk.GRASS, kk.LEMON),
             (kk.HOT, kk.SKY)][n % 6]
     kk.starburst(c, W / 2, 800, t, cols)
+    if not plate:
+        return st.arr
     k = kk.pop(t, 0.0, 0.3, 0.35)
     c.save()
     c.translate(W / 2, 800)
@@ -166,9 +169,10 @@ def chapter(T, t, n, title, sub="A FAMILY MUSICAL"):
     return st.arr
 
 
-def slam(c, s, x, y, size, T, t0, color=kk.LEMON, edge=kk.HOT, sub=None, tag="slam", plate=True, max_w=800):
-    """A big number slammed onto the screen on a jagged plate, TV-telop style."""
-    k = kk.pop(T, t0, 0.18, 0.22)
+def slam(c, s, x, y, size, T, t0, color=kk.LEMON, edge=kk.HOT, sub=None, tag="slam", plate=True, max_w=660):
+    """A big number slammed onto the screen on a jagged plate, TV-telop style. The plate always stays inside the
+    frame (its spikes included, even at the top of the pop)."""
+    k = kk.pop(T, t0, 0.18, 0.12)
     if k <= 0:
         return
     f = kk.font("dela-400", size)
@@ -181,7 +185,9 @@ def slam(c, s, x, y, size, T, t0, color=kk.LEMON, edge=kk.HOT, sub=None, tag="sl
     c.scale(k, k)
     c.rotate(-3)
     if plate:
-        kk.burst_plate(c, 0, -size * 0.25, max(w * 0.62 + 60, size * 1.05), T, color, edge, ry=size * 1.15)
+        room = (min(x, W - x) - 24) / 1.12                              # 1.12 = the pop's overshoot
+        rx = min(max(w * 0.6 + 50, size * 1.05), room)
+        kk.burst_plate(c, 0, -size * 0.25, rx, T, color, edge, ry=size * 1.15)
     kk.chrome_text(c, s, 0, 0, size, 0, tag=tag, face=((255, 255, 255), (255, 80, 120), (160, 0, 40)), depth=8)
     if sub:
         kk.text(c, sub, 0, size * 0.62 + 40, 40, "rounded-900", INK, tag=tag + "_sub", outline=WHITE, ow=10)

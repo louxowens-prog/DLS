@@ -202,7 +202,7 @@ def rubber_stamp(c, x, y, s, label="DENIED", ink=BLOOD):
 
 # ------------------------------------------------------------------ the machine (early CGI plastic)
 
-def machine(c, x, y, s, T, face="smile", stamp=0.0, slot=0.0, glow=0.0):
+def machine(c, x, y, s, T, face="smile", stamp=0.0, slot=0.0, glow=0.0, label=True):
     """CLAIM-O-MATIC 2000: a glossy pink plastic cabinet with chrome trim, a CRT face, blinking bulbs, a stamping arm.
     (x, y) = floor centre; ~760 px tall at s=1."""
     c.save()
@@ -243,8 +243,9 @@ def machine(c, x, y, s, T, face="smile", stamp=0.0, slot=0.0, glow=0.0):
         if on:
             c.drawCircle(bx, -350, 40, paint(shader=rad((bx, -350), 40, [(*cc, 0.6), (*cc, 0.0)])))
         c.drawCircle(bx - 7, -357, 6, paint(WHITE, 0.8))
-    kk.chrome_text(c, "CLAIM-O-MATIC 2000", 0, -260, 42, 0, fname="bungee-400", depth=4, tag="machine",
-                   face=((255, 255, 255), (190, 200, 220), (90, 100, 130)))
+    if label:
+        kk.chrome_text(c, "CLAIM-O-MATIC 2000", 0, -260, 42, 0, fname="bungee-400", depth=4, tag="machine",
+                       face=((255, 255, 255), (190, 200, 220), (90, 100, 130)))
     c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-150, -200, 150, -150), 14, 14), paint(INK))    # output slot
     if slot > 0:
         c.save()
@@ -322,16 +323,26 @@ def crow(c, x, y, s, T, caw=0.0, seed=7, flip=False):
     c.restore()
 
 
-def corpse(c, x, y, s, T, pose=(10, 0, 10, 0), rise=1.0, seed=3, skin=(170, 200, 160), robe=(235, 235, 225), clip_y=None):
+def moves(T, beat, k=0, amt=1.0):
+    """The dancing body under the arms: a hop on every beat, a hip sway, a step side to side every two beats."""
+    ph = T / beat + k * 0.5
+    hop = 30 * amt * abs(math.sin(math.pi * ph))
+    tilt = 11 * amt * math.sin(math.pi * ph)
+    dx = 34 * amt * math.sin(math.pi * ph / 2)
+    return dx, hop, tilt
+
+
+def corpse(c, x, y, s, T, pose=(10, 0, 10, 0), rise=1.0, seed=3, skin=(170, 200, 160), robe=(235, 235, 225), clip_y=None,
+           hop=0.0, tilt=0.0):
     """A clay corpse in a burial robe with X eyes; rise 0..1 lifts it out of the ground (clipped at clip_y)."""
     t = twos(T)
     bx, by, br = boil(T, 2.0, seed)
     c.save()
     if clip_y is not None:
         c.clipRect(skia.Rect.MakeLTRB(-10000, -10000, 10000, clip_y))
-    c.translate(x + bx, y + by + (1 - rise) * 520 * s)
+    c.translate(x + bx, y + by - hop + (1 - rise) * 520 * s)
     c.scale(s, s)
-    c.rotate(br * 1.5)
+    c.rotate(br * 1.5 + tilt)
     for i, side in enumerate((-1, 1)):
         sh, el = pose[2 * i], pose[2 * i + 1]
         a1 = math.radians(sh) * side

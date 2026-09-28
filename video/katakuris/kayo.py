@@ -710,3 +710,14 @@ def sparkle(amp=1.0, seed=0):
     w = whoosh(0.35, True, seed, 0.25)
     out[:len(w)] += w
     return amp * out
+
+
+def scratch(dur=0.32, amp=1.0, seed=0):
+    """A record scratch: the needle dragged back and forth across the groove (a pitched rasp sweeping up and down)."""
+    t = tx(dur)
+    rng = np.random.default_rng(seed)
+    sweep = 380 + 1400 * np.abs(np.sin(2 * np.pi * 2.4 * t / dur * 0.5 + 0.3)) * (1 - 0.5 * t / dur)
+    ph = np.cumsum(sweep) / SR
+    rasp = (2 * (ph % 1.0) - 1) * 0.5 + _bp(rng.normal(0, 1, len(t)), 800, 5000) * 0.9 * (0.4 + 0.6 * np.abs(np.sin(2 * np.pi * 9 * t)))
+    env = np.clip(t / 0.005, 0, 1) * np.clip((dur - t) / 0.03, 0, 1)
+    return amp * np.tanh(1.6 * _bp(rasp, 300, 6000)) * env

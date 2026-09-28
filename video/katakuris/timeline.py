@@ -11,7 +11,8 @@ FPS = 24
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 PRE = {"c0": 0.6, "b2": 0.45, "a1": 1.15, "b1": 1.15, "d1": 1.1, "f1": 1.4, "g1": 1.2,        # room for a chapter card
-       "d5": 1.25, "e1": 1.4, "f3": 1.5, "g2": 0.5}                        # true dead air before the heaviest beats
+       "d5": 1.65, "e1": 2.3, "f3": 1.5, "g2": 0.5,                        # true dead air before the heaviest beats
+       "b4": 0.45, "f2": 0.5, "f4": 0.6, "f5": 0.6, "f6": 0.6}             # room for a scare hit between words
 TAIL = 3.5
 
 
@@ -83,7 +84,7 @@ class Timeline:
         speech = [k for k in self.order if self.lines[k]["song"] is None]
         for n, key in enumerate(speech):
             L = self.lines[key]
-            raw = L["breaks"].split()
+            raw = [w for w in L["breaks"].split(" ") if w]                       # (a no-break space holds "737 MAX" together)
             cw, sp = [w.rstrip("|") for w in raw], L["words"]
             nw, m = len(cw), len(sp)
             times = [(sp[min(m - 1, int(i * m / nw))][1], sp[min(m - 1, max(0, int((i + 1) * m / nw) - 1))][2]) for i in range(nw)]

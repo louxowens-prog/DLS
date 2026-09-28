@@ -49,6 +49,11 @@ def main():
             f" guestbooks with YOUR name on the next line {f('payoff'):.1f}",
             f"  CHAPTER CARDS: " + ", ".join(f"{t:.1f}" for t, n, tr in EDIT if tr == "card"),
             f"  DEAD AIR (every bus cut, >1 s): after 'You did nothing wrong', after the duet, after 'can't afford even one'",
+            f"  SCARE HITS (every one lands in a pause between words; peak >= 7 dB and 50 ms RMS >= 8 dB above the neighbouring"
+            f" dialogue): " + ", ".join(f"{t:.2f}" for t in _hits()),
+            f"  THE DISASTER STING: a record scratch cuts the duet off {TL.e('s2'):.1f}; dead air over the still volcano; it erupts on"
+            f" a thunder + timpani + cymbal + scare-hit sting {C['erupt']:.1f}, before a word is said",
+            f"  THE SPIN: a close hero shot, the camera whip-panning round with her {f('finale_b'):.1f}",
             f"  RECURRING CUE (crow's caw): {C['pop'] + 0.6:.1f}, {C['dontask'] + 0.35:.1f}, {f('graves') + 0.3:.1f}, {C['fraud_letter']:.1f},"
             f" {TL.e('s3') - 0.6:.1f}, {f('payoff') + 1.1:.1f}",
             f"\nTOTAL {TL.total:.2f} s"]
@@ -56,6 +61,13 @@ def main():
     os.makedirs(os.path.dirname(path), exist_ok=True)
     open(path, "w").write("\n".join(out) + "\n")
     print(path)
+
+
+def _hits():
+    import audio
+    hits = []
+    audio.sfx(audio.Bus(), hits)
+    return sorted(h[0] for h in hits)
 
 
 if __name__ == "__main__":

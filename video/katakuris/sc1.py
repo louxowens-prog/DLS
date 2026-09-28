@@ -340,6 +340,18 @@ def s_rule(T, t, d):
         kk.drip(c, 40 + i * 76, 960, 18, 40 + 260 * ((i * 37) % 10) / 10 * grow, BLOOD)
     c.restore()
     c.drawRect(skia.Rect.MakeLTRB(0, 950, W, 970), paint(WHITE))
+    n = min(24, 2 ** int(t / 0.3))                                          # the multiplying: 1, 2, 4, 8 ... on both halves
+    rng = np.random.default_rng(12)
+    top = [(110 + (i % 6) * 172 + rng.uniform(-20, 20), 600 + (i // 6) * 95 + rng.uniform(-15, 15)) for i in range(24)]
+    bot = [(110 + (i % 6) * 172 + rng.uniform(-20, 20), 1020 + (i // 6) * 90 + rng.uniform(-12, 12)) for i in range(24)]
+    order = rng.permutation(24)
+    for j in order[:n]:
+        kk.cg_star(c, *top[j], 40, T, seed=int(j), color=[kk.LEMON, WHITE, kk.MINT][j % 3])
+        kit.clay_x(c, *bot[j], 0.26, T, seed=int(j))
+    if T >= C["rule_right"] - 0.2:
+        c.drawRect(skia.Rect.MakeLTRB(0, 560, W, 940), paint((255, 255, 255), 0.35))
+    if T >= C["rule_wrong"] - 0.2:
+        c.drawRect(skia.Rect.MakeLTRB(0, 980, W, 1320), paint((30, 0, 10), 0.45))
     kk.chrome_text(c, "AUTOMATION", 540, 330, 96, T, max_w=900, tag="rule")
     kk.chrome_text(c, "MULTIPLIES", 540, 450, 96, T, max_w=900, tag="rule")
     k1 = kk.pop(T, C["rule_right"] - 0.2, 0.25, 0.3)

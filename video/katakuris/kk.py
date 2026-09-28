@@ -166,6 +166,24 @@ def reg_local(c, x0, y0, x1, y1, tag):
     reg(min(p.x() for p in pts), min(p.y() for p in pts), max(p.x() for p in pts), max(p.y() for p in pts), tag)
 
 
+def wrap_balanced(s, f, maxw):
+    """Two even lines rather than a long one and an orphan; a no-break space (\u00a0) never splits."""
+    words = s.split(" ")
+    fix = lambda ls: [x.replace("\u00a0", " ") for x in ls]
+    if f.measureText(s) <= maxw:
+        return fix([s])
+    best = None
+    for i in range(1, len(words)):
+        a, b = " ".join(words[:i]), " ".join(words[i:])
+        wa, wb = f.measureText(a), f.measureText(b)
+        if wa > maxw or wb > maxw:
+            continue
+        cost = max(wa, wb) + (400 if i == len(words) - 1 or i == 1 else 0)
+        if best is None or cost < best[0]:
+            best = (cost, [a, b])
+    return fix(best[1]) if best else fix(wrap(s, f, maxw))
+
+
 def wrap(s, f, maxw):
     words, lines, cur = s.split(), [], ""
     for w in words:
@@ -403,7 +421,7 @@ def chrome_text(c, s, x, y, size, t=0.0, fname="dela-400", face=((255, 250, 180)
 
 # ------------------------------------------------------------------ claymation
 
-def _lumps(n, seed, amp=0.05, t=0.0, boil_amp=0.012):
+def _lumps(n, seed, amp=0.05, t=0.0, boil_amp=0.02):
     """Radial multipliers for a hand-pressed outline: low lumps fixed by the sculptor, plus a per-drawing boil."""
     rng = np.random.default_rng(seed)
     a = np.linspace(0, 2 * math.pi, n, endpoint=False)
@@ -451,33 +469,47 @@ def clay_path(c, p, color, t=0.0, seed=0, light=(-0.6, -0.8), prints=2, marks=2,
     c.drawPath(p, paint(deep, rim, stroke=max(4, rr * 0.1), blur=max(2, rr * 0.03)))       # the crease at the edge
     rng = np.random.default_rng(seed * 17 + 3)
     bx, by, _ = boil(t, 1.0, seed + 5)
-    if rr > 50:
-        for i in range(prints):                                                      # fingerprints, thumbed in
-            fx = cx + rng.uniform(-0.4, 0.4) * rw + bx
-            fy = cy + rng.uniform(-0.4, 0.4) * rh + by
-            fs = min(rr * 0.45, 40) * rng.uniform(0.8, 1.1)
+    big = 2 if rr > 120 else (1 if rr > 70 else 0)                                   # big lumps get handled more
+    if rr > 24:
+        for i in range(prints + big if prints else 0):                               # fingerprints, thumbed in deep
+            fx = cx + rng.uniform(-0.42, 0.42) * rw + bx
+            fy = cy + rng.uniform(-0.42, 0.42) * rh + by
+            fs = min(rr * 0.5, 64) * rng.uniform(0.8, 1.1)
+            wd = max(2.6, min(5.0, fs * 0.09))
             c.save()
             c.translate(fx, fy)
             c.rotate(float(rng.uniform(0, 180)))
             c.scale(fs, fs)
-            pd, pl = paint(lo, 0.26, stroke=3.2 / fs), paint(hi, 0.24, stroke=2.4 / fs)
-            for arc in _print_arcs(seed * 7 + i)[:6]:
+            pd, pl = paint(deep, 0.42, stroke=wd / fs, blur=0.6 / fs), paint(hi, 0.4, stroke=wd * 0.62 / fs)
+            for arc in _print_arcs(seed * 7 + i)[:7]:
                 c.drawPath(arc, pd)
-            c.translate(1.6 / fs, 1.8 / fs)
-            for arc in _print_arcs(seed * 7 + i)[:6]:
+            c.translate(wd * 0.55 / fs, wd * 0.65 / fs)
+            for arc in _print_arcs(seed * 7 + i)[:7]:
                 c.drawPath(arc, pl)
             c.restore()
-    for i in range(marks if rr > 40 else 0):                                         # gouges: a groove with a lit lip
+    for i in range(marks + big if rr > 26 else 0):                                   # gouges: a groove with a lit lip
         mx = cx + rng.uniform(-0.5, 0.5) * rw
         my = cy + rng.uniform(-0.5, 0.5) * rh
-        L = min(rr * rng.uniform(0.12, 0.22), 40)
+        L = min(rr * rng.uniform(0.14, 0.26), 70)
         an = rng.uniform(0, math.pi)
-        pts = bez((mx - L * math.cos(an), my - L * math.sin(an)), (mx + rng.uniform(-6, 6), my + rng.uniform(-6, 6)),
+        pts = bez((mx - L * math.cos(an), my - L * math.sin(an)), (mx + rng.uniform(-8, 8), my + rng.uniform(-8, 8)),
                   (mx + L * math.cos(an), my + L * math.sin(an)), 8)
-        c.drawPath(path(pts, closed=False), paint(deep, 0.45, stroke=6, blur=1.2))
-        c.drawPath(path([(q[0] + 2.5, q[1] + 3.0) for q in pts], closed=False), paint(hi, 0.5, stroke=3.5))
-    for i in range(int(6 + rr / 12)):                                                # grit and specks in the clay
-        c.drawCircle(cx + rng.uniform(-rw, rw), cy + rng.uniform(-rh, rh), rng.uniform(1.2, 2.6), paint(deep, 0.35))
+        gw = max(4.0, min(10.0, rr * 0.06))
+        c.drawPath(path(pts, closed=False), paint(deep, 0.62, stroke=gw, blur=1.4))
+        c.drawPath(path([(q[0] + gw * 0.45, q[1] + gw * 0.55) for q in pts], closed=False), paint(hi, 0.6, stroke=gw * 0.55))
+    if rr > 90:                                                                      # the loop tool's parallel scrapes
+        sx0 = cx + rng.uniform(-0.3, 0.3) * rw
+        sy0 = cy + rng.uniform(-0.3, 0.3) * rh
+        an = rng.uniform(0, math.pi)
+        Ls = min(rr * 0.3, 90)
+        for j in range(4):
+            ox, oy = -math.sin(an) * j * 9, math.cos(an) * j * 9
+            q0 = (sx0 + ox - Ls * math.cos(an), sy0 + oy - Ls * math.sin(an))
+            q1 = (sx0 + ox + Ls * math.cos(an), sy0 + oy + Ls * math.sin(an))
+            c.drawLine(*q0, *q1, paint(deep, 0.3, stroke=3.2, blur=0.8))
+            c.drawLine(q0[0] + 1.5, q0[1] + 2, q1[0] + 1.5, q1[1] + 2, paint(hi, 0.3, stroke=1.8))
+    for i in range(int(8 + rr / 8)):                                                 # grit and specks in the clay
+        c.drawCircle(cx + rng.uniform(-rw, rw), cy + rng.uniform(-rh, rh), rng.uniform(1.4, 3.2), paint(deep, 0.42))
     if gloss > 0:                                                                    # a soft waxy sheen
         c.drawOval(skia.Rect.MakeXYWH(cx + lx * rw * 0.45 - rw * 0.22, cy + ly * rh * 0.45 - rh * 0.12, rw * 0.44, rh * 0.24),
                    paint(WHITE, gloss, blur=max(3, rr * 0.08)))
@@ -487,7 +519,7 @@ def clay_path(c, p, color, t=0.0, seed=0, light=(-0.6, -0.8), prints=2, marks=2,
 
 
 def clay_ellipse(c, cx, cy, rx, ry, color, t=0.0, seed=0, rot=0.0, amp=0.09, **kw):
-    a, r = _lumps(56, seed, amp, t)
+    a, r = _lumps(56, seed, amp * 1.3, t)
     ca, sa = math.cos(math.radians(rot)), math.sin(math.radians(rot))
     pts = [(cx + ca * rx * rr * math.cos(q) - sa * ry * rr * math.sin(q), cy + sa * rx * rr * math.cos(q) + ca * ry * rr * math.sin(q))
            for q, rr in zip(a, r)]
@@ -505,7 +537,7 @@ def clay_poly(c, pts, color, t=0.0, seed=0, amp=6.0, **kw):
         (x0, y0), (x1, y1) = pts[i], pts[(i + 1) % n]
         for u in (0.0, 0.33, 0.66):
             x, y = x0 + (x1 - x0) * u, y0 + (y1 - y0) * u
-            out.append((x + rng.uniform(-amp, amp) + rb.uniform(-1, 1), y + rng.uniform(-amp, amp) + rb.uniform(-1, 1)))
+            out.append((x + rng.uniform(-amp, amp) * 1.5 + rb.uniform(-2.2, 2.2), y + rng.uniform(-amp, amp) * 1.5 + rb.uniform(-2.2, 2.2)))
     return clay_path(c, smooth(out), color, t, seed, **kw)
 
 

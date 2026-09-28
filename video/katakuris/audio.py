@@ -19,7 +19,7 @@ from scipy import signal
 
 import kayo as P
 from cues import C, ls
-from edit import EDIT, first
+from edit import EDIT, HIT_CUTS, first
 from script import MACH, MAMA, NAR, SONGS
 from timeline import TL
 from voice import SR as VSR
@@ -199,8 +199,8 @@ KAYO_THEME = [(77, 1), (79, 1), (81, 2), (84, 1), (81, 1), (79, 2), (77, 1), (74
 
 def dead_air():
     """True silence: every bus cut (only a voice may speak; here none does)."""
-    return [(E("d4") + 0.22, S("d5") - 0.04),
-            (E("s2") + 0.05, S("e1") - 0.04),
+    return [(E("d4b") + 0.22, first("michigan") - 0.03),
+            (E("s2") + 0.34, C["erupt"] - 0.03),
             (E("f2") + 0.22, S("f3") - 0.4)]
 
 
@@ -225,7 +225,7 @@ def arrangement(bus, lead, choir, hz):
     band(bus, lead, None, "enka", f("job"), f("card4"), 70, 0.9)
     hz.add(P.drone(f("card4") - f("michigan"), root=26, seed=3), f("michigan"), 0.5)
     # the volcano: silence, then the earth itself
-    hz.add(P.rumble(S("s3") - S("e1"), seed=4), S("e1") - 0.05, 1.0)
+    hz.add(P.rumble(S("s3") - C["erupt"], seed=4), C["erupt"], 1.0)
     # the sitcom bed again for the shrug; then it keeps smiling under the disasters
     band(bus, None, None, "sitcom", f("ads"), f("one"), 112, 0.65)
     band(bus, None, None, "sitcom", f("plane"), f("card6"), 112, 0.5, drums=True)
@@ -252,6 +252,12 @@ def sfx(fx, hits):
             fx.add(P.whoosh(0.5, True, seed=i), t - 0.05, 0.55)
         elif tr == "flash":
             hits.append((t + 0.01, 1.0, 1.0, i))
+        elif name.startswith("duet_"):                                  # cuts inside the dream: a harp glint
+            for k in range(4):
+                fx.add(P.harp(79 + [0, 4, 7, 12][k]), t - 0.02 + k * 0.04, 0.25, pan=0.35 + 0.1 * k)
+        elif name in HIT_CUTS:
+            hits.append((t, 0.9, 0.9, 40 + i))
+            fx.add(P.squelch(1.0, seed=40 + i, dur=0.3), t + 0.03, 0.35)
         else:
             fx.add(P.pop(1.0), t, 0.3)
             fx.add(P.woodblock(0.8, 900 + 70 * (i % 5)), t, 0.28, pan=0.4 + 0.04 * (i % 5))
@@ -280,7 +286,7 @@ def sfx(fx, hits):
     fx.add(P.thunder(3.5, seed=2), f("flood") + 0.1, 0.8)
     for k in range(28):
         fx.add(P.squelch(0.8, seed=100 + k, dur=0.25), f("flood") + 0.2 + k * 0.14, 0.3, pan=0.15 + 0.7 * ((k * 3) % 10) / 10)
-    hits.append((C["millions"] - 0.05, 0.8, 1.0, 5))
+    hits.append((C["millions"], 0.9, 1.0, 5))
     fx.add(P.crow(1.0, seed=3), f("graves") + 0.3, 0.55, pan=0.5)
     fx.add(P.sparkle(1.0, seed=5), C["rule_right"] - 0.2, 0.5)
     fx.add(P.squelch(1.4, seed=7, dur=0.5), C["rule_wrong"] - 0.15, 0.7)
@@ -299,9 +305,9 @@ def sfx(fx, hits):
     fx.add(P.keys(14, 0.07, seed=4), W("d1", "file"), 0.45)
     fx.add(P.page(1.0, seed=2), f("letter") + 0.9, 0.5)
     fx.add(P.crow(1.0, seed=4), C["fraud_letter"] + 0.1, 0.5, pan=0.75)
-    hits.append((W("d2", "No") - 0.05, 0.55, 0.7, 7))
-    fx.add(P.squelch(1.0, seed=11), C["penalty"] - 0.05, 0.5)
-    hits.append((C["penalty"] - 0.05, 0.5, 0.6, 8))
+    hits.append((C["no_human"], 0.8, 0.7, 7))
+    fx.add(P.squelch(1.0, seed=11), C["penalty"], 0.5)
+    hits.append((C["penalty"], 0.8, 0.6, 8))
     for k in range(6):
         fx.add(P.squelch(0.7, seed=20 + k, dur=0.18), C["interest"] + k * 0.12, 0.3)
     for tk in (W("d4", "wages.") - 0.3, C["refund"] - 0.1):
@@ -310,23 +316,27 @@ def sfx(fx, hits):
         fx.add(P.whoosh(0.4, True, seed=4), tk + 0.45, 0.4)
     for k in range(20):
         fx.add(P.squelch(0.6, seed=300 + k, dur=0.2), f("michigan") + 0.3 + k * 0.2, 0.2, pan=0.3 + 0.4 * (k % 3) / 2)
-    hits.append((C["forty"] - 0.1, 0.8, 0.9, 9))
-    fx.add(P.stamp(1.6), C["eightyfive"] - 0.1, 0.9)
-    hits.append((C["eightyfive"] - 0.1, 0.8, 0.9, 10))
+    hits.append((C["forty"], 0.9, 0.9, 9))
+    fx.add(P.stamp(1.6), C["eightyfive"], 0.9)
+    hits.append((C["eightyfive"], 0.9, 0.9, 10))
     fx.add(P.rumble(1.6, seed=7), f("homes") + 0.2, 0.6)
     for k in range(5):
         fx.add(P.squelch(0.9, seed=400 + k, dur=0.35), f("homes") + 0.3 + k * 0.14, 0.35)
-    hits.append((W("d6", "hundreds") - 0.1, 0.7, 0.8, 11))
+    hits.append((C["robodebt"], 0.9, 0.8, 11))
     # the duet
     for k in range(8):
         fx.add(P.harp(70 + [0, 4, 7, 11, 14, 17, 21, 24][k]), f("duet") - 0.1 + k * 0.05, 0.3, pan=0.3 + 0.05 * k)
-    # the volcano
-    hits.append((C["billion"] - 0.1, 1.2, 1.4, 12))
-    fx.add(P.thunder(4.0, seed=5), C["billion"], 0.9)
+    # the volcano: the duet is scratched off the record, dead air, then the mountain blows (the big sting)
+    fx.add(P.scratch(0.32, seed=2), E("s2") - 0.02, 0.9)
+    hits.append((C["erupt"], 1.5, 1.6, 12))
+    fx.add(P.thunder(4.0, seed=5), C["erupt"] + 0.02, 1.0)
+    fx.add(P.timpani(36, 1.0), C["erupt"], 0.8)
+    fx.add(P.cymbal(1.0, 3.0), C["erupt"] + 0.02, 0.6)
+    fx.add(P.growl(2.0), C["erupt"] + 0.1, 0.5)
     for k in range(24):
-        fx.add(P.squelch(0.8, seed=500 + k, dur=0.25), C["billion"] + 0.2 + k * 0.15, 0.3, pan=0.2 + 0.6 * ((k * 7) % 10) / 10)
-    hits.append((W("e1", "Point") - 0.1, 0.5, 0.6, 13))
-    hits.append((C["onemil"] - 0.1, 0.9, 1.0, 14))
+        fx.add(P.squelch(0.8, seed=500 + k, dur=0.25), C["erupt"] + 0.2 + k * 0.15, 0.3, pan=0.2 + 0.6 * ((k * 7) % 10) / 10)
+    hits.append((C["point"], 0.8, 0.6, 13))
+    hits.append((C["onemil"], 1.0, 1.0, 14))
     # the disco: the dead climb out on the beat
     s3 = TL.songs["s3"]
     for k in range(4):
@@ -339,7 +349,7 @@ def sfx(fx, hits):
         fx.add(P.glock(m, 0.9), f("ads") + 0.4 + k * 0.13, 0.3, pan=0.35)
     fx.add(P.slide_whistle(False, 0.5), W("f1", "shrug.") - 0.25, 0.4)
     fx.add(P.glock(100, 1.0), f("translate") + 0.3, 0.3)
-    hits.append((C["attack"] - 0.1, 0.7, 0.8, 15))
+    hits.append((C["attack"], 1.0, 0.8, 15))
     fx.add(P.siren(2.2), C["arrested"] - 0.1, 0.45)
     fx.add(P.squelch(1.3, seed=700, dur=0.5), f("one") + 0.05, 0.6)
     # the four disasters
@@ -358,15 +368,14 @@ def sfx(fx, hits):
     fx.add(P.geiger(f("card6") - f("radiation"), rate=20), f("radiation"), 0.35)
     for k in range(6):
         fx.add(P.squelch(0.8, seed=800 + k, dur=0.2), C["p6"] + k * 0.12, 0.35, pan=0.15 + 0.14 * k)
-    for key, i in (("p55", 17), ("p6", 19)):
-        hits.append((C[key] - 0.1, 0.6, 1.0, i))
+    for key, i in (("p50", 17), ("p6", 19)):
+        hits.append((C[key], 1.0, 1.0, i))
     for key, i in (("impact_plane", 20), ("impact_missile", 21)):              # the crashes land between words
         hits.append((C[key], 1.3, 0.9, i))
         fx.add(P.thunder(1.6, seed=i), C[key] + 0.02, 0.7)
         for k in range(8):
             fx.add(P.squelch(1.0, seed=1000 + i * 10 + k, dur=0.3), C[key] + 0.05 + k * 0.08, 0.35, pan=0.1 + 0.1 * k)
-    hits.append((C["p6"] - 0.25, 0.7, 0.9, 22))
-    fx.add(P.geiger(1.2, rate=90, seed=9), C["p6"] - 0.25, 0.5)
+    fx.add(P.geiger(1.2, rate=90, seed=9), C["p6"], 0.5)
     # the rule
     for k, key in enumerate(("scale", "stakes", "smaller")):
         fx.add(P.woodblock(1.0, 600 + 150 * k), C[key] - 0.2, 0.45)
@@ -410,6 +419,7 @@ def voices():
         r = np.sqrt((up ** 2).mean()) + 1e-12
         lvl = {NAR: -17.0, MAMA: -16.0, MACH: -14.5}[who] + (2.2 if L["song"] else 0.0)
         up = up * db(lvl) / r
+        up = limit(up[None], db(lvl + 8.5), look=0.003, rel=0.06)[0]         # broadcast-style peak control on the voice
         if who == MACH:
             up = robot(up)
         sig = np.stack([up, up])
@@ -445,6 +455,19 @@ def widen(x, amt=0.5):
     return np.stack([mid + side, mid - side])
 
 
+def mono_safe(x, max_ratio=0.36, hop=1024):
+    """Wide, but never phasey: wherever the side outweighs ~0.36 of the mid (L/R correlation under ~0.47), the side
+    is pulled back, so a phone speaker summing to mono loses at most ~1.3 dB."""
+    mid, side = 0.5 * (x[0] + x[1]), 0.5 * (x[0] - x[1])
+    n = len(mid) // hop
+    em = np.convolve((mid[: n * hop] ** 2).reshape(n, hop).mean(axis=1), np.ones(8) / 8, "same")
+    es = np.convolve((side[: n * hop] ** 2).reshape(n, hop).mean(axis=1), np.ones(8) / 8, "same")
+    g = np.minimum(1.0, np.sqrt(max_ratio * em / (es + 1e-12)))
+    g = np.interp(np.arange(len(side)), np.arange(n) * hop + hop / 2, g)
+    side = side * g
+    return np.stack([mid + side, mid - side])
+
+
 def reverb(x, wet=0.1, rt60=0.8, seed=8):
     rng = np.random.default_rng(seed)
     t = np.arange(int(rt60 * 1.4 * SR)) / SR
@@ -465,15 +488,25 @@ def warp(x, depth_ms=8.0, rate=0.5):
     return x[:, i0] * (1 - fr) + x[:, i1] * fr
 
 
+def next_word(t):
+    return min([a for k in TL.order for w, a, b in TL.lines[k]["words"] if a > t - 0.02] or [TL.total])
+
+
 def hit_signal(gain, body, seed, t):
-    """A scare hit: dense and loud but band-limited (no codec overshoot); pulled back mid-sentence."""
-    talking = any(TL.s(k) + 0.05 < t < TL.e(k) - 0.05 for k in TL.order)
-    soon = any(t - 0.05 < TL.s(k) < t + 0.7 for k in TL.order)
-    g = 6.0 * gain * (0.18 if talking else 1.0)
-    b = 0.45 if (talking or soon) else body
+    """A scare hit: dense and loud but band-limited (no codec overshoot). Every hit sits in a pause between words;
+    when the next word is close, the tail is short so it never sits on her voice."""
+    g = 6.0 * gain
+    b = body if next_word(t) - t > 0.9 or body > 1.5 else 0.45
     x = P.scare(1.0, seed=seed, body=b, drive=3.2)
+    n = int(0.16 * SR)                                                  # the slam itself: a dense, clipped low boom
+    tt = np.arange(n) / SR
+    slam = np.tanh(6.0 * (np.sin(2 * np.pi * np.cumsum(62 + 90 * np.exp(-tt / 0.03)) / SR)
+                          + 0.6 * np.random.default_rng(seed).normal(0, 1, n))) * np.clip((0.16 - tt) / 0.06, 0, 1)
+    x[:n] = np.tanh(2.0 * (x[:n] + 0.8 * slam))
     x = signal.sosfilt(signal.butter(4, 7000 / (SR / 2), "low", output="sos"), x)
     x = signal.sosfilt(signal.butter(2, 22 / (SR / 2), "high", output="sos"), x)
+    x = np.tanh(2.5 * x) / np.tanh(2.5)                                 # squeezed dense: loud for its whole first 50 ms
+    x = signal.sosfilt(signal.butter(2, 12000 / (SR / 2), "low", output="sos"), x)
     x[: int(0.004 * SR)] *= np.linspace(0, 1, int(0.004 * SR))
     return x * g * 1.7
 
@@ -533,12 +566,30 @@ def build():
     mid = music - low - high
     k_mid = 0.9 - 0.25 * insong                                          # sung lines carve a little less
     music = low * (1 - 0.4 * env) + mid * (1 - k_mid * env) + high * (1 - 0.6 * env)
-    music = widen(music, 1.15)
+    music = mono_safe(widen(music, 1.15))
     ref = music[:, int(S("a1") * SR):int(E("b1") * SR)]
     g_mu = db(-23.0) / (np.sqrt((ref ** 2).mean()) + 1e-12)
-    hits_x = reverb(hb.x, 0.12, 0.9) * dead * (1 - 0.6 * env)             # a hit never buries a word
-    mix = music * g_mu + hits_x * g_mu + vo
-    mix = loudness(mix, -14.0)
+    vad = np.convolve(np.abs(vo.mean(axis=0)), np.ones(int(0.015 * SR)) / int(0.015 * SR), mode="same")
+    vad = np.clip(vad / (np.percentile(vad[vad > 1e-5], 70) + 1e-9), 0, 1)
+    vad = maximum_filter1d(vad, size=int(0.09 * SR), origin=-int(0.02 * SR))
+    vad = np.convolve(vad, np.ones(int(0.02 * SR)) / int(0.02 * SR), mode="same")
+    lines_on = np.zeros(N)
+    for key in TL.order:
+        lines_on[max(0, int((TL.s(key) - 0.04) * SR)):int(TL.e(key) * SR)] = 1.0
+    protect = np.zeros(N)
+    for t, *_ in hits:
+        protect[max(0, int((t - 0.01) * SR)):int((t + 0.14) * SR)] = 1.0
+    lines_on = np.maximum(lines_on * (1 - protect), vad)
+    lines_on = np.convolve(lines_on, np.ones(int(0.05 * SR)) / int(0.05 * SR), mode="same")
+    # the hit bus runs far over the ceiling (that is what makes it slam); under a line it is taken right down
+    hits_x = reverb(hb.x, 0.12, 0.9) * dead * (1 - 0.995 * lines_on)
+    # while anyone speaks or sings, everything but the hits stays well under the hits' ceiling
+    speech = np.zeros(N)
+    for key in TL.order:
+        speech[max(0, int((TL.s(key) - 0.05) * SR)):int((TL.e(key) + 0.1) * SR)] = 1.0
+    for t, *_ in hits:
+        speech[max(0, int((t - 0.02) * SR)):int((t + 0.5) * SR)] = 0.0
+    mix = loudness(music * g_mu + vo, hits_x * g_mu, speech, -15.5)
     tail = int(0.4 * SR)
     mix[:, -tail:] *= np.linspace(1, 0, tail) ** 2
     STEMS.update(music=(music + hits_x) * g_mu, vo=vo)
@@ -548,12 +599,20 @@ def build():
 STEMS = {}
 
 
-def loudness(x, target):
+CEIL, SPEECH_CEIL = -1.9, -9.2
+
+
+def loudness(a, h, speech, target):
+    """Normalise to `target` LUFS: the speech and music under a region limiter (SPEECH_CEIL while a line is on),
+    then the hits on top, the whole under a true-peak limiter at CEIL."""
     import pyloudnorm as pyln
-    for _ in range(3):
+    g = 1.0
+    ceil = np.where(speech > 0.5, db(SPEECH_CEIL), db(CEIL))
+    for _ in range(4):
+        x = limit(limit(a * g, ceil) + h * g, db(CEIL))
         lufs = pyln.Meter(SR).integrated_loudness(x.T)
-        x = limit(x * db(target - lufs), db(-2.4))
-    return x
+        g *= db(target - lufs)
+    return limit(limit(a * g, ceil) + h * g, db(CEIL))
 
 
 def limit(x, ceil, look=0.005, rel=0.12):
