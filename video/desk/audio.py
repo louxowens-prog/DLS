@@ -58,7 +58,7 @@ def nxt(name):
 
 
 # the dead stops: music and ambience cut to nothing
-STOPS = [E("o2") + 0.35, E("a7") + 0.25, E("b12") + 0.25, E("d7") + 0.25]
+STOPS = [E("o0b") + 0.25, E("a7") + 0.25, E("b12") + 0.25, E("d7") + 0.25]
 SILENCES = [(STOPS[i], CARDS[i][3] + 0.8) for i in range(4)] + [(E("e7") + 0.25, f("final") + 0.05)]
 
 
@@ -67,19 +67,19 @@ def dead_air():
 
 
 def score(mus, amb, fx):
-    # ---------------------------------------------------------------- cold open: the hook, then the present
-    fx.add(O.keys(int((E("o0a") - 0.35) / 0.08), gap=0.08, amp=0.55, seed=9), 0.15, 1.0, pan=0.55)
-    Sc.ostinato(mus, 0.0, f("teaser_dial"), Sc.A_MIN, {"pulse": 0.4, "arp": 0.35}, bars_per_chord=2)
-    Sc.ostinato(mus, f("teaser_dial"), f("open_lamp"), Sc.A_MIN, {"pulse": 0.55, "arp": 0.7, "bass": 0.6, "counter": 0.45,
-                                                                  "brass": 0.4, "timp": 0.4})
-    fx.add(Sc.clappers(amp=0.9, seed=11), f("teaser_dial") - 0.05, 1.0)
-    to = f("open_lamp")
-    amb.add(Sc.room_tone(STOPS[0] - to), to, 0.8)
-    amb.add(wide(Sc.rain, STOPS[0] - to, amp=0.5), to, 1.0)
-    fx.add(O.click(amp=1.2), C["lamp_on"] - 0.02, 1.0, pan=0.35)
-    Sc.ostinato(mus, to, STOPS[0], Sc.A_MIN, {"pulse": 0.35}, bars_per_chord=2)
-    for k in range(int(STOPS[0] - to)):
+    # ---------------------------------------------------------------- cold open: the lamp, the stakes, then the promise
+    to, tt = f("open_lamp"), f("teaser_dial")
+    amb.add(Sc.room_tone(tt - to + 0.3), to, 0.8)
+    amb.add(wide(Sc.rain, tt - to + 0.3, amp=0.5), to, 1.0)
+    fx.add(O.click(amp=1.2), 0.02, 1.0, pan=0.35)                        # the lamp clicks on: the first sound
+    Sc.ostinato(mus, 0.1, tt, Sc.A_MIN, {"pulse": 0.4}, bars_per_chord=2)
+    mus.add(Sc.bowed(57, tt - 0.4, amp=0.35, bright=0.6, attack=0.8), 0.3, 1.0, pan=0.45)   # the thin string line
+    for k in range(int(tt - to)):
         fx.add(O.tick(amp=0.5, tock=k % 2), to + 0.3 + k, 1.0, pan=0.6)
+    fx.add(Sc.clappers(amp=0.9, seed=11), tt - 0.05, 1.0)               # the stage: full, all at once
+    Sc.ostinato(mus, tt, STOPS[0], Sc.A_MIN, {"pulse": 0.55, "arp": 0.7, "bass": 0.6, "counter": 0.45, "brass": 0.45,
+                                              "timp": 0.45})
+    mus.add(O.cymbal(amp=0.5, dur=1.4, swell=True), tt - 1.2, 1.0)
 
     # ---------------------------------------------------------------- ONE: CROWD
     card = [c[3] for c in CARDS]
@@ -197,8 +197,8 @@ def score(mus, amb, fx):
     from cues import WHO_TAGS
     for k, w in enumerate(WHO_TAGS):
         mus.add(O.celesta(76 + (0, 2, 4, 7, 9)[k], amp=0.8), w[0] + 0.2, 1.0, pan=0.3 + 0.1 * k)
-    fx.add(Sc.clappers(amp=0.9, seed=7), Wx("e3", "translate") - 0.4, 1.0)
-    fx.add(Sc.wood_slide(1.0, amp=0.8), Wx("e3", "translate") - 0.2, 1.0)
+    fx.add(Sc.clappers(amp=0.9, seed=7), Wx("e3b", "translate") - 0.4, 1.0)
+    fx.add(Sc.wood_slide(1.0, amp=0.8), Wx("e3b", "translate") - 0.2, 1.0)
     mus.add(O.shakuhachi(72, 1.2, amp=0.45, seed=2), C["coach"], 1.0, pan=0.6)
     tn2 = f("nigeria")
     Sc.ostinato(mus, tn2, f("exam"), Sc.DAWN, {"pulse": 0.5, "arp": 0.65, "bass": 0.65, "counter": 0.5, "harp": 0.4,
@@ -214,10 +214,25 @@ def score(mus, amb, fx):
     mus.add(O.strings([60, 64, 67], E("e7") + 0.25 - C["smile"], amp=0.9, seed=8), C["smile"] - 0.1, 1.0)
     fx.add(Sc.envelope_tear(amp=1.0), f("letter") + 0.1, 1.0, pan=0.5)
 
+    # the set changes: a cymbal swell into a brass chord and a timpani stroke, each time the stage moves
+    for t_, root in ((C["split98"], 57), (C["turn"], 57), (C["hints"], 62), (C["open"], 62)):
+        mus.add(O.cymbal(amp=0.45, dur=1.2, swell=True, seed=int(root)), t_ - 1.1, 1.0)
+        mus.add(O.brass([root - 12, root - 5, root], 1.6, amp=0.5), t_ + 0.05, 1.0, pan=0.5)
+        mus.add(O.timpani(root - 24, amp=0.7), t_ + 0.05, 1.0)
+    # the trap: a screen humming at midnight, the button pulsing
+    ttr = f("trap")
+    amb.add(Sc.room_tone(f("box") - ttr + 0.2), ttr, 0.8)
+    mus.add(Sc.bowed(50, f("box") - ttr, amp=0.35, bright=0.5, attack=0.3), ttr, 1.0, pan=0.5)
+    for k in range(3):
+        fx.add(O.beep(0.12, amp=0.12, f=660.0), ttr + 0.4 + k * 0.45, 1.0, pan=0.55)
+    # built her way: it asks, she answers, and gets it
+    fx.add(O.keys(7, 0.06, amp=0.5, seed=13), S("d4") + 0.55, 1.0, pan=0.55)
+    mus.add(O.celesta(88, amp=0.6), S("d4") + 1.05, 1.0, pan=0.55)
+
     # the final image: all three registers meet
     tf = f("final") + 0.05
     mus.add(Sc.temple_bell(36, amp=1.1, dur=9.0), tf, 1.0)
-    mus.add(O.strings([48, 55, 62, 64, 67, 72], TL.total - tf, amp=1.2, seed=11), tf, 1.0, pan=0.5)
+    mus.add(O.strings([48, 55, 62, 64, 67, 72], TL.total - tf, amp=0.8, seed=11), tf, 1.0, pan=0.5)
     Sc.ostinato(mus, tf + 0.3, TL.total - 1.0, Sc.FINAL, {"arp": Sc.ramp_up(tf, tf + 2, 0.2, 0.45), "harp": 0.4,
                                                         "bass": 0.4, "brass": 0.25})
     mus.add(O.timpani(36, amp=0.6), tf + 0.02, 1.0)
@@ -289,7 +304,7 @@ def build():
     k = int(0.012 * SR)
     dead = np.convolve(dead, np.ones(k) / k, "same")
     music = music * dead
-    vo = presence(reverb(voices(), 0.06, 0.5), 3000, 2.0) * dead
+    vo = presence(reverb(voices(), 0.1, 0.5), 3000, 2.0) * dead
     # a steady duck under speech (slow, so it never pumps), then a ride so each line sits 13 dB clear
     from scipy.ndimage import maximum_filter1d
     raw = np.convolve(np.abs(vo.mean(axis=0)), np.ones(SR // 20) / (SR // 20), mode="same")
@@ -334,9 +349,15 @@ def build():
     k = int(0.3 * SR)
     shape = np.convolve(np.pad(shape, k, mode="edge"), np.ones(k) / k, "same")[k:-k]
     mix = mix * db(shape)[None]
+    te = int(f("end") * SR)                                              # the end card sits 5 dB down
+    endk = np.ones(N)
+    endk[te:] = db(-5.0)
+    endk = np.convolve(np.pad(endk, SR, mode="edge"), np.ones(SR) / SR, "same")[SR:-SR]
+    mix = mix * endk[None]
     mix = loudness(mix, -14.0)
-    tail = int(0.8 * SR)
-    mix[:, -tail:] *= np.linspace(1, 0, tail) ** 2
+    a_, b_ = int((TL.total - 2.6) * SR), int(TL.total * SR)              # a long fade to nothing before the film ends
+    mix[:, a_:b_] *= np.linspace(1, 0, b_ - a_) ** 2
+    mix[:, b_:] = 0.0
     STEMS.update(music=music, vo=vo)
     return mix
 

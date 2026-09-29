@@ -30,9 +30,9 @@ def chapter_card(c, T, i):
 def countdown(c, T, a=1.0):
     """The present-day clock, top left: the time and what's left before the exam."""
     hhmm = clock_at(T)
-    c.drawRect(skia.Rect.MakeLTRB(60, 236, 470, 350), paint((0, 0, 0), 0.62 * a))
-    D.text(c, hhmm, 84, 300, 62, "courier-400", (236, 232, 220), align="left", tag="clock", a=a)
-    D.text(c, left_until_exam(hhmm), 86, 338, 28, "courier-400", (200, 196, 186), align="left", tag="clock", a=a)
+    c.drawRect(skia.Rect.MakeLTRB(80, 256, 490, 370), paint((0, 0, 0), 0.62 * a))
+    D.text(c, hhmm, 104, 320, 62, "courier-400", (236, 232, 220), align="left", tag="clock", a=a)
+    D.text(c, left_until_exam(hhmm), 106, 358, 28, "courier-400", (200, 196, 186), align="left", tag="clock", a=a)
 
 
 def use_tag(c, T, y=None):
@@ -47,11 +47,11 @@ def use_tag(c, T, y=None):
     f = D.font("cormorant-700", 36)
     size = min(36, 36 * 440 / f.measureText(lab))
     w = D.font("cormorant-700", size).measureText(lab)
-    x1 = 1030
-    c.drawRect(skia.Rect.MakeLTRB(x1 - w - 36, 238, x1 + 14, 350), paint((0, 0, 0), 0.62 * k))
-    c.drawLine(x1 - w - 22, 346, x1, 346, paint(GOLD, k, stroke=2))
-    D.text(c, f"{n} / 13", x1, 282, 34, "cormorant-700", GOLDL, align="right", tag="use", a=k)
-    D.text(c, lab, x1, 332, size, "cormorant-700", CREAM, align="right", tag="use", a=k)
+    x1 = 1010
+    c.drawRect(skia.Rect.MakeLTRB(x1 - w - 36, 258, x1 + 14, 370), paint((0, 0, 0), 0.62 * k))
+    c.drawLine(x1 - w - 22, 366, x1, 366, paint(GOLD, k, stroke=2))
+    D.text(c, f"{n} / 13", x1, 302, 34, "cormorant-700", GOLDL, align="right", tag="use", a=k)
+    D.text(c, lab, x1, 352, size, "cormorant-700", CREAM, align="right", tag="use", a=k)
 
 
 def aphorism(c, T, text, t0, y=820, size=76, color=CREAM, maxw=880):

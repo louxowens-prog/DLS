@@ -20,8 +20,6 @@ S, E = TL.s, TL.e
 SPOKEN = {k: sp for k, who, sp, cap, gap in LINES}
 
 PROMPT1 = "Don't explain derivatives mathematically. Explain them using cars."
-TEASER = [("me", "Explain derivatives using cars.", 0.15, E("o0a") - 0.35),
-          ("tutor", "Your speedometer is a derivative.", S("o0b"), 1.2)]
 MSGS = [
     ("me", PROMPT1, C["type1"], E("b2q") - C["type1"] - 0.2),
     ("tutor", SPOKEN["b3"], S("b3"), E("b3") - S("b3")),
@@ -37,6 +35,8 @@ MSGS = [
     ("tutor", "Now teach it back to me, in your own words.", Wx("b11", "midnight"), 0.7),
     ("me", "Never give me the answer. Make me find it.", S("d3q"), E("d3q") - S("d3q")),
     ("tutor", "Deal. I'll ask you questions instead.", E("d3q") - 0.1, 0.6),
+    ("tutor", "So: what happens to the slope when the car speeds up?", S("d4") - 0.1, 0.5),
+    ("me", "It gets steeper!", S("d4") + 0.55, 0.45),
 ]
 
 
@@ -67,7 +67,7 @@ def _chat_bg(c):
 
 
 def _chat(T):
-    return lambda c: _chat_bg(c) or P.chat(c, T, MSGS, x0=80, y0=520, x1=960, y_bottom=1280)
+    return lambda c: _chat_bg(c) or P.chat(c, T, MSGS, x0=80, y0=520, x1=920, y_bottom=1280)
 
 
 def s_clock1(T, t, d):
@@ -110,7 +110,7 @@ def _car_set(c, T, phase):
 
 
 def _deriv_set(c, T):
-    sets.stage(c, "jade")
+    sets.stage(c, "jade", floor="black", posts="gold")
     P.lantern(c, 540, 700, 0.6, 1.0, T, cord=520)
     P.banner(c, 540, 1120, 820, 300, ["speed  =  d(distance) / d(time)", "the rate of change, at one instant"],
              bg=LACQ, sizes=(64, 42))
@@ -199,6 +199,7 @@ def s_error(T, t, d):
     P.working(c, T, 540, 720, circle=ring, fix=fix, size=74)
     c.restore()
     K.use_tag(c, T, y=430)
+    K.countdown(c, T)
     return st.arr
 
 
@@ -239,7 +240,7 @@ def s_montage(T, t, d):
     def fn(c):
         if T < ph_h:
             _chat_bg(c)
-            P.chat(c, T, MSGS, x0=80, y0=520, x1=960, y_bottom=1280)
+            P.chat(c, T, MSGS, x0=80, y0=520, x1=920, y_bottom=1280)
         elif T < ph_c:
             c.drawRect(skia.Rect.MakeLTRB(80, 240, 1000, 1280), paint((26, 30, 36)))
             D.text(c, "difficulty", 540, 600, 44, "inter-700", (200, 206, 214), tag="ui")
@@ -284,7 +285,7 @@ def s_aph2(T, t, d):
     """One desk on the great stage; the lantern comes down over it, and it is hers."""
     st = D.Stage((0, 0, 0))
     c = st.c
-    sets.bd(st, "stage_gold", lambda cc: sets.stage(cc, "gold"))
+    sets.staged(st, "gold", "gold", "black")
     c.drawRect(skia.Rect.MakeWH(W, H), paint((0, 0, 0), 0.45))
     k = ease(ramp(t, 0.0, 2.0))
     sets.spotlight(c, 540, 170, 540, 1330, 230, a=0.35)

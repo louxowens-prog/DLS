@@ -61,9 +61,9 @@ def s_lamps(T, t, d):
     c = st.c
     u = t / max(d, 0.1)
     c.save()
-    cam(c, 1.12, 540, 1000)
-    c.translate(70 - 140 * u, 0)                                        # a long lateral track past the learners
-    sets.bd(st, "stage_none", lambda cc: sets.stage(cc, None))
+    cam(c, 1.28, 540, 1000)
+    c.translate(120 - 240 * u, 0)                                       # a long lateral track past the learners
+    sets.staged(st, None, "gold", None)
     y = 1330
     for i, (x, col) in enumerate(LEARNERS):
         t0 = WHO_TAGS[i][0]
@@ -84,14 +84,14 @@ def s_language(T, t, d):
     """Screens slide open on the same word in six languages; a voice-print for pronunciation; two figures talking."""
     st = D.Stage((0, 0, 0))
     c = st.c
-    sets.bd(st, "stage_verm", lambda cc: sets.stage(cc, "verm"))
+    sets.staged(st, "jade", "black", "verm")
     c.drawRect(skia.Rect.MakeWH(W, H), paint((0, 0, 0), 0.35))
-    k40 = ease(ramp(T, S("e3") - 0.1, S("e3") + 0.4)) * (1 - ease(ramp(T, Wx("e3", "translate") - 0.4, Wx("e3", "translate"))))
+    k40 = ease(ramp(T, S("e3") - 0.1, S("e3") + 0.4)) * (1 - ease(ramp(T, Wx("e3b", "translate") - 0.4, Wx("e3b", "translate"))))
     if k40 > 0:
         P.banner(c, 540, 700, 860, 300, ["40% OF PEOPLE", "have no schooling in a language", "they speak or understand"], bg=LACQ,
                  sizes=(76, 44), src="UNESCO Global Education Monitoring, 2025", a=k40)
-    kt = ramp(T, Wx("e3", "translate") + 0.02, Wx("e3", "translate") + 1.4)
-    if kt > 0 and T < Wx("e3", "coach") - 0.1:
+    kt = ramp(T, Wx("e3b", "translate") + 0.02, Wx("e3b", "translate") + 1.4)
+    if kt > 0 and T < C["coach"] - 0.1:
         for i, (wd, x, y) in enumerate(WORDS):                          # sliding screens, each opening on a word
             o = ease(ramp(kt, i * 0.1, i * 0.1 + 0.5))
             c.drawRect(skia.Rect.MakeLTRB(x - 230, y - 100, x + 230, y + 100), paint((214, 204, 180)))
@@ -113,7 +113,7 @@ def s_language(T, t, d):
             c.drawLine(x, 1100 - h2, x, 1100 + h2, paint(JADE, stroke=7))
         D.text(c, "yours", 540, 990, 44, "cormorant-500i", CREAM, tag="pr")
         D.text(c, "a native speaker", 540, 1290, 44, "cormorant-500i", CREAM, tag="pr2")
-    kc = ramp(T, C["conv"] - 0.2, E("e3") + 0.4)
+    kc = ramp(T, C["conv"] - 0.2, E("e3b") + 0.4)
     if kc > 0:                                                           # the other side of a conversation
         F.robed(c, 360, 1400, 0.6, T, body=INDIGO, arms=0.3 + 0.2 * math.sin(T * 3))
         F.learner(c, 720, 1400, 0.62, T, pose="stand")
@@ -131,9 +131,9 @@ def s_nigeria(T, t, d):
     c = st.c
     u = t / max(d, 0.1)
     c.save()
-    cam(c, 1.1, 540, 1250)
-    c.translate(-60 + 120 * u, 0)                                       # tracking along the hall of lanterns
-    sets.bd(st, "stage_none", lambda cc: sets.stage(cc, None))
+    cam(c, 1.3, 540, 1250)
+    c.translate(-120 + 240 * u, 0)                                      # tracking along the hall of lanterns
+    sets.staged(st, None, "verm", "gold")
     k = ramp(t, 0.2, d - 1.0)
     n = 0
     for r in range(4):
@@ -188,6 +188,7 @@ def s_q1(T, t, d):
     if k2 > 0:
         c.drawArc(skia.Rect.MakeLTRB(620, 720, 800, 860), 0, 360 * k2, False, paint(JADE, 0.8, stroke=6))
     c.drawLine(820, 1300, 980, 1060 + 20 * math.sin(T * 6), paint((200, 160, 60), stroke=14))
+    K.countdown(c, T)
     return st.arr
 
 
@@ -196,6 +197,7 @@ def s_smile(T, t, d):
     c = st.c
     c.drawRect(skia.Rect.MakeWH(W, H), paint(shader=D.rad((1000, 600), 1100, [(236, 236, 228), (150, 150, 146), (80, 80, 80)], [0, 0.5, 1])))
     F.profile(c, 470, 780, 2.35, T, mood="smile", light="day")
+    K.countdown(c, T)
     return st.arr
 
 
@@ -237,5 +239,7 @@ def s_final(T, t, d):
     F.child_back(c, 540, 1760, 2.6, hair=(20, 20, 20), shirt=(200, 170, 70), seed=5)
     kl = ease(ramp(k, 0.8, 1.0))
     c.drawCircle(540, 1500, 700, paint(GOLDL, 0.18 * kl, blur=160))
-    K.aphorism(c, T, "A light for every desk.", S("e9"), y=470, size=96, color=WHITE)
+    K.aphorism(c, T, "For most of history, a tutor was a privilege. Now it can be almost anyone's.", S("e8"), y=282, size=54,
+               color=CREAM, maxw=960)
+    K.aphorism(c, T, "A light for every desk.", S("e9"), y=505, size=88, color=WHITE)
     return st.arr

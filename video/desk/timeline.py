@@ -12,7 +12,7 @@ FPS = 24
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 PRE = {c[3]: 2.5 for c in CHAPTERS}                 # room for the chapter card between chapters
-PRE.update({"a3": 0.2, "a5": 0.3, "d5": 0.3, "e8": 0.3})
+PRE.update({"a3": 0.2, "a5": 0.3, "d5": 0.3, "e8": 0.3, "a7": 0.5, "b12": 0.5, "d7": 0.5, "e9": 0.3})
 TAIL = 4.2
 
 

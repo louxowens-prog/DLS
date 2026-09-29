@@ -44,27 +44,13 @@ def _table_top(c, T, on):
     c.drawLine(700, 1480, 900, 1420, paint((200, 160, 60), stroke=12))
 
 
-def s_teaser_type(T, t, d):
-    """The hook: her screen, the prompt typed straight in."""
-    from sc2 import TEASER, screen
-    import props as P_
-    st = D.Stage()
-    screen(st, T, t, d, lambda c: (c.drawRect(skia.Rect.MakeLTRB(80, 240, 1000, 1280), paint((26, 30, 36))),
-                                   P_.chat(c, T, TEASER, x0=80, y0=520, x1=960, y_bottom=1060, scale=1.4, wrap=600))[-1],
-           push=0.1)
-    c = st.c
-    c.drawCircle(700, 900, 420, paint((140, 170, 220), 0.12, blur=120))
-    K.countdown(st.c, T)
-    return st.arr
-
-
 def s_teaser_dial(T, t, d):
     """...and the answer, on the stage: the speedometer, gold, the needle climbing."""
     st = D.Stage((0, 0, 0))
     c = st.c
     c.save()
     cam(c, 1.25 - 0.1 * t / max(d, 0.1), 540, 900)
-    sets.bd(st, "stage_pink", lambda cc: sets.stage(cc, "pink"))
+    sets.staged(st, "pink")
     sets.spotlight(c, 540, 170, 540, 1300, 260, a=0.3)
     c.drawPath(path([(110, 1290), (970, 1290), (1080, 1400), (0, 1400)]), paint(GOLDL))
     c.drawLine(0, 1345, W, 1345, paint(VERM, stroke=6))
@@ -97,8 +83,8 @@ def s_open_room(T, t, d):
     st = D.Stage()
     c = st.c
     c.save()
-    cam(c, 1.1, 540, 1100)
-    c.translate(-45 + 90 * t / max(d, 0.1), 0)                           # a slow lateral track along the table
+    cam(c, 1.3, 540, 1150)
+    c.translate(-110 + 220 * t / max(d, 0.1), 0)                         # a lateral track along the table
     sets.bd(st, "kitchen_night", lambda cc: sets.kitchen(cc))
     c.drawRect(skia.Rect.MakeWH(W, H), paint((0, 0, 0), 0.38))
     P.pool_of_light(c, 560, 1260, 520, 170, 1.0, a=0.5)
@@ -148,7 +134,7 @@ def _class_rows(c, T, hand=0.0, teacher_pose="write", girl=True, girl_scale=1.0,
     desk_rows = [(0.34, 930), (0.42, 990), (0.52, 1065), (0.64, 1160), (0.8, 1280), (1.0, 1440)]
     P.hanging_bulb(c, 540, 330, 1.2, 1.0, cord=330)
     if teacher_pose:
-        F.teacher(c, 460, 900, 0.34, T, pose=teacher_pose)
+        F.teacher(c, 318, 900, 0.34, T, pose=teacher_pose)                # at the edge of the board, not in front of it
     rng = np.random.default_rng(5)
     n = 0
     for r, (s, y) in enumerate(desk_rows):
@@ -175,8 +161,8 @@ def s_class(T, t, d):
     c = st.c
     u = ease(t / max(d, 0.1))
     c.save()
-    cam(c, 1.12 + 0.06 * u, 540, 760)
-    c.translate(80 * (1 - u), 0)                                        # a long lateral track, settling dead centre
+    cam(c, 1.26 + 0.06 * u, 540, 760)
+    c.translate(105 - 105 * u, 0)                                       # a long lateral track, settling dead centre
     sets.bd(st, "classroom", sets.classroom, tex=0.06)
     _class_rows(c, T)
     c.restore()
@@ -291,7 +277,7 @@ def s_prince(T, t, d):
 
 
 def _after_split(c, T, k):
-    sets.stage(c, "indigo")
+    sets.stage(c, "indigo", floor="jade", posts="black")
     P.lantern(c, 540, 900, 0.7, 1.0, T, cord=700)
     P.banner(c, 540, 470, 820, 290, ["LATER STUDIES", "a smaller effect, but still a large one", "+0.79 standard deviations"],
              bg=(30, 36, 90), a=ease(k), sizes=(62, 42), src="VanLehn, 2011")
@@ -304,7 +290,7 @@ def s_aph1(T, t, d):
     c = st.c
     c.save()
     cam(c, 1.0 + 0.06 * t / max(d, 0.1), 540, 1200)
-    sets.bd(st, "stage_none", lambda cc: sets.stage(cc, None))
+    sets.staged(st, None, "black", None)
     sets.spotlight(c, 540, 170, 540, 1330, 200, a=0.28)
     P.lantern(c, 540, 980, 0.7, 1.0, T, cord=800)
     P.lacquer_desk(c, 540, 1330, 1.0, lit=1.0)

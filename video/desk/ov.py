@@ -33,7 +33,10 @@ def telop(arr, T):
     c = skia.Surface(arr).getCanvas()
     lh = size * 1.18
     y = 1466 - lh * (len(lines) - 1)
+    f = D.font("cormorant-700", size)
     for ln in lines:
-        D.text(c, ln, CX, y, size, "cormorant-700", WHITE, tag="caption", outline=(10, 10, 12), ow=size * 0.2,
-               outline2=(0, 0, 0), ow2=size * 0.34, a=a)
+        x0 = CX - f.measureText(ln) / 2                                 # a soft shadow under, then a thin dark edge
+        c.drawString(ln, x0 + size * 0.03, y + size * 0.05, f, paint((0, 0, 0), a * 0.85, stroke=size * 0.22, blur=size * 0.16))
+        c.drawString(ln, x0, y, f, paint((0, 0, 0), a * 0.55, blur=size * 0.1))
+        D.text(c, ln, CX, y, size, "cormorant-700", WHITE, tag="caption", outline=(8, 8, 10), ow=size * 0.09, a=a)
         y += lh

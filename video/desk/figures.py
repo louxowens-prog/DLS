@@ -161,7 +161,12 @@ def child_back(c, x, y, s, hair=(30, 28, 28), shirt=(200, 200, 196), hand=0.0, s
     c.scale(s, s)
     w = rng.uniform(0.9, 1.1)
     c.drawPath(D.smooth([(-70 * w, 10), (-62 * w, -60), (-30, -84), (30, -84), (62 * w, -60), (70 * w, 10)]), paint(shirt))
+    skin = mix((206, 172, 150), shirt, 0.15)
+    c.drawRect(skia.Rect.MakeLTRB(-15, -100, 15, -76), paint(mix(skin, INK, 0.25)))              # the neck, in shadow
     c.drawPath(path([(-22, -84), (0, -64), (22, -84)]), paint(mix(shirt, WHITE, 0.4)))
+    for sd in (-1, 1):                                                  # the shirt collar, folded down
+        c.drawPath(path([(sd * 34, -86), (sd * 4, -72), (sd * 6, -90), (sd * 26, -96)]), paint(mix(shirt, WHITE, 0.6)))
+        c.drawOval(skia.Rect.MakeLTRB(sd * 40 - 7, -130, sd * 40 + 7, -102), paint(skin))           # the ears
     c.drawOval(skia.Rect.MakeLTRB(-34, -150, 34, -74), paint(mix(hair, (220, 180, 150), 0.25)))
     style = seed % 3
     if style == 0:

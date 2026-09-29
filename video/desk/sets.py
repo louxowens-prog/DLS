@@ -162,8 +162,14 @@ def teacher_kitchen(c):
 
 # ------------------------------------------------------------------ fiction: the stage
 
-def stage(c, panel="gold"):
-    """Black void; a gold-leaf floor in perspective; vermilion proscenium posts; a painted panel upstage."""
+FLOORS = {"gold": (GOLDD, GOLD, GOLDL), "black": ((8, 8, 10), (26, 24, 26), (46, 42, 40)),
+          "jade": ((20, 60, 52), (40, 100, 84), (80, 150, 124)), "verm": ((90, 20, 16), (150, 36, 26), (196, 70, 50))}
+POSTS = {"verm": VERM, "black": (22, 20, 22), "gold": GOLD, "indigo": (40, 48, 120)}
+
+
+def stage(c, panel="gold", floor="gold", posts="verm"):
+    """Black void; a leaf floor in perspective (gold, black lacquer, jade or vermilion); proscenium posts (vermilion,
+    black, gold, indigo or none - an open void); a painted panel upstage. Each scene gets its own combination."""
     c.drawRect(skia.Rect.MakeWH(W, H), paint(LACQ))
     if panel:
         col = {"gold": GOLD, "pink": PINK, "jade": JADE, "verm": VERM, "indigo": (30, 36, 90)}[panel]
@@ -174,21 +180,33 @@ def stage(c, panel="gold"):
                     x, y = 160 + i * 76, 260 + j * 67
                     c.drawRect(skia.Rect.MakeXYWH(x, y, 76, 67), paint(mix(GOLDD, GOLDL, ((i * 7 + j * 3) % 5) / 5), 0.35))
                     c.drawRect(skia.Rect.MakeXYWH(x, y, 76, 67), paint(GOLDD, 0.35, stroke=1.5))
-    floor = path([(160, 1060), (920, 1060), (1080, 1560), (0, 1560)])
-    c.drawPath(floor, paint(shader=D.lin((0, 1060), (0, 1560), [GOLDD, GOLD, GOLDL])))
-    for j in range(-6, 7):                                              # the seams of the leaf floor
-        c.drawLine(540 + j * 64, 1060, 540 + j * 190, 1560, paint(GOLDD, 0.45, stroke=2))
+    fd, fm, fl = FLOORS[floor]
+    seam = GOLDD if floor != "gold" else mix(GOLDD, INK, 0.2)
+    floor_p = path([(160, 1060), (920, 1060), (1080, 1560), (0, 1560)])
+    c.drawPath(floor_p, paint(shader=D.lin((0, 1060), (0, 1560), [fd, fm, fl])))
+    if floor == "black":                                                # black lacquer: a long reflection of the spot
+        c.drawPath(path([(470, 1060), (610, 1060), (700, 1560), (380, 1560)]), paint((255, 240, 210), 0.07))
+    for j in range(-6, 7):                                              # the seams of the floor
+        c.drawLine(540 + j * 64, 1060, 540 + j * 190, 1560, paint(seam, 0.45, stroke=2))
     for k in range(6):
         y = 1060 + 500 * (k / 6) ** 1.4
-        c.drawLine(0, y, W, y, paint(GOLDD, 0.35, stroke=2))
+        c.drawLine(0, y, W, y, paint(seam, 0.35, stroke=2))
     c.drawRect(skia.Rect.MakeLTRB(0, 1560, W, H), paint(LACQ))                                   # the stage edge
     c.drawLine(0, 1560, W, 1560, paint(GOLDL, stroke=6))
-    for x0, x1 in ((0, 110), (970, W)):                                 # proscenium posts
-        c.drawRect(skia.Rect.MakeLTRB(x0, 0, x1, 1560), paint(shader=D.lin((x0, 0), (x1, 0), [mix(VERM, INK, 0.4), VERM, mix(VERM, INK, 0.5)])))
-        c.drawLine(x0 + 10, 0, x0 + 10, 1560, paint(GOLD, stroke=5))
-        c.drawLine(x1 - 10, 0, x1 - 10, 1560, paint(GOLD, stroke=5))
-    c.drawRect(skia.Rect.MakeLTRB(0, 0, W, 170), paint(shader=D.lin((0, 0), (0, 170), [mix(VERM, INK, 0.5), VERM])))
-    c.drawLine(0, 170, W, 170, paint(GOLD, stroke=6))
+    if posts:
+        pc = POSTS[posts]
+        trim = GOLD if posts != "gold" else mix(GOLDD, INK, 0.3)
+        for x0, x1 in ((0, 110), (970, W)):                             # proscenium posts
+            c.drawRect(skia.Rect.MakeLTRB(x0, 0, x1, 1560), paint(shader=D.lin((x0, 0), (x1, 0), [mix(pc, INK, 0.4), pc, mix(pc, INK, 0.5)])))
+            c.drawLine(x0 + 10, 0, x0 + 10, 1560, paint(trim, stroke=5))
+            c.drawLine(x1 - 10, 0, x1 - 10, 1560, paint(trim, stroke=5))
+        c.drawRect(skia.Rect.MakeLTRB(0, 0, W, 170), paint(shader=D.lin((0, 0), (0, 170), [mix(pc, INK, 0.5), pc])))
+        c.drawLine(0, 170, W, 170, paint(trim, stroke=6))
+
+
+def staged(st, panel, floor="gold", posts="verm"):
+    """A cached stage backdrop in one of its combinations."""
+    bd(st, f"stage_{panel}_{floor}_{posts}", lambda cc: stage(cc, panel, floor, posts))
 
 
 def spotlight(c, x, y_top, x_floor, y_floor, w, a=0.35, col=(255, 240, 200)):

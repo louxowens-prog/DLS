@@ -9,12 +9,11 @@ from timeline import TL
 S, E = TL.s, TL.e
 
 EDIT = [
-    # cold open
-    (0.0, "teaser_type", "present", "cut"),
-    (S("o0b") - 0.1, "teaser_dial", "fiction", "cut"),
-    (S("o2") - 0.15, "open_lamp", "present", "cut"),
-    (Wx("o2", "my") - 0.1, "open_room", "present", "cut"),
+    # cold open: the lamp, the stakes, then the promise
+    (0.0, "open_lamp", "present", "cut"),
+    (Wx("o2", "exam") - 0.1, "open_room", "present", "cut"),
     (Wx("o2", "And") - 0.1, "open_profile", "present", "cut"),
+    (S("o0b") - 0.1, "teaser_dial", "fiction", "cut"),
     # ONE: CROWD
     (CARDS[0][3], "card1", "card", "fade"),
     (S("a1") - 0.25, "class", "memory", "fade"),
@@ -23,7 +22,7 @@ EDIT = [
     (S("a4") + 0.45, "hand_down", "memory", "cut"),
     (S("a5") - 0.2, "window", "memory", "cut"),
     (S("a6") - 0.15, "prince", "fiction", "cut"),
-    (S("a7") - 0.3, "aph1", "fiction", "cut"),
+    (E("a6b") + 0.3, "aph1", "fiction", "cut"),
     # TWO: LIGHT
     (CARDS[1][3], "card2", "card", "fade"),
     (S("b1") - 0.25, "clock1", "present", "fade"),
@@ -39,16 +38,18 @@ EDIT = [
     (Wx("b9", "Not") - 0.15, "profile2", "present", "cut"),
     (S("b11") - 0.1, "montage", "present", "cut"),
     (Wx("b11", "midnight") - 0.4, "teachback", "present", "cut"),
-    (S("b12") - 0.3, "aph2", "fiction", "cut"),
+    (E("b11") + 0.3, "aph2", "fiction", "cut"),
     # THREE: DOUBT
     (CARDS[2][3], "card3", "card", "fade"),
-    (S("d1") - 0.25, "box", "fiction", "fade"),
+    (S("d1") - 0.25, "trap", "present", "fade"),
+    (S("d1b") - 0.15, "box", "fiction", "cut"),
     (S("d2") - 0.1, "study", "fiction", "cut"),
     (S("d3") - 0.15, "rule", "present", "cut"),
-    (S("d4") - 0.2, "harvard", "fiction", "cut"),
+    (S("d4") - 0.1, "built", "present", "cut"),
+    (S("d4b") - 0.15, "harvard", "fiction", "cut"),
     (S("d5") - 0.3, "teacher_night", "memory", "cut"),
     (S("d6") - 0.1, "cranes", "fiction", "cut"),
-    (S("d7") - 0.3, "back_row", "memory", "cut"),
+    (E("d6") + 0.3, "back_row", "memory", "cut"),
     # FOUR: DAWN
     (CARDS[3][3], "card4", "card", "fade"),
     (S("e1") - 0.25, "dawn", "present", "fade"),
@@ -61,7 +62,7 @@ EDIT = [
     (S("e7") - 0.2, "letter", "present", "cut"),
     (E("e7") + 0.35, "black", "card", "cut"),
     (S("e8") - 0.3, "final", "fiction", "cut"),
-    (E("e9") + 0.7, "end", "card", "fade"),
+    (E("e9") + 1.0, "end", "card", "fade"),
 ]
 FADE = 0.45
 
