@@ -116,7 +116,7 @@ def chat(c, T, msgs, x0=90, y0=360, x1=990, y_bottom=1250, scale=1.0, dark=True,
             words = txt.split(" ")
             n = int(len(words) * min(1.0, (T - t0) / max(0.05, dur))) + 1
             shown = " ".join(words[:n])
-        lines = _wrap(shown or " ", f, wrap or WRAP_W * scale)
+        lines = _wrap(shown or " ", f, wrap or WRAP_W * scale) or [""]
         blocks.append((who, lines))
     y = y_bottom - 30
     c.save()

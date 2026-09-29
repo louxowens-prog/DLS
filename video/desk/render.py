@@ -30,7 +30,13 @@ def work(k, a, b, scale, out):
     p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     t0 = time.time()
     for i in range(a, b):
-        fr = render_frame(i / FPS, idx=i)[..., :3]
+        try:
+            fr = render_frame(i / FPS, idx=i)[..., :3]
+        except Exception as e:                                          # never lose a chunk to one bad frame
+            import traceback
+            print(f"[w{k}] FRAME {i} FAILED: {e!r}", flush=True)
+            traceback.print_exc()
+            fr = render_frame((i - 1) / FPS, idx=i)[..., :3] if i > a else np.zeros((G.H, G.W, 3), np.uint8)
         if scale != 1.0:
             fr = np.asarray(Image.fromarray(fr).resize((w, h), Image.BILINEAR))
         p.stdin.write(np.ascontiguousarray(fr).tobytes())
