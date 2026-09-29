@@ -89,9 +89,13 @@ def s_language(T, t, d):
     if kt > 0 and T < Wx("e3", "coach") - 0.1:
         for i, (wd, x, y) in enumerate(WORDS):                          # sliding screens, each opening on a word
             o = ease(ramp(kt, i * 0.1, i * 0.1 + 0.5))
-            c.drawRect(skia.Rect.MakeLTRB(x - 230, y - 100, x + 230, y + 100), paint(CREAM, 0.95))
+            c.drawRect(skia.Rect.MakeLTRB(x - 230, y - 100, x + 230, y + 100), paint((214, 204, 180)))
             D.text(c, wd, x, y + 22, 64, "cormorant-600", LACQ, tag=f"lang{i}", a=o)
-            c.drawRect(skia.Rect.MakeLTRB(x - 230 + 460 * o, y - 100, x + 230, y + 100), paint(mix(CREAM, GOLD, 0.3)))
+            c.drawRect(skia.Rect.MakeLTRB(x - 230 + 460 * o, y - 100, x + 230, y + 100), paint(GOLDD))
+            for j in range(3):
+                xx = x - 230 + 460 * o + (230 - (230 * o)) * 0 + j * 150
+                if xx < x + 230:
+                    c.drawLine(xx, y - 100, xx, y + 100, paint(GOLD, 0.6, stroke=3))
             c.drawLine(x - 230 + 460 * o, y - 100, x - 230 + 460 * o, y + 100, paint(GOLDD, stroke=4))
         D.text(c, "“derivative”", 540, 1240, 54, "cormorant-500i", CREAM, tag="langsrc")
     kp = ramp(T, C["coach"] - 0.1, C["conv"] - 0.2)

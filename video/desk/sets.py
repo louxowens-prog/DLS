@@ -212,13 +212,13 @@ def split(c, img, k, gap_col=None, axis="x"):
     """The set splits down the middle and its halves glide apart (k 0..1), revealing what's behind."""
     d = (W / 2 + 40) * D.ease(k)
     for side in (-1, 1):
-        c.save()
+        c.save()                                                        # the half moves with its own clip
         if axis == "x":
-            c.clipRect(skia.Rect.MakeLTRB(0 if side < 0 else W / 2, 0, W / 2 if side < 0 else W, H))
             c.translate(side * d, 0)
+            c.clipRect(skia.Rect.MakeLTRB(0 if side < 0 else W / 2, 0, W / 2 if side < 0 else W, H))
         else:
-            c.clipRect(skia.Rect.MakeLTRB(0, 0 if side < 0 else H / 2, W, H / 2 if side < 0 else H))
             c.translate(0, side * d)
+            c.clipRect(skia.Rect.MakeLTRB(0, 0 if side < 0 else H / 2, W, H / 2 if side < 0 else H))
         c.drawImage(img, 0, 0)
         c.restore()
         if axis == "x" and k > 0:                                        # the lit edge of each moving flat
