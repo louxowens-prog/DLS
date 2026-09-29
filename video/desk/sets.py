@@ -106,27 +106,32 @@ def exam_desks():
 # ------------------------------------------------------------------ memory
 
 def classroom(c):
+    """Strict one-point perspective; windows on both walls throwing hard shafts; deep shadow everywhere else."""
     vx, vy = 540, 700
-    _grad(c, 0, H, [(90, 90, 90), (120, 120, 120)])
-    c.drawPath(path([(0, 0), (300, 480), (300, 900), (0, 1920)]), paint((70, 70, 70)))            # left wall
-    c.drawPath(path([(1080, 0), (780, 480), (780, 900), (1080, 1920)]), paint((100, 100, 100)))    # right wall
-    c.drawRect(skia.Rect.MakeLTRB(300, 480, 780, 900), paint((150, 150, 150)))                    # the front wall
-    c.drawRect(skia.Rect.MakeLTRB(350, 560, 730, 780), paint((40, 44, 42)))                       # the blackboard
-    c.drawRect(skia.Rect.MakeLTRB(350, 560, 730, 780), paint((120, 110, 90), stroke=10))
+    _grad(c, 0, H, [(40, 40, 40), (58, 58, 58)])
+    c.drawPath(path([(0, 0), (300, 480), (300, 900), (0, 1920)]), paint((52, 52, 52)))            # left wall
+    c.drawPath(path([(1080, 0), (780, 480), (780, 900), (1080, 1920)]), paint((52, 52, 52)))       # right wall
+    c.drawRect(skia.Rect.MakeLTRB(300, 480, 780, 900), paint((96, 96, 96)))                       # the front wall
+    c.drawRect(skia.Rect.MakeLTRB(350, 560, 730, 780), paint((30, 32, 30)))                       # the blackboard
+    c.drawRect(skia.Rect.MakeLTRB(350, 560, 730, 780), paint((100, 94, 80), stroke=10))
     D.text(c, "dy/dx = lim", 470, 660, 44, "cormorant-600", (230, 230, 230), tag="board")
     D.text(c, "h→0", 470, 700, 26, "oldstandard-700", (230, 230, 230), tag="board")
     D.text(c, "f(x+h) − f(x)", 640, 640, 30, "cormorant-600", (230, 230, 230), tag="board")
     c.drawLine(575, 652, 710, 652, paint((230, 230, 230), stroke=3))
     D.text(c, "h", 640, 690, 30, "cormorant-600", (230, 230, 230), tag="board")
-    c.drawPath(path([(300, 900), (780, 900), (1080, 1920), (0, 1920)]), paint((110, 110, 110)))   # the floor
+    c.drawPath(path([(300, 900), (780, 900), (1080, 1920), (0, 1920)]), paint((64, 64, 64)))      # the floor
     for j in range(-9, 10):
-        c.drawLine(vx + j * 26, 900, vx + j * 130, H, paint((80, 80, 80), stroke=3))
-    for i in range(3):                                                  # windows on the left wall, light falling in
-        y0 = 180 + i * 260
-        c.drawPath(path([(40 + i * 70, y0 + 60), (180 + i * 40, y0 + 120), (180 + i * 40, y0 + 300), (40 + i * 70, y0 + 330)]),
-                   paint((236, 236, 236)))
-        c.drawPath(path([(180 + i * 40, y0 + 120), (180 + i * 40, y0 + 300), (760, 1500 + i * 60), (520, 1600 + i * 60)]),
-                   paint((255, 255, 255), 0.07))
+        c.drawLine(vx + j * 26, 900, vx + j * 130, H, paint((44, 44, 44), stroke=3))
+    for side in (-1, 1):                                                # windows on both walls, mirrored
+        for i in range(3):
+            y0 = 180 + i * 260
+            xo, xi = (40 + i * 70, 180 + i * 40)
+            q = [(xo, y0 + 60), (xi, y0 + 120), (xi, y0 + 300), (xo, y0 + 330)]
+            if side > 0:
+                q = [(W - x, y) for x, y in q]
+            c.drawPath(path(q), paint((226, 226, 226)))
+            shaft = [q[1], q[2], (540 + side * 220, 1500 + i * 60), (540 + side * 20, 1600 + i * 60)]
+            c.drawPath(path(shaft), paint((255, 255, 255), 0.08))
 
 
 def street(c):

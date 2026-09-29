@@ -19,6 +19,9 @@ def telop(arr, T):
     t0, t1, s, key = cap
     if key in NO_CAPTION:
         return
+    from edit import shot_at
+    if T > TL.e(key) and shot_at(T) != shot_at(t0 + 0.05):          # never carry a caption over a cut
+        return
     f = D.font("cormorant-700", CAP_SIZE)
     lines = D.wrap_balanced(s, f, MAX_W)
     size = CAP_SIZE

@@ -67,7 +67,7 @@ def _bars(c, T, show_hint):
 def _hint_set(c, T):
     sets.stage(c, "jade")
     P.lantern(c, 540, 820, 0.7, 1.0, T, cord=650)
-    P.banner(c, 540, 400, 840, 230, ["HINTS, NOT ANSWERS", "a tutor built this way: no drop on the exam"], bg=LACQ,
+    P.banner(c, 540, 400, 840, 230, ["HINTS, NOT ANSWERS", "a tutor built this way largely avoided the drop"], bg=LACQ,
              sizes=(66, 40), src="same study")
     F.learner(c, 540, 1420, 0.6, T, pose="stand", glow=1.0)
 
@@ -97,38 +97,43 @@ def s_harvard(T, t, d):
     c = st.c
     sets.bd(st, "stage_none", lambda cc: sets.stage(cc, None))
     kt = ease(ramp(T, C["twice"] - 0.3, C["twice"] + 0.6))
-    P.banner(c, 540, 400, 840, 220, ["HARVARD PHYSICS", "AI tutor vs. an active-learning class"], bg=INDIGO, sizes=(58, 40),
-             src="Kestin et al., Scientific Reports, 2025")
     base = 1150
     for x, lab, g in ((330, "CLASS", 1.0), (750, "AI TUTOR", 1.0 + 1.15 * kt)):
-        h = 260 * g
+        h = 200 * g
         c.drawRect(skia.Rect.MakeLTRB(x - 100, base - h, x + 100, base), paint(GOLD if lab == "AI TUTOR" else (120, 110, 90)))
-        P.lantern(c, x, base - h - 110, 0.55, 0.4 + 0.6 * (g - 1) / 1.15 if lab == "AI TUTOR" else 0.4, T, cord=300)
+        P.lantern(c, x, base - h - 90, 0.45, 0.4 + 0.6 * (g - 1) / 1.15 if lab == "AI TUTOR" else 0.4, T, cord=500)
         D.text(c, lab, x, base + 60, 44, "cormorant-700", CREAM, tag="hv")
-    D.text(c, "learning gains", 540, base + 120, 34, "cormorant-500i", (220, 210, 190), tag="hv2")
-    if kt > 0.5:
-        D.text(c, "more than", 750, base - 260 * (1 + 1.15 * kt) + 60, 38, "cormorant-700", LACQ, tag="hv3", a=kt)
-        D.text(c, "2×", 750, base - 260 * (1 + 1.15 * kt) + 130, 70, "cormorant-700", LACQ, tag="hv5", a=kt)
+    P.banner(c, 540, 400, 840, 220, ["HARVARD PHYSICS", "AI tutor vs. an active-learning class"], bg=INDIGO, sizes=(58, 40),
+             src="Kestin et al., Scientific Reports, 2025")
     kl = ease(ramp(T, C["less_time"] - 0.2, C["less_time"] + 0.4))
-    if kl > 0:
-        D.text(c, "in less time", 540, 700, 50, "cormorant-500i", CREAM, tag="hv4", a=kl)
+    D.text(c, "learning gains" + (",  in less time" if kl > 0.5 else ""), 540, base + 112, 36, "cormorant-500i", (230, 220, 200), tag="hv2")
+    if kt > 0.5:
+        D.text(c, "more than", 750, base - 200 * (1 + 1.15 * kt) + 60, 38, "cormorant-700", LACQ, tag="hv3", a=kt)
+        D.text(c, "2×", 750, base - 200 * (1 + 1.15 * kt) + 130, 70, "cormorant-700", LACQ, tag="hv5", a=kt)
+
     return st.arr
 
 
 def s_teacher_night(T, t, d):
-    """Memory: her teacher, at her own kitchen table at night, under a lamp, with the stack of papers."""
-    st = D.Stage()
+    """Memory, dead symmetrical: her teacher at her own table at night, facing us, a stack of papers either side,
+    one bulb above - grading. Older, glasses, a shawl: not the girl."""
+    st = D.Stage((20, 20, 20))
     c = st.c
+    c.drawRect(skia.Rect.MakeWH(W, H), paint(shader=D.rad((540, 760), 1000, [(120, 120, 120), (40, 40, 40), (10, 10, 10)], [0, 0.5, 1])))
     c.save()
-    cam(c, 1.0 + 0.06 * t / max(d, 0.1), 540, 1100)
-    sets.bd(st, "teacher_kitchen", sets.teacher_kitchen, tex=0.06)
-    P.pool_of_light(c, 540, 1260, 460, 150, 1.0, color=(255, 255, 255), a=0.35)
-    for i in range(int(14 + 10 * ease(t / max(d, 0.1)))):             # the stack keeps growing
-        c.drawRect(skia.Rect.MakeLTRB(620 - (i % 2) * 6, 1230 - i * 14, 860 + (i % 3) * 4, 1242 - i * 14), paint((230, 230, 228)))
-        c.drawLine(620, 1242 - i * 14, 860, 1242 - i * 14, paint((150, 150, 150), stroke=1.5))
-    bx, by = P.desk_lamp(c, 900, 1230, 0.6, side=-1, body=(60, 60, 60), glow=(255, 255, 255))
-    P.light_cone(c, bx, by, 700, 1240, 220, 1.0, color=(255, 255, 255), a=0.2)
-    F.seated(c, 250, 1480, 0.56, T, action="write", lit=(250, 250, 250), sil=(30, 30, 30))
+    cam(c, 1.0 + 0.06 * t / max(d, 0.1), 540, 1000)
+    P.hanging_bulb(c, 540, 520, 1.2, 1.0, cord=420)
+    F.teacher_front(c, 540, 1180, 1.0, T)
+    c.drawRect(skia.Rect.MakeLTRB(80, 1180, 1000, 1230), paint((150, 150, 150)))                   # the table
+    c.drawRect(skia.Rect.MakeLTRB(120, 1230, 150, 1700), paint((60, 60, 60)))
+    c.drawRect(skia.Rect.MakeLTRB(930, 1230, 960, 1700), paint((60, 60, 60)))
+    n = int(12 + 10 * ease(t / max(d, 0.1)))
+    for side in (-1, 1):                                                # the two stacks, growing
+        for i in range(n):
+            x0 = 540 + side * 330
+            c.drawRect(skia.Rect.MakeLTRB(x0 - 110, 1172 - i * 13, x0 + 110, 1182 - i * 13), paint((226, 226, 224)))
+            c.drawLine(x0 - 110, 1182 - i * 13, x0 + 110, 1182 - i * 13, paint((140, 140, 140), stroke=1.5))
+    c.drawRect(skia.Rect.MakeLTRB(430, 1150, 650, 1178), paint((236, 236, 234)))                   # the paper in front of her
     c.restore()
     return st.arr
 
@@ -141,13 +146,13 @@ def s_cranes(T, t, d):
     c.drawRect(skia.Rect.MakeWH(W, H), paint((0, 0, 0), 0.3))
     for r in range(3):                                                  # her class, small desks on the floor
         for q in range(6):
-            x, y = 250 + q * 116, 1300 + r * 80
+            x, y = 250 + q * 116, 1140 + r * 70
             flagged = (r, q) == (2, 4) and T >= C["flag"]
             P.lacquer_desk(c, x, y, 0.45, lit=1.0 if flagged else 0.0)
             if flagged:
                 c.drawCircle(x, y - 40, 60, paint(VERM, 0.5 + 0.3 * math.sin(T * 6), blur=20))
-    P.lacquer_desk(c, 540, 1150, 0.8)
-    F.robed(c, 540, 1180, 0.55, T, body=JADE, arms=0.2)
+    P.lacquer_desk(c, 540, 1010, 0.8)
+    F.robed(c, 540, 1040, 0.5, T, body=JADE, arms=0.2)
     rng = np.random.default_rng(9)
     kc = ramp(T, C["cranes"] - 0.3, C["cranes"] + 3.0)
     for i in range(12):                                                 # papers lift and fold into cranes
@@ -155,7 +160,7 @@ def s_cranes(T, t, d):
         if u <= 0:
             continue
         x = 540 + (rng.uniform(-1, 1) * 420) * u
-        y = 1080 - 760 * u + 40 * math.sin(T * 2 + i)
+        y = 940 - 640 * u + 40 * math.sin(T * 2 + i)
         P.crane(c, x, y, 0.35 + 0.25 * u, T, flap=T * 7 + i)
     ks = ease(ramp(T, C["six"] - 0.3, C["six"] + 0.3))
     if ks > 0:

@@ -11,7 +11,7 @@ from voice import SR, speak_fx, word_times
 FPS = 24
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-PRE = {c[3]: 3.0 for c in CHAPTERS}                 # room for the chapter card between chapters
+PRE = {c[3]: 2.5 for c in CHAPTERS}                 # room for the chapter card between chapters
 PRE.update({"a3": 0.2, "a5": 0.3, "d5": 0.3, "e8": 0.3})
 TAIL = 4.2
 

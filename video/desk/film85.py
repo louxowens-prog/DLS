@@ -52,7 +52,8 @@ def _luts():
             return y * t
         lo2, hi2 = _s(0, 1.45), _s(1, 1.45)
         _cache["present"] = _lut(present)
-        _cache["memory"] = _lut(lambda ch, x: 0.02 + 0.96 * (_s(x, 1.45) - lo2) / (hi2 - lo2))
+        lo4, hi4 = _s(0, 1.9), _s(1, 1.9)
+        _cache["memory"] = _lut(lambda ch, x: 0.0 + 0.98 * ((_s(x ** 1.15, 1.9) - lo4) / (hi4 - lo4)))
         lo3, hi3 = _s(0, 1.25), _s(1, 1.25)
         _cache["fiction"] = _lut(lambda ch, x: ((_s(x, 1.25) - lo3) / (hi3 - lo3)) * (1.02, 1.0, 0.97)[ch])
         _cache["card"] = _lut(lambda ch, x: x)
@@ -110,7 +111,7 @@ def _dust(a, idx, rate):
 
 PARAMS = {  # colour, weave px, grain amp, grain size divisor, halation, flare gain, vignette, dust
     "present": dict(sat=0.72, weave=0.5, grain=0.024, div=2, hal=0.8, flare=1.0, vig=0.22, dust=0.15),
-    "memory": dict(sat=0.0, weave=1.3, grain=0.05, div=3, hal=0.6, flare=0.7, vig=0.34, dust=0.9),
+    "memory": dict(sat=0.0, weave=1.3, grain=0.05, div=3, hal=0.6, flare=0.7, vig=0.5, dust=0.9),
     "fiction": dict(sat=1.22, weave=0.4, grain=0.018, div=2, hal=1.0, flare=1.5, vig=0.26, dust=0.1),
     "card": dict(sat=1.0, weave=0.0, grain=0.012, div=2, hal=0.0, flare=0.0, vig=0.0, dust=0.0),
 }

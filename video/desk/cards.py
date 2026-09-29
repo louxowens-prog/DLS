@@ -30,13 +30,13 @@ def chapter_card(c, T, i):
 def countdown(c, T, a=1.0):
     """The present-day clock, top left: the time and what's left before the exam."""
     hhmm = clock_at(T)
-    c.drawRect(skia.Rect.MakeLTRB(60, 236, 470, 350), paint((0, 0, 0), 0.35 * a))
+    c.drawRect(skia.Rect.MakeLTRB(60, 236, 470, 350), paint((0, 0, 0), 0.62 * a))
     D.text(c, hhmm, 84, 300, 62, "courier-400", (236, 232, 220), align="left", tag="clock", a=a)
     D.text(c, left_until_exam(hhmm), 86, 338, 28, "courier-400", (200, 196, 186), align="left", tag="clock", a=a)
 
 
-def use_tag(c, T, y=430):
-    """The thirteen uses, counted as they happen: '3 / 13' and the use, between two thin gold rules."""
+def use_tag(c, T, y=None):
+    """The thirteen uses, counted as they happen: a small running counter, top right ('4 / 13' and the use)."""
     cur = [u for u in USE_TAGS if u[0] <= T < u[1]]
     if not cur:
         return
@@ -44,14 +44,14 @@ def use_tag(c, T, y=430):
     k = ease(ramp(T, t0, t0 + 0.25)) * (1 - ease(ramp(T, t1 - 0.2, t1)))
     if k <= 0:
         return
-    f = D.font("cormorant-700", 50)
-    size = min(50, 50 * 820 / f.measureText(lab))
+    f = D.font("cormorant-700", 36)
+    size = min(36, 36 * 440 / f.measureText(lab))
     w = D.font("cormorant-700", size).measureText(lab)
-    c.drawRect(skia.Rect.MakeLTRB(540 - w / 2 - 50, y - 92, 540 + w / 2 + 50, y + 30), paint((0, 0, 0), 0.42 * k))
-    c.drawLine(540 - w / 2 - 30, y - 88, 540 + w / 2 + 30, y - 88, paint(GOLD, k, stroke=2))
-    c.drawLine(540 - w / 2 - 30, y + 26, 540 + w / 2 + 30, y + 26, paint(GOLD, k, stroke=2))
-    D.text(c, f"{n}  /  13", 540, y - 46, 38, "cormorant-700", GOLDL, tag="use", a=k)
-    D.text(c, lab, 540, y + 6, size, "cormorant-700", CREAM, tag="use", a=k)
+    x1 = 1030
+    c.drawRect(skia.Rect.MakeLTRB(x1 - w - 36, 238, x1 + 14, 350), paint((0, 0, 0), 0.62 * k))
+    c.drawLine(x1 - w - 22, 346, x1, 346, paint(GOLD, k, stroke=2))
+    D.text(c, f"{n} / 13", x1, 282, 34, "cormorant-700", GOLDL, align="right", tag="use", a=k)
+    D.text(c, lab, x1, 332, size, "cormorant-700", CREAM, align="right", tag="use", a=k)
 
 
 def aphorism(c, T, text, t0, y=820, size=76, color=CREAM, maxw=880):
@@ -61,6 +61,10 @@ def aphorism(c, T, text, t0, y=820, size=76, color=CREAM, maxw=880):
         return
     f = D.font("cormorant-500i", size)
     lines = D.wrap_balanced(text, f, maxw)
+    w = max(f.measureText(l) for l in lines)                            # a dark panel behind the words (hides cords)
+    c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(540 - w / 2 - 40, y - size * 1.05, 540 + w / 2 + 40,
+                                                         y + (len(lines) - 1) * size * 1.15 + size * 0.45), 18, 18),
+                paint((0, 0, 0), 0.72 * k))
     for j, ln in enumerate(lines):
         D.text(c, ln, 540, y + j * size * 1.15, size, "cormorant-500i", color, tag="aph", a=k)
 

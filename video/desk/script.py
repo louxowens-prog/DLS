@@ -27,7 +27,8 @@ CHAPTERS = [  # (number word, title, Japanese, first line key)
 
 LINES = [
     # ---- cold open: the present, the lamp clicks on
-    ("o1", CLOCK, "Twenty-one forty.", "21:40.", 0.25),
+    ("o0a", NAR, "Explain derivatives using cars.", None, 0.15),
+    ("o0b", TUTOR, "Your speedometer is a derivative.", None, 0.3),
     ("o2", NAR, "Eleven hours until my exam. And I still don't understand derivatives.",
      "Eleven hours until my exam.| And I still don't understand derivatives.", 0.7),
 
@@ -36,24 +37,24 @@ LINES = [
      "I left school at sixteen.| Before that, I was the girl in the back row.| 38 of us, one teacher, 45 minutes.| About a minute each.", 0.35),
     ("a3", TEACHER, "Any questions?", None, 0.1),
     ("a4", NAR, "The bell always rang first.", None, 0.6),
-    ("a5", NAR, "Across the street, a boy had a tutor. For most of history, the best teaching was one teacher, one student, for families who could pay.",
-     "Across the street, a boy had a tutor.| For most of history, the best teaching was| one teacher, one student,| for families who could pay.", 0.35),
-    ("a6", NAR, "In one famous study, tutored students beat ninety-eight percent of a regular class. Later studies found a smaller, but still large, effect.",
-     "In one famous study, tutored students| beat 98% of a regular class.| Later studies found a smaller,| but still large, effect.", 0.45),
+    ("a5", NAR, "Across the street, a boy had a tutor. For most of history, that kind of teaching was only for families who could pay.",
+     "Across the street, a boy had a tutor.| For most of history, that kind of teaching| was only for families who could pay.", 0.35),
+    ("a6", NAR, "In famous research from 1984, tutored students beat ninety-eight percent of a regular class. Later studies found a smaller effect, but still a large one.",
+     "In famous research from 1984, tutored students| beat 98% of a regular class.| Later studies found a smaller effect,| but still a large one.", 0.45),
     ("a7", NAR, "Attention was the most expensive thing in the room.", None, 0.9),
 
     # ---- TWO: LIGHT (the real-life scenario, at full strength)
     ("b1", CLOCK, "Twenty-one fifty-two.", "21:52.", 0.25),
-    ("b2", NAR, "After my shift, I asked a machine. Don't explain derivatives mathematically. Explain them using cars.",
-     "After my shift, I asked a machine.| “Don't explain derivatives mathematically.| Explain them using cars.”", 0.35),
+    ("b2", NAR, "After my shift, I asked a machine.", None, 0.15),
+    ("b2q", NAR, "Don't explain derivatives mathematically. Explain them using cars.", None, 0.35),
     ("b3", TUTOR, "Your odometer shows how far you've gone. Your speedometer shows how fast that's changing, right now. That's a derivative.",
      "Your odometer shows how far you've gone.| Your speedometer shows how fast that's changing,| right now. That's a derivative.", 0.4),
     ("b4", NAR, "Now explain it visually.", "“Now explain it visually.”", 0.25),
     ("b5", TUTOR, "Drag the point along the curve. How steep it is, right there, is the derivative.",
      "Drag the point along the curve.| How steep it is, right there,| is the derivative.", 0.4),
     ("b6", NAR, "Give me five problems.", "“Give me five problems.”", 1.0),
-    ("b7", NAR, "Four right. One wrong. Show me exactly where my reasoning went wrong.",
-     "Four right. One wrong.| “Show me exactly where my reasoning went wrong.”", 0.3),
+    ("b7", NAR, "Four right. One wrong.", None, 0.15),
+    ("b7q", NAR, "Show me exactly where my reasoning went wrong.", None, 0.3),
     ("b8", TUTOR, "Your power rule is right. But the inside changes too. Multiply by two.",
      "Your power rule is right.| But the inside changes too.| Multiply by 2.", 0.5),
     ("b9", NAR, "Nobody had ever looked at my work that closely. Not once.",
@@ -65,16 +66,16 @@ LINES = [
     # ---- THREE: DOUBT
     ("d1", NAR, "But there's a trap. If it just hands you answers, you learn nothing.",
      "But there's a trap.| If it just hands you answers, you learn nothing.", 0.3),
-    ("d2", NAR, "In a study of about a thousand high-school students, a plain chatbot raised their practice scores. Then, on the exam without it, they did seventeen percent worse. A tutor that gave hints, not answers, avoided that drop.",
-     "In a study of about 1,000 high-school students,| a plain chatbot raised their practice scores.| Then, on the exam without it,| they did 17% worse.| A tutor that gave hints, not answers,| avoided that drop.", 0.35),
-    ("d3", NAR, "So my rule was: never give me the answer. Make me find it.",
-     "So my rule was:| “Never give me the answer. Make me find it.”", 0.4),
+    ("d2", NAR, "In one study, high-school students with a plain chatbot did better in practice, then seventeen percent worse on the exam without it. A tutor that gave hints, not answers, largely avoided that drop.",
+     "In one study, high-school students with a plain chatbot| did better in practice,| then 17% worse on the exam without it.| A tutor that gave hints, not answers,| largely avoided that drop.", 0.35),
+    ("d3", NAR, "So my rule was:", None, 0.1),
+    ("d3q", NAR, "Never give me the answer. Make me find it.", None, 0.4),
     ("d4", NAR, "Built that way, it works. At Harvard, physics students with an AI tutor learned more than twice as much, in less time, as in an active-learning class.",
      "Built that way, it works.| At Harvard, physics students with an AI tutor| learned more than twice as much, in less time,| as in an active-learning class.", 0.5),
     ("d5", NAR, "And my teacher was never the problem. She had thirty-eight of us, and a stack of papers every night.",
      "And my teacher was never the problem.| She had 38 of us,| and a stack of papers every night.", 0.3),
-    ("d6", NAR, "The same tools can draft her lesson plans, grade the simple work, make exercises, and flag the kid who's lost. Teachers who use AI weekly say it saves them about six hours a week.",
-     "The same tools can draft her lesson plans,| grade the simple work, make exercises,| and flag the kid who's lost.| Teachers who use AI weekly say| it saves them about 6 hours a week.", 0.4),
+    ("d6", NAR, "The same tools can draft her lessons, grade simple work, and flag the kid who's lost. Teachers who use AI weekly say it saves them about six hours a week.",
+     "The same tools can draft her lessons,| grade simple work, and flag the kid who's lost.| Teachers who use AI weekly say| it saves them about 6 hours a week.", 0.4),
     ("d7", NAR, "Time to finally see the back row.", None, 0.9),
 
     # ---- FOUR: DAWN
@@ -83,8 +84,8 @@ LINES = [
      "It isn't just me.| It's the boy whose letters swim.| The girl learning in a second language.| The village with no maths teacher.| The night-shift nurse.| The 12-year-old already bored of algebra.", 0.3),
     ("e3", NAR, "Forty percent of people can't get schooling in a language they understand. It can translate the lesson, coach their pronunciation, and play the other side of a conversation.",
      "40% of people can't get schooling| in a language they understand.| It can translate the lesson,| coach their pronunciation,| and play the other side of a conversation.", 0.3),
-    ("e4", NAR, "In Nigeria, six weeks of after-school AI tutoring brought gains like one and a half to two years of ordinary school.",
-     "In Nigeria, six weeks of after-school AI tutoring| brought gains like 1.5 to 2 years| of ordinary school.", 0.5),
+    ("e4", NAR, "In Nigeria, six weeks of after-school AI tutoring in English brought gains like one and a half to two years of ordinary school.",
+     "In Nigeria, six weeks of after-school AI tutoring in English| brought gains like 1.5 to 2 years| of ordinary school.", 0.5),
     ("e5", CLOCK, "Nine o'clock.", "09:00.", 0.35),
     ("e6", NAR, "Question one. A derivative, with an inside. I smiled.",
      "Question one.| A derivative, with an inside.| I smiled.", 0.6),
@@ -103,7 +104,7 @@ USES = [
     ("b5", "Drag", "EXPLAINS IT ANOTHER WAY"),
     ("b5", "steep", "INTERACTIVE EXERCISES"),
     ("b6", "Give", "GENERATES PRACTICE"),
-    ("b7", "Show", "FINDS WHERE YOU GOT LOST"),
+    ("b7q", "Show", "FINDS WHERE YOU GOT LOST"),
     ("b8", "Your", "INSTANT FEEDBACK"),
     ("b11", "pace", "TEACHES AT YOUR PACE"),
     ("b11", "harder", "ADJUSTS THE DIFFICULTY"),
@@ -115,9 +116,9 @@ USES = [
 ]
 # who it helps most, lit one lamp at a time (line, word, label)
 WHO = [
-    ("e2", "letters", "LEARNING DIFFERENCES"),
-    ("e2", "second", "LANGUAGE BARRIERS"),
+    ("e2", "It's", "LEARNING DIFFERENCES"),
+    ("e2", "girl", "LANGUAGE BARRIERS"),
     ("e2", "village", "NO TEACHER NEARBY"),
     ("e2", "night-shift", "UNUSUAL HOURS"),
-    ("e2", "twelve-year-old", "ADVANCED INTERESTS"),
+    ("e2", "twelve", "ADVANCED INTERESTS"),
 ]

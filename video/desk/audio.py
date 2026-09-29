@@ -59,7 +59,7 @@ def nxt(name):
 
 # the dead stops: music and ambience cut to nothing
 STOPS = [E("o2") + 0.35, E("a7") + 0.25, E("b12") + 0.25, E("d7") + 0.25]
-SILENCES = [(STOPS[i], CARDS[i][3] + 1.05) for i in range(4)] + [(E("e7") + 0.25, f("final") + 0.05)]
+SILENCES = [(STOPS[i], CARDS[i][3] + 0.8) for i in range(4)] + [(E("e7") + 0.25, f("final") + 0.05)]
 
 
 def dead_air():
@@ -67,20 +67,26 @@ def dead_air():
 
 
 def score(mus, amb, fx):
-    # ---------------------------------------------------------------- cold open: the present
-    amb.add(Sc.room_tone(STOPS[0]), 0.0, 0.8)
-    amb.add(wide(Sc.rain, STOPS[0], amp=0.5), 0.0, 1.0)
+    # ---------------------------------------------------------------- cold open: the hook, then the present
+    fx.add(O.keys(int((E("o0a") - 0.35) / 0.08), gap=0.08, amp=0.55, seed=9), 0.15, 1.0, pan=0.55)
+    Sc.ostinato(mus, 0.0, f("teaser_dial"), Sc.A_MIN, {"pulse": 0.4, "arp": 0.35}, bars_per_chord=2)
+    Sc.ostinato(mus, f("teaser_dial"), f("open_lamp"), Sc.A_MIN, {"pulse": 0.55, "arp": 0.7, "bass": 0.6, "counter": 0.45,
+                                                                  "brass": 0.4, "timp": 0.4})
+    fx.add(Sc.clappers(amp=0.9, seed=11), f("teaser_dial") - 0.05, 1.0)
+    to = f("open_lamp")
+    amb.add(Sc.room_tone(STOPS[0] - to), to, 0.8)
+    amb.add(wide(Sc.rain, STOPS[0] - to, amp=0.5), to, 1.0)
     fx.add(O.click(amp=1.2), C["lamp_on"] - 0.02, 1.0, pan=0.35)
-    Sc.ostinato(mus, 0.5, STOPS[0], Sc.A_MIN, {"pulse": 0.35}, bars_per_chord=2)
-    for k in range(6):
-        fx.add(O.tick(amp=0.5, tock=k % 2), 0.6 + k, 1.0, pan=0.6)
+    Sc.ostinato(mus, to, STOPS[0], Sc.A_MIN, {"pulse": 0.35}, bars_per_chord=2)
+    for k in range(int(STOPS[0] - to)):
+        fx.add(O.tick(amp=0.5, tock=k % 2), to + 0.3 + k, 1.0, pan=0.6)
 
     # ---------------------------------------------------------------- ONE: CROWD
     card = [c[3] for c in CARDS]
     for i, t in enumerate(card):                                        # a temple bell under each chapter card
-        mus.add(Sc.temple_bell(40 + (0, 3, 5, 7)[i], amp=0.9), t + 1.1, 1.0, pan=0.5)
+        mus.add(Sc.temple_bell(40 + (0, 3, 5, 7)[i], amp=0.42), t + 0.8, 1.0, pan=0.5)
     t_class = f("class")
-    amb.add(wide(Sc.murmur, C["bell"] - t_class, amp=0.8), t_class, 1.0)
+    amb.add(wide(Sc.murmur, C["bell"] - t_class, amp=0.4), t_class, 1.0)
     Sc.piano_motif(mus, t_class + 0.4, C["bell"] - 0.2, amp=0.7, step=1.7, seed=1)
     for k in range(10):
         fx.add(Sc.chalk(amp=0.6, seed=k), t_class + 0.8 + k * 0.9 + 0.2 * (k % 3), 1.0, pan=0.42)
@@ -108,7 +114,7 @@ def score(mus, amb, fx):
     amb.add(wide(Sc.rain, f("car") - t2, amp=0.35, seed=11), t2, 1.0)
     for k in range(int(f("car") - t2)):
         fx.add(O.tick(amp=0.4, tock=k % 2), t2 + 0.2 + k, 1.0, pan=0.62)
-    n_keys = int((E("b2") - C["type1"]) / 0.09)
+    n_keys = int((E("b2q") - C["type1"]) / 0.09)
     fx.add(O.keys(n_keys, gap=0.09, amp=0.5, seed=1), C["type1"], 1.0, pan=0.55)
     Sc.ostinato(mus, t2 + 0.3, f("car"), Sc.A_MIN, {"pulse": 0.35, "arp": Sc.ramp_up(S("b3") - 0.5, S("b3"), 0, 0.3)},
                 bars_per_chord=2)
@@ -122,12 +128,12 @@ def score(mus, amb, fx):
     Sc.ostinato(mus, t3, f("old_test"), Sc.A_MIN, {"pulse": 0.35, "arp": 0.3, "bass": 0.3}, bars_per_chord=2)
     fx.add(O.keys(int((E("b4") - S("b4")) / 0.09), 0.09, amp=0.5, seed=2), S("b4"), 1.0, pan=0.55)
     fx.add(O.keys(int((E("b6") - S("b6")) / 0.09), 0.09, amp=0.5, seed=3), S("b6"), 1.0, pan=0.55)
-    fx.add(O.keys(int((E("b7") - C["type4"]) / 0.09), 0.09, amp=0.5, seed=4), C["type4"], 1.0, pan=0.55)
+    fx.add(O.keys(int((E("b7q") - C["type4"]) / 0.09), 0.09, amp=0.5, seed=4), C["type4"], 1.0, pan=0.55)
     for k in range(4):
         mus.add(O.harp(72 + k * 4, amp=0.5), Wx("b5", "steep") - 0.2 + k * 0.07, 1.0, pan=0.4)
-    fx.add(Sc.pencil(2.4, amp=0.9), S("b6") + 1.3, 1.0, pan=0.62)
+    fx.add(Sc.pencil(1.4, amp=0.9), E("b6") + 0.3, 1.0, pan=0.62)
     for k in range(5):
-        fx.add(Sc.ding(k < 4, amp=0.8), C["marks"] + k * 0.18, 1.0, pan=0.62)
+        fx.add(Sc.ding(k < 4, amp=0.8), S("b7") + 0.25 + k * 0.18, 1.0, pan=0.62)
     mus.add(O.harp(76, amp=0.6), C["ring"], 1.0)
     mus.add(O.celesta(84, amp=0.7), C["fix"], 1.0)
     mus.add(O.celesta(88, amp=0.5), C["fix"] + 0.3, 1.0)
@@ -160,7 +166,7 @@ def score(mus, amb, fx):
     Sc.ostinato(mus, C["hints"] - 0.4, f("rule"), Sc.DAWN, {"pulse": 0.4, "arp": 0.5, "bass": 0.5, "harp": 0.5})
     tr = f("rule")
     amb.add(Sc.room_tone(f("harvard") - tr), tr, 0.8)
-    fx.add(O.keys(int((E("d3") - S("d3") - 0.5) / 0.09), 0.09, amp=0.5, seed=6), S("d3") + 0.4, 1.0, pan=0.55)
+    fx.add(O.keys(int((E("d3q") - S("d3q")) / 0.09), 0.09, amp=0.5, seed=6), S("d3q"), 1.0, pan=0.55)
     Sc.ostinato(mus, tr, f("harvard"), Sc.A_MIN, {"pulse": 0.35}, bars_per_chord=2)
     th = f("harvard")
     Sc.ostinato(mus, th, f("teacher_night"), Sc.DAWN, {"pulse": 0.45, "arp": 0.55, "bass": 0.55,
@@ -294,8 +300,15 @@ def build():
     high = signal.lfilter(*signal.butter(2, 4500 / (SR / 2), "high"), music)
     mid = music - low - high
     music = low * (1 - 0.3 * env) + mid * (1 - 0.6 * env) + high * (1 - 0.35 * env)
-    music = mono_safe(music)
-    ref = music[:, int(f("prince") * SR):int(f("aph1") * SR)]
+    music = mono_safe(music, max_ratio=1.0)
+    shape = np.zeros(N)                                                  # memory hushed, the stage swelling
+    for i, (t0, name, reg, tr) in enumerate(EDIT):
+        t1 = EDIT[i + 1][0] if i + 1 < len(EDIT) else TL.total
+        shape[int(t0 * SR):int(t1 * SR)] = {"memory": -5.0, "present": -1.5, "fiction": 2.5, "card": 0.0}[reg] + (1.5 if name == "final" else 0.0)
+    k = int(0.25 * SR)
+    shape = np.convolve(np.pad(shape, k, mode="edge"), np.ones(k) / k, "same")[k:-k]
+    music = music * db(shape)[None]
+    ref = music[:, int(f("prince") * SR):int(f("aph1") * SR)] / db(2.5)
     music = music * db(-19.0) / (np.sqrt((ref ** 2).mean()) + 1e-12)
     band = lambda x: signal.sosfilt(signal.butter(2, [300 / (SR / 2), 4000 / (SR / 2)], "band", output="sos"), x.mean(axis=0))
     bm, bv = band(music), band(vo)
@@ -314,11 +327,10 @@ def build():
     music = music * ride
     mix = music + vo
     mix = signal.sosfilt(signal.butter(4, 35 / (SR / 2), "high", output="sos"), mix, axis=1)
-    shape = np.zeros(N)                                                  # memory hushed, the stage full, the end fullest
+    shape = np.zeros(N)                                                  # the whole mix breathes with the registers too
     for i, (t0, name, reg, tr) in enumerate(EDIT):
         t1 = EDIT[i + 1][0] if i + 1 < len(EDIT) else TL.total
-        g = {"memory": -2.5, "present": -1.0, "fiction": 1.5, "card": 0.0}[reg] + (1.5 if name == "final" else 0.0)
-        shape[int(t0 * SR):int(t1 * SR)] = g
+        shape[int(t0 * SR):int(t1 * SR)] = {"memory": -2.5, "present": -0.8, "fiction": 1.5, "card": 0.0}[reg] + (1.5 if name == "final" else 0.0)
     k = int(0.3 * SR)
     shape = np.convolve(np.pad(shape, k, mode="edge"), np.ones(k) / k, "same")[k:-k]
     mix = mix * db(shape)[None]

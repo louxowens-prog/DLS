@@ -204,6 +204,29 @@ def teacher(c, x, y, s, T, pose="write"):
     c.restore()
 
 
+def teacher_front(c, x, y, s, T):
+    """The teacher seated behind her table, facing us: short grey hair, glasses, a shawl; pen moving."""
+    c.save()
+    c.translate(x, y)
+    c.scale(s, s)
+    shawl, skin, hair = (70, 70, 70), (200, 196, 190), (170, 170, 168)
+    c.drawPath(D.smooth([(-230, 0), (-210, -170), (-120, -250), (0, -270), (120, -250), (210, -170), (230, 0)]), paint(shawl))
+    c.drawPath(path([(-120, -250), (0, -120), (120, -250), (60, -262), (0, -170), (-60, -262)]), paint((110, 110, 110)))
+    c.drawRect(skia.Rect.MakeLTRB(-26, -300, 26, -250), paint(skin))
+    c.drawOval(skia.Rect.MakeLTRB(-72, -440, 72, -276), paint(skin))
+    c.drawPath(D.smooth([(-80, -350), (-76, -430), (0, -470), (76, -430), (80, -350), (60, -410), (-60, -410)]), paint(hair))
+    for sx in (-1, 1):                                                  # glasses, looking down at the page
+        c.drawCircle(sx * 28, -366, 20, paint((40, 40, 40), stroke=4))
+        c.drawLine(sx * 22, -364, sx * 34, -362, paint((40, 40, 40), stroke=3))
+    c.drawLine(-8, -366, 8, -366, paint((40, 40, 40), stroke=3))
+    c.drawLine(-14, -310, 14, -310, paint((110, 90, 86), stroke=4))
+    k = math.sin(T * 7)
+    c.drawPath(D.capsule(-150, -160, -90 + 8 * k, -20, 40, 34), paint(shawl))
+    c.drawPath(D.capsule(150, -160, 110, -20, 40, 34), paint(shawl))
+    c.drawLine(-90 + 8 * k, -24, -70 + 8 * k, -60, paint((20, 20, 20), stroke=6))
+    c.restore()
+
+
 def sil_profile(c, x, y, s, side=1, kind="adult", color=(12, 12, 14)):
     """A seated profile silhouette at a desk (the tutor, the boy): (x, y) is the seat line."""
     c.save()

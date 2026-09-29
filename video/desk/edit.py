@@ -10,8 +10,10 @@ S, E = TL.s, TL.e
 
 EDIT = [
     # cold open
-    (0.0, "open_lamp", "present", "cut"),
-    (S("o2") - 0.1, "open_room", "present", "cut"),
+    (0.0, "teaser_type", "present", "cut"),
+    (S("o0b") - 0.1, "teaser_dial", "fiction", "cut"),
+    (S("o2") - 0.15, "open_lamp", "present", "cut"),
+    (Wx("o2", "my") - 0.1, "open_room", "present", "cut"),
     (Wx("o2", "And") - 0.1, "open_profile", "present", "cut"),
     # ONE: CROWD
     (CARDS[0][3], "card1", "card", "fade"),
@@ -57,8 +59,8 @@ EDIT = [
     (S("e6") - 0.1, "q1", "present", "cut"),
     (C["smile"] - 0.15, "smile", "present", "cut"),
     (S("e7") - 0.2, "letter", "present", "cut"),
-    (E("e7") + 0.35, "black", "card", "fade"),
-    (S("e8") - 0.3, "final", "fiction", "fade"),
+    (E("e7") + 0.35, "black", "card", "cut"),
+    (S("e8") - 0.3, "final", "fiction", "cut"),
     (E("e9") + 0.7, "end", "card", "fade"),
 ]
 FADE = 0.45

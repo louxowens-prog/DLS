@@ -96,7 +96,7 @@ def _wrap(s, f, w):
     return D.wrap(s, f, w)
 
 
-def chat(c, T, msgs, x0=90, y0=360, x1=990, y_bottom=1250, scale=1.0, dark=True):
+def chat(c, T, msgs, x0=90, y0=360, x1=990, y_bottom=1250, scale=1.0, dark=True, wrap=None):
     """A chat on a screen: msgs = [(who, text, t_start, t_type)] - 'me' types (characters appear over t_type),
     'tutor' answers (words appear). Newest at the bottom; older ones scroll up. Returns nothing."""
     bg = (26, 30, 36) if dark else (238, 238, 234)
@@ -116,7 +116,7 @@ def chat(c, T, msgs, x0=90, y0=360, x1=990, y_bottom=1250, scale=1.0, dark=True)
             words = txt.split(" ")
             n = int(len(words) * min(1.0, (T - t0) / max(0.05, dur))) + 1
             shown = " ".join(words[:n])
-        lines = _wrap(shown or " ", f, WRAP_W * scale)
+        lines = _wrap(shown or " ", f, wrap or WRAP_W * scale)
         blocks.append((who, lines))
     y = y_bottom - 30
     c.save()
@@ -264,7 +264,6 @@ def old_test(c, x, y, s, T):
     """Her old maths test: a grade circled, and not one comment."""
     c.save()
     c.translate(x, y)
-    c.rotate(-4)
     c.scale(s, s)
     c.drawRect(skia.Rect.MakeLTRB(-340, -440, 340, 440), paint((236, 236, 232)))
     D.text(c, "MATHEMATICS  ·  TEST 4", -300, -370, 32, "courier-400", INK, align="left", tag="test")

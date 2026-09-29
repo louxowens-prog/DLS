@@ -40,9 +40,38 @@ def _table_top(c, T, on):
     c.drawRect(skia.Rect.MakeLTRB(-200, -120, 200, 140), paint((226, 222, 210)))
     for j in range(5):
         c.drawLine(-160, -70 + j * 44, 100 - 30 * (j % 2), -70 + j * 44, paint((90, 90, 110), stroke=4))
-    D.text(c, "dy/dx ?", 40, 70, 48, "cormorant-600i" if False else "cormorant-500i", (40, 40, 90), tag="scrib")
     c.restore()
     c.drawLine(700, 1480, 900, 1420, paint((200, 160, 60), stroke=12))
+
+
+def s_teaser_type(T, t, d):
+    """The hook: her screen, the prompt typed straight in."""
+    from sc2 import TEASER, screen
+    import props as P_
+    st = D.Stage()
+    screen(st, T, t, d, lambda c: (c.drawRect(skia.Rect.MakeLTRB(80, 240, 1000, 1280), paint((26, 30, 36))),
+                                   P_.chat(c, T, TEASER, x0=80, y0=520, x1=960, y_bottom=1060, scale=1.4, wrap=600))[-1],
+           push=0.1)
+    c = st.c
+    c.drawCircle(700, 900, 420, paint((140, 170, 220), 0.12, blur=120))
+    K.countdown(st.c, T)
+    return st.arr
+
+
+def s_teaser_dial(T, t, d):
+    """...and the answer, on the stage: the speedometer, gold, the needle climbing."""
+    st = D.Stage((0, 0, 0))
+    c = st.c
+    c.save()
+    cam(c, 1.25 - 0.1 * t / max(d, 0.1), 540, 900)
+    sets.bd(st, "stage_pink", lambda cc: sets.stage(cc, "pink"))
+    sets.spotlight(c, 540, 170, 540, 1300, 260, a=0.3)
+    c.drawPath(path([(110, 1290), (970, 1290), (1080, 1400), (0, 1400)]), paint(GOLDL))
+    c.drawLine(0, 1345, W, 1345, paint(VERM, stroke=6))
+    P.car(c, 250 + 500 * t / max(d, 0.1), 1340, 0.9)
+    P.dial(c, 540, 760, 300, 0.15 + 0.6 * ease(t / max(d, 0.1)), "HOW FAST", T)
+    c.restore()
+    return st.arr
 
 
 def s_open_lamp(T, t, d):
@@ -68,7 +97,8 @@ def s_open_room(T, t, d):
     st = D.Stage()
     c = st.c
     c.save()
-    cam(c, 1.0 + 0.04 * t / max(d, 0.1), 540, 1100)
+    cam(c, 1.1, 540, 1100)
+    c.translate(-45 + 90 * t / max(d, 0.1), 0)                           # a slow lateral track along the table
     sets.bd(st, "kitchen_night", lambda cc: sets.kitchen(cc))
     c.drawRect(skia.Rect.MakeWH(W, H), paint((0, 0, 0), 0.38))
     P.pool_of_light(c, 560, 1260, 520, 170, 1.0, a=0.5)
@@ -143,18 +173,13 @@ def _class_rows(c, T, hand=0.0, teacher_pose="write", girl=True, girl_scale=1.0,
 def s_class(T, t, d):
     st = D.Stage()
     c = st.c
+    u = ease(t / max(d, 0.1))
     c.save()
-    cam(c, 1.0 + 0.1 * ease(t / max(d, 0.1)), 540, 760)
+    cam(c, 1.12 + 0.06 * u, 540, 760)
+    c.translate(80 * (1 - u), 0)                                        # a long lateral track, settling dead centre
     sets.bd(st, "classroom", sets.classroom, tex=0.06)
     _class_rows(c, T)
     c.restore()
-    k = ease(ramp(T, Wx("a1", "Thirty-eight") - 0.1, Wx("a1", "Thirty-eight") + 0.4))
-    if k > 0:
-        c.drawRect(skia.Rect.MakeLTRB(150, 236, 930, 330), paint((0, 0, 0), 0.45 * k))
-        D.text(c, "38 pupils  ·  1 teacher  ·  45 minutes", 540, 296, 44, "cormorant-600", WHITE, tag="count", a=k)
-    k2 = ease(ramp(T, Wx("a1", "About") - 0.1, Wx("a1", "About") + 0.4))
-    if k2 > 0:
-        D.text(c, "about 1 minute each", 540, 400, 52, "cormorant-500i", WHITE, tag="count2", a=k2, outline=(0, 0, 0), ow=6)
     return st.arr
 
 
@@ -267,9 +292,9 @@ def s_prince(T, t, d):
 
 def _after_split(c, T, k):
     sets.stage(c, "indigo")
-    P.banner(c, 540, 470, 820, 290, ["LATER STUDIES", "a smaller effect  ·  still one of the", "largest in education"],
-             bg=(30, 36, 90), a=ease(k), sizes=(62, 42), src="VanLehn, 2011")
     P.lantern(c, 540, 900, 0.7, 1.0, T, cord=700)
+    P.banner(c, 540, 470, 820, 290, ["LATER STUDIES", "a smaller effect, but still a large one", "+0.79 standard deviations"],
+             bg=(30, 36, 90), a=ease(k), sizes=(62, 42), src="VanLehn, 2011")
     P.lacquer_desk(c, 540, 1300, 0.9, lit=1.0)
 
 

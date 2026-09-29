@@ -20,21 +20,23 @@ S, E = TL.s, TL.e
 SPOKEN = {k: sp for k, who, sp, cap, gap in LINES}
 
 PROMPT1 = "Don't explain derivatives mathematically. Explain them using cars."
+TEASER = [("me", "Explain derivatives using cars.", 0.15, E("o0a") - 0.35),
+          ("tutor", "Your speedometer is a derivative.", S("o0b"), 1.2)]
 MSGS = [
-    ("me", PROMPT1, C["type1"], E("b2") - C["type1"] - 0.2),
+    ("me", PROMPT1, C["type1"], E("b2q") - C["type1"] - 0.2),
     ("tutor", SPOKEN["b3"], S("b3"), E("b3") - S("b3")),
     ("me", "Now explain it visually.", S("b4"), E("b4") - S("b4")),
     ("tutor", SPOKEN["b5"], S("b5"), E("b5") - S("b5")),
     ("me", "Give me five problems.", S("b6"), E("b6") - S("b6")),
     ("tutor", "Here are five, about a car. Take your time.", E("b6") + 0.1, 0.6),
-    ("me", "Show me exactly where my reasoning went wrong.", C["type4"], E("b7") - C["type4"]),
+    ("me", "Show me exactly where my reasoning went wrong.", C["type4"], E("b7q") - C["type4"]),
     ("tutor", SPOKEN["b8"], S("b8"), E("b8") - S("b8")),
     ("tutor", "No rush. Try it your way first.", Wx("b11", "pace") - 0.3, 0.6),
     ("tutor", "Nice. Let's make the next one harder.", Wx("b11", "harder") - 0.2, 0.6),
     ("tutor", "One more with the chain rule - remember the inside.", Wx("b11", "chain") - 0.2, 0.6),
     ("tutor", "Now teach it back to me, in your own words.", Wx("b11", "midnight"), 0.7),
-    ("me", "Never give me the answer. Make me find it.", S("d3") + 0.4, E("d3") - S("d3") - 0.5),
-    ("tutor", "Deal. I'll ask you questions instead.", E("d3") - 0.1, 0.6),
+    ("me", "Never give me the answer. Make me find it.", S("d3q"), E("d3q") - S("d3q")),
+    ("tutor", "Deal. I'll ask you questions instead.", E("d3q") - 0.1, 0.6),
 ]
 
 
@@ -65,7 +67,7 @@ def _chat_bg(c):
 
 
 def _chat(T):
-    return lambda c: _chat_bg(c) or P.chat(c, T, MSGS, x0=80, y0=520, x1=1000, y_bottom=1280)
+    return lambda c: _chat_bg(c) or P.chat(c, T, MSGS, x0=80, y0=520, x1=960, y_bottom=1280)
 
 
 def s_clock1(T, t, d):
@@ -110,8 +112,8 @@ def _car_set(c, T, phase):
 def _deriv_set(c, T):
     sets.stage(c, "jade")
     P.lantern(c, 540, 700, 0.6, 1.0, T, cord=520)
-    P.banner(c, 540, 1120, 820, 300, ["SPEED", "is how fast the distance is changing,", "right now: the derivative"],
-             bg=LACQ, sizes=(80, 44))
+    P.banner(c, 540, 1120, 820, 300, ["speed  =  d(distance) / d(time)", "the rate of change, at one instant"],
+             bg=LACQ, sizes=(64, 42))
 
 
 def s_car(T, t, d):
@@ -167,7 +169,7 @@ def s_paper(T, t, d):
     _paper_room(st, T, t, d)
     c.save()
     cam(c, 1.0 + 0.05 * t / max(d, 0.1), 540, 1000)
-    P.problems(c, T, 150, 560, 780, t0=S("b6") + 1.3, per=0.5, marks_at=C["marks"], size=48)
+    P.problems(c, T, 150, 560, 780, t0=E("b6") + 0.3, per=0.22, marks_at=S("b7") + 0.25, size=48)
     c.drawLine(900, 1500, 1000, 1330 - 100 * math.sin(T * 5), paint((200, 160, 60), stroke=14))   # her pencil
     c.restore()
     K.use_tag(c, T, y=430)
@@ -205,7 +207,7 @@ def s_old_test(T, t, d):
     c = st.c
     c.drawRect(skia.Rect.MakeWH(W, H), paint(shader=D.rad((540, 900), 1000, [(120, 120, 120), (30, 30, 30)])))
     c.save()
-    cam(c, 1.0 + 0.08 * t / max(d, 0.1), 600, 700)
+    cam(c, 1.0 + 0.08 * t / max(d, 0.1), 540, 900)
     P.old_test(c, 540, 900, 1.25, T)
     c.restore()
     return st.arr
@@ -237,7 +239,7 @@ def s_montage(T, t, d):
     def fn(c):
         if T < ph_h:
             _chat_bg(c)
-            P.chat(c, T, MSGS, x0=80, y0=520, x1=1000, y_bottom=1280)
+            P.chat(c, T, MSGS, x0=80, y0=520, x1=960, y_bottom=1280)
         elif T < ph_c:
             c.drawRect(skia.Rect.MakeLTRB(80, 240, 1000, 1280), paint((26, 30, 36)))
             D.text(c, "difficulty", 540, 600, 44, "inter-700", (200, 206, 214), tag="ui")
@@ -251,7 +253,7 @@ def s_montage(T, t, d):
             c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-360, -230, 360, 230), 24, 24), paint((246, 240, 222)))
             D.text(c, "CHAIN RULE", 0, -110, 64, "inter-700", (40, 44, 60), tag="flash")
             D.text(c, "remember the inside:", 0, -10, 44, "inter-500", (60, 64, 80), tag="flash")
-            D.text(c, "d/dx (3x + 2)²  =  2(3x + 2) · 3", 0, 90, 42, "inter-500", (160, 60, 50), tag="flash")
+            D.text(c, "d/dx (3x + 2)²  =  2(3x + 2) · 3", 0, 100, 46, "inter-700", (120, 20, 20), tag="flash")
             c.restore()
     screen(st, T, t, d, fn, push=0.03)
     K.use_tag(st.c, T, y=470)

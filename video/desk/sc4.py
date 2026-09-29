@@ -49,7 +49,7 @@ def who_tag(c, T, y=430):
     k = ease(ramp(T, t0, t0 + 0.25)) * (1 - ease(ramp(T, t1 - 0.2, t1)))
     f = D.font("cormorant-700", 56)
     w = f.measureText(lab)
-    c.drawRect(skia.Rect.MakeLTRB(540 - w / 2 - 50, y - 96, 540 + w / 2 + 50, y + 30), paint((0, 0, 0), 0.45 * k))
+    c.drawRect(skia.Rect.MakeLTRB(540 - w / 2 - 50, y - 96, 540 + w / 2 + 50, y + 30), paint((0, 0, 0), 0.82 * k))
     c.drawLine(540 - w / 2 - 30, y + 26, 540 + w / 2 + 30, y + 26, paint(GOLD, k, stroke=2))
     D.text(c, "who it can help most", 540, y - 50, 34, "cormorant-500i", GOLDL, tag="whot", a=k)
     D.text(c, lab, 540, y + 8, 56, "cormorant-700", CREAM, tag="whot", a=k)
@@ -59,6 +59,10 @@ def s_lamps(T, t, d):
     """A vast dark stage: one by one, a lantern comes down over each learner at a desk, and their need is named."""
     st = D.Stage((0, 0, 0))
     c = st.c
+    u = t / max(d, 0.1)
+    c.save()
+    cam(c, 1.12, 540, 1000)
+    c.translate(70 - 140 * u, 0)                                        # a long lateral track past the learners
     sets.bd(st, "stage_none", lambda cc: sets.stage(cc, None))
     y = 1330
     for i, (x, col) in enumerate(LEARNERS):
@@ -67,6 +71,7 @@ def s_lamps(T, t, d):
         P.lantern(c, x, 700 + 260 * k, 0.42, k, T, cord=900)
         F.learner(c, x - 30, y, 0.5, T, color=mix((50, 50, 60), col, 0.25 + 0.75 * k), pose="sit", glow=k)
         P.lacquer_desk(c, x + 20, y + 10, 0.6, lit=k)
+    c.restore()
     who_tag(c, T)
     return st.arr
 
@@ -85,7 +90,7 @@ def s_language(T, t, d):
     if k40 > 0:
         P.banner(c, 540, 700, 860, 300, ["40% OF PEOPLE", "have no schooling in a language", "they speak or understand"], bg=LACQ,
                  sizes=(76, 44), src="UNESCO Global Education Monitoring, 2025", a=k40)
-    kt = ramp(T, Wx("e3", "translate") - 0.2, Wx("e3", "translate") + 1.2)
+    kt = ramp(T, Wx("e3", "translate") + 0.02, Wx("e3", "translate") + 1.4)
     if kt > 0 and T < Wx("e3", "coach") - 0.1:
         for i, (wd, x, y) in enumerate(WORDS):                          # sliding screens, each opening on a word
             o = ease(ramp(kt, i * 0.1, i * 0.1 + 0.5))
@@ -124,6 +129,10 @@ def s_nigeria(T, t, d):
     """A whole hall of small lanterns lighting up: six weeks, and a year and a half of learning or more."""
     st = D.Stage((0, 0, 0))
     c = st.c
+    u = t / max(d, 0.1)
+    c.save()
+    cam(c, 1.1, 540, 1250)
+    c.translate(-60 + 120 * u, 0)                                       # tracking along the hall of lanterns
     sets.bd(st, "stage_none", lambda cc: sets.stage(cc, None))
     k = ramp(t, 0.2, d - 1.0)
     n = 0
@@ -134,8 +143,9 @@ def s_nigeria(T, t, d):
             P.lantern(c, x, y - 160, 0.22, on, T, cord=40)
             P.lacquer_desk(c, x, y, 0.4, lit=on)
             n += 1
-    P.banner(c, 540, 520, 880, 330, ["NIGERIA", "6 weeks of after-school AI tutoring:", "gains like 1.5 to 2 years", "of ordinary school"],
-             bg=INDIGO, sizes=(76, 44), src="De Simone et al., World Bank, 2025")
+    c.restore()
+    P.banner(c, 540, 520, 880, 330, ["NIGERIA", "6 weeks of after-school AI tutoring in English:", "gains like 1.5 to 2 years",
+                                     "of ordinary school"], bg=INDIGO, sizes=(76, 42), src="De Simone et al., World Bank, 2025")
     return st.arr
 
 
@@ -156,10 +166,10 @@ def s_exam(T, t, d):
     c.save()
     cam(c, 1.0 + 0.08 * ease(t / max(d, 0.1)), 540, 1100)
     sets.bd(st, "exam_hall", sets.exam_hall)
-    P.wall_clock(c, 540, 420, 90, 9.0, face=(230, 228, 220), rim=(50, 50, 50))
+    P.wall_clock(c, 720, 440, 90, 9.0, face=(230, 228, 220), rim=(50, 50, 50))
     _hall(c, T, t, d)
     x, y, s = [(x, y, s) for x, y, s, r, q in sets.exam_desks() if r == 5 and q == 0][0]
-    F.child_back(c, x, y - 14 * s, s * 1.2, hair=(24, 20, 18), shirt=(200, 170, 70), seed=4)     # her: the one mustard sweater
+    F.child_back(c, x, y - 14 * s, s * 1.2, hair=(24, 20, 18), shirt=(200, 170, 70), seed=5)     # her: the one mustard sweater, the bun
     c.restore()
     K.countdown(c, T)
     return st.arr
@@ -198,8 +208,6 @@ def s_letter(T, t, d):
     sets.bd(st, "kitchen_morning", lambda cc: sets.kitchen(cc, morning=True))
     c.restore()
     P.envelope(c, 540, 1120, 1.1, T, open_=ease(ramp(t, 0.1, 0.9)))
-    k = ease(ramp(t, 0.4, 1.0))
-    D.text(c, "six weeks later", 540, 520, 54, "cormorant-500i", (60, 60, 60), tag="later", a=k)
     return st.arr
 
 
@@ -226,7 +234,7 @@ def s_final(T, t, d):
             P.lantern(c, x, y - 180 * s, 0.26 * s + 0.08, on, T, cord=200 * s)
             c.drawPath(path([(x - 70 * s, y), (x + 70 * s, y), (x + 60 * s, y - 24 * s), (x - 60 * s, y - 24 * s)]),
                        paint(mix((70, 64, 60), GOLD, on * 0.8)))
-    F.child_back(c, 540, 1760, 2.6, hair=(20, 20, 20), shirt=(200, 170, 70), seed=4)
+    F.child_back(c, 540, 1760, 2.6, hair=(20, 20, 20), shirt=(200, 170, 70), seed=5)
     kl = ease(ramp(k, 0.8, 1.0))
     c.drawCircle(540, 1500, 700, paint(GOLDL, 0.18 * kl, blur=160))
     K.aphorism(c, T, "A light for every desk.", S("e9"), y=470, size=96, color=WHITE)
