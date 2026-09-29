@@ -34,6 +34,10 @@ def telop(arr, T):
     lh = size * 1.18
     y = 1466 - lh * (len(lines) - 1)
     f = D.font("cormorant-700", size)
+    wmax = max(f.measureText(ln) for ln in lines)                    # a translucent plate: legible on any background
+    c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(CX - wmax / 2 - 26, y - size * 0.98, CX + wmax / 2 + 26,
+                                                         y + lh * (len(lines) - 1) + size * 0.4), 14, 14),
+                paint((0, 0, 0), 0.5 * a))
     for ln in lines:
         x0 = CX - f.measureText(ln) / 2                                 # a soft shadow under, then a thin dark edge
         c.drawString(ln, x0 + size * 0.03, y + size * 0.05, f, paint((0, 0, 0), a * 0.85, stroke=size * 0.22, blur=size * 0.16))

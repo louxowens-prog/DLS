@@ -30,7 +30,7 @@ def chapter_card(c, T, i):
 def countdown(c, T, a=1.0):
     """The present-day clock, top left: the time and what's left before the exam."""
     hhmm = clock_at(T)
-    c.drawRect(skia.Rect.MakeLTRB(80, 256, 490, 370), paint((0, 0, 0), 0.62 * a))
+    c.drawRect(skia.Rect.MakeLTRB(80, 256, 520, 370), paint((0, 0, 0), 0.62 * a))
     D.text(c, hhmm, 104, 320, 62, "courier-400", (236, 232, 220), align="left", tag="clock", a=a)
     D.text(c, left_until_exam(hhmm), 106, 358, 28, "courier-400", (200, 196, 186), align="left", tag="clock", a=a)
 

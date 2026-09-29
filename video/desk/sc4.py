@@ -90,8 +90,8 @@ def s_language(T, t, d):
     if k40 > 0:
         P.banner(c, 540, 700, 860, 300, ["40% OF PEOPLE", "have no schooling in a language", "they speak or understand"], bg=LACQ,
                  sizes=(76, 44), src="UNESCO Global Education Monitoring, 2025", a=k40)
-    kt = ramp(T, Wx("e3b", "translate") + 0.02, Wx("e3b", "translate") + 1.4)
-    if kt > 0 and T < C["coach"] - 0.1:
+    kt = ramp(T, Wx("e3b", "translate") + 0.02, Wx("e3b", "translate") + 0.9)
+    if kt > 0 and T < C["coach"] + 0.25:
         for i, (wd, x, y) in enumerate(WORDS):                          # sliding screens, each opening on a word
             o = ease(ramp(kt, i * 0.1, i * 0.1 + 0.5))
             c.drawRect(skia.Rect.MakeLTRB(x - 230, y - 100, x + 230, y + 100), paint((214, 204, 180)))
@@ -103,7 +103,7 @@ def s_language(T, t, d):
                     c.drawLine(xx, y - 100, xx, y + 100, paint(GOLD, 0.6, stroke=3))
             c.drawLine(x - 230 + 460 * o, y - 100, x - 230 + 460 * o, y + 100, paint(GOLDD, stroke=4))
         D.text(c, "“derivative”", 540, 1240, 54, "cormorant-500i", CREAM, tag="langsrc")
-    kp = ramp(T, C["coach"] - 0.1, C["conv"] - 0.2)
+    kp = ramp(T, C["coach"] + 0.25, C["conv"] - 0.2)
     if 0 < kp < 1:                                                       # a voice-print: pronunciation, matched
         for i in range(60):
             x = 140 + i * 13.5
@@ -239,7 +239,5 @@ def s_final(T, t, d):
     F.child_back(c, 540, 1760, 2.6, hair=(20, 20, 20), shirt=(200, 170, 70), seed=5)
     kl = ease(ramp(k, 0.8, 1.0))
     c.drawCircle(540, 1500, 700, paint(GOLDL, 0.18 * kl, blur=160))
-    K.aphorism(c, T, "For most of history, a tutor was a privilege. Now it can be almost anyone's.", S("e8"), y=282, size=54,
-               color=CREAM, maxw=960)
-    K.aphorism(c, T, "A light for every desk.", S("e9"), y=505, size=88, color=WHITE)
+    K.aphorism(c, T, "A light for every desk.", S("e9"), y=430, size=92, color=WHITE)
     return st.arr

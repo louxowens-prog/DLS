@@ -240,5 +240,5 @@ def s_back_row(T, t, d):
     k = ease(ramp(t, 0.0, 1.4))
     F.teacher(c, 960 - 180 * k, 1960, 1.0, T, pose="front")
     c.restore()
-    K.aphorism(c, T, "Time to finally see the back row.", S("d7"), y=440, size=80, color=WHITE)
+    K.aphorism(c, T, "Time to finally see the back row.", S("d7"), y=330, size=80, color=WHITE)
     return st.arr

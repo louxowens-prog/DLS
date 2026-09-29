@@ -68,7 +68,7 @@ C = {
 }
 
 # the countdown on screen in the present: (from T, clock time)
-CLOCKS = [(0.0, "21:40"), (S("b1") - 0.2, "21:52"), (S("b6") + 0.8, "22:31"), (S("b7") - 0.2, "22:58"),
+CLOCKS = [(0.0, "21:40"), (S("b1") - 0.2, "21:52"), (S("b6") + 0.8, "22:31"), (C["type4"] - 0.15, "22:58"),
           (S("b11") - 0.1, "23:10"), (Wx("b11", "midnight") - 0.3, "00:04"), (S("d1") - 0.3, "00:12"), (S("d3") - 0.3, "00:21"),
           (S("e1") - 0.2, "07:30"), (S("e5") - 0.2, "09:00")]
 
@@ -103,4 +103,4 @@ def _tagtimes(items):
 USE_TAGS = _tagtimes(USES)
 WHO_TAGS = _tagtimes(WHO)
 APHORISMS = {"a7", "b12", "d7", "e8", "e9"}          # spoken and written big on screen (no caption)
-NO_CAPTION = APHORISMS | {"b4", "b6", "b2q", "b7q", "d3q", "b1", "e1", "e5"}   # typed prompts and clock times are on screen
+NO_CAPTION = (APHORISMS - {"e8"}) | {"b4", "b6", "b2q", "b7q", "d3q", "b1", "e1", "e5"}   # typed prompts and clock times are on screen
