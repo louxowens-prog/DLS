@@ -28,7 +28,7 @@ def _curve(lo, hi, gamma):
 def _luts():
     if not _cache:
         _cache["zone"] = _curve(0.10, 0.84, 1.05)                       # the underworld: hard
-        _cache["real"] = _curve(0.06, 0.92, 1.0)                        # the kitchen: a bit gentler
+        _cache["real"] = _curve(0.08, 0.88, 1.05)                       # the kitchen: a bit gentler
         _cache["card"] = _curve(0.08, 0.80, 1.0)
         y, x = np.mgrid[0:H, 0:W].astype(np.float32)
         r = np.sqrt(((x - W / 2) / (W * 0.62)) ** 2 + ((y - H / 2) / (H * 0.56)) ** 2)
@@ -39,8 +39,8 @@ def _luts():
 def _grain(idx, amp, lum):
     """Coarse 16 mm grain: two scales, strongest in the mid-tones."""
     rng = np.random.default_rng(idx * 7919 + 3)
-    g1 = rng.normal(0, 1, (H // 3, W // 3)).astype(np.float32)
-    g2 = rng.normal(0, 1, (H // 2, W // 2)).astype(np.float32)
+    g1 = rng.normal(0, 1, (H // 4, W // 4)).astype(np.float32)
+    g2 = rng.normal(0, 1, (H // 3, W // 3)).astype(np.float32)
     up = lambda g: np.asarray(Image.fromarray(np.clip(g * 40 + 128, 0, 255).astype(np.uint8)).resize((W, H), Image.BILINEAR),
                               np.float32) - 128
     g = up(g1) * 0.7 + up(g2) * 0.45
@@ -108,9 +108,13 @@ def look(arr, idx, mode="zone", tint=None, colour=0.0, damage=1.0):
     # hand tint: chroma from the frame (colour) and/or the painted tint layer, on the graded luminance
     cb = np.zeros_like(y)
     cr = np.zeros_like(y)
-    if colour > 0:
-        cb += (a[..., 2] - lum) * 0.564 * colour * 1.35
-        cr += (a[..., 0] - lum) * 0.713 * colour * 1.35
+    if colour > 0:                                                      # colour painted onto the print: it bleeds, off-register
+        cf = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8)).transform(
+            (W, H), Image.AFFINE, (1, 0, -5, 0, 1, 3), resample=Image.BILINEAR).filter(ImageFilter.GaussianBlur(4))
+        ca = np.asarray(cf, np.float32)
+        cl = ca[..., 0] * 0.299 + ca[..., 1] * 0.587 + ca[..., 2] * 0.114
+        cb += (ca[..., 2] - cl) * 0.564 * colour * 1.5
+        cr += (ca[..., 0] - cl) * 0.713 * colour * 1.5
     if tint is not None:
         ti = Image.fromarray(np.ascontiguousarray(tint))
         ti = ti.transform((W, H), Image.AFFINE, (1, 0, -dx - 3, 0, 1, -dy + 2), resample=Image.BILINEAR)   # off-register
@@ -124,7 +128,7 @@ def look(arr, idx, mode="zone", tint=None, colour=0.0, damage=1.0):
     out[..., 0] = y + 1.403 * cr
     out[..., 1] = y - 0.344 * cb - 0.714 * cr
     out[..., 2] = y + 1.773 * cb
-    g = _grain(idx, 0.075 if mode != "card" else 0.05, y)
+    g = _grain(idx, 0.068 if mode != "card" else 0.05, y)
     out += g[..., None]
     y2 = out.mean(axis=2)
     before = y2.copy()

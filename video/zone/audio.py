@@ -61,7 +61,7 @@ def tts(text, voice, speed=1.0, pitch=0.0):
 
 
 # the gag silences: everything cut dead (music, effects, ambience)
-SILENCES = [(C["crow"] + 0.62, S("d3") - 0.02), (E("f2") + 0.12, C["flag"] - 0.02)]
+SILENCES = [(C["crow"] + 0.62, S("d3") - 0.02), (E("f2") + 0.12, C["flag"] - 0.42)]
 
 
 def score(mus, amb, fx):
@@ -144,9 +144,12 @@ def score(mus, amb, fx):
         fx.add(F.thud(0.5, i), f("record") + 0.25 * i + 0.3, 1.0, pan=0.3 + 0.04 * i)
     song(mus, "s3", "drag")
     fx.add(O.slide_whistle(False, nxt("s3_king") - f("s3_king") - 0.3, 0.3), f("s3_king") + 0.2, 1.0, pan=0.45)
-    for k in range(int((nxt("s3_pills") - f("s3_pills")) * 132 / 60)):
-        fx.add(O.woodblock(0.4, 1000 if k % 2 else 800), f("s3_pills") + k * 60 / 132, 1.0, pan=0.6)
-    fx.add(O.boing(0.7), f("s3_scale") + 0.1, 1.0, pan=0.5)
+    ti, dti = f("s3_iron"), nxt("s3_iron") - f("s3_iron")
+    for k in range(10):                                                 # a coin clinks out of the chest each year
+        fx.add(Bd.xylo(96 - k, 0.35), ti + 0.1 + (dti - 0.4) * k / 10, 1.0, pan=0.6)
+    tce, dce = f("s3_cells"), nxt("s3_cells") - f("s3_cells")
+    for k in range(10):                                                 # each year the cells shrink: a smaller pop
+        fx.add(O.pop(0.5 - 0.03 * k), tce + 0.1 + (dce - 0.4) * k / 10, 1.0, pan=0.45)
     fx.add(O.heartbeat(4, 72, 0.9), f("s3_heart") + 0.2, 1.0, pan=0.5)
     for j in range(4):
         fx.add(F.thud(0.6, j), f("s3_fine") + 0.45 * j + 0.15, 1.0, pan=0.3 + 0.13 * j)
@@ -184,6 +187,7 @@ def score(mus, amb, fx):
     fx.add(O.whir(E("f2") + 0.1 - tn, amp=0.35, f=70), tn, 1.0)
     for k in range(3):
         fx.add(F.drip(0.6, k), tn + 0.4 + k * 0.5, 1.0, pan=0.3 + 0.2 * k)
+    fx.add(tts("Gulp.", "bf_emma", 1.0, 3.0) * 0.9, C["flag"] - 0.4, 1.0, pan=0.6)                  # the Eye swallows: the gag
     fx.add(O.ding(1.0, 100), C["flag"], 1.0, pan=0.55)
     fx.add(Bd.xylo_run([79, 84, 88, 91, 96], 0.05, 0.7), C["flag"] + 0.05, 1.0, pan=0.55)
     fx.add(O.whoosh(0.25, True, 6, 0.5), C["flag"] - 0.12, 1.0)
@@ -285,7 +289,7 @@ def voices():
         i = int(L["start"] * SR)
         j = min(N, i + sig.shape[1])
         zone = in_zone(L["start"] + 0.1)
-        (wet if zone or who == EMCEE else dry)[:, i:j] += sig[:, : j - i]
+        (wet if zone else dry)[:, i:j] += sig[:, : j - i]
     return dry + reverb(wet, 0.22, 1.1, seed=5)
 
 
@@ -356,7 +360,7 @@ def build():
     music = music * ride
     mix = music + vo
     mix = signal.sosfilt(signal.butter(4, 35 / (SR / 2), "high", output="sos"), mix, axis=1)
-    shape = np.where(zone > 0, 1.0, -2.0)                                # the real world a little quieter than the zone
+    shape = np.where(zone > 0, 1.0, -4.5)                                # the real world clearly quieter than the zone
     k = int(0.3 * SR)
     shape = np.convolve(np.pad(shape, k, mode="edge"), np.ones(k) / k, "same")[k:-k]
     mix = mix * db(shape)[None]

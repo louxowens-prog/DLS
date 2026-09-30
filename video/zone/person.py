@@ -76,8 +76,8 @@ def person(c, x, y, s, T, look, matte=False, face=True):
                                        look.get("legcol", bottom))
         feet.append((fx, fy, sx))
     for fx, fy, sx in feet:
-        c.drawPath(D.smooth([(fx - 34, fy - 18), (fx + 30 * sx + 10, fy - 16), (fx + 44 * sx, fy + 8), (fx - 30, fy + 10)]),
-                   paint(shoe))
+        c.drawOval(skia.Rect.MakeLTRB(fx - 60, fy + 14, fx + 60, fy + 34), paint((0, 0, 0), 0.35, blur=6))    # its shadow
+        c.drawOval(skia.Rect.MakeLTRB(fx - 36 + 14 * sx, fy - 20, fx + 36 + 14 * sx, fy + 16), paint(shoe))
     if look.get("skirt"):
         D.shade(c, path([(-120, hipY - 60), (120, hipY - 60), (170, hipY + 200), (-170, hipY + 200)]), look["skirt"], k=0.3, edge=0.0)
     # torso

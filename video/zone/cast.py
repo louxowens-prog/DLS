@@ -142,7 +142,7 @@ def _cardigan(c, sh_y, hipY):
 
 def mae(c, x, y, s, T, pose="stand", glasses_on=False, matte=False, expr="puzzled", outfit="cardigan", joints=None):
     """Mae, 56, full figure: short grey curls, a grey cardigan over a white blouse, slacks, flat shoes."""
-    look = dict(pose=pose, top=(122, 120, 128), bottom=(64, 62, 66), hair="curls", haircol=(206, 204, 200),
+    look = dict(pose=pose, top=(122, 120, 128), bottom=(40, 38, 44), hair="curls", haircol=(206, 204, 200),
                 browcol=(150, 146, 140), expr=expr, glasses=glasses_on, extras=[_cardigan], seed=1, joints=joints or {})
     if outfit == "gown":
         look.update(top=(214, 218, 222), extras=[], bottom=(214, 218, 222))
@@ -207,25 +207,25 @@ def doctor(c, x, y, s, T, pose="stand", masked=False, matte=True, expr="calm", h
 
 
 def mae_asleep(c, x, y, s, T):
-    """Mae on the table, sedated, in a hospital gown under a blanket: face in profile, peaceful."""
+    """Mae on the table, sedated, under a blanket: her own face (curls, closed eyes, a small smile) on the pillow,
+    turned toward us."""
     c.save()
     c.translate(x, y)
     c.scale(s, s)
     c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-420, -60, 420, 20), 20, 20), paint((200, 200, 204)))     # the table
     c.drawRect(skia.Rect.MakeLTRB(-380, 20, -350, 260), paint((80, 80, 84)))
     c.drawRect(skia.Rect.MakeLTRB(350, 20, 380, 260), paint((80, 80, 84)))
+    c.drawOval(skia.Rect.MakeLTRB(-440, -190, -200, -50), paint((236, 236, 236)))                     # the pillow
+    c.save()                                                            # her face, lying on the pillow, turned to us
+    c.translate(-300, -150)
+    c.rotate(-72)
+    mae_face(c, 0, 0, 0.3, T, expr="calm", eyes_closed=True)
+    c.restore()
     rise = 6 * math.sin(T * 1.4)
-    blanket = D.smooth([(-300, -60), (-260, -150 - rise), (100, -170 - rise), (380, -120), (400, -60)])
+    blanket = D.smooth([(-250, -60), (-230, -170 - rise), (100, -190 - rise), (380, -130), (400, -60)])
     _soft(c, blanket, (170, 172, 180), 0.3)
-    c.drawOval(skia.Rect.MakeLTRB(-430, -170, -230, -60), paint((236, 236, 236)))                     # the pillow
-    for i in range(12):                                                 # grey curls on the pillow, behind her head
-        ang = math.pi * (0.55 + i / 11 * 0.9)
-        c.drawCircle(-330 - 70 * math.cos(ang), -170 - 60 * math.sin(ang) + 40, 26, paint(HAIR_GREY))
-    face = D.smooth([(-360, -240), (-300, -262), (-250, -240), (-236, -206), (-214, -190), (-236, -178), (-240, -150),
-                     (-262, -120), (-320, -110), (-370, -150)])                                     # in profile, face up
-    _soft(c, face, SKIN, 0.28)
-    c.drawLine(-280, -214, -254, -212, paint((60, 40, 36), stroke=5))                               # eye closed
-    c.drawLine(-262, -146, -244, -146, paint((130, 70, 64), stroke=5))                              # mouth, at rest
+    for k in range(5):
+        c.drawLine(-200 + k * 120, -150 - rise, -180 + k * 120, -70, paint((140, 142, 150), stroke=4))
     c.restore()
 
 
@@ -383,7 +383,7 @@ def octopus(c, x, y, s, T, glasses_on=True, page=0.0, seed=4):
     c.restore()
 
 
-def king_heme(c, x, y, s, T, size=1.0, tint=None, seed=6):
+def king_heme(c, x, y, s, T, size=1.0, tint=None, seed=6, crown=True):
     """King Hemoglobin: a red blood cell (a dimpled disc) in a crown and ermine cape, on noodle legs.
     size shrinks him year by year. tint: the hand-tint canvas (his red is painted on)."""
     T2 = twos(T)
@@ -392,11 +392,12 @@ def king_heme(c, x, y, s, T, size=1.0, tint=None, seed=6):
     c.scale(s, s)
     r = 210 * size
     cy = -130 - r * 0.62
-    cape = [(-r * 0.7, cy - r * 0.2), (r * 0.7, cy - r * 0.2), (r * 1.15 + 20, -30), (0, -10), (-r * 1.15 - 20, -30)]
-    blob(c, cape, (96, 92, 100), T, seed + 5, amp=2, ow=5)                                             # the royal cape
-    c.drawPath(path([(-r * 1.15 - 20, -30), (0, -10), (r * 1.15 + 20, -30), (r * 1.1, -60), (-r * 1.1, -60)]), paint((240, 238, 232)))
-    for k in range(7):
-        c.drawCircle(-r * 0.95 + k * r * 0.32, -40 - 4 * (k % 2), 6, paint(BLACK))                   # ermine trim
+    if crown:
+        cape = [(-r * 0.7, cy - r * 0.2), (r * 0.7, cy - r * 0.2), (r * 1.15 + 20, -30), (0, -10), (-r * 1.15 - 20, -30)]
+        blob(c, cape, (96, 92, 100), T, seed + 5, amp=2, ow=5)                                         # the royal cape
+        c.drawPath(path([(-r * 1.15 - 20, -30), (0, -10), (r * 1.15 + 20, -30), (r * 1.1, -60), (-r * 1.1, -60)]), paint((240, 238, 232)))
+        for k in range(7):
+            c.drawCircle(-r * 0.95 + k * r * 0.32, -40 - 4 * (k % 2), 6, paint(BLACK))               # ermine trim
     for sx in (-1, 1):
         fx = sx * 60 + sx * 20 * math.sin(T2 * 6)
         hose(c, sx * 30, -120, fx, -20, bend=0.2 * sx, w=18)
@@ -406,11 +407,12 @@ def king_heme(c, x, y, s, T, size=1.0, tint=None, seed=6):
     c.drawOval(skia.Rect.MakeLTRB(-r * 0.5, cy - r * 0.26, r * 0.5, cy + r * 0.26), paint((190, 110, 110)))
     pie_eye(c, -r * 0.28, cy - r * 0.05, r * 0.14, r * 0.2, (0, 0.2), 0.0)
     pie_eye(c, r * 0.28, cy - r * 0.05, r * 0.14, r * 0.2, (0, 0.2), 0.0)
-    crown = [(-r * 0.4, cy - r * 0.5), (-r * 0.4, cy - r * 0.95), (-r * 0.2, cy - r * 0.72), (0, cy - r * 1.05), (r * 0.2, cy - r * 0.72),
+    crown_pts = [(-r * 0.4, cy - r * 0.5), (-r * 0.4, cy - r * 0.95), (-r * 0.2, cy - r * 0.72), (0, cy - r * 1.05), (r * 0.2, cy - r * 0.72),
              (r * 0.4, cy - r * 0.95), (r * 0.4, cy - r * 0.5)]
-    blob(c, crown, (230, 200, 90), T, seed + 2, smooth=False, ow=5)
+    if crown:
+        blob(c, crown_pts, (230, 200, 90), T, seed + 2, smooth=False, ow=5)
     Z.tinted(tint, c, lambda t: (t.drawPath(D.smooth(disc), paint((220, 30, 30), 0.85)),
-                                 t.drawPath(path(crown), paint((250, 200, 40), 0.8))))   # his red, painted on
+                                 t.drawPath(path(crown_pts), paint((250, 200, 40), 0.8 if crown else 0.0))))   # his red, painted on
     c.restore()
 
 

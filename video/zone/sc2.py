@@ -18,9 +18,9 @@ from timeline import TL
 from zkit import BLACK, CHALK
 
 S, E = TL.s, TL.e
-WEIGHT = [72, 72, 71.8, 71.5, 71, 70.6, 70, 69.4, 68.8, 68]
-PULSE = [64, 65, 66, 68, 69, 71, 72, 74, 76, 78]
-IRON = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
+FERRITIN = [96, 88, 80, 71, 62, 54, 45, 37, 29, 22]          # iron stores, ng/mL (all still in the usual range)
+MCV = [92, 91, 90, 89, 88, 87, 86, 85, 84, 82]                # red-cell size, fL (normal 80-100)
+PULSE = [64, 65, 66, 68, 69, 71, 72, 74, 76, 78]              # resting pulse (normal 60-100)
 
 
 # ------------------------------------------------------------------ ROOM 2
@@ -34,7 +34,8 @@ def s_files(T, t, d):
     st = ZStage()
     c = st.c
     sets.bd(st, "library", sets.library)
-    x0, y0, w, hh = 250, 430, 580, 920
+    x0, y0, w, hh = 330, 430, 560, 920
+    K.mae(c, 150, 1600, 0.64, T, pose="point", expr="puzzled", matte=True)                           # "that's mine?"
     Z.cardboard(c, [(x0, y0), (x0 + w, y0 - 20), (x0 + w + 10, y0 + hh), (x0 - 6, y0 + hh + 10)], (150, 146, 140), T=T, seed=3)
     Z.letters(c, "MAE'S FILE", x0 + w / 2, y0 - 40, 64, "londrina-900", WHITE, T=T, seed=1, tag="file", outline=BLACK, ow=10)
     for j, (word, lab) in enumerate(DRAWERS):
@@ -196,25 +197,35 @@ def s_s3_king(T, t, d):
     return st
 
 
-def s_s3_pills(T, t, d):
-    """Iron pills for 'tired': a chorus line of capsules, kicking."""
-    st = ZStage()
-    c = st.c
-    sets.bd(st, "clockroom", sets.clockroom)
-    Z.letters(c, "for “tired”", 540, 460, 100, "londrina-900", WHITE, T=T, seed=5, tag="tired", outline=BLACK, ow=10)
-    K.bottle(c, 540, 900, 1.1, T, label="IRON")
-    for j in range(5):
-        K.pill(c, 140 + j * 200, 1340, 0.75, T, phase=j * 0.5, label="Fe")
-    return st
-
-
-def s_s3_scale(T, t, d):
+def s_s3_iron(T, t, d):
+    """Her iron stores sinking: the King's treasure chest of iron coins, a few fewer every year."""
     st = ZStage()
     c = st.c
     sets.bd(st, "clockroom", sets.clockroom)
     i = min(9, int(ramp(t, 0.1, d - 0.3) * 10))
-    _year(c, T, i, f"weight {WEIGHT[i]} kg", "(no diet)")
-    K.scale_critter(c, 540, 1300, 2.1, T, kg=WEIGHT[i])
+    _year(c, T, i, f"iron stores {FERRITIN[i]}", "(still in the normal range)")
+    Z.blob(c, [(260, 1330), (260, 1040), (820, 1040), (820, 1330)], (110, 90, 70), T, 3, smooth=False)       # the chest
+    Z.blob(c, [(240, 1040), (300, 920), (780, 920), (840, 1040)], (90, 72, 56), T, 4, smooth=False)
+    n = int(round(FERRITIN[i] / 96 * 21))
+    for k in range(n):                                                  # the coins still in it
+        x = 330 + (k % 7) * 70
+        y = 990 - (k // 7) * 56
+        Z.circ(c, x, y, 34, (200, 196, 186), T, k, ow=5)
+        D.text(c, "Fe", x, y + 12, 32, "londrina-900", BLACK, tag="fe")
+    K.king_heme(c, 920, 1330, 0.42, T, tint=st.t)
+    return st
+
+
+def s_s3_cells(T, t, d):
+    """Her red cells shrinking a size: a chorus line of blood cells (painted red), a little smaller each year."""
+    st = ZStage()
+    c = st.c
+    sets.bd(st, "clockroom", sets.clockroom)
+    i = min(9, int(ramp(t, 0.1, d - 0.3) * 10))
+    _year(c, T, i, f"red-cell size {MCV[i]}", "(still in the normal range)")
+    s = 0.62 * (MCV[i] / 92) ** 3
+    for j in range(4):
+        K.king_heme(c, 180 + j * 240, 1330 - 30 * (j % 2), s, T, tint=st.t, crown=False, seed=20 + j)
     return st
 
 
@@ -228,7 +239,7 @@ def s_s3_heart(T, t, d):
     return st
 
 
-CHARTS = [("HEMOGLOBIN", HB, ("13.6", "12.1")), ("IRON PILLS", IRON, ("none", "daily")), ("WEIGHT", WEIGHT, ("72", "68 kg")),
+CHARTS = [("HEMOGLOBIN", HB, ("13.6", "12.1")), ("IRON STORES", FERRITIN, ("96", "22")), ("RED-CELL SIZE", MCV, ("92", "82")),
           ("RESTING PULSE", PULSE, ("64", "78"))]
 
 

@@ -56,8 +56,8 @@ LINES = [
      "It doesn't replace your doctor's judgment.| It hands her the right page,| and flags the pills that clash.", 0.5),
 
     # ---- ROOM 3: Mae's ten years
-    ("c1", EMCEE, "Now, Mae's record. Ten years, one number at a time, and each one looked fine.",
-     "Now, Mae's record. Ten years,| one number at a time,| and each one looked fine.", 0.2),
+    ("c1", EMCEE, "Now, Mae's record. Ten years, one number at a time, and each one looked fine. She felt fine too.",
+     "Now, Mae's record. Ten years,| one number at a time, and each one looked fine.| She felt fine too.", 0.2),
     ("s3", SONG, None, None, 0.3),
     ("c2", EYE, "This person should be evaluated now, rather than waiting for symptoms.",
      "“This person should be evaluated now,| rather than waiting for symptoms.”", 0.4),
@@ -75,14 +75,14 @@ LINES = [
 
     # ---- ROOM 5: the colonoscopy - the second look
     ("f1", EMCEE, "Mae's colonoscopy. She's asleep for this part.", None, 0.3),
-    ("f2", DOC, "All clear so far.", None, 1.5),
+    ("f2", DOC, "All clear so far.", None, 1.85),
     ("f3", EYE, "This tiny region deserves another look.", "“This tiny region deserves another look.”", 0.35),
     ("f4", DOC, "Well, look at that. Flat, hiding in a fold. Easy to miss.", "Well, look at that.| Flat, hiding in a fold. Easy to miss.", 0.3),
     ("f5", EMCEE, "In one trial, AI help cut the growths doctors missed roughly in half.",
      "In one trial, AI help cut the growths doctors missed| roughly in half.", 0.2),
     ("s5", SONG, None, None, 0.2),
-    ("f6", EMCEE, "Colon cancer found early: about nine in ten are alive five years on. Found after it spreads: about one in eight.",
-     "Colon cancer found early:| about 9 in 10 are alive five years on.| Found after it spreads: about 1 in 8.", 0.4),
+    ("f6", EMCEE, "Colon cancer found early: about nine in ten are alive five years on. Found after it spreads far: about one in eight.",
+     "Colon cancer found early:| about 9 in 10 are alive five years on.| Found after it spreads far: about 1 in 8.", 0.4),
 
     # ---- back through the door: the real world, a year later
     ("g1", EMCEE, "Back through the door, Mae!", None, 0.9),
@@ -111,16 +111,16 @@ SONGS = {
     ]),
     "s3": dict(bpm=132, style="drag", intro=4, outro=2, lines=[
         (EMCEE, "Her blood count slipped a little every year,"),
-        (EMCEE, "iron pills for tired, nothing much to fear,"),
-        (EMCEE, "four kilos lighter, and she didn't try,"),
-        (EMCEE, "her resting pulse was creeping high."),
+        (EMCEE, "her iron stores were sinking, still in the clear,"),
+        (EMCEE, "her red cells shrank a size, and no one knew,"),
+        (EMCEE, "her resting pulse crept up a beat or two."),
         (CHORUS, "One at a time: fine, fine, fine!"),
         (CHORUS, "All at once: a warning sign!"),
     ]),
     "s4": dict(bpm=176, style="newwave", intro=4, outro=4, lines=[
         (CHORUS, "Before the symptoms!"),
         (EMCEE, "Sepsis flagged hours ahead,"),
-        (EMCEE, "a kidney injury two days out,"),
+        (EMCEE, "some kidney injuries two days out,"),
         (EMCEE, "a weak heart found in a plain ECG,"),
         (EMCEE, "diabetic eyes checked by a camera,"),
         (CHORUS, "Fix the roof before the rain!"),
@@ -132,12 +132,12 @@ SONGS = {
         (CHORUS, "Found it early!"),
     ]),
 }
-LYRIC_SHOWN = {"iron pills for tired, nothing much to fear,": "iron pills for “tired”, nothing much to fear,"}
+LYRIC_SHOWN = {}
 
 # on-screen fact plates inside the songs (song, lyric line index, lines, source)
 PLATES = {
     ("s4", 1): (["SEPSIS ALERTS", "acted on within 3 hours:", "about 1/5 fewer deaths"], "TREWS, 5 hospitals · Nature Medicine, 2022"),
-    ("s4", 2): (["KIDNEY INJURY", "55.8% predicted", "up to 48 hours ahead"], "Tomašev et al. · Nature, 2019"),
+    ("s4", 2): (["KIDNEY INJURY", "55.8% predicted, up to 48 h ahead", "(about 2 false alerts per true one)"], "Tomašev et al. · Nature, 2019"),
     ("s4", 3): (["WEAK HEART PUMP", "32% more diagnoses", "from ordinary ECGs"], "EAGLE trial · Nature Medicine, 2021"),
-    ("s4", 4): (["DIABETIC EYE DISEASE", "first autonomous AI", "diagnosis cleared, 2018"], "IDx-DR · U.S. FDA"),
+    ("s4", 4): (["DIABETIC EYE DISEASE", "first autonomous AI", "diagnosis authorized, 2018"], "IDx-DR · U.S. FDA"),
 }

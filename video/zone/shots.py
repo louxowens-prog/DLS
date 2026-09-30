@@ -11,7 +11,7 @@ import sc1
 import sc2
 import sc3
 import sc4
-from edit import EDIT, IRIS, shot_at
+from edit import CANT, EDIT, IRIS, shot_at
 from timeline import FPS, TL
 
 SHOTS = {}
@@ -35,13 +35,35 @@ def _zoom(a, z):
     return out
 
 
+def _cant(a, deg):
+    """Hang the whole frame off true, scaled up so no corner shows."""
+    im = Image.fromarray(np.ascontiguousarray(a))
+    im = im.rotate(deg, resample=Image.BICUBIC, center=(D.W / 2, D.H / 2))
+    z = 1 + abs(np.sin(np.radians(deg))) * 1.9
+    w, h = int(D.W / z), int(D.H / z)
+    x0, y0 = (D.W - w) // 2, (D.H - h) // 2
+    return np.array(im.crop((x0, y0, x0 + w, y0 + h)).resize((D.W, D.H), Image.BILINEAR))
+
+
+def _crashing(i, T):
+    t0, tr = EDIT[i][0], EDIT[i][3]
+    t1 = EDIT[i + 1][0] if i + 1 < len(EDIT) else TL.total + 1
+    return (tr == "crash" and T - t0 < CRASH_IN) or (i + 1 < len(EDIT) and EDIT[i + 1][3] == "crash" and t1 - T < CRASH_OUT)
+
+
 def shot_frame(i, T, idx, post=True):
     t0, name, reg, tr, colour = EDIT[i]
     t1 = EDIT[i + 1][0] if i + 1 < len(EDIT) else TL.total + 1
     st = SHOTS[name](T, T - t0, t1 - t0)
-    if reg != "card":
-        KD.lyric(st.c, T, TL)
-    arr = np.ascontiguousarray(st.arr)
+    arr, tint_arr = st.arr, st.tint_arr
+    if name in CANT:
+        arr = _cant(arr, CANT[name])
+        tint_arr = _cant(tint_arr, CANT[name])
+    if reg != "card" and not _crashing(i, T):
+        import skia
+        KD.lyric(skia.Surface(arr).getCanvas(), T, TL)
+    arr = np.ascontiguousarray(arr)
+    st.tint_arr = tint_arr
     if post:
         tint = st.tint_arr if st.tint_arr[..., 3].any() else None
         film80.look(arr, idx, reg, tint=tint, colour=colour, damage=0.5 if reg == "card" else 1.0)

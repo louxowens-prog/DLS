@@ -27,8 +27,9 @@ def s_ballroom(T, t, d):
     st = ZStage()
     c = st.c
     sets.bd(st, "ballroom", sets.ballroom)
-    K.early_bird(c, 760, 1500, 1.0, T)
-    K.emcee(c, 270, 1580, 0.92, T, pose="present")
+    K.early_bird(c, 820, 1500, 0.9, T)
+    K.emcee(c, 230, 1580, 0.9, T, pose="present")
+    K.mae(c, 520, 1590, 0.66, T, pose="stand", expr="happy", matte=True)
     P.placard(c, 540, 470, 820, ["EARLIER", "= more ways to treat"], None, T, k=ease(ramp(T, Wx("d1", "Earlier") - 0.2, Wx("d1", "Earlier") + 0.2)),
               seed=21, size=84)
     return st
@@ -37,6 +38,8 @@ def s_ballroom(T, t, d):
 def _kickline(c, T, y=1760, s=0.95, kinds=("pill", "skel", "pill", "skel", "pill")):
     for j, kd in enumerate(kinds):
         x = 130 + j * 205
+        if kd is None:
+            continue
         if kd == "pill":
             K.pill(c, x, y, s, T, phase=j * 0.5, label="Rx")
         else:
@@ -48,7 +51,8 @@ def s_s4_open(T, t, d):
     c = st.c
     sets.bd(st, "ballroom", sets.ballroom)
     K.early_bird(c, 540, 1060, 0.7, T)
-    _kickline(c, T, y=1420, s=0.8)
+    _kickline(c, T, y=1420, s=0.8, kinds=("pill", "skel", None, "skel", "pill"))
+    K.mae(c, 540, 1430, 0.55, T, pose="kick" if (T * 176 / 60) % 2 < 1 else "both_up", expr="happy", matte=True)
     return st
 
 
@@ -119,12 +123,21 @@ def s_caveat(T, t, d):
     sets.bd(st, "ballroom", sets.ballroom)
     c.drawRect(skia.Rect.MakeWH(W, H), paint(BLACK, 0.45))
     k1 = ease(ramp(T, Wx("d3", "sepsis") - 0.3, Wx("d3", "sepsis")))
-    P.placard(c, 540, 560, 900, ["ONE SEPSIS ALARM", "missed 2 of 3 cases", "in an outside test"],
-              "Wong et al. · JAMA Internal Medicine, 2021", T, k=k1, seed=41, size=78)
-    k2 = ease(ramp(T, Wx("d3", "skin") - 0.3, Wx("d3", "skin")))
-    P.placard(c, 540, 1120, 900, ["SKIN AI", "trained on light skin", "misses more on dark skin"],
-              "Daneshjou et al. · Science Advances, 2022", T, k=k2, seed=42, size=78)
-    K.rooster(c, 150, 1560, 0.45, T, crow=0.0)
+    P.placard(c, 540, 760, 900, ["ONE SEPSIS ALARM", "missed 2 of 3 cases", "in an outside test"],
+              "Wong et al. · JAMA Internal Medicine, 2021", T, k=k1, seed=41, size=100)
+    K.rooster(c, 170, 1560, 0.45, T, crow=0.0)
+    return st
+
+
+def s_caveat_b(T, t, d):
+    st = ZStage()
+    c = st.c
+    sets.bd(st, "ballroom", sets.ballroom)
+    c.drawRect(skia.Rect.MakeWH(W, H), paint(BLACK, 0.45))
+    P.placard(c, 540, 760, 900, ["SKIN AI", "trained on light skin", "misses more on dark skin"],
+              "Daneshjou et al. · Science Advances, 2022", T, k=ease(ramp(t, 0.0, 0.2)), seed=42, size=100)
+    P.picture(c, "skin", 300, 1230, 260, 200, T)
+    P.picture(c, "skin", 780, 1230, 260, 200, T)
     return st
 
 
@@ -136,7 +149,7 @@ def s_charge(T, t, d):
     c.drawRect(skia.Rect.MakeWH(W, H), paint(BLACK, 0.3))
     K.doctor(c, 330, 1600, 0.98, T, pose="hips", expr="calm", seed=12, hair="short", haircol=(30, 28, 26), skin=(150, 110, 88))
     K.second_eye(c, 820, 1540, 0.55, T, look=(-0.6, -0.3), pose="dance")
-    P.placard(c, 540, 560, 880, ["TEST IT LIKE A MEDICINE", "and keep a doctor in charge"], None, T,
+    P.placard(c, 540, 360, 880, ["TEST IT LIKE A MEDICINE", "and keep a doctor in charge"], None, T,
               k=ease(ramp(t, 0.1, 0.4)), seed=43, size=76)
     return st
 
@@ -148,10 +161,10 @@ def s_clinic(T, t, d):
     st = ZStage()
     c = st.c
     sets.bd(st, "clinic", sets.clinic)
-    P.monitor(c, 90, 470, 400, 300, lambda cc: _mini_tunnel(cc, T, 400, 300, lesion=False))
-    K.second_eye(c, 290, 446, 0.36, T, look=(0.2, 0.9), pose="stand")                                # perched on the monitor
-    K.doctor(c, 850, 1500, 0.9, T, pose="reach", masked=True, seed=14)
-    K.mae_asleep(c, 600, 1180, 1.05, T)
+    P.monitor(c, 470, 420, 400, 300, lambda cc: _mini_tunnel(cc, T, 400, 300, lesion=False))
+    K.second_eye(c, 670, 396, 0.36, T, look=(-0.3, 0.9), pose="stand")                               # perched on the monitor
+    K.doctor(c, 900, 1500, 0.85, T, pose="reach", masked=True, seed=14)
+    K.mae_asleep(c, 610, 1230, 1.35, T)
     return st
 
 
@@ -159,7 +172,7 @@ def s_tunnel(T, t, d):
     """The scope's view, a painted tunnel ride through the folds; all clear so far. Then nothing moves but us."""
     st = ZStage()
     c = st.c
-    sets.tunnel(c, T, tunnel_u(T), lesion=True, flag=0.0)
+    sets.tunnel(c, T, tunnel_u(T), lesion=True, flag=0.0, reveal=0.0)
     c.drawRect(skia.Rect.MakeWH(W, H), paint(shader=D.rad((540, 900), 900, [(0, 0, 0, 0.0), (0, 0, 0, 0.0), (0, 0, 0, 0.9)], [0, 0.6, 1])))
     return st
 
@@ -170,7 +183,8 @@ def s_flag(T, t, d):
     c = st.c
     c.save()
     cam(c, 1.0 + 0.25 * ease(ramp(t, 0.6, 1.8)), 790, 1070)
-    sets.tunnel(c, T, tunnel_u(min(T, C["flag"])), lesion=True, flag=ramp(T, C["flag"], C["flag"] + 0.25), tint=st.t)
+    sets.tunnel(c, T, tunnel_u(min(T, C["flag"])), lesion=True, flag=ramp(T, C["flag"], C["flag"] + 0.25), tint=st.t,
+                reveal=ramp(T, C["flag"] + 0.1, C["flag"] + 0.6))
     c.restore()
     c.drawRect(skia.Rect.MakeWH(W, H), paint(shader=D.rad((540, 900), 900, [(0, 0, 0, 0.0), (0, 0, 0, 0.0), (0, 0, 0, 0.9)], [0, 0.6, 1])))
     k = ease(ramp(T, C["flag"] + 0.1, C["flag"] + 0.4))
@@ -201,7 +215,7 @@ def _mini_tunnel(c, T, w, h, lesion=True):
     """The monitor's picture: the same tunnel, small."""
     s = skia.Surface(W, H)
     cc = s.getCanvas()
-    sets.tunnel(cc, T, tunnel_u(min(T, C["flag"])), lesion=lesion, flag=1.0 if lesion else 0.0)
+    sets.tunnel(cc, T, tunnel_u(min(T, C["flag"])), lesion=lesion, flag=1.0 if lesion else 0.0, reveal=1.0)
     img = s.makeImageSnapshot()
     c.save()
     c.scale(w / 900, h / 700)
@@ -215,8 +229,18 @@ def s_halved(T, t, d):
     c = st.c
     sets.bd(st, "clinic", sets.clinic)
     c.drawRect(skia.Rect.MakeWH(W, H), paint(BLACK, 0.4))
-    P.placard(c, 540, 640, 900, ["GROWTHS MISSED", "without AI: 32%", "with AI: 15.5%"], "Wallace et al. · Gastroenterology, 2022", T,
-              k=ease(ramp(t, 0.0, 0.3)), seed=51, size=84)
+    P.placard(c, 540, 520, 900, ["GROWTHS MISSED", "without AI: 32%"], None, T, k=ease(ramp(t, 0.0, 0.3)), seed=51, size=110)
+    K.doctor(c, 540, 1660, 0.74, T, pose="shrug", masked=True, seed=14)
+    return st
+
+
+def s_halved_b(T, t, d):
+    st = ZStage()
+    c = st.c
+    sets.bd(st, "clinic", sets.clinic)
+    c.drawRect(skia.Rect.MakeWH(W, H), paint(BLACK, 0.4))
+    P.placard(c, 540, 700, 900, ["WITH AI: 15.5%", "about half as many missed"], "Wallace et al. · Gastroenterology, 2022", T,
+              k=ease(ramp(t, 0.0, 0.2)), seed=52, size=110)
     K.second_eye(c, 540, 1540, 0.6, T, look=(0.0, -0.6), pose="dance")
     return st
 
@@ -228,11 +252,12 @@ def s_s5_found(T, t, d):
     sets.bd(st, "stage", sets.stage)
     K.skeleton(c, 110, 1300, 0.38, T, phase=0.0)
     K.octopus(c, 330, 1300, 0.42, T)
-    K.king_heme(c, 560, 1300, 0.65, T, tint=st.t)
-    K.pill(c, 760, 1300, 0.8, T, phase=0.5, label="Fe")
-    K.rooster(c, 950, 1300, 0.45, T)
-    K.second_eye(c, 780, 1560, 0.55, T, pose="dance")
-    K.emcee(c, 300, 1580, 0.9, T, pose="kick")
+    K.emcee(c, 190, 1580, 0.9, T, pose="kick")
+    K.king_heme(c, 610, 1320, 0.65, T, tint=st.t)
+    K.pill(c, 800, 1300, 0.8, T, phase=0.5, label="Rx")
+    K.rooster(c, 960, 1300, 0.42, T)
+    K.second_eye(c, 800, 1580, 0.5, T, pose="dance")
+    K.mae(c, 470, 1600, 0.62, T, pose="both_up", glasses_on=False, expr="happy", matte=True)
     rng = np.random.default_rng(3)
     for i in range(80):
         x = rng.uniform(0, W)
@@ -255,7 +280,7 @@ def s_doors(T, t, d):
     ke = ease(ramp(T, C["early_door"] - 0.2, C["early_door"] + 0.3))
     kl = ease(ramp(T, C["late_door"] - 0.2, C["late_door"] + 0.3))
     P.door2(c, 110, 760, 360, 620, "FOUND EARLY", "9 in 10 alive at 5 years", ke * 0.9, T, seed=1, lit=True)
-    P.door2(c, 610, 760, 360, 620, "FOUND LATE", "about 1 in 8", 0.0, T, seed=3, lit=False)
+    P.door2(c, 610, 760, 360, 620, "SPREAD FAR", "about 1 in 8 at 5 years", 0.0, T, seed=3, lit=False)
     Z.tinted(st.t, c, lambda tt: tt.drawRect(skia.Rect.MakeLTRB(110, 760, 470, 1380), paint((250, 210, 60), 0.6 * ke)))
     if kl < 0.5:
         pass

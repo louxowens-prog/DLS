@@ -12,7 +12,7 @@ FPS = 24
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 PRE = {c[3]: 1.5 for c in CHAPTERS}                 # room for each room's hand-lettered intertitle
-PRE.update({"t1": 0.0, "r1": 2.4, "g1": 0.3})        # r1: the phone buzzes first
+PRE.update({"t1": 0.0, "r1": 1.5, "g1": 0.3})        # r1: the phone buzzes first
 TAIL = 4.6
 
 

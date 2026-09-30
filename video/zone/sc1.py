@@ -25,18 +25,32 @@ YEARS = list(range(2016, 2026))
 # ------------------------------------------------------------------ the real world
 
 def s_phone(T, t, d):
-    """Close on the kitchen table: her phone buzzes, a message lights it."""
+    """Close on the kitchen table: her phone buzzes and lights: 10 years of blood tests show a PATTERN (painted red)."""
     st = ZStage()
     c = st.c
     c.drawRect(skia.Rect.MakeWH(W, H), paint(shader=D.lin((0, 0), (0, H), [(150, 128, 108), (100, 84, 70)])))
     for k in range(9):
         c.drawLine(0, 200 + k * 200, W, 150 + k * 200, paint((120, 100, 84), 0.5, stroke=3))           # the grain of the table
-    c.drawCircle(860, 1500, 150, paint((236, 234, 230)))                                             # a mug
-    c.drawCircle(860, 1500, 110, paint((70, 50, 40)))
+    c.drawCircle(880, 1560, 150, paint((236, 234, 230)))                                             # a mug
+    c.drawCircle(880, 1560, 110, paint((70, 50, 40)))
+    z = 1.0 + 0.9 * (1 - ease(ramp(t, 0.0, 0.35))) + 0.05 * t / max(d, 0.1)                     # a crash in, then a creep
     c.save()
-    cam(c, 1.0 + 0.05 * t / max(d, 0.1), 500, 900)
-    P.phone(c, 500, 900, 1.35, T, lit=T > C["buzz"], buzz=float(0.15 < T % 1.2 < 0.7),
-            msg=["CLINIC", "Your blood tests", "over 10 years", "show a pattern.", "Please come in", "this week."])
+    cam(c, z, 520, 880)
+    buzz = float(0.15 < T % 1.2 < 0.7)
+    c.translate(math.sin(T * 70) * 5 * buzz, 0)
+    c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(230, 360, 810, 1420), 60, 60), paint((20, 20, 22)))
+    c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(260, 400, 780, 1380), 40, 40), paint((236, 238, 240)))
+    D.text(c, "CLINIC", 520, 520, 56, "inter-700", (40, 40, 44), tag="phone")
+    for j, ln in enumerate(["10 years of your", "blood tests show a"]):
+        D.text(c, ln, 520, 640 + j * 70, 46, "inter-500", (40, 40, 44), tag="phone")
+    k = ease(ramp(t, 0.3, 0.6))
+    c.save()
+    c.translate(520, 900)
+    c.scale(0.6 + 0.4 * k, 0.6 + 0.4 * k)
+    D.text(c, "PATTERN", 0, 0, 118, "inter-700", (20, 20, 22), tag="phone")
+    Z.tinted(st.t, c, lambda tt: tt.drawRect(skia.Rect.MakeLTRB(-250, -100, 250, 20), paint((230, 30, 30), 0.9 * k)))
+    c.restore()
+    D.text(c, "Please come in.", 520, 1060, 46, "inter-500", (40, 40, 44), tag="phone")
     c.restore()
     return st
 
@@ -60,13 +74,23 @@ def s_slips(T, t, d):
     cam(c, 1.0 + 0.04 * t / max(d, 0.1), 540, 960)
     rng = np.random.default_rng(2)
     for i, (yr, hb) in enumerate(zip(YEARS, HB)):
-        k = ease(ramp(t, 0.15 * i, 0.15 * i + 0.3))
+        k = ease(ramp(t, 0.1 * i, 0.1 * i + 0.25))
         if k <= 0:
             continue
         x = 150 + (i % 4) * 260 + rng.uniform(-20, 20)
         y = 470 + (i // 4) * 380 + rng.uniform(-20, 20)
-        P.slip(c, x, y - 60 * (1 - k), 0.8, yr, f"{hb}", T, rot=rng.uniform(-10, 10), stamp_k=ease(ramp(t, 0.15 * i + 0.25, 0.15 * i + 0.4)))
+        P.slip(c, x, y - 60 * (1 - k), 0.8, yr, f"{hb}", T, rot=rng.uniform(-10, 10), stamp_k=ease(ramp(t, 0.1 * i + 0.2, 0.1 * i + 0.3)))
     c.restore()
+    return st
+
+
+def s_slips_b(T, t, d):
+    """Closer: three of the slips, NORMAL, NORMAL, NORMAL."""
+    st = ZStage()
+    c = st.c
+    c.drawRect(skia.Rect.MakeWH(W, H), paint(shader=D.lin((0, 0), (0, H), [(150, 128, 108), (100, 84, 70)])))
+    for j, i in enumerate((0, 5, 9)):
+        P.slip(c, 540 + (j - 1) * 40, 520 + j * 330, 1.25, YEARS[i], f"{HB[i]}", T, rot=(-8, 5, -3)[j], stamp_k=ease(ramp(t, 0.1 + 0.25 * j, 0.3 + 0.25 * j)))
     return st
 
 
@@ -147,7 +171,7 @@ def s_title(T, t, d):
     st = ZStage()
     c = st.c
     sets.bd(st, "stage", sets.stage)
-    K.emcee(c, 540, 1760, 1.1, T, pose="present")
+    K.emcee(c, 540, 1900, 1.0, T, pose="present")
     KD.title_card(c, T, S("t1") + 0.3)
     return st
 
@@ -174,7 +198,8 @@ def s_hall(T, t, d):
     st = ZStage()
     c = st.c
     sets.bd(st, "hall", sets.hall)
-    slots = [(170, 1010), (400, 1010), (630, 1010), (860, 1010), (280, 1390), (540, 1390), (800, 1390)]
+    slots = [(250, 1010), (460, 1010), (670, 1010), (880, 1010), (390, 1390), (610, 1390), (830, 1390)]
+    K.mae(c, 105, 1600, 0.62, T, pose="stand", expr="puzzled", matte=True)                           # Mae, taking the tour
     order = [0, 1, 2, 3, 4, 5, 6]
     for j, (word, kind) in enumerate(LIST):
         tw = Wx("a1", word) - 0.15
@@ -267,23 +292,41 @@ def s_s1_pair(T, t, d):
     return st
 
 
-def s_masai(T, t, d):
-    """The Swedish trial, on placards held up by the chorus."""
-    st = ZStage()
-    c = st.c
+def _masai_bg(st, T):
     sets.bd(st, "hall", sets.hall)
-    c.drawRect(skia.Rect.MakeWH(W, H), paint(BLACK, 0.3))
-    P.placard(c, 540, 560, 900, ["MAMMOGRAM SCREENING", "105,000+ women, Sweden", "with AI as a second reader:"],
-              None, T, k=ease(ramp(t, 0.0, 0.3)), seed=1, size=64)
-    k2 = ease(ramp(T, Wx("a2", "twenty-nine") - 0.2, Wx("a2", "twenty-nine") + 0.2))
-    P.placard(c, 300, 1060, 460, ["29% MORE", "cancers found"], None, T, k=k2, rot=-4, seed=2, size=74)
-    k3 = ease(ramp(T, Wx("a2", "false") - 0.2, Wx("a2", "false") + 0.2))
-    P.placard(c, 780, 1080, 460, ["NO MORE", "false alarms"], None, T, k=k3, rot=4, seed=3, size=74)
-    k4 = ease(ramp(T, E("a2") - 1.4, E("a2") - 1.0))
-    P.placard(c, 540, 1330, 700, ["44% LESS", "reading work for doctors"], "MASAI trial · Lancet Digital Health, 2025", T, k=k4,
-              seed=4, size=60)
+    st.c.drawRect(skia.Rect.MakeWH(W, H), paint(BLACK, 0.35))
     for j, x in enumerate((110, 950)):
-        K.skeleton(c, x, 1560, 0.36, T, phase=j * 0.5)
+        K.skeleton(st.c, x, 1560, 0.36, T, phase=j * 0.5)
+
+
+def s_masai(T, t, d):
+    """The Swedish trial: who, and how."""
+    st = ZStage()
+    _masai_bg(st, T)
+    P.placard(st.c, 540, 700, 900, ["MAMMOGRAM SCREENING", "105,000+ women, Sweden", "with AI-supported screening:"],
+              None, T, k=ease(ramp(t, 0.0, 0.3)), seed=1, size=74)
+    return st
+
+
+def s_masai_b(T, t, d):
+    st = ZStage()
+    _masai_bg(st, T)
+    P.placard(st.c, 540, 760, 820, ["29% MORE", "cancers found"], None, T, k=ease(ramp(t, 0.0, 0.2)), rot=-3, seed=2, size=150)
+    return st
+
+
+def s_masai_c(T, t, d):
+    st = ZStage()
+    _masai_bg(st, T)
+    P.placard(st.c, 540, 760, 820, ["NO MORE", "false alarms"], None, T, k=ease(ramp(t, 0.0, 0.2)), rot=3, seed=3, size=150)
+    return st
+
+
+def s_masai_d(T, t, d):
+    st = ZStage()
+    _masai_bg(st, T)
+    P.placard(st.c, 540, 740, 880, ["44% LESS", "reading work for doctors"], "MASAI trial · Lancet Digital Health, 2025", T,
+              k=ease(ramp(t, 0.0, 0.2)), seed=4, size=130)
     return st
 
 

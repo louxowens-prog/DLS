@@ -106,17 +106,49 @@ def bus_day(c):
 
 # ------------------------------------------------------------------ the underworld
 
-def _room(c, back, walls, floor_cols=(CHALK, BLACK), vp=(560, 820), lean=-40, scribble="spiral", seed=0, floor_skew=0.6):
-    """A crooked painted room: a back flat, two leaning side flats, a checker floor with bad perspective."""
+def _room(c, back, walls, floor_cols=(CHALK, BLACK), vp=(560, 820), lean=-40, scribble="spiral", seed=0, floor_skew=0.6,
+          tilt=0.0, floor="checker", door=True, width=640):
+    """A crooked painted room: a back flat hung off true (tilt, degrees), two side flats leaning at different angles,
+    a crooked doorway painted on the back, and a floor whose perspective goes wrong."""
     c.drawRect(skia.Rect.MakeWH(W, H), paint(BLACK))
-    bx0, by0, bx1, by1 = 230 + lean, 360, 870 + lean, 1180
-    Z.cardboard(c, [(bx0, by0 + 30), (bx1, by0), (bx1 + 20, by1), (bx0 - 10, by1 + 10)], back, seams=(bx0 + 300,), seed=seed)
-    Z.scribble(c, bx0, by0, bx1, by1, scribble, col=mix(back, WHITE, 0.55), seed=seed + 1, a=0.55)
-    Z.cardboard(c, [(0, 60), (bx0, by0 + 30), (bx0 - 10, by1 + 10), (0, 1560)], walls[0], seams=(110,), seed=seed + 2)
-    Z.cardboard(c, [(bx1, by0), (W, 0), (W, 1620), (bx1 + 20, by1)], walls[1], seams=(980,), seed=seed + 3)
-    Z.scribble(c, 0, 100, bx0, 1500, "zigzag", col=mix(walls[0], WHITE, 0.5), seed=seed + 4, a=0.5)
-    Z.scribble(c, bx1, 60, W, 1560, "dots", col=mix(walls[1], WHITE, 0.5), seed=seed + 5, a=0.5, density=0.6)
-    Z.checker(c, vp, by1, H, bx0 - 10, bx1 + 20, -500, W + 420, n_cols=8, n_rows=6, cols=floor_cols, skew=floor_skew)
+    cx, cy = 550 + lean, 770
+    a = math.radians(tilt)
+    def rot(x, y):
+        return (cx + (x - cx) * math.cos(a) - (y - cy) * math.sin(a), cy + (x - cx) * math.sin(a) + (y - cy) * math.cos(a))
+    hw = width / 2
+    q = [rot(cx - hw, 360 + 30), rot(cx + hw, 350), rot(cx + hw + 20, 1180), rot(cx - hw - 10, 1190)]
+    (bx0, by0), (bx1, by1b), (bx2, by2), (bx3, by3) = q
+    Z.cardboard(c, [(0, 40), q[0], q[3], (0, 1540)], walls[0], seams=(110,), seed=seed + 2)
+    Z.cardboard(c, [q[1], (W, 0), (W, 1640), q[2]], walls[1], seams=(980,), seed=seed + 3)
+    Z.scribble(c, 0, 100, min(bx0, bx3), 1500, "zigzag", col=mix(walls[0], WHITE, 0.5), seed=seed + 4, a=0.5)
+    Z.scribble(c, max(bx1, bx2), 60, W, 1560, "dots", col=mix(walls[1], WHITE, 0.5), seed=seed + 5, a=0.5, density=0.6)
+    Z.cardboard(c, q, back, seams=(cx - 20,), seed=seed)
+    c.save()
+    c.clipPath(path(q))
+    Z.scribble(c, 0, 300, W, 1250, scribble, col=mix(back, WHITE, 0.55), seed=seed + 1, a=0.55)
+    c.restore()
+    if door:                                                            # a crooked painted doorway, leaning the other way
+        d = [rot(cx + hw - 190, 760), rot(cx + hw - 70, 740), rot(cx + hw - 60, 1170), rot(cx + hw - 200, 1180)]
+        c.drawPath(path(d), paint(BLACK))
+        c.drawPath(path(d), paint(mix(back, WHITE, 0.4), stroke=8))
+    fy = max(q[2][1], q[3][1])
+    if floor == "checker":
+        Z.checker(c, vp, fy, H, q[3][0], q[2][0], -500, W + 420, n_cols=8, n_rows=6, cols=floor_cols, skew=floor_skew)
+    elif floor == "rays":                                               # a sunburst floor: painted stripes fanning out
+        c.drawPath(path([q[3], q[2], (W + 400, H), (-400, H)]), paint(floor_cols[1]))
+        for k in range(14):
+            u0, u1 = k / 14, (k + 0.5) / 14
+            top = lambda u: (q[3][0] + (q[2][0] - q[3][0]) * u, q[3][1] + (q[2][1] - q[3][1]) * u)
+            bot = lambda u: (-400 + (W + 800) * u, H)
+            c.drawPath(path([top(u0), top(u1), bot(u1 + 0.02), bot(u0 - 0.02)]), paint(floor_cols[0]))
+    elif floor == "spiral":
+        Z.checker(c, vp, fy, H, q[3][0], q[2][0], -500, W + 420, n_cols=8, n_rows=6, cols=floor_cols, skew=floor_skew)
+        c.save()
+        c.translate(540, 1560)
+        c.scale(1, 0.32)
+        for k in range(9, 0, -1):
+            c.drawCircle(0, 0, k * 70, paint(floor_cols[k % 2]))
+        c.restore()
 
 
 def stage(c):
@@ -141,19 +173,23 @@ def stage(c):
 
 def hall(c):
     """The Hall of Pictures: a leaning gallery of light boxes, painted eyes on the walls, a bare bulb."""
-    _room(c, (70, 68, 66), ((110, 106, 100), (84, 80, 78)), scribble="eyes", seed=10, lean=-30)
-    for x0, y0, w, h in ((40, 420, 150, 200), (40, 700, 150, 200), (900, 380, 150, 200), (900, 700, 150, 200)):
+    _room(c, (70, 68, 66), ((110, 106, 100), (84, 80, 78)), scribble="eyes", seed=10, lean=-40, tilt=-7, floor_skew=0.9,
+          width=560)
+    import props as PR
+    for (x0, y0, w, h), kind in zip(((40, 420, 150, 200), (40, 700, 150, 200), (900, 380, 150, 200), (900, 700, 150, 200)),
+                                    ("xray", "mri", "ct", "retina")):
         c.save()
         c.translate(x0 + w / 2, y0 + h / 2)
-        c.rotate(-6 if x0 < 500 else 6)
-        c.drawRect(skia.Rect.MakeLTRB(-w / 2, -h / 2, w / 2, h / 2), paint((230, 230, 226)))
+        c.rotate(-9 if x0 < 500 else 8)
+        PR.picture(c, kind, 0, 0, w - 20, h - 20)
         c.drawRect(skia.Rect.MakeLTRB(-w / 2, -h / 2, w / 2, h / 2), paint(BLACK, stroke=10))
         c.restore()
 
 
 def library(c):
     """The Library That Never Sleeps: crooked towers of painted books and paper to the flies."""
-    _room(c, (60, 58, 56), ((100, 96, 92), (80, 78, 76)), scribble="hatch", seed=20, lean=20, floor_skew=-0.5)
+    _room(c, (60, 58, 56), ((100, 96, 92), (80, 78, 76)), scribble="hatch", seed=20, lean=30, floor_skew=-0.8, tilt=5,
+          door=False, width=600)
     rng = np.random.default_rng(21)
     for x0, lean in ((20, 6), (250, -4), (820, 5), (960, -7)):
         y = 1500
@@ -173,7 +209,8 @@ def library(c):
 
 def clockroom(c):
     """Ten Years at a Glance: a painted clock face the size of the back wall, calendar flats, a spiral rug."""
-    _room(c, (80, 78, 76), ((60, 58, 56), (100, 96, 92)), scribble="zigzag", seed=30, lean=-10)
+    _room(c, (80, 78, 76), ((60, 58, 56), (100, 96, 92)), scribble="zigzag", seed=30, lean=40, tilt=8, floor="spiral",
+          floor_skew=-0.6, width=700)
     cx, cy, r = 530, 760, 300
     c.drawCircle(cx, cy, r, paint((226, 222, 212)))
     c.drawCircle(cx, cy, r, paint(BLACK, stroke=14))
@@ -185,7 +222,8 @@ def clockroom(c):
 
 def ballroom(c):
     """Before the Symptoms: a ballroom at dawn: a spiky painted sun, crooked columns, alarm-clock chandeliers."""
-    _room(c, (110, 108, 104), ((70, 68, 66), (70, 68, 66)), scribble="stars", seed=40, lean=0, floor_skew=0.2)
+    _room(c, (110, 108, 104), ((70, 68, 66), (70, 68, 66)), scribble="stars", seed=40, lean=-10, floor_skew=0.2, tilt=-5,
+          floor="rays", door=False, width=760)
     cx, cy = 550, 820
     for k in range(16):                                                 # the sun's spikes
         a = 2 * math.pi * k / 16
@@ -203,14 +241,14 @@ def ballroom(c):
 def clinic(c):
     """The procedure room, painted: tiles scribbled on a leaning wall, a cardboard monitor on a pole."""
     _room(c, (150, 150, 148), ((120, 120, 118), (100, 100, 98)), floor_cols=((200, 200, 198), (120, 120, 118)), scribble="dots",
-          seed=50, lean=10, floor_skew=0.3)
+          seed=50, lean=10, floor_skew=0.3, tilt=4, door=False)
     for x in range(260, 900, 60):
         c.drawLine(x, 380, x + 6, 1180, paint((120, 120, 118), 0.6, stroke=3))
     for y in range(420, 1180, 60):
         c.drawLine(240, y, 890, y - 8, paint((120, 120, 118), 0.6, stroke=3))
 
 
-def tunnel(c, T, u, lesion=True, flag=0.0, tint=None):
+def tunnel(c, T, u, lesion=True, flag=0.0, tint=None, reveal=1.0):
     """The inside, painted as a carnival tunnel ride: ribbed arches (the folds) receding to a lamp-lit vanishing point.
     u moves us forward. lesion: a small flat growth tucked in a fold (right of centre). flag: the AI's box around it."""
     c.drawRect(skia.Rect.MakeWH(W, H), paint((14, 12, 12)))
@@ -234,10 +272,11 @@ def tunnel(c, T, u, lesion=True, flag=0.0, tint=None):
     c.drawCircle(cx, cy, 60, paint((4, 4, 4)))
     if lesion:
         lx, ly = cx + 250, cy + 170
-        c.drawOval(skia.Rect.MakeLTRB(lx - 78, ly - 30, lx + 78, ly + 34), paint((236, 232, 226)))
-        c.drawOval(skia.Rect.MakeLTRB(lx - 62, ly - 20, lx + 58, ly + 22), paint((96, 88, 86)))
+        rim = mix((150, 146, 142), (236, 232, 226), reveal)                # barely there until the box is drawn
+        c.drawOval(skia.Rect.MakeLTRB(lx - 78, ly - 30, lx + 78, ly + 34), paint(rim, 0.35 + 0.65 * reveal))
+        c.drawOval(skia.Rect.MakeLTRB(lx - 62, ly - 20, lx + 58, ly + 22), paint(mix((130, 124, 120), (96, 88, 86), reveal)))
         for k in range(9):
-            c.drawCircle(lx - 46 + k * 11, ly + 3 * math.sin(k * 1.7), 5, paint((150, 140, 138)))
+            c.drawCircle(lx - 46 + k * 11, ly + 3 * math.sin(k * 1.7), 5, paint((150, 140, 138), 0.3 + 0.7 * reveal))
         if flag > 0:
             k = D.ease(flag)
             m = 150 - 60 * k

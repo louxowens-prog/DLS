@@ -27,7 +27,7 @@ def intertitle(c, T, t0, t1, top, title, seed=0):
     c.drawRect(skia.Rect.MakeWH(W, 1920), paint(BLACK))
     k = ease(ramp(T, t0, t0 + 0.15))
     _border(c, T, k)
-    Z.letters(c, top, 540, 640, 64, "londrina-400", CHALK, T=T, seed=seed, tag="card", a=k, track=6)
+    Z.letters(c, top, 540, 640, 64, "londrina-400", CHALK, T=T, seed=seed, tag="card", a=k, track=6, jitter=1.8)
     words = title.split(" ")
     f = D.font("londrina-900", 130)
     lines, cur = [], ""
@@ -42,7 +42,7 @@ def intertitle(c, T, t0, t1, top, title, seed=0):
     size = min(130, min(130 * 820 / f.measureText(l) for l in lines))
     y = 900 - (len(lines) - 1) * size * 0.55
     for j, ln in enumerate(lines):
-        Z.letters(c, ln, 540, y + j * size * 1.08, size, "londrina-900", WHITE, T=T, seed=seed + 5 + j, tag="card", a=k)
+        Z.letters(c, ln, 540, y + j * size * 1.08, size, "londrina-900", WHITE, T=T, seed=seed + 5 + j, tag="card", a=k, jitter=2.2)
     from cast import glasses
     glasses(c, 540, 1330, 0.9, rot=6 * math.sin(T * 5), a=k)
     glasses_col = None
@@ -53,16 +53,15 @@ def title_card(c, T, t0):
     k = ease(ramp(T, t0, t0 + 0.4))
     sc = 1 + 0.25 * (1 - k)
     c.save()
-    c.translate(540, 470)
+    c.translate(540, 450)
     c.scale(sc, sc)
-    c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-470, -200, 470, 170), 30, 30), paint(BLACK, 0.8 * k))
-    c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-450, -180, 450, 150), 24, 24), paint(CHALK, k, stroke=5))
-    Z.letters(c, "THE SECOND", 0, -50, 120, "limelight-400", WHITE, T=T, seed=41, tag="title", a=k, jitter=0.5)
-    Z.letters(c, "LOOK", 0, 90, 150, "limelight-400", WHITE, T=T, seed=42, tag="title", a=k, jitter=0.5)
-    c.restore()
+    c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-470, -200, 470, 272), 30, 30), paint(BLACK, 0.8 * k))
+    c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-450, -180, 450, 252), 24, 24), paint(CHALK, k, stroke=5))
+    Z.letters(c, "THE SECOND", 0, -50, 120, "limelight-400", WHITE, T=T, seed=41, tag="title", a=k, jitter=1.0)
+    Z.letters(c, "LOOK", 0, 90, 150, "limelight-400", WHITE, T=T, seed=42, tag="title", a=k, jitter=1.0)
     k2 = ease(ramp(T, t0 + 0.5, t0 + 0.9))
-    Z.letters(c, "a medical vaudeville in five rooms", 540, 730, 50, "londrina-400", CHALK, T=T, seed=43, tag="title2", a=k2,
-              outline=BLACK, ow=8)
+    Z.letters(c, "a medical vaudeville in five rooms", 0, 226, 48, "londrina-400", CHALK, T=T, seed=43, tag="title2", a=k2, jitter=1.2)
+    c.restore()
 
 
 def lyric(c, T, TL):
@@ -90,8 +89,9 @@ def lyric(c, T, TL):
     f = D.font(fname, size)
     w = f.measureText(s)
     c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(LYR_X - w / 2 - 34, LYR_Y - size - 26, LYR_X + w / 2 + 34, LYR_Y + size * 0.45),
-                                      18, 18), paint(BLACK, 0.72 * a))
-    Z.letters(c, s, LYR_X, LYR_Y, size, fname, WHITE if chorus else CHALK, T=T, seed=hash(s) % 97, tag="lyric", a=a, jitter=0.5)
+                                      18, 18), paint(BLACK, 0.9 * a))
+    Z.letters(c, s, LYR_X, LYR_Y, size, fname, WHITE if chorus else CHALK, T=T, seed=len(s) % 97, tag="lyric", a=a, jitter=0.5,
+              outline=BLACK, ow=size * 0.12)
     # the bouncing ball: word positions measured on the same line
     words = s.split(" ")
     xs, x = [], LYR_X - w / 2
