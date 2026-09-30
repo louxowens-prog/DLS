@@ -2,19 +2,20 @@
 
 Mae is an invented character; her numbers are illustrative, and every one of them sits inside the usual normal range,
 which is the point: one visit at a time, nothing looks wrong, and she feels fine. Hemoglobin 13.6 to 12.1 g/dL (women:
-about 12-15.5); ferritin, her iron stores, 96 to 22 ng/mL (about 12-150); red-cell size (MCV) 92 to 82 fL (80-100);
+about 12-15.5); ferritin, her iron stores, 110 to 48 ng/mL (kept above 45, the AGA 2020 guideline's threshold for iron deficiency, so no
+single result would have triggered a work-up); red-cell size (MCV) 92 to 82 fL (80-100);
 resting pulse 64 to 78 (60-100). Together, a slow iron-deficiency drift that should make a doctor look for slow bleeding
 in the gut. The studies
 below are real, and the film words them the way they report.
 
 | On screen / spoken | Source | Notes |
 |---|---|---|
-| "Some radiologists get 3 or 4 seconds an image." | McDonald et al., *Academic Radiology* 2015 (Mayo Clinic): to keep up, the average radiologist reading CT/MRI must interpret one image every 3-4 seconds in an 8-hour day | Said as "some radiologists", not all. |
+| "To keep up, some radiologists read a CT or MRI image every 3 or 4 seconds." Visual: a stack of CT/MRI slices flipping, "per CT / MRI image" | McDonald et al., *Academic Radiology* 2015 (Mayo Clinic): to keep up, the average radiologist reading CT/MRI must interpret one image every 3-4 seconds in an 8-hour day | A workload estimate counting individual CT/MRI slices; worded and shown that way. |
 | "In a Swedish trial of over 100,000 women, AI-supported screening found 29% more cancers, with no more false alarms." Placards: "with AI-supported screening", "44% less reading work" | MASAI randomised trial, Hernström et al., *Lancet Digital Health* 2025: more than 105,000 women (53,043 in the AI arm); cancer detection 6.4 vs 5.0 per 1,000 (+29%), no increase in false positives, 44% lower screen-reading workload | "With AI as a second reader" is the film's shorthand for AI-supported screening (AI triage plus flagging for the radiologists). |
 | "The doctor still decides. The machine just points." | MASAI and the other deployed tools here are decision support; radiologists make the reads | |
 | "A million papers a year" / "nearly 3,000 a day" | NLM MEDLINE citation counts: 1,063,140 citations for 2021 (≈2,900 a day) | MEDLINE alone; PubMed as a whole is larger. |
 | "It hands her the right page, and flags the pills that clash." | Retrieval of relevant literature and drug-interaction checking are standard decision-support uses | General description, no specific product claimed. |
-| Mae's decade: blood count slipping, iron stores sinking, red cells shrinking, resting pulse creeping up; each value still "normal", and she feels fine | A slow fall in hemoglobin with falling ferritin and shrinking red cells (iron deficiency) in an adult is a recognised reason to look for slow bleeding in the gut, for example from colon cancer; a slightly faster resting pulse fits a slowly developing anaemia | Dramatization, deliberately limited to lab values and vital signs (no symptoms) so it matches "before the symptoms". |
+| Mae's decade: blood count slipping, iron stores sinking (110 to 48), red cells shrinking, resting pulse creeping up; each value still "normal", and she feels fine | A slow fall in hemoglobin with falling ferritin and shrinking red cells (iron deficiency) in an adult is a recognised reason to look for slow bleeding in the gut, for example from colon cancer; a slightly faster resting pulse fits a slowly developing anaemia | Dramatization, deliberately limited to lab values and vital signs (no symptoms) so it matches "before the symptoms". |
 | "This person should be evaluated now, rather than waiting for symptoms." | The client's own line | |
 | "Real tools read blood-count trends like this. They've flagged colon cancers up to a year before the usual diagnosis." | ColonFlag (blood count, age, sex): Kinar et al., *JAMIA* 2016; Hornbrook et al., *Digestive Diseases and Sciences* 2017 (Kaiser Permanente): flagged colorectal cancer risk up to about a year earlier than usual diagnosis, mostly at curable stages | |
 | "Sepsis flagged hours ahead" / placard "acted on within 3 hours: about 1/5 fewer deaths" | TREWS, Adams et al., *Nature Medicine* 2022: 590,736 patients, 5 hospitals; when the alert was confirmed within 3 hours, in-hospital mortality was 18.7% lower (relative, adjusted) | Observational (prospective, multi-site), not randomised; "about 1/5" rounds 18.7%. |
@@ -43,4 +44,5 @@ below are real, and the film words them the way they report.
 - AI colonoscopy 2022: https://www.mayoclinic.org/medical-professionals/news/ai-assisted-colonoscopies-reduce-miss-rate-by-50-percent/mac-20536196
 - Survival by stage: https://www.cancer.org/cancer/colon-rectal-cancer/detection-diagnosis-staging/survival-rates.html
 - USPSTF 2021: https://www.uspreventiveservicestaskforce.org/uspstf/document/ClinicalSummaryFinal/colorectal-cancer-screening
+- AGA iron-deficiency guideline 2020 (ferritin < 45 ng/mL): https://www.mdcalc.com/guidelines/10434/aga/gastrointestinal-evaluation-iron-deficiency-anemia
 - Diagnostic error 2023: https://www.hopkinsmedicine.org/news/newsroom/news-releases/2023/07/report-highlights-public-health-impact-of-serious-harms-from-diagnostic-error-in-us

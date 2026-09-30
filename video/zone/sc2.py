@@ -18,7 +18,7 @@ from timeline import TL
 from zkit import BLACK, CHALK
 
 S, E = TL.s, TL.e
-FERRITIN = [96, 88, 80, 71, 62, 54, 45, 37, 29, 22]          # iron stores, ng/mL (all still in the usual range)
+FERRITIN = [110, 104, 97, 90, 83, 76, 68, 61, 54, 48]        # iron stores, ng/mL (all above the 45 guideline threshold)
 MCV = [92, 91, 90, 89, 88, 87, 86, 85, 84, 82]                # red-cell size, fL (normal 80-100)
 PULSE = [64, 65, 66, 68, 69, 71, 72, 74, 76, 78]              # resting pulse (normal 60-100)
 
@@ -173,10 +173,10 @@ def s_record(T, t, d):
     sets.bd(st, "clockroom", sets.clockroom)
     c.drawRect(skia.Rect.MakeWH(W, H), paint(BLACK, 0.25))
     for i, (yr, hb) in enumerate(zip(YEARS, HB)):
-        x = 140 + (i % 5) * 200
-        y = 820 + (i // 5) * 430
+        x = 120 + (i % 5) * 182
+        y = 820 + (i // 5) * 400
         k = ramp(t, 0.25 * i, 0.25 * i + 0.3)
-        P.slip(c, x, y, 0.78, yr, f"{hb}", T, rot=((i * 37) % 11) - 5, stamp_k=ease(k))
+        P.slip(c, x, y, 0.72, yr, f"{hb}", T, rot=((i * 37) % 11) - 5, stamp_k=ease(k))
     K.second_eye(c, 540, 1560, 0.42, T, look=(-0.2, -0.8), pose="stand", blink=float((T % 2.1) < 0.12))
     return st
 
@@ -206,7 +206,7 @@ def s_s3_iron(T, t, d):
     _year(c, T, i, f"iron stores {FERRITIN[i]}", "(still in the normal range)")
     Z.blob(c, [(260, 1330), (260, 1040), (820, 1040), (820, 1330)], (110, 90, 70), T, 3, smooth=False)       # the chest
     Z.blob(c, [(240, 1040), (300, 920), (780, 920), (840, 1040)], (90, 72, 56), T, 4, smooth=False)
-    n = int(round(FERRITIN[i] / 96 * 21))
+    n = int(round(FERRITIN[i] / 110 * 21))
     for k in range(n):                                                  # the coins still in it
         x = 330 + (k % 7) * 70
         y = 990 - (k // 7) * 56
@@ -239,7 +239,7 @@ def s_s3_heart(T, t, d):
     return st
 
 
-CHARTS = [("HEMOGLOBIN", HB, ("13.6", "12.1")), ("IRON STORES", FERRITIN, ("96", "22")), ("RED-CELL SIZE", MCV, ("92", "82")),
+CHARTS = [("HEMOGLOBIN", HB, ("13.6", "12.1")), ("IRON STORES", FERRITIN, ("110", "48")), ("RED-CELL SIZE", MCV, ("92", "82")),
           ("RESTING PULSE", PULSE, ("64", "78"))]
 
 
@@ -249,11 +249,11 @@ def s_s3_fine(T, t, d):
     c = st.c
     c.drawRect(skia.Rect.MakeWH(W, H), paint((30, 30, 30)))
     for j, (title, vals, labs) in enumerate(CHARTS):
-        x0, y0 = 60 + (j % 2) * 490, 420 + (j // 2) * 520
+        x0, y0 = 60 + (j % 2) * 460, 420 + (j // 2) * 520
         k = ease(ramp(t, 0.45 * j, 0.45 * j + 0.3))
         if k <= 0:
             continue
-        P.chart(c, x0, y0, 470, 470, vals, T, k=1.0, title=title, fine=k, seed=j * 3, labels=labs)
+        P.chart(c, x0, y0, 420, 470, vals, T, k=1.0, title=title, fine=k, seed=j * 3, labels=labs)
     return st
 
 
@@ -272,7 +272,7 @@ def s_s3_all(T, t, d):
         Z.letters(c, title, x0 + 20, top + 50, 40, "londrina-900", CHALK, T=T, seed=j, align="left", tag=f"al{j}")
         v = np.array(vals, float)
         v = (v - v.min()) / (np.ptp(v) + 1e-9)
-        pts = [(x0 + 360 + 520 * i / 9, top + 160 - 120 * vv) for i, vv in enumerate(v)]
+        pts = [(x0 + 340 + 480 * i / 9, top + 160 - 120 * vv) for i, vv in enumerate(v)]
         n = max(2, int(k * 10))
         c.drawPath(path(Z.wob(pts[:n], 2, j, T), closed=False), paint((236, 234, 226), stroke=7))
         if n == 10:
@@ -304,9 +304,8 @@ def s_flagtool(T, t, d):
     c = st.c
     sets.bd(st, "clockroom", sets.clockroom)
     c.drawRect(skia.Rect.MakeWH(W, H), paint(BLACK, 0.3))
-    P.placard(c, 540, 820, 900, ["BLOOD-COUNT TREND TOOLS", "have flagged colon cancer", "up to a year before",
-                                 "the usual diagnosis"], "Hornbrook et al. · Digestive Diseases and Sciences, 2017", T,
-              k=ease(ramp(t, 0.0, 0.3)), seed=12, size=66)
+    P.placard(c, 540, 820, 900, ["BLOOD-COUNT TRENDS", "flagged colon cancer", "up to a year early"],
+              "Hornbrook et al. · Digestive Diseases and Sciences, 2017", T, k=ease(ramp(t, 0.0, 0.3)), seed=12, size=96)
     K.king_heme(c, 230, 1520, 0.62, T, tint=st.t)
     K.second_eye(c, 850, 1540, 0.5, T, look=(-0.6, -0.4), pose="dance")
     return st

@@ -11,8 +11,9 @@ S, E = TL.s, TL.e
 
 # (start, shot, print, transition, colour)
 EDIT = [
-    # the real world
-    (0.0, "phone", "real", "cut", 0.0),
+    # a flash of what's behind the door, then the real world
+    (0.0, "flash", "zone", "cut", 0.0),
+    (0.75, "phone", "real", "iris", 0.0),
     (S("r1") - 0.15, "mae_phone", "real", "cut", 0.0),
     (S("r2") - 0.1, "slips", "real", "cut", 0.0),
     (Wx("r2", "every") - 0.1, "slips_b", "real", "jump", 0.0),

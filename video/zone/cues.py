@@ -27,7 +27,7 @@ for num, title, _, first in CHAPTERS:
     CARDS.append((num, title, t1 - 1.35, t1))
 
 C = {
-    "buzz": 0.25,
+    "buzz": 0.95,
     "hand": S("r3") + 0.5,
     "door_open": S("r3") + 0.2,
     "spot": SL("s1", 2) + 0.2,

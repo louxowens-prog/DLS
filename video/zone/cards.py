@@ -9,7 +9,7 @@ import zkit as Z
 from draw import W, WHITE, ease, paint, ramp
 from zkit import BLACK, CHALK
 
-LYR_Y, LYR_X, LYR_W = 1440, 510, 860
+LYR_Y, LYR_X, LYR_W = 1480, 510, 860
 
 
 def _border(c, T, k=1.0):

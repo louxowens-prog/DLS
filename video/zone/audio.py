@@ -66,13 +66,18 @@ SILENCES = [(C["crow"] + 0.62, S("d3") - 0.02), (E("f2") + 0.12, C["flag"] - 0.4
 
 def score(mus, amb, fx):
     # ---------------------------------------------------------------- the real world: a quiet kitchen
-    t_fall = f("fall")
-    amb.add(F.room_tone(t_fall + 0.2, amp=1.0), 0.0, 1.0)
-    amb.add(wide(F.birds, t_fall), 0.0, 0.8)
-    for k in range(int(t_fall)):
-        fx.add(O.tick(amp=0.35, tock=k % 2), 0.4 + k, 1.0, pan=0.7)
+    # the flash of the underworld first: a crash, a stab, a gang shout, then the iris shuts on it
+    Bd.fanfare(mus, 0.02, 0.9, key=53)
+    mus.add(tts("Doo-wah!", "chorus"), 0.05, 0.8)
+    fx.add(O.slide_whistle(False, 0.5, 0.6), 0.3, 1.0)
+    fx.add(O.whoosh(0.3, False, 11, 0.5), 0.55, 1.0)
+    t_fall, tp = f("fall"), f("phone")
+    amb.add(F.room_tone(t_fall - tp + 0.2, amp=1.0), tp, 1.0)
+    amb.add(wide(F.birds, t_fall - tp), tp, 0.8)
+    for k in range(int(t_fall - tp)):
+        fx.add(O.tick(amp=0.35, tock=k % 2), tp + 0.4 + k, 1.0, pan=0.7)
     for k in range(2):
-        fx.add(F.buzz(0.55, 1.0), 0.15 + 1.2 * k, 1.0, pan=0.5)
+        fx.add(F.buzz(0.55, 1.0), tp + 0.15 + 1.2 * k, 1.0, pan=0.5)
     t_sl = f("slips")
     for i in range(10):
         fx.add(O.page(amp=0.5, seed=i), t_sl + 0.15 * i, 1.0, pan=0.3 + 0.04 * i)
@@ -360,7 +365,7 @@ def build():
     music = music * ride
     mix = music + vo
     mix = signal.sosfilt(signal.butter(4, 35 / (SR / 2), "high", output="sos"), mix, axis=1)
-    shape = np.where(zone > 0, 1.0, -4.5)                                # the real world clearly quieter than the zone
+    shape = np.where(zone > 0, 1.0, -7.0)                                # the real world clearly quieter than the zone
     k = int(0.3 * SR)
     shape = np.convolve(np.pad(shape, k, mode="edge"), np.ones(k) / k, "same")[k:-k]
     mix = mix * db(shape)[None]

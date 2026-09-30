@@ -41,8 +41,8 @@ LINES = [
     ("t1", EMCEE, "Ladies and germs: The Second Look!", "Ladies and germs:| THE SECOND LOOK!", 0.4),
 
     # ---- ROOM 1: pictures - a second pair of eyes
-    ("a1", EMCEE, "X-rays, CT, MRI, eye scans, skin, slides, heart tracings. Some radiologists get three or four seconds an image.",
-     "X-rays, CT, MRI, eye scans, skin, slides, heart tracings.| Some radiologists get 3 or 4 seconds an image.", 0.2),
+    ("a1", EMCEE, "X-rays, CT, MRI, eye scans, skin, slides, heart tracings. To keep up, some radiologists read a CT or MRI image every three or four seconds.",
+     "X-rays, CT, MRI, eye scans, skin, slides, heart tracings.| To keep up, some radiologists read| a CT or MRI image every 3 or 4 seconds.", 0.2),
     ("s1", SONG, None, None, 0.2),
     ("a2", EMCEE, "In a Swedish trial of over a hundred thousand women, AI-supported screening found twenty-nine percent more cancers, with no more false alarms.",
      "In a Swedish trial of over 100,000 women,| AI-supported screening found 29% more cancers,| with no more false alarms.", 0.2),
@@ -117,7 +117,7 @@ SONGS = {
         (CHORUS, "One at a time: fine, fine, fine!"),
         (CHORUS, "All at once: a warning sign!"),
     ]),
-    "s4": dict(bpm=176, style="newwave", intro=4, outro=4, lines=[
+    "s4": dict(bpm=150, style="newwave", intro=4, outro=4, lines=[
         (CHORUS, "Before the symptoms!"),
         (EMCEE, "Sepsis flagged hours ahead,"),
         (EMCEE, "some kidney injuries two days out,"),
@@ -135,9 +135,9 @@ SONGS = {
 LYRIC_SHOWN = {}
 
 # on-screen fact plates inside the songs (song, lyric line index, lines, source)
-PLATES = {
-    ("s4", 1): (["SEPSIS ALERTS", "acted on within 3 hours:", "about 1/5 fewer deaths"], "TREWS, 5 hospitals · Nature Medicine, 2022"),
-    ("s4", 2): (["KIDNEY INJURY", "55.8% predicted, up to 48 h ahead", "(about 2 false alerts per true one)"], "Tomašev et al. · Nature, 2019"),
-    ("s4", 3): (["WEAK HEART PUMP", "32% more diagnoses", "from ordinary ECGs"], "EAGLE trial · Nature Medicine, 2021"),
-    ("s4", 4): (["DIABETIC EYE DISEASE", "first autonomous AI", "diagnosis authorized, 2018"], "IDx-DR · U.S. FDA"),
+PLATES = {   # headline only; the full citations are on the end card and in FACTCHECK.md
+    ("s4", 1): (["SEPSIS ALERTS", "~1/5 fewer deaths"], None),
+    ("s4", 2): (["KIDNEY INJURY", "flagged 48 h early", "(with false alarms)"], None),
+    ("s4", 3): (["WEAK HEART", "32% more found"], None),
+    ("s4", 4): (["DIABETIC EYES", "screened by AI"], None),
 }

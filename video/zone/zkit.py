@@ -250,8 +250,9 @@ def shoe(c, x, y, s=1.0, flip=1):
 
 
 def matte_edge(c, p, a=0.5):
-    """The pale fringe round a live actor matted into a painted world (cheap blue-screen)."""
-    c.drawPath(p, paint(WHITE, a * 0.55, stroke=5, blur=2))
+    """The pale fringe round a live actor matted into a painted world (cheap blue-screen), with a little halation."""
+    c.drawPath(p, paint(WHITE, a * 0.25, stroke=20, blur=10))
+    c.drawPath(p, paint(WHITE, a * 0.8, stroke=7, blur=2.5))
 
 
 def tinted(tint, c, fn):

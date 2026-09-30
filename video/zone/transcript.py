@@ -38,10 +38,12 @@ def main():
     out += ["", "WHERE THE DEVICES ARE",
             f"  THE REAL-LIFE SCENARIO, played literally: Mae, 56, feels fine; ten years of 'normal' blood tests; a computer "
             f"reads all ten at once (phone 0.0, slips {f('slips'):.1f}, scan {f('scan'):.1f}); her decade in Room 3 "
-            f"({f('record'):.1f}-{f('flagtool'):.1f}): blood count slipping, iron pills for 'tired', 4 kg lost, pulse rising; "
+            f"({f('record'):.1f}-{f('flagtool'):.1f}): blood count slipping, iron stores sinking, red cells shrinking, resting "
+            f"pulse creeping up - lab values and vital signs only, each still in range, and she feels fine; "
             f"'evaluate now' {C['evaluate']:.1f}; her colonoscopy in Room 5 ({f('clinic'):.1f}): 'all clear so far', silence, "
             f"the AI flags a flat growth hiding in a fold {C['flag']:.1f}; found early, stage one; a year later she is back "
             f"driving her school bus in colour {f('bus'):.1f}",
+            f"  A FLASH OF THE UNDERWORLD (0-0.75 s) before the real world, as the hook; then the phone",
             f"  THE DOORWAY: the pantry door creaks open {C['door_open']:.1f}; a white glove beckons with her glasses; the "
             f"iris and the spiral fall {f('fall'):.1f}; back out through the same door {f('door_back'):.1f}",
             "  FIVE ROOMS, each opened by a hand-lettered intertitle with an iris: " +

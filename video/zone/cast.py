@@ -169,12 +169,28 @@ def _tophat(c):
     c.restore()
 
 
-def emcee(c, x, y, s, T, pose="present", matte=True, cane=True, expr="grin", joints=None):
-    """The Emcee: tall, a sleek black bob, top hat and tails, white gloves, dark lipstick, a cane."""
+EMCEE_ROUTINE = ["present", "cane", "wave", "kick", "present", "both_up"]
+
+
+def emcee(c, x, y, s, T, pose="present", matte=True, cane=True, expr="grin", joints=None, routine=False, bpm=120):
+    """The Emcee: tall, a sleek black bob, top hat and tails, white gloves, dark lipstick, a cane. routine=True: she
+    works through her vaudeville business (sweep, cane twirl, wave, high kick) two beats per pose."""
+    if routine:
+        pose = EMCEE_ROUTINE[int(T * bpm / 60 / 2) % len(EMCEE_ROUTINE)]
     look = dict(pose=pose, top=(28, 26, 30), sleeve=(28, 26, 30), bottom=(40, 38, 42), legcol=(70, 66, 70), hair="bob",
                 haircol=(20, 18, 20), browcol=(20, 18, 20), expr=expr, lip=(70, 14, 20), tails=True, extras=[_tux],
                 hat=[_tophat], seed=2, joints=joints or {}, skin=(222, 196, 178))
     P.person(c, x, y, s, T, look, matte=matte)
+    if cane and "L" in P.HANDS:                                         # the cane, in her left hand, twirling on "cane"
+        hx, hy, a1 = P.HANDS["L"]
+        ang = T * 9 if pose == "cane" else 0.35
+        L = 330 * s
+        c.save()
+        c.resetMatrix()
+        c.drawLine(hx - L * 0.2 * math.sin(ang), hy - L * 0.2 * math.cos(ang), hx + L * 0.8 * math.sin(ang), hy + L * 0.8 * math.cos(ang),
+                   paint((14, 12, 12), stroke=13 * s))
+        c.drawCircle(hx - L * 0.2 * math.sin(ang), hy - L * 0.2 * math.cos(ang), 17 * s, paint(WHITE))
+        c.restore()
 
 
 def _coat(c, sh_y, hipY):

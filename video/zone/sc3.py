@@ -28,7 +28,7 @@ def s_ballroom(T, t, d):
     c = st.c
     sets.bd(st, "ballroom", sets.ballroom)
     K.early_bird(c, 820, 1500, 0.9, T)
-    K.emcee(c, 230, 1580, 0.9, T, pose="present")
+    K.emcee(c, 230, 1580, 0.9, T, routine=True, bpm=150)
     K.mae(c, 520, 1590, 0.66, T, pose="stand", expr="happy", matte=True)
     P.placard(c, 540, 470, 820, ["EARLIER", "= more ways to treat"], None, T, k=ease(ramp(T, Wx("d1", "Earlier") - 0.2, Wx("d1", "Earlier") + 0.2)),
               seed=21, size=84)
@@ -41,9 +41,9 @@ def _kickline(c, T, y=1760, s=0.95, kinds=("pill", "skel", "pill", "skel", "pill
         if kd is None:
             continue
         if kd == "pill":
-            K.pill(c, x, y, s, T, phase=j * 0.5, label="Rx")
+            K.pill(c, x, y, s, T, phase=0.0, label="Rx")
         else:
-            K.skeleton(c, x, y, s * 0.42, T, phase=j * 0.5)
+            K.skeleton(c, x, y, s * 0.42, T, phase=0.0)
 
 
 def s_s4_open(T, t, d):
@@ -63,7 +63,7 @@ def _plate_shot(idx, pic=None):
         sets.bd(st, "ballroom", sets.ballroom)
         c.drawRect(skia.Rect.MakeWH(W, H), paint(BLACK, 0.25))
         lines, src = PLATES[("s4", idx)]
-        P.placard(c, 540, 700, 900, lines, src, T, k=ease(ramp(t, 0.0, 0.25)), seed=30 + idx, size=86)
+        P.placard(c, 540, 680, 880, lines, src, T, k=ease(ramp(t, 0.0, 0.25)), seed=30 + idx, size=120)
         if pic:
             P.picture(c, pic, 540, 1120, 420, 300, T)
         _kickline(c, T, y=1800, s=0.8)
@@ -123,8 +123,8 @@ def s_caveat(T, t, d):
     sets.bd(st, "ballroom", sets.ballroom)
     c.drawRect(skia.Rect.MakeWH(W, H), paint(BLACK, 0.45))
     k1 = ease(ramp(T, Wx("d3", "sepsis") - 0.3, Wx("d3", "sepsis")))
-    P.placard(c, 540, 760, 900, ["ONE SEPSIS ALARM", "missed 2 of 3 cases", "in an outside test"],
-              "Wong et al. · JAMA Internal Medicine, 2021", T, k=k1, seed=41, size=100)
+    P.placard(c, 540, 760, 900, ["ONE SEPSIS ALARM", "missed 2 of 3"], "Wong et al. · JAMA Internal Medicine, 2021", T, k=k1,
+              seed=41, size=120)
     K.rooster(c, 170, 1560, 0.45, T, crow=0.0)
     return st
 
@@ -134,8 +134,8 @@ def s_caveat_b(T, t, d):
     c = st.c
     sets.bd(st, "ballroom", sets.ballroom)
     c.drawRect(skia.Rect.MakeWH(W, H), paint(BLACK, 0.45))
-    P.placard(c, 540, 760, 900, ["SKIN AI", "trained on light skin", "misses more on dark skin"],
-              "Daneshjou et al. · Science Advances, 2022", T, k=ease(ramp(t, 0.0, 0.2)), seed=42, size=100)
+    P.placard(c, 540, 760, 900, ["SKIN AI", "worse on dark skin"], "Daneshjou et al. · Science Advances, 2022", T,
+              k=ease(ramp(t, 0.0, 0.2)), seed=42, size=120)
     P.picture(c, "skin", 300, 1230, 260, 200, T)
     P.picture(c, "skin", 780, 1230, 260, 200, T)
     return st
@@ -252,7 +252,7 @@ def s_s5_found(T, t, d):
     sets.bd(st, "stage", sets.stage)
     K.skeleton(c, 110, 1300, 0.38, T, phase=0.0)
     K.octopus(c, 330, 1300, 0.42, T)
-    K.emcee(c, 190, 1580, 0.9, T, pose="kick")
+    K.emcee(c, 190, 1580, 0.9, T, routine=True, bpm=196)
     K.king_heme(c, 610, 1320, 0.65, T, tint=st.t)
     K.pill(c, 800, 1300, 0.8, T, phase=0.5, label="Rx")
     K.rooster(c, 960, 1300, 0.42, T)
@@ -281,12 +281,12 @@ def s_doors(T, t, d):
     kl = ease(ramp(T, C["late_door"] - 0.2, C["late_door"] + 0.3))
     P.door2(c, 110, 760, 360, 620, "FOUND EARLY", "9 in 10 alive at 5 years", ke * 0.9, T, seed=1, lit=True)
     P.door2(c, 610, 760, 360, 620, "SPREAD FAR", "about 1 in 8 at 5 years", 0.0, T, seed=3, lit=False)
-    Z.tinted(st.t, c, lambda tt: tt.drawRect(skia.Rect.MakeLTRB(110, 760, 470, 1380), paint((250, 210, 60), 0.6 * ke)))
-    if kl < 0.5:
-        pass
-    else:
-        c.drawRect(skia.Rect.MakeLTRB(610, 760, 970, 1380), paint(BLACK, 0.4 * kl))
     x = 700 - 400 * ease(ramp(t, 0.8, d - 0.3))
+    crossing = ramp(x, 330, 360) * (1 - ramp(x, 560, 600))              # 1 while she overlaps the door's edge
+    gold = ke * (1 - crossing)
+    Z.tinted(st.t, c, lambda tt: tt.drawRect(skia.Rect.MakeLTRB(110, 760, 470, 1380), paint((250, 210, 60), 0.6 * gold)))
+    if kl >= 0.5:
+        c.drawRect(skia.Rect.MakeLTRB(610, 760, 970, 1380), paint(BLACK, 0.4 * kl))
     K.mae(c, x, 1860, 0.72, T, pose="walk", expr="calm", matte=True)
     D.text(c, "5-year survival, colon cancer · American Cancer Society / SEER", 540, 520, 34, "londrina-400", CHALK, tag="src")
     return st

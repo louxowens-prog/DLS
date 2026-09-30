@@ -24,6 +24,21 @@ YEARS = list(range(2016, 2026))
 
 # ------------------------------------------------------------------ the real world
 
+def s_flash(T, t, d):
+    """A flash of what's behind the door: the spiral, the Second Eye in Mae's glasses, crashing toward us."""
+    st = ZStage()
+    c = st.c
+    Z.spiral_bg(c, 540, 900, T, turns=6, cols=((226, 224, 216), (14, 14, 14)), speed=4.0)
+    z = 0.7 + 0.6 * ease(ramp(t, 0.0, 0.5))
+    c.save()
+    cam(c, z, 540, 1000)
+    K.second_eye(c, 540, 1500, 1.4, T, look=(0.0, 0.3), pose="dance")
+    c.restore()
+    Z.letters(c, "TAKE ANOTHER LOOK", 540, 460, 96 * (0.8 + 0.2 * ease(ramp(t, 0, 0.3))), "londrina-900", WHITE, T=T, seed=77,
+              tag="flash", outline=BLACK, ow=14, jitter=1.4)
+    return st
+
+
 def s_phone(T, t, d):
     """Close on the kitchen table: her phone buzzes and lights: 10 years of blood tests show a PATTERN (painted red)."""
     st = ZStage()
@@ -36,7 +51,7 @@ def s_phone(T, t, d):
     z = 1.0 + 0.9 * (1 - ease(ramp(t, 0.0, 0.35))) + 0.05 * t / max(d, 0.1)                     # a crash in, then a creep
     c.save()
     cam(c, z, 520, 880)
-    buzz = float(0.15 < T % 1.2 < 0.7)
+    buzz = float(0.15 < (T - 0.75) % 1.2 < 0.7)
     c.translate(math.sin(T * 70) * 5 * buzz, 0)
     c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(230, 360, 810, 1420), 60, 60), paint((20, 20, 22)))
     c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(260, 400, 780, 1380), 40, 40), paint((236, 238, 240)))
@@ -47,8 +62,8 @@ def s_phone(T, t, d):
     c.save()
     c.translate(520, 900)
     c.scale(0.6 + 0.4 * k, 0.6 + 0.4 * k)
-    D.text(c, "PATTERN", 0, 0, 118, "inter-700", (20, 20, 22), tag="phone")
-    Z.tinted(st.t, c, lambda tt: tt.drawRect(skia.Rect.MakeLTRB(-250, -100, 250, 20), paint((230, 30, 30), 0.9 * k)))
+    D.text(c, "PATTERN", 0, 0, 92, "inter-700", (20, 20, 22), tag="phone")
+    Z.tinted(st.t, c, lambda tt: tt.drawRect(skia.Rect.MakeLTRB(-205, -80, 205, 18), paint((230, 30, 30), 0.9 * k)))
     c.restore()
     D.text(c, "Please come in.", 520, 1060, 46, "inter-500", (40, 40, 44), tag="phone")
     c.restore()
@@ -171,7 +186,7 @@ def s_title(T, t, d):
     st = ZStage()
     c = st.c
     sets.bd(st, "stage", sets.stage)
-    K.emcee(c, 540, 1900, 1.0, T, pose="present")
+    K.emcee(c, 540, 1900, 1.0, T, routine=True, bpm=188)
     KD.title_card(c, T, S("t1") + 0.3)
     return st
 
@@ -221,8 +236,11 @@ def s_reader(T, t, d):
     c = st.c
     sets.bd(st, "hall", sets.hall)
     c.drawRect(skia.Rect.MakeWH(W, H), paint(BLACK, 0.35))
-    kinds = ["xray", "ct", "mri", "mammo", "xray", "ct", "retina", "mri"]
+    kinds = ["ct", "mri", "ct", "mri"]
     i = int(t * 6) % len(kinds)
+    for k in range(5, 0, -1):                                           # a stack of slices behind the one on the box
+        c.drawRect(skia.Rect.MakeLTRB(270 + k * 10, 330 - k * 10, 830 + k * 10, 790 - k * 10), paint((30, 30, 30)))
+        c.drawRect(skia.Rect.MakeLTRB(270 + k * 10, 330 - k * 10, 830 + k * 10, 790 - k * 10), paint((150, 150, 150), stroke=3))
     P.picture(c, kinds[i], 540, 560, 560, 460, T)
     K.doctor(c, 300, 1880, 1.05, T, pose="write", expr="worried", seed=5, hair="short", haircol=(40, 36, 34))
     c.drawRect(skia.Rect.MakeLTRB(30, 1330, 1050, 1920), paint((58, 54, 50)))                        # the reading desk
@@ -234,7 +252,7 @@ def s_reader(T, t, d):
     a = -math.pi / 2 + 2 * math.pi * ((t % 3.0) / 3.0)
     c.drawLine(cx, cy, cx + 95 * math.cos(a), cy + 95 * math.sin(a), paint(BLACK, stroke=8))
     Z.letters(c, "3-4 SECONDS", cx, cy + 190, 56, "londrina-900", WHITE, T=T, seed=3, tag="sec", outline=BLACK, ow=8)
-    Z.letters(c, "per image", cx, cy + 240, 40, "londrina-400", WHITE, T=T, seed=4, tag="sec", outline=BLACK, ow=6)
+    Z.letters(c, "per CT / MRI image", cx, cy + 240, 40, "londrina-400", WHITE, T=T, seed=4, tag="sec", outline=BLACK, ow=6)
     return st
 
 
@@ -244,9 +262,9 @@ def s_s1_dance(T, t, d):
     c = st.c
     sets.bd(st, "hall", sets.hall)
     for j in range(5):
-        K.skeleton(c, 140 + j * 200, 1250, 0.38, T, phase=j * 0.5,
+        K.skeleton(c, 140 + j * 200, 1250, 0.38, T, phase=0.0,
                    frame=lambda cc, j=j: P.picture(cc, ["xray", "mri", "mammo", "ct", "retina"][j], 0, -60, 340, 260, T))
-    K.second_eye(c, 540, 1760, 1.05, T, look=(0.3 * math.sin(T * 3), 0.1), pose="dance")
+    K.second_eye(c, 540, 1600, 0.95, T, look=(0.3 * math.sin(T * 3), 0.1), pose="dance")
     return st
 
 

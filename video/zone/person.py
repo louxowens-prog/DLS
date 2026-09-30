@@ -35,13 +35,20 @@ POSES = {
 }
 
 
-def _limb(c, x0, y0, a0, l0, bend, l1, w0, w1, w2, col, k=0.25):
+HANDS = {}                                                              # the last figure's hands, in device pixels
+
+
+def _limb(c, x0, y0, a0, l0, bend, l1, w0, w1, w2, col, k=0.25, matte=False):
     """A two-segment limb from (x0, y0): first segment at angle a0 (rad, 0 = straight down), then bent by `bend`."""
     x1, y1 = x0 + l0 * math.sin(a0), y0 + l0 * math.cos(a0)
     a1 = a0 + bend
     x2, y2 = x1 + l1 * math.sin(a1), y1 + l1 * math.cos(a1)
-    D.shade(c, D.capsule(x0, y0, x1, y1, w0, w1), col, k=k, edge=0.0)
-    D.shade(c, D.capsule(x1, y1, x2, y2, w1, w2), col, k=k, edge=0.0)
+    p0, p1 = D.capsule(x0, y0, x1, y1, w0, w1), D.capsule(x1, y1, x2, y2, w1, w2)
+    if matte:
+        Z.matte_edge(c, p0, 0.6)
+        Z.matte_edge(c, p1, 0.6)
+    D.shade(c, p0, col, k=k, edge=0.0)
+    D.shade(c, p1, col, k=k, edge=0.0)
     return (x1, y1), (x2, y2), a1
 
 
@@ -73,7 +80,7 @@ def person(c, x, y, s, T, look, matte=False, face=True):
         sx = -1 if side == "L" else 1
         a0 = sx * math.radians(P[hk])                                   # 0 = straight down; + swings out to that side
         (kx, ky), (fx, fy), a1 = _limb(c, sx * 52, hipY, a0, 250, -sx * math.radians(P[kk]), 245, 92, 70, 52,
-                                       look.get("legcol", bottom))
+                                       look.get("legcol", bottom), matte=matte)
         feet.append((fx, fy, sx))
     for fx, fy, sx in feet:
         c.drawOval(skia.Rect.MakeLTRB(fx - 60, fy + 14, fx + 60, fy + 34), paint((0, 0, 0), 0.35, blur=6))    # its shadow
@@ -103,8 +110,11 @@ def person(c, x, y, s, T, look, matte=False, face=True):
     for side, sk, ek in (("L", "sL", "eL"), ("R", "sR", "eR")):
         sx = -1 if side == "L" else 1
         a0 = sx * math.radians(P[sk])                                   # 0 = hanging; 90 = out to the side; 170 = up
-        (ex, ey), (hx, hy), a1 = _limb(c, sx * 106, sh_y + 26, a0, 175, -sx * math.radians(P[ek]), 168, 56, 46, 38, sleeve)
+        (ex, ey), (hx, hy), a1 = _limb(c, sx * 106, sh_y + 26, a0, 175, -sx * math.radians(P[ek]), 168, 56, 46, 38, sleeve,
+                                       matte=matte)
         _hand(c, hx, hy, a1, 1.0, skin)
+        q = c.getTotalMatrix().mapXY(hx, hy)
+        HANDS[side] = (q.x(), q.y(), a1)
     # head
     c.translate(0, sh_y - 6)
     c.rotate(P.get("tilt", 0) + 2 * math.sin(T * 0.9))

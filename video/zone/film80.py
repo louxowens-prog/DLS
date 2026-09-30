@@ -39,8 +39,8 @@ def _luts():
 def _grain(idx, amp, lum):
     """Coarse 16 mm grain: two scales, strongest in the mid-tones."""
     rng = np.random.default_rng(idx * 7919 + 3)
-    g1 = rng.normal(0, 1, (H // 4, W // 4)).astype(np.float32)
-    g2 = rng.normal(0, 1, (H // 3, W // 3)).astype(np.float32)
+    g1 = rng.normal(0, 1, (H // 5, W // 5)).astype(np.float32)
+    g2 = rng.normal(0, 1, (H // 4, W // 4)).astype(np.float32)
     up = lambda g: np.asarray(Image.fromarray(np.clip(g * 40 + 128, 0, 255).astype(np.uint8)).resize((W, H), Image.BILINEAR),
                               np.float32) - 128
     g = up(g1) * 0.7 + up(g2) * 0.45
@@ -128,7 +128,7 @@ def look(arr, idx, mode="zone", tint=None, colour=0.0, damage=1.0):
     out[..., 0] = y + 1.403 * cr
     out[..., 1] = y - 0.344 * cb - 0.714 * cr
     out[..., 2] = y + 1.773 * cb
-    g = _grain(idx, 0.068 if mode != "card" else 0.05, y)
+    g = _grain(idx, 0.06 if mode != "card" else 0.045, y)
     out += g[..., None]
     y2 = out.mean(axis=2)
     before = y2.copy()
