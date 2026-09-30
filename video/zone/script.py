@@ -136,7 +136,7 @@ LYRIC_SHOWN = {}
 
 # on-screen fact plates inside the songs (song, lyric line index, lines, source)
 PLATES = {   # headline only; the full citations are on the end card and in FACTCHECK.md
-    ("s4", 1): (["SEPSIS ALERTS", "~1/5 fewer deaths"], None),
+    ("s4", 1): (["SEPSIS ALERTS", "acted on within 3 h:", "~1/5 fewer deaths"], "observational · TREWS, Nature Medicine 2022"),
     ("s4", 2): (["KIDNEY INJURY", "flagged 48 h early", "(with false alarms)"], None),
     ("s4", 3): (["WEAK HEART", "32% more found"], None),
     ("s4", 4): (["DIABETIC EYES", "screened by AI"], None),

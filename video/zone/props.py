@@ -14,7 +14,7 @@ from zkit import BLACK, CHALK, GREY
 FILM = (22, 24, 26)
 
 
-def picture(c, kind, x, y, w, h, T=0.0, spot=False, tint=None, label=None):
+def picture(c, kind, x, y, w, h, T=0.0, spot=False, tint=None, label=None, skin=(200, 176, 160)):
     """A medical picture on a light box, painted: 'xray', 'mammo', 'ct', 'mri', 'retina', 'skin', 'slide', 'ecg'.
     spot: the tiny speck the Second Eye points at (returns its canvas position)."""
     c.save()
@@ -78,7 +78,7 @@ def picture(c, kind, x, y, w, h, T=0.0, spot=False, tint=None, label=None):
             c.drawPath(D.smooth(pts, closed=False), paint((40, 38, 36), stroke=4 * s))
         ret = (w * 0.16, h * 0.1)
     elif kind == "skin":
-        c.drawRect(skia.Rect.MakeLTRB(-w / 2, -h / 2, w / 2, h / 2), paint((200, 176, 160)))
+        c.drawRect(skia.Rect.MakeLTRB(-w / 2, -h / 2, w / 2, h / 2), paint(skin))
         rng = np.random.default_rng(8)
         for k in range(40):
             c.drawLine(rng.uniform(-w / 2, w / 2), rng.uniform(-h / 2, h / 2), rng.uniform(-w / 2, w / 2), rng.uniform(-h / 2, h / 2),

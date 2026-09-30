@@ -136,8 +136,8 @@ def s_caveat_b(T, t, d):
     c.drawRect(skia.Rect.MakeWH(W, H), paint(BLACK, 0.45))
     P.placard(c, 540, 760, 900, ["SKIN AI", "worse on dark skin"], "Daneshjou et al. · Science Advances, 2022", T,
               k=ease(ramp(t, 0.0, 0.2)), seed=42, size=120)
-    P.picture(c, "skin", 300, 1230, 260, 200, T)
-    P.picture(c, "skin", 780, 1230, 260, 200, T)
+    P.picture(c, "skin", 300, 1110, 260, 190, T, label="LIGHT SKIN")
+    P.picture(c, "skin", 780, 1110, 260, 190, T, label="DARK SKIN", skin=(92, 64, 50))
     return st
 
 
@@ -290,3 +290,21 @@ def s_doors(T, t, d):
     K.mae(c, x, 1860, 0.72, T, pose="walk", expr="calm", matte=True)
     D.text(c, "5-year survival, colon cancer · American Cancer Society / SEER", 540, 520, 34, "londrina-400", CHALK, tag="src")
     return st
+
+
+def s_relief(T, t, d):
+    """Mae, close, at 'Stage one': she lets out her breath, and smiles, eyes wet."""
+    st = ZStage()
+    c = st.c
+    sets.bd(st, "stage", sets.stage)
+    c.drawRect(skia.Rect.MakeWH(W, H), paint(BLACK, 0.45))
+    c.drawCircle(540, 900, 520, paint(WHITE, 0.18, blur=120))
+    K.mae_face(c, 540, 1330, 1.05, T, expr="happy" if t > 0.4 else "calm", glasses_on=False, look=(0.0, -0.2))
+    k = ease(ramp(t, 0.5, 1.0))
+    for sx in (-1, 1):                                                  # a glint in each eye
+        c.drawCircle(540 + sx * 76 * 1.05, 1330 - 205 * 1.05 + 14, 7, paint(WHITE, 0.9 * k))
+    return st
+
+
+def s_s5_found2(T, t, d):
+    return s_s5_found(T, t, d)

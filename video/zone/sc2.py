@@ -122,7 +122,7 @@ def s_s2_octo(T, t, d):
     sets.bd(st, "library", sets.library)
     K.octopus(c, 540, 1560, 0.95, T)
     k = ease(ramp(T, C["page"] - 0.3, C["page"] + 0.3))
-    px, py = 540, 640 - 120 * k
+    px, py = 540, 700 - 120 * k
     c.save()
     c.translate(px, py)
     c.rotate(-6 + 6 * k)

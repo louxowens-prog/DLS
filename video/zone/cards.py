@@ -60,7 +60,7 @@ def title_card(c, T, t0):
     Z.letters(c, "THE SECOND", 0, -50, 120, "limelight-400", WHITE, T=T, seed=41, tag="title", a=k, jitter=1.0)
     Z.letters(c, "LOOK", 0, 90, 150, "limelight-400", WHITE, T=T, seed=42, tag="title", a=k, jitter=1.0)
     k2 = ease(ramp(T, t0 + 0.5, t0 + 0.9))
-    Z.letters(c, "a medical vaudeville in five rooms", 0, 226, 48, "londrina-400", CHALK, T=T, seed=43, tag="title2", a=k2, jitter=1.2)
+    Z.letters(c, "a medical vaudeville in five rooms", 0, 226, 50, "londrina-900", WHITE, T=T, seed=43, tag="title2", a=k2, jitter=1.2)
     c.restore()
 
 

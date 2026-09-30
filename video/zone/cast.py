@@ -164,8 +164,10 @@ def _tophat(c):
     c.translate(8, -196)
     c.rotate(-8)
     c.drawRect(skia.Rect.MakeLTRB(-50, -150, 50, -8), paint((18, 16, 18)))
+    c.drawRect(skia.Rect.MakeLTRB(-50, -150, 50, -8), paint((200, 198, 196), stroke=5))                 # rim light
     c.drawRect(skia.Rect.MakeLTRB(-50, -44, 50, -22), paint((130, 128, 130)))
     c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-92, -16, 92, 4), 9, 9), paint((18, 16, 18)))
+    c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-92, -16, 92, 4), 9, 9), paint((200, 198, 196), stroke=4))
     c.restore()
 
 

@@ -75,6 +75,8 @@ EDIT = [
     (S("f5") - 0.1, "halved", "zone", "cut", 0.0),
     (Wx("f5", "roughly") - 0.25, "halved_b", "zone", "crash", 0.0),
     (S("s5") - 0.05, "s5_found", "zone", "cut", 0.35),
+    (SL("s5", 1) - 0.1, "relief", "zone", "crash", 0.35),
+    (SL("s5", 2) + 0.4, "s5_found2", "zone", "jump", 0.35),
     (S("f6") - 0.15, "doors", "zone", "cut", 0.0),
     # back through the door
     (S("g1") - 0.25, "door_back", "real", "iris", 0.0),

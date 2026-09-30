@@ -62,10 +62,10 @@ def s_phone(T, t, d):
     c.save()
     c.translate(520, 900)
     c.scale(0.6 + 0.4 * k, 0.6 + 0.4 * k)
-    D.text(c, "PATTERN", 0, 0, 92, "inter-700", (20, 20, 22), tag="phone")
-    Z.tinted(st.t, c, lambda tt: tt.drawRect(skia.Rect.MakeLTRB(-205, -80, 205, 18), paint((230, 30, 30), 0.9 * k)))
+    D.text(c, "PATTERN", 0, -60, 92, "inter-700", (20, 20, 22), tag="phone")
+    Z.tinted(st.t, c, lambda tt: tt.drawRect(skia.Rect.MakeLTRB(-205, -140, 205, -42), paint((230, 30, 30), 0.9 * k)))
     c.restore()
-    D.text(c, "Please come in.", 520, 1060, 46, "inter-500", (40, 40, 44), tag="phone")
+    D.text(c, "Please come in.", 520, 1000, 46, "inter-500", (40, 40, 44), tag="phone")
     c.restore()
     return st
 
@@ -288,6 +288,7 @@ def s_s1_spot(T, t, d):
     c = st.c
     c.drawRect(skia.Rect.MakeWH(W, H), paint((14, 14, 14)))
     sp = P.picture(c, "mammo", 560, 700, 780, 880, T, spot=True)
+    Z.letters(c, "MAMMOGRAM", 560, 330, 64, "londrina-900", WHITE, T=T, seed=8, tag="mlabel", outline=BLACK, ow=10)
     k = ease(ramp(T, C["spot"], C["spot"] + 0.35))
     if k > 0:
         r = 60 + 30 * (1 - k)

@@ -44,9 +44,6 @@ def _limb(c, x0, y0, a0, l0, bend, l1, w0, w1, w2, col, k=0.25, matte=False):
     a1 = a0 + bend
     x2, y2 = x1 + l1 * math.sin(a1), y1 + l1 * math.cos(a1)
     p0, p1 = D.capsule(x0, y0, x1, y1, w0, w1), D.capsule(x1, y1, x2, y2, w1, w2)
-    if matte:
-        Z.matte_edge(c, p0, 0.6)
-        Z.matte_edge(c, p1, 0.6)
     D.shade(c, p0, col, k=k, edge=0.0)
     D.shade(c, p1, col, k=k, edge=0.0)
     return (x1, y1), (x2, y2), a1
@@ -68,6 +65,10 @@ def person(c, x, y, s, T, look, matte=False, face=True):
     top, sleeve = look.get("top", (120, 118, 122)), look.get("sleeve", look.get("top", (120, 118, 122)))
     bottom, shoe = look.get("bottom", (70, 68, 72)), look.get("shoe", (26, 24, 24))
     skin = look.get("skin", SKIN)
+    if matte:                                                           # the matte fringe, behind the whole figure only
+        lp = skia.Paint()
+        lp.setImageFilter(skia.ImageFilters.DropShadow(0, 0, 5 * s + 2, 5 * s + 2, skia.Color4f(1, 1, 1, 0.9).toColor()))
+        c.saveLayer(None, lp)
     c.save()
     c.translate(x, y)
     c.scale(s, s)
@@ -80,7 +81,7 @@ def person(c, x, y, s, T, look, matte=False, face=True):
         sx = -1 if side == "L" else 1
         a0 = sx * math.radians(P[hk])                                   # 0 = straight down; + swings out to that side
         (kx, ky), (fx, fy), a1 = _limb(c, sx * 52, hipY, a0, 250, -sx * math.radians(P[kk]), 245, 92, 70, 52,
-                                       look.get("legcol", bottom), matte=matte)
+                                       look.get("legcol", bottom))
         feet.append((fx, fy, sx))
     for fx, fy, sx in feet:
         c.drawOval(skia.Rect.MakeLTRB(fx - 60, fy + 14, fx + 60, fy + 34), paint((0, 0, 0), 0.35, blur=6))    # its shadow
@@ -101,8 +102,6 @@ def person(c, x, y, s, T, look, matte=False, face=True):
     if look.get("tails"):
         c.drawPath(path([(-90, hipY - 40), (-120, hipY + 230), (-40, hipY + 60), (40, hipY + 60), (120, hipY + 230), (90, hipY - 40)]),
                    paint(mix(top, INK, 0.3)))
-    if matte:
-        Z.matte_edge(c, torso)
     D.shade(c, torso, top, k=0.32, edge=0.0)
     for fn in look.get("extras", []):                                   # shirt fronts, buttons, stethoscopes...
         fn(c, sh_y, hipY)
@@ -110,8 +109,7 @@ def person(c, x, y, s, T, look, matte=False, face=True):
     for side, sk, ek in (("L", "sL", "eL"), ("R", "sR", "eR")):
         sx = -1 if side == "L" else 1
         a0 = sx * math.radians(P[sk])                                   # 0 = hanging; 90 = out to the side; 170 = up
-        (ex, ey), (hx, hy), a1 = _limb(c, sx * 106, sh_y + 26, a0, 175, -sx * math.radians(P[ek]), 168, 56, 46, 38, sleeve,
-                                       matte=matte)
+        (ex, ey), (hx, hy), a1 = _limb(c, sx * 106, sh_y + 26, a0, 175, -sx * math.radians(P[ek]), 168, 56, 46, 38, sleeve)
         _hand(c, hx, hy, a1, 1.0, skin)
         q = c.getTotalMatrix().mapXY(hx, hy)
         HANDS[side] = (q.x(), q.y(), a1)
@@ -120,8 +118,6 @@ def person(c, x, y, s, T, look, matte=False, face=True):
     c.rotate(P.get("tilt", 0) + 2 * math.sin(T * 0.9))
     D.shade(c, D.capsule(0, 10, 0, -50, 50, 46), mix(skin, SKIN_D, 0.25), k=0.2, edge=0.0)
     head = D.smooth([(-58, -70), (-54, -130), (-40, -178), (0, -196), (40, -178), (54, -130), (58, -70), (36, -34), (0, -24), (-36, -34)])
-    if matte:
-        Z.matte_edge(c, head)
     _hair_back(c, look.get("hair", "short"), look.get("haircol", (60, 52, 48)))
     D.shade(c, head, skin, k=0.3, edge=0.0)
     if face:
@@ -131,6 +127,8 @@ def person(c, x, y, s, T, look, matte=False, face=True):
         fn(c)
     c.restore()
     c.restore()
+    if matte:
+        c.restore()
 
 
 def _hair_back(c, style, col):
