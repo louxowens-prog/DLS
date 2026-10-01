@@ -15,7 +15,7 @@ from draw import H, W, ease, mix, paint, path, ramp
 from timeline import TL
 
 FLASHES = [0.95, S("p1") + 0.6, C["storm"], S("r1") - 1.2, S("r1") + 2.6, Wx("r1", "sick") + 0.15, S("r7") + 0.5, S("b2") + 0.6,
-           Wx("b3", "invented"), S("g1") - 1.1, S("m1") - 0.6, S("d1") - 0.4]
+           Wx("b3", "made"), S("g1") - 1.1, S("m1") - 0.6, S("d1") - 0.4]
 
 
 def stage(bg=(0, 0, 0), **lk):
@@ -102,7 +102,7 @@ def s_floor(T, t, d):
     scr = chat_screen([("ai", ["Based on your symptoms,", "this is unlikely to be", "serious."], 1.0)], T, header=True)
     K.phone(c, 520, 800, 1.5, -7, scr, glow_col=(150, 200, 255))
     K.key(c, 760, 1290, 0.7, ang=24, glint=0.8, T=T)
-    F.hand_flat(c, 190, 1230, 0.95, gel=K.RED, ang=-8)                 # her hand on the carpet, quite still
+    F.hand_flat(c, 250, 1180, 1.3, gel=K.RED, ang=-8, twitch=max(0.0, 1.0 - t / 0.45))   # her hand: a twitch, then still
     c.restore()
     K.dark(c, 540, 900, 380, 1100, 0.6)
     return st
@@ -173,7 +173,7 @@ def s_exterior(T, t, d):
     st = stage(sat=1.35, bloom=0.6)
     stride = math.sin(T * 5.0)
     nx = 300 + 60 * min(t, 4.0)
-    fl = A.hotel(st, T, z=1.0 + 0.03 * t, cy=1250, flashes=FLASHES, nora=(nx, stride), taxi=min(1.0, t / 3.0), dy=290)
+    fl = A.hotel(st, T, z=1.0 + 0.03 * t, cy=1250, flashes=FLASHES, nora=(nx, stride), taxi=min(1.0, t / 3.0), dy=120)
     st.lk["flash"] = 0.3 * fl
     return st
 
@@ -248,8 +248,8 @@ def s_chestcu(T, t, d):
     c = st.c
     c.drawRect(skia.Rect.MakeWH(W, H), paint((40, 2, 8)))
     K.glow(c, 900, 500, 1000, K.RED, 0.6 + 0.2 * math.sin(T * 7))
-    F.face_profile(c, 330, 4250, 4.4, key=(255, 120, 120), rim=(120, 160, 255), eye_k=0.8, tear=ease(ramp(t, 0.5, 2.5)), hand=True,
-                   head=6 + 2 * math.sin(T * 1.3), T=T)
+    F.face_profile(c, 330, 4250, 4.4, key=(255, 120, 120), rim=(120, 160, 255), eye_k=0.6, tear=ease(ramp(t, 0.5, 2.5)), hand=True,
+                   head=6 + 2 * math.sin(T * 1.3), T=T, pain=0.8, sweat=0.7)
     return st
 
 
@@ -274,7 +274,7 @@ def s_faceglow(T, t, d):
     c.drawRect(skia.Rect.MakeWH(W, H), paint((36, 2, 8)))
     K.glow(c, 200, 600, 1000, K.RED, 0.55)
     K.glow(c, 900, 900, 500, (150, 200, 255), 0.5 + 0.1 * math.sin(T * 8))
-    F.face_profile(c, 300, 4300 + 20 * t, 4.4, key=(150, 200, 255), rim=K.RED, eye_k=1.0, head=10, T=T)
+    F.face_profile(c, 300, 4300 + 20 * t, 4.4, key=(150, 200, 255), rim=K.RED, eye_k=1.0, head=10, T=T, pain=0.45, sweat=0.8)
     return st
 
 
@@ -295,7 +295,7 @@ def s_relief(T, t, d):
     c.drawRect(skia.Rect.MakeWH(W, H), paint((30, 2, 8)))
     K.glow(c, 300, 500, 1100, K.RED, 0.5 + 0.15 * math.sin(T * 6.5))
     F.face_profile(c, 300, 4300, 4.4, key=(160, 205, 255), rim=K.RED, eye_k=1.0 - 0.85 * ease(ramp(t, 1.5, d - 0.5)), head=10 - 14 * ease(ramp(t, 1.0, d)),
-                   key_a=0.9, T=T)
+                   key_a=0.9, T=T, pain=0.35 * (1 - ease(ramp(t, 0.5, 2.5))), sweat=0.6)
     return st
 
 
@@ -379,8 +379,8 @@ def s_pen(T, t, d):
 
 def s_papers(T, t, d):
     st = stage(sat=1.4, bloom=0.5)
-    B.papers(st, T, stamp=ramp(T, Wx("b3", "invented") - 0.2, Wx("b3", "invented") + 0.9))
-    K.plate(st.c, "6 INVENTED CASES", "Filed in federal court by two lawyers who trusted ChatGPT. Fine: $5,000.", "Mata v. Avianca, New York, 2023",
+    B.papers(st, T, stamp=ramp(T, Wx("b3", "made") - 0.2, Wx("b3", "made") + 0.9))
+    K.plate(st.c, "6 INVENTED CASES", "Two lawyers filed ChatGPT's fake cases in federal court. Fine: $5,000.", "Mata v. Avianca, New York, 2023",
             y=230, color=K.GOLD, a=fade_in(t, 0.2), size=74, glow_col=K.BLUE)
     return st
 
@@ -388,7 +388,7 @@ def s_papers(T, t, d):
 def s_books(T, t, d):
     st = stage(sat=1.4, bloom=0.55)
     B.books(st, T, red_k=ease(ramp(t, 0.6, 1.4)))
-    K.plate(st.c, "AT LEAST 1 IN 6 WRONG", "Professional legal AI research tools, tested on real legal questions", "Stanford RegLab / HAI, 2024",
+    K.plate(st.c, "AT LEAST 1 IN 6 WRONG", "Professional legal AI research tools, tested on legal research questions", "Stanford RegLab / HAI, 2024",
             y=230, color=K.GOLD, a=fade_in(t, 0.2), size=72, glow_col=K.BLUE)
     return st
 
@@ -459,7 +459,8 @@ def s_mirrors(T, t, d):
 def s_chart(T, t, d):
     st = stage(sat=1.35, bloom=0.45)
     t0 = T - t
-    B.mirrors(st, T, nod=1.0, chart=lambda c: B.bars(c, T, Wx("m3", "wrong") - 0.3, y=330, t1=Wx("m3", "Even")))
+    focus = None if T < Wx("m3", "less") - 0.1 else (0 if T < Wx("m3", "Even") - 0.1 else 1)
+    B.mirrors(st, T, nod=1.0, chart=lambda c: B.bars(c, T, Wx("m3", "twenty") - 0.3, y=330, t1=Wx("m3", "Even"), focus=focus))
     return st
 
 
@@ -507,6 +508,10 @@ def s_gridone(T, t, d):
     st = stage(sat=1.4, bloom=0.6)
     B.hidden_door(st, T, seam=0.7, key_in=1.0, grid_mode="one", grid_k=fade_in(t, 0.0, 0.3), z=1.2, cy=800)
     D.text(st.c, "1 IN 100 WRONG", 540, 300, 64, "limelight-400", (255, 230, 160), tag="gridl", a=fade_in(t, 0.2), shadow=(0, 0, 0))
+    a = fade_in(t, 1.2)
+    st.c.drawRect(skia.Rect.MakeLTRB(150, 1150, 930, 1270), paint((6, 2, 8), 0.85 * a))
+    D.text(st.c, "The real tools in this film miss", 540, 1198, 36, "jost-600", (255, 210, 200), tag="gridn", a=a)
+    D.text(st.c, "far more often than 1 in 100.", 540, 1246, 36, "jost-600", (255, 210, 200), tag="gridn", a=a)
     return st
 
 
@@ -550,7 +555,7 @@ def s_doorwide(T, t, d):
 
 
 def s_room100(T, t, d):
-    st = stage(sat=1.4, bloom=0.85, blaze=0.35)
+    st = stage(sat=1.4, bloom=0.5, blaze=0.12)
     c = st.c
     z = 1.0 + 0.06 * t
     if T >= C["sting4"]:
@@ -581,11 +586,34 @@ def s_truth(T, t, d):
     return st
 
 
+def son_screen(T, a=1.0):
+    def fn(c):
+        c.drawRect(skia.Rect.MakeLTRB(-182, -392, 182, 392), paint((14, 20, 30)))
+        D.text(c, "Leo (son)", 0, -150, 52, "jost-600", (240, 245, 255), tag="son")
+        D.text(c, "calling...", 0, -90, 34, "jost-500", (170, 210, 240), tag="son2")
+        c.drawCircle(0, -280, 60, paint((120, 160, 220)))
+        c.drawCircle(-90, 250, 50, paint((220, 40, 40)))
+        c.drawCircle(90, 250, 50, paint((40, 200, 90), 0.5 + 0.5 * abs(math.sin(T * 4))))
+    return fn
+
+
 def s_rested(T, t, d):
+    """She did exactly what it said. Her son calls; the phone lights her face; nobody answers."""
     st = stage(sat=1.3, bloom=0.6)
-    dim = 1.0 - ease(ramp(T, C["flat"], C["dead3"]))
-    A.red_room(st, T, z=1.25 - 0.12 * t, cx=700, cy=1250, nora="lie", phone_lit=dim, pulse=ease(ramp(T, S("x1"), C["flat"])))
-    st.c.drawRect(skia.Rect.MakeWH(W, H), paint((0, 0, 0), 1 - dim))
+    ring = T >= C["son"]
+    A.red_room(st, T, z=1.25 - 0.08 * t, cx=700, cy=1250, nora="lie", phone_lit=1.0 if ring else 0.6, pale=0.5 + 0.5 * ramp(T, S("x1"), C["flat"]),
+               screen=son_screen(T) if ring else None)
+    if ring:
+        K.glow(st.c, 560, 1100, 360, (140, 190, 255), 0.4 + 0.3 * abs(math.sin(T * 4)))
+    return st
+
+
+def s_deathcu(T, t, d):
+    """Her face, still, in the phone's light, as the heartbeat stops. Then the light goes."""
+    st = stage(sat=1.2, bloom=0.5)
+    _lying_cu(st, T, t, pale=1.0, sweat=0.4, pain=0.0)
+    K.glow(st.c, 1000, 1500, 420, (140, 190, 255), 0.4 + 0.3 * abs(math.sin(T * 4)) * (T < C["flat"]))
+    st.c.drawRect(skia.Rect.MakeWH(W, H), paint((0, 0, 0), ease(ramp(T, C["flat"] + 0.15, C["dead3"]))))
     return st
 
 
@@ -616,7 +644,7 @@ def s_believe(T, t, d):
     c = st.c
     c.drawRect(skia.Rect.MakeWH(W, H), paint((36, 2, 8)))
     K.glow(c, 900, 500, 1000, K.RED, 0.6 + 0.2 * math.sin(T * 7))
-    F.face_profile(c, 330, 4250, 4.4, key=(255, 150, 140), rim=(120, 160, 255), eye_k=1.0, hand=True, head=-2, T=T)
+    F.face_profile(c, 330, 4250, 4.4, key=(255, 150, 140), rim=(120, 160, 255), eye_k=1.0, hand=True, head=-2, T=T, pain=0.75, sweat=1.0)
     return st
 
 
@@ -629,7 +657,10 @@ def s_dial(T, t, d):
     def scr(cc):
         cc.drawRect(skia.Rect.MakeLTRB(-182, -392, 182, 392), paint((10, 30, 20)))
         D.text(cc, "911", 0, -170, 110, "jost-600", (240, 255, 245), tag="dial911")
-        D.text(cc, "Calling...", 0, -100, 34, "jost-500", (160, 230, 190), tag="dialc")
+        if T < S("d3") - 0.05:
+            D.text(cc, "Calling...", 0, -100, 34, "jost-500", (160, 230, 190), tag="dialc")
+        else:
+            D.text(cc, "Emergency  0:%02d" % int(1 + (T - S("d3"))), 0, -100, 34, "jost-500", (160, 230, 190), tag="dialc")
         cc.drawCircle(0, 260, 60, paint((220, 40, 40)))
         K.glow(cc, 0, -150, 200, K.GREEN, 0.3 + 0.2 * math.sin(T * 6))
     F.hand_phone(c, 540, 800, 1.2, T, scr, thumb=0.0, gel=K.RED, glow_col=(140, 255, 190), ang=-4, tremble=1.0)
@@ -662,8 +693,8 @@ def s_hospital(T, t, d):
 
 def s_aha(T, t, d):
     st = stage(sat=1.2, bloom=0.45, warm=0.8)
-    B.hospital(st, T, z=1.15, cy=1000)
-    st.c.drawRect(skia.Rect.MakeWH(W, H), paint((0, 0, 0), 0.4))
+    B.hospital(st, T, z=1.0, cx=540, cy=1000, dy=420)
+    st.c.drawRect(skia.Rect.MakeWH(W, H), paint((0, 0, 0), 0.35))
     K.plate(st.c, "HEART ATTACK SIGNS IN WOMEN", ["Chest pain, pressure or tightness", "Jaw, neck, back or arm pain",
                                                   "Nausea, shortness of breath, cold sweat", "Don't wait: call emergency services"],
             "American Heart Association", y=240, color=K.GOLD, a=fade_in(t, 0.2), size=66, maxw=900, glow_col=(255, 160, 100))
@@ -717,8 +748,10 @@ def s_coda(T, t, d):
     st = stage(sat=1.4, bloom=0.7)
     on = ease(ramp(T, S("e4") - 0.25, S("e4")))
     scr = chat_screen([("ai", ["Is there anything else", "I can help you with?"], on)], T)
-    A.bedside(st, T, screen=scr, phone_lit=0.05 + 0.95 * on, key_a=0.0, z=1.5 + 0.1 * t, cx=520, cy=1300)
-    K.key(st.c, 540, 930, 0.62, ang=-8, glint=1.0, T=T)
+    A.bedside(st, T, screen=None, phone_lit=0.0, key_a=0.0, z=1.6 + 0.08 * t, cx=520, cy=1250, glass=False, phone=False)
+    st.c.drawRect(skia.Rect.MakeWH(W, H), paint((0, 0, 0), 0.35))
+    K.phone(st.c, 540, 860, 1.55 + 0.03 * t, -6, scr, glow_col=(150, 200, 255), lit=0.05 + 0.95 * on)
+    K.key(st.c, 300, 1260, 0.62, ang=-14, glint=1.0, T=T)
     if T >= C["sting5"]:
         st.lk["flash"] = 0.5 * math.exp(-(T - C["sting5"]) / 0.1)
     return st
@@ -766,7 +799,7 @@ def s_fine(T, t, d):
     k = ease(ramp(T, Wx("b3", "five") - 0.25, Wx("b3", "five")))
     if k > 0:
         c.save()
-        c.translate(0, 330)
+        c.translate(0, 210)
         c.rotate(-12)
         c.scale(1 + 1.5 * (1 - k), 1 + 1.5 * (1 - k))
         c.drawPath(D.rrect(-300, -90, 300, 90, 14), paint((230, 20, 40), k, stroke=12))
@@ -820,38 +853,33 @@ def s_scalecu(T, t, d):
     return st
 
 
-def _lying_cu(st, T, t, pale=0.0, sweat=0.0, flick=0.0):
+def _lying_cu(st, T, t, pale=0.0, sweat=0.0, flick=0.0, pain=0.0):
     """Her face on the pillow, close: the red room's light, the phone's glow, the sweat; getting worse."""
     c = st.c
     c.drawRect(skia.Rect.MakeWH(W, H), paint(mix((40, 2, 8), (14, 10, 24), pale)))
     K.glow(c, 300, 700, 1100, mix(K.RED, (80, 60, 140), pale), 0.55 + 0.2 * math.sin(T * (7 - 3 * pale)))
     c.drawPath(D.oval(-400, 1000, 900, 1700), paint((200, 190, 200), 0.5))                     # the pillow
-    F.lying_nora(c, 4700, 1150, 4.2, key=mix((170, 210, 255), (150, 160, 190), pale), rim=K.RED, eye_k=0.15 * flick, T=T,
-                 key_a=1.0 - 0.35 * pale)
-    if sweat > 0:
-        rng = np.random.default_rng(5)
-        for k in range(9):
-            x, y = rng.uniform(300, 760), rng.uniform(820, 980)
-            c.drawPath(D.oval(x - 6, y - 9, x + 6, y + 9), paint((230, 240, 255), 0.55 * sweat))
-    K.glow(c, 900, 1100, 300, (150, 200, 255), 0.4)
+    F.lying_nora(c, 4430, 1150, 4.2, key=(170, 210, 255), rim=K.RED, eye_k=0.15 * flick, T=T, key_a=1.0 - 0.3 * pale, pain=pain,
+                 pale=pale, sweat=sweat)
+    K.glow(c, 1000, 1500, 300, (150, 200, 255), 0.4)
 
 
 def s_nb1(T, t, d):
     st = stage(sat=1.35, bloom=0.55)
-    _lying_cu(st, T, t, pale=0.15, sweat=1.0)
+    _lying_cu(st, T, t, pale=0.15, sweat=0.8, pain=0.5)
     return st
 
 
 def s_nb2(T, t, d):
     st = stage(sat=1.35, bloom=0.6)
-    fl = A.red_room(st, T, z=1.3, cx=700, cy=1200, flashes=[T - t + 0.2], nora="lie", phone_lit=1.0, pale=0.35)
+    fl = A.red_room(st, T, z=1.3, cx=700, cy=1200, flashes=[T - t + 0.2], nora="lie", phone_lit=1.0, pale=0.35, pain=0.7, sweat=1.0)
     st.lk["flash"] = 0.3 * fl
     return st
 
 
 def s_nb3(T, t, d):
     st = stage(sat=1.3, bloom=0.5)
-    _lying_cu(st, T, t, pale=0.6, sweat=1.0, flick=abs(math.sin(T * 9)))
+    _lying_cu(st, T, t, pale=0.6, sweat=1.0, flick=abs(math.sin(T * 9)), pain=0.9)
     return st
 
 
@@ -878,6 +906,12 @@ def s_alive(T, t, d):
         c.drawRect(skia.Rect.MakeLTRB(560, y, 1080, y + 34), paint((255, 190, 130), 0.55))
     K.glow(c, 860, 700, 800, (255, 190, 120), 0.6)
     F.face_profile(c, 320, 4300, 4.3, key=(255, 205, 160), rim=(255, 220, 170), eye_k=1.0, skin_gel=(255, 180, 130), head=-6, T=T)
+
+    def msg(cc):
+        cc.drawRect(skia.Rect.MakeLTRB(-182, -392, 182, 392), paint((20, 22, 30)))
+        D.text(cc, "Leo (son)", 0, -320, 30, "jost-600", (240, 245, 255), tag="son")
+        K.bubble(cc, ["Mum? I'm on my way.", "Love you."], -160, -270, 300, size=26, a=1.0, tag="son3")
+    K.phone(c, 840, 1150, 1.0, 5, msg, glow_col=(255, 220, 190))
     return st
 
 
@@ -909,3 +943,47 @@ def s_chartcu1(T, t, d):
 
 def s_chartcu2(T, t, d):
     return _chart_focus(T, t, 1)
+
+
+def s_clutch(T, t, d):
+    """Her hand, in her sleep, gripping the coverlet."""
+    st = stage(sat=1.35, bloom=0.5)
+    c = st.c
+    c.drawRect(skia.Rect.MakeWH(W, H), paint((70, 0, 14)))
+    for k in range(14):                                                 # folds in the velvet, pulled tight
+        x = k * 80 + 40
+        c.drawPath(D.smooth([(x, 0), (x + 40 * math.sin(k), 700), (540 + (x - 540) * 0.3, 1100)], closed=False),
+                   paint((30, 0, 6), 0.7, stroke=26, blur=10))
+        c.drawPath(D.smooth([(x + 20, 0), (x + 20 + 40 * math.sin(k), 700), (560 + (x - 540) * 0.3, 1100)], closed=False),
+                   paint((200, 30, 50), 0.35, stroke=10, blur=6))
+    K.glow(c, 540, 1000, 700, K.RED, 0.4 + 0.2 * math.sin(T * 8))
+    grip = 0.5 + 0.5 * ease(ramp(t, 0.0, 0.5))
+    F.hand_flat(c, 600, 1050, 2.0, gel=K.RED, ang=-70 + 10 * grip, twitch=0.3 * grip)
+    return st
+
+
+def s_nb4(T, t, d):
+    st = stage(sat=1.25, bloom=0.5)
+    _lying_cu(st, T, t, pale=0.85, sweat=1.0, flick=abs(math.sin(T * 6)) * 0.5, pain=0.6)
+    return st
+
+
+def s_storm2(T, t, d):
+    st = stage(sat=1.4, bloom=0.65)
+    fl = A.hotel(st, T, z=1.9, cx=930, cy=820, flashes=[T - t + 0.15], dy=120)
+    st.lk["flash"] = 0.4 * fl
+    return st
+
+
+def s_soncall(T, t, d):
+    """The phone on the coverlet by her still hand: her son, calling. It buzzes. Nobody answers."""
+    st = stage(sat=1.3, bloom=0.55)
+    c = st.c
+    c.drawRect(skia.Rect.MakeWH(W, H), paint((60, 0, 12)))
+    for k in range(12):
+        x = k * 95 + 30
+        c.drawPath(D.smooth([(x, 0), (x + 30 * math.sin(k), 900), (x - 20, 1920)], closed=False), paint((30, 0, 6), 0.6, stroke=24, blur=10))
+    shake = 4 * math.sin(T * 60) * (abs(math.sin(T * 2.4)) > 0.5)
+    K.phone(c, 560 + shake, 820, 1.25, -8, son_screen(T), glow_col=(140, 190, 255))
+    F.hand_flat(c, 120, 1290, 1.1, gel=K.RED, ang=8)
+    return st

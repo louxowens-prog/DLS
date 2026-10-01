@@ -49,7 +49,7 @@ def render_frame(T, idx=None, overlays=True, post=True):
 
 
 SAME_OK = ("caption", "chat", "title", "end", "plate", "keytag", "door", "chart", "case0", "case1", "case2", "case3", "case4",
-           "case5", "truth", "safe")
+           "case5", "truth", "safe", "son3", "gridn")
 
 
 def lint(boxes, ignore=()):

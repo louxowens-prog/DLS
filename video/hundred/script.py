@@ -33,7 +33,7 @@ VOICES = {
     DISP: ("af_kore", 1.05, 0.0),
     DOC: ("am_michael", 1.0, 0.0),
 }
-SPEED, PITCH = {"r5": 1.2, "e2": 1.28, "o3": 1.2, "r6": 1.22, "b4": 1.2, "g5": 1.2, "m1": 1.2, "h2": 1.12, "h3": 1.12, "p2": 1.25, "m3": 1.25}, {}                     # r5: "competence" must not blur into "confidence"
+SPEED, PITCH = {"r5": 1.2, "e2": 1.28, "o3": 1.2, "r6": 1.22, "b4": 1.2, "g5": 1.2, "m1": 1.2, "h2": 1.12, "h3": 1.12, "p2": 1.25, "m3": 1.35, "r7": 1.2}, {}                     # r5: "competence" must not blur into "confidence"
 
 # rooms: (key of the first line, colour name, door number or None)
 ROOMS = [("r1", "red", None), ("b1", "blue", "97"), ("g1", "green", "98"), ("m1", "magenta", "99"), ("h6", "blaze", "100")]
@@ -60,36 +60,33 @@ LINES = [
      "Nora asks, hoping. | And these machines tend to agree with you.", 0.2),
     ("r4", AI, "Based on your symptoms, this is unlikely to be serious. It's most likely acid reflux. Sit upright, and rest.",
      "Based on your symptoms, | this is unlikely to be serious. | It's most likely acid reflux. | Sit upright, and rest.", 0.3),
-    ("r5", N, "Calm. Fluent. Certain. It sounds just as sure when it's wrong. And we mistake confidence for competence.",
-     "Calm. Fluent. Certain. | It sounds just as sure when it's wrong. | And we mistake confidence | for competence.", 0.25),
-    ("r6", N, "In one study, people trusted low-accuracy AI medical advice as much as a doctor's, and said they'd follow it.",
-     "In one study, people trusted | low-accuracy AI medical advice | as much as a doctor's, | and said they'd follow it.", 0.35),
-    ("r7", N, "So she rests. And through the wall, the same voice.", "So she rests. | And through the wall, the same voice.", 0.05),
+    ("r5", N, "Calm. Fluent. Certain. It can sound just as sure when it's wrong. And we mistake confidence for competence.",
+     "Calm. Fluent. Certain. | It can sound just as sure when it's wrong. | And we mistake confidence | for competence.", 0.2),
+    ("r6", N, "In one study, people trusted low-accuracy AI medical advice like a doctor's, and would follow it.",
+     "In one study, people trusted | low-accuracy AI medical advice | like a doctor's, | and would follow it.", 0.25),
+    ("r7", N, "So she rests. And as she drifts off, through the wall, the same voice.",
+     "So she rests. | And as she drifts off, | through the wall, the same voice.", 0.05),
     # ---- BLUE: Room 97
     ("b1", AI, "This contract protects you.", None, 0.25),
     ("b2", N, "Room ninety-seven. He signs.", "Room 97. He signs.", 0.25),
-    ("b3", N, "In 2023, two New York lawyers trusted it, and handed a judge six court cases the AI had invented. "
-              "Fined five thousand dollars.",
-     "In 2023, two New York lawyers trusted it, | and handed a judge six court cases | the AI had invented. | Fined $5,000.", 0.15),
+    ("b3", N, "In 2023, two New York lawyers filed six court cases ChatGPT had made up. Fined five thousand dollars.",
+     "In 2023, two New York lawyers filed | six court cases ChatGPT had made up. | Fined $5,000.", 0.15),
     ("b4", N, "Even professional legal AI tools got at least one question in six wrong.",
      "Even professional legal AI tools | got at least 1 question in 6 wrong.", 0.2),
     # ---- GREEN: Room 98
     ("g1", AI, "This investment is safe.", None, 0.25),
     ("g2", N, "Room ninety-eight. A woman's life savings. All of it.", "Room 98. | A woman's life savings. All of it.", 0.25),
-    ("g3", N, "No investment is risk-free. A smooth voice can't change that.", "No investment is risk-free. | A smooth voice can't change that.", 0.2),
-    ("g4", N, "In 2024, Americans reported losing five point seven billion dollars to investment scams. More than any "
-              "other fraud.",
-     "In 2024, Americans reported losing | $5.7 billion to investment scams. | More than any other fraud.", 0.2),
+    ("g3", N, "No investment is risk-free.", None, 0.15),
+    ("g4", N, "In 2024, Americans reported losing five point seven billion dollars to investment scams.",
+     "In 2024, Americans reported losing | $5.7 billion to investment scams.", 0.2),
     ("g5", N, "Her chest is a fist now. Reflux, she tells herself. It said so.",
      "Her chest is a fist now. | Reflux, she tells herself. | It said so.", 0.35),
     # ---- MAGENTA: Room 99, the mirrors
     ("m1", N, "Room ninety-nine. Mirrors.", "Room 99. Mirrors.", 0.25),
     ("m2", N, "This has a name. Automation bias. We defer to the machine, because we assume it knows better.",
      "This has a name. | Automation bias. | We defer to the machine, | because we assume it knows better.", 0.2),
-    ("m3", N, "With a correct AI hint, radiologists scored about eighty percent. With a wrong one, the least experienced "
-              "scored twenty. Even the most experienced: forty-six.",
-     "With a correct AI hint, | radiologists scored about 80%. | With a wrong one, | the least experienced scored 20%. | "
-     "Even the most experienced: 46%.", 0.15),
+    ("m3", N, "Given a wrong AI hint, less-experienced radiologists scored twenty percent, not eighty. Even experts: forty-six.",
+     "Given a wrong AI hint, | less-experienced radiologists | scored 20%, not 80%. | Even experts: 46%.", 0.15),
     ("m4", W, "One hundred.", None, 0.3),
     # ---- the hidden door: the paradox
     ("h1", N, "Here's the cruel part.", None, 0.15),

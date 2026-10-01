@@ -154,49 +154,65 @@ def corridor(st, T, zc=0.0, doors=(), light=K.BLUE, wall="blue", far_door=None, 
 # ------------------------------------------------------------------ the spiral stair, from above
 
 def spiral(st, T, rot=0.0, nora_k=0.5, cols=(K.BLUE, K.MAGENTA, K.GREEN, K.RED)):
-    """Her view straight down the stairwell: thin treads winding round and down into the dark - each a lit tread face
-    and a shadowed riser - a brass banister with balusters on the inner edge, the well black in the middle."""
+    """The spiral staircase from the landing, looking down the well at an angle: treads and their risers winding down
+    into the dark, balusters and a brass rail on the inner edge, Nora on the stairs going down. True perspective."""
     c = st.c
     c.drawRect(skia.Rect.MakeWH(W, H), paint((0, 0, 0)))
-    cx, cy = 540, 960
-    R = 1500
-    per = 30
-    step = 2 * math.pi / per
-    n = 150
-    rail = []
-    for k in range(n - 1, 18, -1):                                      # deepest first; the nearest turn is above us
-        sc = 1.0 / (1.0 + 0.034 * k)
-        a0 = rot + k * step
-        a1 = a0 + step * 1.03
-        ro, ri = R * sc, R * sc * 0.5
-        turn = k // per
+    Cm = np.array([0.0, 1.5, -2.1])
+    tgt = np.array([0.0, -2.8, 0.3])
+    fwd = (tgt - Cm) / np.linalg.norm(tgt - Cm)
+    rgt = np.cross(fwd, [0.0, 1.0, 0.0])
+    rgt /= np.linalg.norm(rgt)
+    upv = np.cross(rgt, fwd)
+    F = 760.0
+
+    def P(r, a, yy):
+        d = np.array([r * math.cos(a), yy, r * math.sin(a)]) - Cm
+        zc = float(d @ fwd)
+        return (540 + F * float(d @ rgt) / zc, 960 - F * float(d @ upv) / zc, zc)
+
+    step = 2 * math.pi / 24
+    rise = 0.17
+    items = []
+    for k in range(0, 96):
+        a0, a1 = rot + k * step, rot + (k + 1) * step * 1.0 + 0.01
+        y = -k * rise
+        turn = k // 24
         colr = cols[turn % len(cols)]
-        lum = max(0.0, 1.0 - k / n) ** 1.2
-        tread = path([(cx + ro * math.cos(a0), cy + ro * math.sin(a0)), (cx + ro * math.cos(a1), cy + ro * math.sin(a1)),
-                      (cx + ri * math.cos(a1), cy + ri * math.sin(a1)), (cx + ri * math.cos(a0), cy + ri * math.sin(a0))])
-        c.drawPath(tread, paint(mix(colr, (0, 0, 0), 1 - 0.8 * lum)))
-        # the riser: a dark band on the step's leading edge, so each tread reads as a step down
-        am = a0 + step * 0.22
-        riser = path([(cx + ro * math.cos(a0), cy + ro * math.sin(a0)), (cx + ro * math.cos(am), cy + ro * math.sin(am)),
-                      (cx + ri * math.cos(am), cy + ri * math.sin(am)), (cx + ri * math.cos(a0), cy + ri * math.sin(a0))])
-        c.drawPath(riser, paint(mix(colr, (0, 0, 0), 1 - 0.25 * lum)))
-        c.drawLine(cx + ro * math.cos(am), cy + ro * math.sin(am), cx + ri * math.cos(am), cy + ri * math.sin(am),
-                   paint(mix(colr, (255, 255, 255), 0.45), 0.9 * lum, stroke=3 * sc + 0.6))     # the nosing catches the light
-        bx, by = cx + ri * 0.97 * math.cos(a0), cy + ri * 0.97 * math.sin(a0)
-        c.drawLine(bx, by, cx + ri * 0.86 * math.cos(a0), cy + ri * 0.86 * math.sin(a0), paint(K.BRASS, 0.9 * lum, stroke=4 * sc + 0.8))
-        rail.append((cx + ri * 0.86 * math.cos(a0), cy + ri * 0.86 * math.sin(a0), lum, sc))
-        # the outer wall between this turn and the one above: deco paper in shadow
-        if k % 2 == 0:
-            ro2 = R / (1.0 + 0.034 * (k - per))
-            c.drawLine(cx + ro * math.cos(a0), cy + ro * math.sin(a0), cx + min(ro2, ro * 1.6) * math.cos(a0), cy + min(ro2, ro * 1.6) * math.sin(a0),
-                       paint(mix(colr, (0, 0, 0), 0.75), 0.5 * lum, stroke=2))
-    for i in range(len(rail) - 1):                                      # the banister, winding down
-        x0, y0, l0, s0 = rail[i]
-        x1, y1, l1, s1 = rail[i + 1]
-        c.drawLine(x0, y0, x1, y1, paint(mix(K.BRASS_L, (0, 0, 0), 1 - l1), stroke=8 * s1 + 1))
-    c.drawCircle(cx, cy, R * 0.5 / (1 + 0.034 * n), paint((0, 0, 0)))
-    c.drawCircle(cx, cy, 260, paint(shader=D.rad((cx, cy), 260, [(0, 0, 0, 1.0), (0, 0, 0, 0.0)])))
-    K.glow(c, cx, cy, 1300, (255, 255, 255), 0.05)
+        q = [P(0.45, a0, y), P(1.35, a0, y), P(1.35, a1, y), P(0.45, a1, y)]
+        if min(p[2] for p in q) < 0.3:
+            continue
+        zc = sum(p[2] for p in q) / 4
+        lum = max(0.0, 1.0 - zc / 9.0) ** 1.1
+        rz = [P(0.45, a0, y), P(1.35, a0, y), P(1.35, a0, y + rise), P(0.45, a0, y + rise)]
+        items.append((zc + 0.01, "riser", rz, colr, lum))
+        items.append((zc, "tread", q, colr, lum))
+        b0, b1 = P(0.47, a0 + step / 2, y), P(0.47, a0 + step / 2, y + 0.9)
+        r0, r1 = P(0.47, a0 + step / 2, y + 0.9), P(0.47, a0 + step * 1.5, y - rise + 0.9)
+        items.append((zc - 0.01, "rail", (b0, b1, r0, r1), colr, lum))
+        if k == int(4 + 8 * nora_k):                                    # Nora, going down
+            ft = P(0.95, a0 + step / 2, y)
+            items.append((ft[2] - 0.02, "nora", ft, colr, lum))
+    items.sort(key=lambda it: -it[0])
+    for zc, kind, g, colr, lum in items:
+        if kind == "tread":
+            c.drawPath(path([(p[0], p[1]) for p in g]), paint(mix(colr, (0, 0, 0), 1 - 0.8 * lum)))
+            c.drawLine(g[0][0], g[0][1], g[1][0], g[1][1], paint(mix(colr, (255, 255, 255), 0.5), 0.9 * lum, stroke=3))   # the nosing
+        elif kind == "riser":
+            c.drawPath(path([(p[0], p[1]) for p in g]), paint(mix(colr, (0, 0, 0), 1 - 0.35 * lum)))
+        elif kind == "rail":
+            b0, b1, r0, r1 = g
+            c.drawLine(b0[0], b0[1], b1[0], b1[1], paint(mix(K.BRASS, (0, 0, 0), 1 - lum), stroke=max(1.0, 60 / b0[2])))
+            c.drawLine(r0[0], r0[1], r1[0], r1[1], paint(mix(K.BRASS_L, (0, 0, 0), 1 - lum), stroke=max(1.5, 110 / r0[2])))
+        else:
+            hgt = F * 1.65 / g[2]
+            K.glow(c, g[0], g[1] - hgt * 0.5, hgt, (255, 255, 255), 0.25)
+            F_.woman_p(c, g[0], g[1], hgt / 1000, rim=(255, 200, 230), side=1, T=T, stride=0.6 * math.sin(T * 4), rim_w=4, halo=0.2,
+                       flip=True)
+    K.glow(c, 540, 1300, 1100, (255, 255, 255), 0.04)
+
+
+F_ = F
 
 
 # ------------------------------------------------------------------ ROOM 97 (blue): the contract
@@ -643,8 +659,8 @@ def blaze(st, T, k=1.0, bed=1.0, phone_text=None):
         c.drawRect(skia.Rect.MakeLTRB(90, 1300, 990, 1500), paint((160, 0, 30), bed))
         c.drawPath(D.smooth([(60, 1330), (60, 960), (130, 900), (200, 960), (210, 1330)]), paint((30, 6, 10), bed))
         c.drawPath(D.oval(150, 1190, 360, 1262), paint((240, 236, 240), bed))                          # the pillow
-        F.lying_nora(c, 1100, 1180, 0.82, key=(255, 240, 230), rim=K.GOLD, eye_k=0.0, T=T)
-        c.drawPath(D.smooth([(520, 1250), (700, 1212), (990, 1222), (990, 1500), (520, 1500)]), paint((160, 0, 30), bed))
+        F.lying_nora(c, 1100, 1180, 0.82, key=(255, 236, 226), rim=K.GOLD, eye_k=0.0, T=T, pain=0.6, pale=0.3)
+        c.drawPath(D.smooth([(480, 1250), (540, 1150), (680, 1098), (990, 1100), (990, 1500), (480, 1500)]), paint((160, 0, 30), bed))
         K.phone(c, 560, 1200, 0.12, -80, None, glow_col=(170, 210, 255), lit=1.0)
         K.glow(c, 560, 1200, 220, (170, 210, 255), 0.8, core=0.6)
     K.wash(c, (255, 255, 255), 0.06)
@@ -671,11 +687,11 @@ def heart_line(c, T, t0, y=600, falter=1.0, col=K.RED, a=1.0):
 
 # ------------------------------------------------------------------ dawn: the hospital
 
-def hospital(st, T, z=1.0, cx=540, cy=960, doc=1.0, beat_bpm=72):
+def hospital(st, T, z=1.0, cx=540, cy=960, doc=1.0, beat_bpm=72, dy=0.0):
     c = st.c
     K.vgrad(c, 0, 0, W, H, (70, 60, 70), (30, 24, 30))
     c.save()
-    cam(c, z, cx, cy)
+    cam(c, z, cx, cy, 0, dy)
     # the window, blinds, dawn behind
     c.drawRect(skia.Rect.MakeLTRB(560, 200, 1040, 1000), paint(shader=D.lin((0, 200), (0, 1000), [(255, 200, 150), (255, 160, 120)])))
     for k in range(18):

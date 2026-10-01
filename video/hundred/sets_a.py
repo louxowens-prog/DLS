@@ -226,7 +226,9 @@ def _ambulance(c, T, x=760, stretcher=0.0):
         c.drawLine(wx, y - 90, wx, y - 20, paint((60, 60, 66), stroke=6))
         c.drawCircle(wx, y - 14, 10, paint((20, 20, 24)))
     F.figure(c, F.lying_path(T, 1.0), sx + 20, y - 112, 0.3, rim=(255, 200, 150), side=1, rim_w=4, halo=0.2)
-    for px, fl in ((sx - 210, False), (sx + 210, True)):
+    for hx in (sx - 170, sx + 170):                                     # the stretcher's handles
+        c.drawLine(hx, y - 100, hx + (-30 if hx < sx else 30), y - 140, paint((180, 180, 186), stroke=6))
+    for px, fl in ((sx - 280, False), (sx + 280, True)):
         F.figure(c, F.man_profile_path(T, 0.5 * math.sin(T * 4), push=True), px, y + 30, 0.32, rim=(255, 210, 160), side=1, rim_w=5,
                  halo=0.2, fill=(26, 36, 60), flip=fl)
 
@@ -333,7 +335,7 @@ def _red_room():
 
 
 def red_room(st, T, z=1.0, cx=540, cy=960, flashes=(), nora="sit", phone_lit=1.0, head=0.0, hand="phone", pulse=0.0, dx=0.0, dy=0.0,
-             key_a=1.0, pale=0.0):
+             key_a=1.0, pale=0.0, pain=0.0, sweat=0.0, screen=None):
     """Nora's room. nora: 'sit' (up in bed, profile facing the window), 'lie', 'empty' or None."""
     c = st.c
     fl = K.flash_at(T, flashes)
@@ -373,13 +375,15 @@ def red_room(st, T, z=1.0, cx=540, cy=960, flashes=(), nora="sit", phone_lit=1.0
             px, py = x0 + 150 * 0.78, y0 - 640 * 0.78
             K.glow(c, px, py, 260, (150, 200, 255), 0.65 * phone_lit, core=0.5)
     elif nora == "lie":
-        F.lying_nora(c, 1130, 1176, 0.8, key=mix((180, 200, 255), (150, 170, 190), pale), rim=K.RED, eye_k=0.0, T=T, key_a=1.0 - 0.4 * pale)
-        c.drawPath(D.smooth([(560, 1250), (700, 1215), (900, 1222), (1080, 1230), (1080, 1500), (560, 1500)]), paint((110, 0, 20)))
+        F.lying_nora(c, 1130, 1180, 0.8, key=(180, 200, 255), rim=K.RED, eye_k=0.0, T=T, key_a=1.0 - 0.3 * pale, pain=pain, pale=pale,
+                     sweat=sweat)
+        c.drawPath(D.smooth([(500, 1250), (560, 1150), (680, 1100), (900, 1096), (1080, 1104), (1080, 1500), (500, 1500)]), paint((110, 0, 20)))
+        c.drawPath(D.smooth([(560, 1150), (680, 1100), (900, 1096), (1080, 1104)], closed=False), paint((200, 30, 50), 0.5, stroke=6))
         for k in range(7):
             x = 600 + k * 70
-            c.drawPath(D.smooth([(x, 1236), (x + 20, 1380), (x - 6, 1500)], closed=False), paint((60, 0, 10), 0.6, stroke=6))
+            c.drawPath(D.smooth([(x, 1120), (x + 20, 1330), (x - 6, 1500)], closed=False), paint((60, 0, 10), 0.6, stroke=6))
         if phone_lit > 0:
-            K.phone(c, 600, 1190, 0.13, -80, None, glow_col=(150, 200, 255), lit=phone_lit)
+            K.phone(c, 600, 1190, 0.13, -80, screen, glow_col=(150, 200, 255), lit=phone_lit)
             K.glow(c, 600, 1190, 300, (150, 200, 255), 0.5 * phone_lit, core=0.4)
     K.dark(c, 540, 1000, 300, 1250, 0.45)
     c.restore()
@@ -430,7 +434,7 @@ def clock(st, T, hh=2, mm=7, ss=0.0, gel=K.RED, z=1.0, flashes=()):
     return fl
 
 
-def bedside(st, T, screen=None, phone_lit=1.0, key_a=1.0, z=1.0, cx=540, cy=1000, gel=K.RED, lamp=0.0):
+def bedside(st, T, screen=None, phone_lit=1.0, key_a=1.0, z=1.0, cx=540, cy=1000, gel=K.RED, lamp=0.0, glass=True, phone=True):
     """A close shot of the nightstand: the phone face up, the brass key beside it, a glass of water, the lamp's foot."""
     c = st.c
     c.drawRect(skia.Rect.MakeWH(W, H), paint((14, 2, 6)))
@@ -442,16 +446,17 @@ def bedside(st, T, screen=None, phone_lit=1.0, key_a=1.0, z=1.0, cx=540, cy=1000
     # the lamp's foot and its glow
     c.drawPath(D.smooth([(80, 1090), (110, 900), (160, 860), (210, 900), (240, 1090)]), paint((40, 16, 8)))
     K.glow(c, 160, 640, 520, K.AMBER, 0.3 + 0.5 * lamp)
-    # the glass of water
-    c.drawPath(D.rrect(830, 860, 960, 1110, 10), paint((180, 200, 255), 0.18))
-    c.drawPath(D.rrect(830, 860, 960, 1110, 10), paint((220, 230, 255), 0.5, stroke=3))
-    c.drawRect(skia.Rect.MakeLTRB(836, 940, 954, 1104), paint((120, 150, 220), 0.25))
+    if glass:                                                           # the glass of water
+        c.drawPath(D.rrect(830, 860, 960, 1110, 10), paint((180, 200, 255), 0.18))
+        c.drawPath(D.rrect(830, 860, 960, 1110, 10), paint((220, 230, 255), 0.5, stroke=3))
+        c.drawRect(skia.Rect.MakeLTRB(836, 940, 954, 1104), paint((120, 150, 220), 0.25))
     # the phone, face up, seen in perspective
-    c.save()
-    c.translate(520, 1330)
-    c.scale(1.0, 0.62)
-    K.phone(c, 0, 0, 0.8, 4, screen, glow_col=(150, 200, 255), lit=phone_lit)
-    c.restore()
+    if phone:
+        c.save()
+        c.translate(520, 1330)
+        c.scale(1.0, 0.62)
+        K.phone(c, 0, 0, 0.8, 4, screen, glow_col=(150, 200, 255), lit=phone_lit)
+        c.restore()
     if key_a > 0:
         K.key(c, 800, 1600, 0.75, ang=12, glint=key_a, T=T)
     c.restore()

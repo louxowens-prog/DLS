@@ -10,21 +10,21 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 PRE = {
     "o1": 0.55,                   # the eye opens first
-    "p1": 3.5,                    # the title crashes in, then dead silence, then the rain
+    "p1": 3.1,                    # the title crashes in, then dead silence, then the rain
     "r1": 1.7,                    # the red room: a clock at 2:07, lightning
-    "b1": 1.9,                    # the spiral stair, the corridor
-    "g1": 1.6,                    # the jump-scare in Room 97, the corridor
-    "m1": 1.2,
-    "m4": 1.1,                    # the reflection that stops nodding, and looks at us
+    "b1": 2.6,                    # the spiral stair, the corridor
+    "g1": 1.4,                    # the jump-scare in Room 97, the corridor
+    "m1": 2.2,
+    "m4": 1.0,                    # the reflection that stops nodding, and looks at us
     "h1": 1.9,                    # dead silence: the key in the wallpaper
     "h6": 1.9,                    # the door opens on blazing colour
     "x1": 0.4,
-    "d1": 4.7,                    # the heartbeat stops; dead silence; the rewind
+    "d1": 7.2,                    # the heartbeat stops; dead silence; the rewind
     "d5": 1.6,                    # sirens into the dawn
     "e1": 0.6,
     "e4": 0.6,
 }
-TAIL = 5.6
+TAIL = 5.0
 
 
 class Timeline:

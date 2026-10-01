@@ -26,8 +26,9 @@ C = {
     "dead2": E("m4") + 0.25,                    # dead silence: the seam of the hidden door
     "door_open": E("h5") + 0.15,                # the hidden door opens: blazing colour, the score crashes in
     "sting4": Wx("h6", "own"),                  # her own body on the bed
-    "flat": E("x1") + 1.0,                      # the heartbeat stops
-    "dead3": E("x1") + 1.6,                     # dead silence, black
+    "son": E("x1") + 0.2,                       # her son calls; nobody answers
+    "flat": E("x1") + 2.4,                      # the heartbeat stops, on her face
+    "dead3": E("x1") + 2.95,                    # dead silence, black
     "rewind": S("d1") - 1.3,
     "siren": E("d4") + 0.2,
     "sting5": E("e4") + 0.15,                   # the phone that lit up by itself

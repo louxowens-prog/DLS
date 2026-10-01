@@ -109,16 +109,21 @@ def woman(c, x, y, s, pose="stand", rim=K.RED, side=1, T=0.0, rim2=None, halo=0.
     figure(c, woman_path(pose, T, hair, stride=stride), x, y, s, rim, side, rim_w=rim_w, halo=halo, rim2=rim2, flip=flip)
 
 
-def woman_profile_path(T=0.0, stride=0.0, arm=0.0, head=0.0, hand=None):
+def woman_profile_path(T=0.0, stride=0.0, arm=0.0, head=0.0, hand=None, lying=False):
     """Nora in profile facing right (+x), feet at 0, 1000 tall: the face line (brow, nose, lips, chin), a full bob,
     a long satin robe. stride -1..1 swings the hem and the arms; head: tilt (deg, + = down); hand: 'chest', 'jaw',
     'phone' or None."""
     p = skia.Path()
     br = 2.5 * math.sin(T * 1.6)
     sw = 40 * stride
-    p.addPath(D.smooth([(26, -800), (34, -760), (68, -700 + br), (74, -672 + br), (52, -634), (34, -566), (42, -488), (64, -300 + sw * 0.3),
-                        (96 + sw, -120), (124 + sw, -6), (40, 2), (-40, 2), (-120 - sw * 0.6, -6), (-104 - sw * 0.4, -150), (-80, -330),
-                        (-74, -470), (-48, -560), (-62, -690), (-58, -760), (-26, -806)]))
+    if lying:                                                           # flat on her back: a straight body, the feet raised a little
+        p.addPath(D.smooth([(26, -800), (34, -760), (66, -700 + br), (70, -672 + br), (50, -634), (36, -566), (44, -480), (46, -300),
+                            (44, -140), (52, -40), (70, -10), (60, 6), (-40, 4), (-60, -150), (-66, -330), (-70, -470), (-52, -560),
+                            (-62, -690), (-58, -760), (-26, -806)]))
+    else:
+        p.addPath(D.smooth([(26, -800), (34, -760), (68, -700 + br), (74, -672 + br), (52, -634), (34, -566), (42, -488), (64, -300 + sw * 0.3),
+                            (96 + sw, -120), (124 + sw, -6), (40, 2), (-40, 2), (-120 - sw * 0.6, -6), (-104 - sw * 0.4, -150), (-80, -330),
+                            (-74, -470), (-48, -560), (-62, -690), (-58, -760), (-26, -806)]))
     if stride:                                                          # feet under the hem
         p.addPath(D.smooth([(80 + sw, -12), (150 + sw, -16), (160 + sw, 4), (80 + sw, 6)]))
     hp = skia.Path()
@@ -165,7 +170,7 @@ def man_profile_path(T=0.0, stride=0.0, push=False, coat=False, clipboard=False)
     p.addPath(D.smooth([(-50, -980), (20, -990), (60, -950), (66, -920), (90, -892), (66, -880), (70, -850), (52, -822), (10, -812),
                         (-40, -830), (-64, -890)]))
     if push:
-        _arm(p, 0, -760, 70, 220, 10, 200, 56, 42)
+        _arm(p, 0, -760, 50, 220, 10, 200, 56, 42)
     elif clipboard:
         _arm(p, 0, -760, 14, 250, 95, 210, 58, 44)
         p.addPath(D.rrect(150, -720, 250, -580, 8))
@@ -339,12 +344,14 @@ def lips(c, cx, cy, s, open_k=0.0, gel=K.RED, rim=K.BLUE, tremble=0.0):
 
 
 def face_profile(c, x, y, s, key=(170, 215, 255), rim=K.RED, eye_k=1.0, key_a=1.0, rim_a=1.0, tear=0.0, hand=False, T=0.0,
-                 head=0.0, skin_gel=None):
+                 head=0.0, skin_gel=None, pain=0.0, pale=0.0, sweat=0.0, lying=False):
     """Nora's head and shoulders in profile facing right, from the same outline as her silhouette (local units: chin
     near (60, -820); s ~ 4 fills the frame). The key light (the phone) falls on the face from the front, a hard gel rim
     on the back of the hair; the rest is shadow."""
-    pth = woman_profile_path(T, 0.0, head=head, hand=None)
+    pth = woman_profile_path(T, 0.0, head=head, hand=None, lying=lying)
     gel = skin_gel or rim
+    if pale > 0:                                                        # the blood going out of her face
+        key = mix(key, (150, 160, 175), pale)
     c.save()
     c.translate(x, y)
     c.scale(s, s)
@@ -372,10 +379,20 @@ def face_profile(c, x, y, s, key=(170, 215, 255), rim=K.RED, eye_k=1.0, key_a=1.
         u = k / 6
         bx, by = 37 + 18 * u, -918 - 3 * math.sin(math.pi * u) + 4 * (1 - eye_k)
         c.drawLine(bx, by, bx + 4, by - 5 * eye_k - 1.5, paint((8, 4, 4), stroke=1.0))
-    c.drawPath(D.smooth([(30, -936), (46, -940), (58, -933)], closed=False), paint((14, 6, 6), 0.8, stroke=2.4))    # brow
+    c.drawPath(D.smooth([(30, -936 - 3 * pain), (46, -940 + 2 * pain), (58, -933 + 6 * pain)], closed=False), paint((14, 6, 6), 0.8,
+                                                                                                          stroke=2.4 + 0.8 * pain))    # brow
+    if pain > 0:                                                        # the furrow above the nose, the line by the mouth
+        c.drawPath(D.smooth([(56, -936), (60, -944), (57, -952)], closed=False), paint((40, 14, 14), 0.6 * pain, stroke=1.4))
+        c.drawPath(D.smooth([(58, -866), (52, -856), (54, -846)], closed=False), paint((40, 14, 14), 0.5 * pain, stroke=1.4))
+    if sweat > 0:                                                       # beads on the brow and temple, catching the light
+        for (sx_, sy_) in ((40, -962), (50, -955), (28, -950), (34, -905), (22, -940), (58, -948)):
+            c.drawPath(D.oval(sx_ - 1.6, sy_ - 2.4, sx_ + 1.6, sy_ + 2.4), paint((235, 245, 255), 0.75 * sweat))
     if tear > 0:
         c.drawPath(path([(55, -908), (57, -908 + 40 * tear)], closed=False), paint((230, 240, 255), 0.85, stroke=1.4))
-    c.drawPath(D.smooth([(66, -862), (70, -857), (64, -852), (67, -846)], closed=False), paint((150, 30, 44), 0.8, stroke=3.2))   # lips
+    c.drawPath(D.smooth([(66, -862), (70, -857), (64, -852), (67, -846)], closed=False), paint(mix((150, 30, 44), (110, 90, 110), pale), 0.8,
+                                                                                            stroke=3.2))   # lips
+    if pain > 0.3:                                                      # lips parted: a breath she can't catch
+        c.drawPath(D.oval(62, -858, 68, -851 + 3 * pain), paint((10, 2, 4), min(1.0, pain)))
     if head:
         c.rotate(-head, 0, -800)
     c.drawPath(hair, paint((6, 3, 4)))
@@ -429,17 +446,17 @@ def hand_phone(c, x, y, s, T=0.0, screen=None, thumb=0.0, gel=K.RED, glow_col=(2
     c.restore()
 
 
-def lying_nora(c, x, y, s, key=(170, 210, 255), rim=K.RED, eye_k=0.0, T=0.0, key_a=1.0):
+def lying_nora(c, x, y, s, key=(170, 210, 255), rim=K.RED, eye_k=0.0, T=0.0, key_a=1.0, pain=0.0, pale=0.0, sweat=0.0):
     """Nora lying on her back, head to the left, face up: (x, y) is where her feet would be; she is 1000 * s long and
     her back rests about 77 * s below y. The face is lit from above, so she reads as a woman, not a shape."""
     c.save()
     c.translate(x, y)
     c.rotate(-90)
-    face_profile(c, 0, 0, s, key=key, rim=rim, eye_k=eye_k, key_a=key_a, T=T)
+    face_profile(c, 0, 0, s, key=key, rim=rim, eye_k=eye_k, key_a=key_a, T=T, pain=pain, pale=pale, sweat=sweat, lying=True)
     c.restore()
 
 
-def hand_flat(c, x, y, s, gel=K.RED, key=(255, 120, 110), ang=0.0):
+def hand_flat(c, x, y, s, gel=K.RED, key=(255, 120, 110), ang=0.0, twitch=0.0):
     """A hand lying palm-down on the carpet, fingers loose, coming in from the left edge (local: knuckles at 0, 0)."""
     c.save()
     c.translate(x, y)
@@ -450,7 +467,8 @@ def hand_flat(c, x, y, s, gel=K.RED, key=(255, 120, 110), ang=0.0):
     palm = D.smooth([(-420, -70), (-150, -86), (-10, -78), (16, -10), (0, 64), (-140, 92), (-420, 80)])
     c.drawPath(palm, paint(shader=D.lin((0, -90), (0, 90), [lit, mix(lit, dark, 0.5), dark])))
     for i, (dy, L, w) in enumerate(((-58, 150, 40), (-14, 172, 42), (30, 162, 40), (70, 120, 34))):
-        pts = [(-10, dy), (L * 0.55, dy + 4 + i * 2), (L, dy + 14 + 4 * i)]
+        tw = twitch * 14 * math.sin(i * 1.7 + twitch * 9)
+        pts = [(-10, dy), (L * 0.55, dy + 4 + i * 2 + tw * 0.4), (L, dy + 14 + 4 * i + tw)]
         for j in range(2):
             (x0, y0), (x1, y1) = pts[j], pts[j + 1]
             c.drawPath(D.capsule(x0, y0, x1, y1, w, w * 0.9), paint(shader=D.lin((x0, y0 - w), (x0, y0 + w), [lit, mix(lit, dark, 0.45), dark])))

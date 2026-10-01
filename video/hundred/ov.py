@@ -9,7 +9,7 @@ from script import AI, DISP, DOC, N, NORA, W as WH
 from timeline import TL
 
 CAP_SIZE, MAX_W, CX, BASE = 54, 800, 510, 1462
-HIDE = {"r4"}                                   # the AI's answer is on the phone screen, word by word, as its own caption
+HIDE = {"r4", "e4"}                                   # the AI's answer is on the phone screen, word by word, as its own caption
 
 
 def _caps():

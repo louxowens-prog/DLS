@@ -38,7 +38,7 @@ DAWN = [(76, 1), (81, 1), (85, 1), (83, 2), (81, 1), (80, 1), (81, 1), (83, 1), 
         (78, 1), (81, 1), (86, 1), (85, 2), (83, 1), (81, 1), (80, 1), (83, 1), (81, 3)]       # the same tune, in A major
 
 
-def lullaby(bus, t0, beat=0.6, amp=1.0, notes=LULLABY, inst="celesta", rate=None, detune=None, pan=0.5, bars=None):
+def lullaby(bus, t0, beat=0.6, amp=1.0, notes=LULLABY, inst="celesta", rate=None, detune=None, pan=0.3, bars=None):
     """Place the lullaby from t0; inst 'celesta' or 'box'."""
     if inst == "box":
         y = O.music_box(notes, rate=rate, amp=amp, detune=detune)
@@ -48,6 +48,7 @@ def lullaby(bus, t0, beat=0.6, amp=1.0, notes=LULLABY, inst="celesta", rate=None
     for m, b in notes:
         bus.add(O.celesta(m, amp * 0.9, dur=1.6), t, 1.0, pan=pan)
         bus.add(O.celesta(m - 12, amp * 0.3, dur=1.2), t, 1.0, pan=pan)
+        bus.add(O.celesta(m, amp * 0.35, dur=1.2), t + beat * 0.5, 1.0, pan=1.0 - pan)        # an echo, across the room
         t += b * beat
     return t
 
@@ -130,15 +131,15 @@ def groove(bus, t0, t1, eighth=0.2, level=1.0, bass=True, drums=True, zouk=True,
         if drums:
             st = (TAAL7_LIGHT if light else TAAL7)[i]
             if st:
-                bus.add(tabla(st, (1.0 if i in (0, 2, 4) else 0.7) * level * (0.6 + 0.4 * e), seed=k), t, 1.0, pan=0.42 + 0.06 * (i % 2))
+                bus.add(tabla(st, (1.0 if i in (0, 2, 4) else 0.7) * level * (0.6 + 0.4 * e), seed=k), t, 1.0, pan=0.28 + 0.44 * (i % 2))
             if not light and i == 4:
-                bus.add(tabla("doum", 0.6 * level * e, seed=k), t, 1.0, pan=0.58)
+                bus.add(tabla("doum", 0.6 * level * e, seed=k), t, 1.0, pan=0.62)
         if bass:
             bus.add(fuzz_bass(BASS7[i], eighth * 0.9, (1.0 if i in (0, 2, 4) else 0.75) * level * (0.5 + 0.5 * e)), t, 1.0)
         if zouk and i == 0 and (k // 7) % 2 == 1 and e > 0.5:
             line = [PHRYG[j] + 12 for j in rng.permutation([0, 1, 2, 3, 4])[:3]]
             for q, m in enumerate(line):
-                bus.add(bouzouki(m, eighth * 2.2, 0.8 * level * e, trem=14, seed=k + q), t + q * eighth * 2.3, 1.0, pan=0.65)
+                bus.add(bouzouki(m, eighth * 2.2, 0.8 * level * e, trem=14, seed=k + q), t + q * eighth * 2.3, 1.0, pan=0.82)
         t += eighth
         k += 1
 
@@ -164,6 +165,11 @@ def drone(dur, root=33, amp=1.0, seed=0, sweep=0.12):
     return amp * out * env * 0.12
 
 
+def drone_st(dur, root=33, amp=1.0, seed=0, sweep=0.12):
+    """The pad in stereo: two decorrelated voicings, left and right."""
+    return np.stack([drone(dur, root, amp, seed, sweep), drone(dur, root, amp, seed + 57, sweep * 1.13)]) * 0.75
+
+
 def lead(m0, m1, dur, amp=1.0):
     """A screaming analogue lead, sliding: the crash-in's top line."""
     t = tx(dur)
@@ -174,12 +180,12 @@ def lead(m0, m1, dur, amp=1.0):
     return amp * x * np.clip(t / 0.02, 0, 1) * np.clip((dur - t) / 0.1, 0, 1) * 0.25
 
 
-def crash_in(bus, t0, dur, level=1.0, seed=0, words="Ahvenna! Sorah!"):
+def crash_in(bus, t0, dur, level=1.0, seed=0, words="Ahvenna! Kolumé!"):
     """The score crashing in at full volume: a stab, the whole band in 7/8, the lead, the gang chanting invented words."""
     bus.add(O.scare(1.0 * level, seed=seed, body=1.2, drive=2.2), t0, 1.0)
     groove(bus, t0, t0 + dur, 0.17, level=1.25 * level, seed=seed)
     bus.add(lead(69, 81, dur, 0.9 * level), t0, 1.0, pan=0.55)
-    bus.add(drone(dur + 0.3, 33, 2.2 * level, seed=seed, sweep=0.8), t0, 1.0)
+    bus.add(drone_st(dur + 0.3, 33, 2.2 * level, seed=seed, sweep=0.8), t0, 1.0)
     g = tts_fx(words, "chorus", 0.95, -5.0)
     bus.add(np.tanh(3.0 * g / (np.abs(g).max() + 1e-9)) * 0.5 * level, t0 + 0.1, 1.0)
     for k in range(int(dur / 0.17)):
@@ -196,7 +202,7 @@ def tts_fx(text, voice, speed=1.0, pitch=0.0):
     return signal.resample_poly(w.astype(np.float64), SR, VSR)
 
 
-INVENTED = ["kelemai", "sorrah", "venti noh", "ahvenna", "miré sola", "tovéh", "anakré", "selenna"]
+INVENTED = ["kelemai", "vorrin", "venti noh", "ahvenna", "miré sola", "tovéh", "anakré", "miravel"]
 
 
 def whispers_inv(dur, amp=1.0, seed=0):
