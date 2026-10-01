@@ -69,8 +69,8 @@ LINES = [
     # ---- BLUE: Room 97
     ("b1", AI, "This contract protects you.", None, 0.25),
     ("b2", N, "Room ninety-seven. He signs.", "Room 97. He signs.", 0.25),
-    ("b3", N, "In 2023, two New York lawyers filed six court cases ChatGPT had made up. Fined five thousand dollars.",
-     "In 2023, two New York lawyers filed | six court cases ChatGPT had made up. | Fined $5,000.", 0.15),
+    ("b3", N, "In 2023, two New York lawyers cited six court cases ChatGPT had made up. Fined five thousand dollars.",
+     "In 2023, two New York lawyers cited | six court cases ChatGPT had made up. | Fined $5,000.", 0.15),
     ("b4", N, "Even professional legal AI tools got at least one question in six wrong.",
      "Even professional legal AI tools | got at least 1 question in 6 wrong.", 0.2),
     # ---- GREEN: Room 98

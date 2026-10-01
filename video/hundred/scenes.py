@@ -333,7 +333,7 @@ def s_scale(T, t, d):
     st = stage(sat=1.3, bloom=0.5)
     scale_scene(st.c, T, t)
     K.plate(st.c, "TRUSTED THE SAME", "People rated low-accuracy AI medical advice as valid and trustworthy as doctors' - and said they'd follow it",
-            "MIT study, NEJM AI, 2025 (300 people)", y=240, color=K.GOLD, a=fade_in(t, 0.3), size=72, glow_col=K.RED)
+            "MIT study, NEJM AI, 2025 (300 people)", y=280, color=K.GOLD, a=fade_in(t, 0.3), size=72, glow_col=K.RED)
     return st
 
 
@@ -380,8 +380,8 @@ def s_pen(T, t, d):
 def s_papers(T, t, d):
     st = stage(sat=1.4, bloom=0.5)
     B.papers(st, T, stamp=ramp(T, Wx("b3", "made") - 0.2, Wx("b3", "made") + 0.9))
-    K.plate(st.c, "6 INVENTED CASES", "Two lawyers filed ChatGPT's fake cases in federal court. Fine: $5,000.", "Mata v. Avianca, New York, 2023",
-            y=230, color=K.GOLD, a=fade_in(t, 0.2), size=74, glow_col=K.BLUE)
+    K.plate(st.c, "6 INVENTED CASES", "Two lawyers cited ChatGPT's fake cases in a federal court filing. Fine: $5,000.", "Mata v. Avianca, New York, 2023",
+            y=270, color=K.GOLD, a=fade_in(t, 0.2), size=74, glow_col=K.BLUE)
     return st
 
 
@@ -389,7 +389,7 @@ def s_books(T, t, d):
     st = stage(sat=1.4, bloom=0.55)
     B.books(st, T, red_k=ease(ramp(t, 0.6, 1.4)))
     K.plate(st.c, "AT LEAST 1 IN 6 WRONG", "Professional legal AI research tools, tested on legal research questions", "Stanford RegLab / HAI, 2024",
-            y=230, color=K.GOLD, a=fade_in(t, 0.2), size=72, glow_col=K.BLUE)
+            y=270, color=K.GOLD, a=fade_in(t, 0.2), size=72, glow_col=K.BLUE)
     return st
 
 
@@ -425,7 +425,7 @@ def s_drain(T, t, d):
     st = stage(sat=1.4, bloom=0.55)
     B.drain(st, T)
     K.plate(st.c, "$5.7 BILLION", "Reported lost by Americans to investment scams in 2024 - more than any other kind of fraud",
-            "U.S. Federal Trade Commission", y=230, color=K.GOLD, a=fade_in(t, 0.2), size=92, glow_col=K.GREEN)
+            "U.S. Federal Trade Commission", y=270, color=K.GOLD, a=fade_in(t, 0.2), size=92, glow_col=K.GREEN)
     return st
 
 
@@ -510,8 +510,8 @@ def s_gridone(T, t, d):
     D.text(st.c, "1 IN 100 WRONG", 540, 300, 64, "limelight-400", (255, 230, 160), tag="gridl", a=fade_in(t, 0.2), shadow=(0, 0, 0))
     a = fade_in(t, 1.2)
     st.c.drawRect(skia.Rect.MakeLTRB(150, 1150, 930, 1270), paint((6, 2, 8), 0.85 * a))
-    D.text(st.c, "The real tools in this film miss", 540, 1198, 36, "jost-600", (255, 210, 200), tag="gridn", a=a)
-    D.text(st.c, "far more often than 1 in 100.", 540, 1246, 36, "jost-600", (255, 210, 200), tag="gridn", a=a)
+    D.text(st.c, "The legal AI tools tested were wrong", 540, 1198, 36, "jost-600", (255, 210, 200), tag="gridn", a=a)
+    D.text(st.c, "at least 1 in 6 times.", 540, 1246, 36, "jost-600", (255, 210, 200), tag="gridn", a=a)
     return st
 
 
@@ -697,7 +697,7 @@ def s_aha(T, t, d):
     st.c.drawRect(skia.Rect.MakeWH(W, H), paint((0, 0, 0), 0.35))
     K.plate(st.c, "HEART ATTACK SIGNS IN WOMEN", ["Chest pain, pressure or tightness", "Jaw, neck, back or arm pain",
                                                   "Nausea, shortness of breath, cold sweat", "Don't wait: call emergency services"],
-            "American Heart Association", y=240, color=K.GOLD, a=fade_in(t, 0.2), size=66, maxw=900, glow_col=(255, 160, 100))
+            "American Heart Association", y=280, color=K.GOLD, a=fade_in(t, 0.2), size=66, maxw=900, glow_col=(255, 160, 100))
     return st
 
 
@@ -771,8 +771,9 @@ def s_end(T, t, d):
     D.text(c, "ask a human expert who answers for it.", 540, 820, 44, "jost-500", (230, 226, 230), tag="end", a=a)
     D.text(c, "Chest pain, jaw pain, nausea, cold sweat?", 540, 980, 44, "jost-600", (255, 120, 120), tag="end", a=a)
     D.text(c, "Call emergency services. Not a chatbot.", 540, 1040, 44, "jost-600", (255, 120, 120), tag="end", a=a)
-    D.text(c, "Sources: MIT/NEJM AI 2025 · Mata v. Avianca 2023 · Stanford 2024", 540, 1170, 28, "cormorant-500i", (220, 200, 180), tag="end", a=a)
-    D.text(c, "FTC 2025 · Radiology 2023 · Bailey & Scerbo 2007 · AHA", 540, 1214, 28, "cormorant-500i", (220, 200, 180), tag="end", a=a)
+    D.text(c, "Sources: MIT/NEJM AI 2025 · Mata v. Avianca 2023 · Stanford 2024", 540, 1150, 28, "cormorant-500i", (220, 200, 180), tag="end", a=a)
+    D.text(c, "FTC 2025 · Radiology 2023 · Bailey & Scerbo 2007 · AHA", 540, 1190, 28, "cormorant-500i", (220, 200, 180), tag="end", a=a)
+    D.text(c, "Sharma et al. 2024 (sycophancy) · Steyvers et al. 2025 (calibration)", 540, 1230, 28, "cormorant-500i", (220, 200, 180), tag="end", a=a)
     return st
 
 
@@ -801,7 +802,7 @@ def s_fine(T, t, d):
         c.save()
         c.translate(0, 210)
         c.rotate(-12)
-        c.scale(1 + 1.5 * (1 - k), 1 + 1.5 * (1 - k))
+        c.scale(1 + 0.45 * (1 - k), 1 + 0.45 * (1 - k))
         c.drawPath(D.rrect(-300, -90, 300, 90, 14), paint((230, 20, 40), k, stroke=12))
         D.text(c, "$5,000 FINE", 0, 34, 96, "limelight-400", (230, 20, 40), tag="finestamp", a=k)
         c.restore()
@@ -910,7 +911,7 @@ def s_alive(T, t, d):
     def msg(cc):
         cc.drawRect(skia.Rect.MakeLTRB(-182, -392, 182, 392), paint((20, 22, 30)))
         D.text(cc, "Leo (son)", 0, -320, 30, "jost-600", (240, 245, 255), tag="son")
-        K.bubble(cc, ["Mum? I'm on my way.", "Love you."], -160, -270, 300, size=26, a=1.0, tag="son3")
+        K.bubble(cc, ["Mom? I'm on my way.", "Love you."], -160, -270, 300, size=26, a=1.0, tag="son3")
     K.phone(c, 840, 1150, 1.0, 5, msg, glow_col=(255, 220, 190))
     return st
 

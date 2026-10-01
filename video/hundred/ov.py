@@ -26,7 +26,7 @@ def _caps():
 
 
 CAPS = _caps()
-STYLE = {N: ("jost-600", (255, 255, 255)), AI: ("jost-500", (190, 228, 255)), WH: ("cormorant-500i", (255, 70, 80)),
+STYLE = {N: ("jost-600", (255, 255, 255)), AI: ("jost-500", (190, 228, 255)), WH: ("cormorant-500i", (255, 120, 128)),
          NORA: ("jost-600", (255, 214, 150)), DISP: ("jost-600", (230, 255, 236)), DOC: ("jost-600", (255, 255, 255))}
 
 
@@ -51,7 +51,7 @@ def telop(arr, T):
     wmax = max(f.measureText(ln) for ln in lines)
     pad = 54 if who == AI else 26
     c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(CX - wmax / 2 - pad, y - size * 0.98, CX + wmax / 2 + 26,
-                                                         y + lh * (len(lines) - 1) + size * 0.36), 12, 12), paint((0, 0, 0), 0.6 * a))
+                                                         y + lh * (len(lines) - 1) + size * 0.36), 12, 12), paint((0, 0, 0), (0.82 if who == WH else 0.6) * a))
     if who == AI:                                                       # the Voice's little glowing dot
         dx, dy = CX - wmax / 2 - 30, y - size * 0.3
         c.drawCircle(dx, dy, 13, paint((120, 200, 255), 0.45 * a, blur=6))

@@ -423,7 +423,7 @@ def build():
     dip = np.convolve(np.pad(dip, k, mode="edge"), np.ones(k) / k, "same")[k:-k]
     music = music * dip[None]
     stg_x = signal.sosfilt(signal.butter(4, 9000 / (SR / 2), "low", output="sos"), stg.x, axis=1)   # no fizz for the codec to overshoot on
-    mix = music + vo + reverb(stg_x, 0.2, 1.4, seed=9) * dead[None]
+    mix = (music + vo + reverb(stg_x, 0.2, 1.4, seed=9)) * dead[None]                # the silences are total: no tails
     mix = signal.sosfilt(signal.butter(4, 30 / (SR / 2), "high", output="sos"), mix, axis=1)
     mix = signal.sosfilt(signal.butter(2, 15000 / (SR / 2), "low", output="sos"), mix, axis=1)
     mix = loudness(mix, -14.0)

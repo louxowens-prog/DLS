@@ -12,7 +12,7 @@ EDIT = [
     (C["title"], "title", "flash"),
     (C["dead1"], "black", "cut"),
     # the storm, the hotel, a year of right answers, the 99 keys and one more
-    (S("p1") - 0.75, "exterior", "cut"),
+    (S("p1") - 0.45, "exterior", "cut"),
     (S("p2") - 0.1, "checks", "cut"),
     (S("p3") - 0.05, "nocheck", "cut"),
     (S("p4") - 0.15, "lobby", "cut"),

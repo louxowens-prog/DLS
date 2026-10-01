@@ -225,7 +225,9 @@ def _ambulance(c, T, x=760, stretcher=0.0):
     for wx in (sx - 140, sx + 140):
         c.drawLine(wx, y - 90, wx, y - 20, paint((60, 60, 66), stroke=6))
         c.drawCircle(wx, y - 14, 10, paint((20, 20, 24)))
-    F.figure(c, F.lying_path(T, 1.0), sx + 20, y - 112, 0.3, rim=(255, 200, 150), side=1, rim_w=4, halo=0.2)
+    F.lying_nora(c, sx + 180, y - 124, 0.32, key=(255, 215, 180), rim=(255, 200, 150), eye_k=0.6, T=T)     # Nora, awake, her face to the dawn
+    c.drawPath(D.smooth([(sx - 40, y - 112), (sx + 40, y - 132), (sx + 170, y - 128), (sx + 170, y - 104), (sx - 40, y - 104)]),
+               paint((200, 214, 236)))                                                                    # a blanket
     for hx in (sx - 170, sx + 170):                                     # the stretcher's handles
         c.drawLine(hx, y - 100, hx + (-30 if hx < sx else 30), y - 140, paint((180, 180, 186), stroke=6))
     for px, fl in ((sx - 280, False), (sx + 280, True)):
