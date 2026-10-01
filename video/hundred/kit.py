@@ -105,12 +105,14 @@ def draw_quad(c, img, dst, a=1.0):
     c.restore()
 
 
-def surf(w, h, fn, bg=(0, 0, 0, 0)):
-    """Paint a w x h image with fn(c) (cached by the caller)."""
+def surf(w, h, fn, bg=(0, 0, 0, 0), tex=0.0, seed=0):
+    """Paint a w x h image with fn(c) (cached by the caller); tex > 0 adds painted, streaky scenic texture."""
     a = np.zeros((h, w, 4), np.uint8)
     a[..., :] = bg
     s = skia.Surface(a)
     fn(s.getCanvas())
+    if tex > 0:
+        D.apply_tex(a, D.brush_tex(w, h, seed=seed, amp=tex))
     return D.image(a)
 
 
@@ -399,7 +401,7 @@ def deco_frame(c, x0, y0, x1, y1, color=GOLD, a=1.0, w=4):
 
 
 def plate(c, head, sub=None, src=None, y=300, color=GOLD, a=1.0, x=540, maxw=860, size=78, glow_col=None, head_font="limelight-400",
-          tag="plate", bg=0.78):
+          tag="plate", bg=0.92):
     """A fact plate: a deco-framed black panel with a glowing headline, a line of detail, and the source."""
     if a <= 0:
         return y

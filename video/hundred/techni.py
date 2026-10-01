@@ -76,7 +76,7 @@ def look(arr, idx, sat=1.3, bloom=0.55, crush=0.05, fringe=2.2, grain=1.0, flash
     l2 = (a[..., 0] * 0.299 + a[..., 1] * 0.587 + a[..., 2] * 0.114)[..., None]
     a = l2 + (a - l2) * sat
     a = np.clip((a - crush) / (1 - crush), 0, None)
-    a = a / (1 + 0.42 * a ** 2.2) * 1.42                                # shoulder: over-bright gel light rolls off, keeps its hue
+    a = np.where(a < 0.75, a, 0.75 + 0.25 * (1 - np.exp(-(a - 0.75) / 0.25)))   # a monotonic shoulder: hot light rolls to white
     flick = 1.0 + 0.018 * np.random.default_rng(idx * 31 + 7).normal()
     a = a * flick * _vig()
     lum = np.clip(a.mean(axis=2), 0, 1)

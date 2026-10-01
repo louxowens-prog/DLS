@@ -59,7 +59,8 @@ def _carpet_tex():
     return cached("carpet", make)
 
 
-def corridor(st, T, zc=0.0, doors=(), light=K.BLUE, wall="blue", far_door=None, bob=1.0, sway=0.0, flashes=(), spill=None, dark_far=True):
+def corridor(st, T, zc=0.0, doors=(), light=K.BLUE, wall="blue", far_door=None, bob=1.0, sway=0.0, flashes=(), spill=None, dark_far=True,
+             stranger=None):
     """A hotel corridor in one-point perspective, the camera zc metres along it. doors: [(Z, side, number, colour)];
     spill: {number: strength} light under the door."""
     c = st.c
@@ -136,6 +137,14 @@ def corridor(st, T, zc=0.0, doors=(), light=K.BLUE, wall="blue", far_door=None, 
     if dark_far:
         K.glow(c, VPX, VPY, 180, (0, 0, 0), 0.0)
         c.drawCircle(VPX, VPY, 260, paint(shader=D.rad((VPX, VPY), 260, [(0, 0, 0, 1.0), (0, 0, 0, 0.0)])))
+    if stranger is not None:                                             # someone at the far end, lit from behind, watching
+        Z = stranger - zc
+        if Z > 1.0:
+            fx, fy = proj(0.15, 0, Z)
+            hgt = FOC * 1.72 / Z
+            K.glow(c, fx, fy - hgt * 0.5, hgt * 1.2, mix(light, (255, 255, 255), 0.3), 0.9)
+            F.figure(c, F.man_profile_path(T, 0.0, coat=True), fx, fy, hgt / 1000, rim=mix(light, (255, 255, 255), 0.3), side=1,
+                     rim2=light, rim_w=3, halo=0.3, flip=True)
     K.glow(c, VPX, VPY + 300, 900, light, 0.25 + 0.6 * fl)
     c.restore()
     K.dark(c, 540, 1000, 500, 1300, 0.45)
@@ -144,33 +153,50 @@ def corridor(st, T, zc=0.0, doors=(), light=K.BLUE, wall="blue", far_door=None, 
 
 # ------------------------------------------------------------------ the spiral stair, from above
 
-def spiral(st, T, rot=0.0, nora_k=0.5, cols=(K.BLUE, K.GREEN, K.MAGENTA, K.RED)):
+def spiral(st, T, rot=0.0, nora_k=0.5, cols=(K.BLUE, K.MAGENTA, K.GREEN, K.RED)):
+    """Her view straight down the stairwell: thin treads winding round and down into the dark - each a lit tread face
+    and a shadowed riser - a brass banister with balusters on the inner edge, the well black in the middle."""
     c = st.c
     c.drawRect(skia.Rect.MakeWH(W, H), paint((0, 0, 0)))
     cx, cy = 540, 960
-    rings = 9
-    for j in range(rings):
-        r0, r1 = 1150 * 0.74 ** j, 1150 * 0.74 ** (j + 1)
-        shade = 1 - j / rings
-        colr = cols[j % len(cols)]
-        n = 18
-        for i in range(n):
-            a0 = rot + j * 0.35 + i * 2 * math.pi / n
-            a1 = a0 + 2 * math.pi / n
-            step = path([(cx + r0 * math.cos(a0), cy + r0 * math.sin(a0)), (cx + r0 * math.cos(a1), cy + r0 * math.sin(a1)),
-                         (cx + r1 * math.cos(a1), cy + r1 * math.sin(a1)), (cx + r1 * math.cos(a0), cy + r1 * math.sin(a0))])
-            c.drawPath(step, paint(mix(colr, (0, 0, 0), 1 - shade * (0.55 if i % 2 else 0.8))))
-            c.drawPath(step, paint((0, 0, 0), 0.8, stroke=3))
-        c.drawCircle(cx, cy, r1, paint(K.BRASS, 0.7 * shade, stroke=8 * shade + 1))                 # the banister
-    c.drawCircle(cx, cy, 1150 * 0.74 ** rings, paint((0, 0, 0)))
-    # Nora, from above: a tiny figure going down
-    a = rot + nora_k * 4.5
-    r = 1150 * 0.74 ** (1.2 + nora_k * 2.2) * 0.9
-    nx, ny = cx + r * math.cos(a), cy + r * math.sin(a)
-    sc = r / 700
-    c.drawPath(D.oval(nx - 50 * sc, ny - 30 * sc, nx + 50 * sc, ny + 30 * sc), paint((240, 236, 240)))
-    c.drawCircle(nx, ny, 22 * sc, paint((10, 6, 6)))
-    K.glow(c, cx, cy, 1000, (255, 255, 255), 0.06)
+    R = 1500
+    per = 30
+    step = 2 * math.pi / per
+    n = 150
+    rail = []
+    for k in range(n - 1, 18, -1):                                      # deepest first; the nearest turn is above us
+        sc = 1.0 / (1.0 + 0.034 * k)
+        a0 = rot + k * step
+        a1 = a0 + step * 1.03
+        ro, ri = R * sc, R * sc * 0.5
+        turn = k // per
+        colr = cols[turn % len(cols)]
+        lum = max(0.0, 1.0 - k / n) ** 1.2
+        tread = path([(cx + ro * math.cos(a0), cy + ro * math.sin(a0)), (cx + ro * math.cos(a1), cy + ro * math.sin(a1)),
+                      (cx + ri * math.cos(a1), cy + ri * math.sin(a1)), (cx + ri * math.cos(a0), cy + ri * math.sin(a0))])
+        c.drawPath(tread, paint(mix(colr, (0, 0, 0), 1 - 0.8 * lum)))
+        # the riser: a dark band on the step's leading edge, so each tread reads as a step down
+        am = a0 + step * 0.22
+        riser = path([(cx + ro * math.cos(a0), cy + ro * math.sin(a0)), (cx + ro * math.cos(am), cy + ro * math.sin(am)),
+                      (cx + ri * math.cos(am), cy + ri * math.sin(am)), (cx + ri * math.cos(a0), cy + ri * math.sin(a0))])
+        c.drawPath(riser, paint(mix(colr, (0, 0, 0), 1 - 0.25 * lum)))
+        c.drawLine(cx + ro * math.cos(am), cy + ro * math.sin(am), cx + ri * math.cos(am), cy + ri * math.sin(am),
+                   paint(mix(colr, (255, 255, 255), 0.45), 0.9 * lum, stroke=3 * sc + 0.6))     # the nosing catches the light
+        bx, by = cx + ri * 0.97 * math.cos(a0), cy + ri * 0.97 * math.sin(a0)
+        c.drawLine(bx, by, cx + ri * 0.86 * math.cos(a0), cy + ri * 0.86 * math.sin(a0), paint(K.BRASS, 0.9 * lum, stroke=4 * sc + 0.8))
+        rail.append((cx + ri * 0.86 * math.cos(a0), cy + ri * 0.86 * math.sin(a0), lum, sc))
+        # the outer wall between this turn and the one above: deco paper in shadow
+        if k % 2 == 0:
+            ro2 = R / (1.0 + 0.034 * (k - per))
+            c.drawLine(cx + ro * math.cos(a0), cy + ro * math.sin(a0), cx + min(ro2, ro * 1.6) * math.cos(a0), cy + min(ro2, ro * 1.6) * math.sin(a0),
+                       paint(mix(colr, (0, 0, 0), 0.75), 0.5 * lum, stroke=2))
+    for i in range(len(rail) - 1):                                      # the banister, winding down
+        x0, y0, l0, s0 = rail[i]
+        x1, y1, l1, s1 = rail[i + 1]
+        c.drawLine(x0, y0, x1, y1, paint(mix(K.BRASS_L, (0, 0, 0), 1 - l1), stroke=8 * s1 + 1))
+    c.drawCircle(cx, cy, R * 0.5 / (1 + 0.034 * n), paint((0, 0, 0)))
+    c.drawCircle(cx, cy, 260, paint(shader=D.rad((cx, cy), 260, [(0, 0, 0, 1.0), (0, 0, 0, 0.0)])))
+    K.glow(c, cx, cy, 1300, (255, 255, 255), 0.05)
 
 
 # ------------------------------------------------------------------ ROOM 97 (blue): the contract
@@ -184,7 +210,7 @@ def _blue_room():
     return K.surf(W, H, fn)
 
 
-def blue_room(st, T, z=1.0, cx=540, cy=960, turn=0.0, flashes=(), phone_lit=1.0, write=0.0):
+def blue_room(st, T, z=1.0, cx=540, cy=960, turn=0.0, flashes=(), phone_lit=1.0, write=0.0, nora_door=1.0):
     c = st.c
     fl = K.flash_at(T, flashes)
     c.save()
@@ -203,6 +229,12 @@ def blue_room(st, T, z=1.0, cx=540, cy=960, turn=0.0, flashes=(), phone_lit=1.0,
     c.drawPath(path([(540, 1176), (760, 1176), (790, 1196), (520, 1196)]), paint((200, 210, 255)))
     K.phone(c, 880, 1186, 0.09, -84, None, glow_col=(150, 200, 255), lit=phone_lit)
     K.glow(c, 880, 1170, 200, (150, 200, 255), 0.6 * phone_lit)
+    K.key(c, 700, 1166, 0.32, ang=6, glint=0.9, T=T)
+    if nora_door > 0:                                                   # Nora in the doorway, the corridor's light behind her
+        c.drawRect(skia.Rect.MakeLTRB(0, 560, 170, 1430), paint((90, 120, 220), nora_door))
+        K.glow(c, 85, 1000, 300, (120, 150, 255), 0.5 * nora_door)
+        c.drawRect(skia.Rect.MakeLTRB(-10, 540, 186, 1440), paint((30, 14, 8), nora_door, stroke=26))
+        F.woman_p(c, 80, 1430, 0.78, rim=(160, 190, 255), side=1, T=T, hand="chest", head=6, rim_w=6, halo=0.0)
     # him, at the desk, in profile
     F.figure(c, F.seated_man_path(turn), 330, 1200, 0.95, rim=(120, 170, 255), side=1, rim2=K.RED, rim_w=9, halo=0.3)
     if turn > 0:
@@ -317,7 +349,7 @@ def _green_room():
     return K.surf(W, H, fn)
 
 
-def green_room(st, T, z=1.0, cx=540, cy=960, pour=0.0, safe=1.0, key_a=1.0):
+def green_room(st, T, z=1.0, cx=540, cy=960, pour=0.0, safe=1.0, key_a=1.0, nora_door=1.0):
     c = st.c
     c.save()
     cam(c, z, cx, cy)
@@ -333,9 +365,14 @@ def green_room(st, T, z=1.0, cx=540, cy=960, pour=0.0, safe=1.0, key_a=1.0):
         c.drawPath(D.oval(x - 26, y - 9, x + 26, y + 9), paint(mix(K.GOLD, K.BRASS_D, rng.random() * 0.6)))
     if key_a > 0:
         K.key(c, 700, 1070, 0.5, ang=-10, glint=key_a, T=T)
+    if nora_door > 0:
+        c.drawRect(skia.Rect.MakeLTRB(0, 600, 150, 1450), paint((80, 200, 140), nora_door))
+        K.glow(c, 75, 1020, 280, K.GREEN, 0.5 * nora_door)
+        c.drawRect(skia.Rect.MakeLTRB(-10, 580, 166, 1460), paint((30, 14, 8), nora_door, stroke=24))
+        F.woman_p(c, 70, 1450, 0.74, rim=(150, 255, 190), side=1, T=T, hand="chest", head=10, rim_w=6, halo=0.0)
     # her, pouring her savings in
-    F.figure(c, F.lady_path(pour), 380, 1450, 0.9, rim=(80, 255, 160), side=1, rim2=K.GOLD, rim_w=9, halo=0.3)
-    bx, by = 380 + 250 * 0.9, 1450 - (680 - 40 * pour) * 0.9
+    F.figure(c, F.lady_path(pour), 400, 1450, 0.9, rim=(80, 255, 160), side=1, rim2=K.GOLD, rim_w=9, halo=0.3)
+    bx, by = 400 + 250 * 0.9, 1450 - (680 - 40 * pour) * 0.9
     for k in range(14):                                                 # the coins arcing into the slot
         u = ((T * 0.9 + k / 14) % 1.0)
         x = bx + (805 - bx) * u
@@ -436,27 +473,39 @@ def mirrors(st, T, nod=1.0, stop=-1, stop_k=0.0, frames=6, chart=None):
             hx, hy = nx, y0 + h - 30 * s - 915 * 0.85 * s
             F.man_face(c, hx, hy, 0.85 * s * 0.95, a=ease(stop_k), glow_col=(255, 160, 230))
     if chart is not None:
+        c.drawRect(skia.Rect.MakeWH(W, H), paint((0, 0, 0), 0.55))
         chart(c)
     K.dark(c, 540, 980, 520, 1250, 0.35)
 
 
-def bars(c, T, t0, y=360):
-    """The radiologists: correct with a right AI hint, then a wrong one."""
-    D.text(c, "MAMMOGRAMS READ WITH A WRONG AI HINT", 540, y, 38, "jost-600", (255, 220, 240), tag="chart")
+def bars(c, T, t0, y=330, t1=None, focus=None):
+    """The radiologists: % of mammograms rated correctly with a correct AI hint, and with a wrong one."""
+    c.drawRect(skia.Rect.MakeLTRB(70, y - 70, 1010, y + 900), paint((8, 2, 10), 0.85))
+    K.deco_frame(c, 70, y - 70, 1010, y + 900, K.GOLD, 0.9, 4)
+    D.text(c, "RADIOLOGISTS READING MAMMOGRAMS", 540, y, 40, "jost-600", (255, 225, 245), tag="chart")
+    D.text(c, "% rated correctly", 540, y + 52, 34, "jost-500", (240, 200, 230), tag="chart")
     groups = [("LEAST EXPERIENCED", 79.7, 19.8), ("MOST EXPERIENCED", 82.3, 45.5)]
-    base = y + 720
+    base = y + 650
     for g, (name, a_, b_) in enumerate(groups):
-        gx = 330 + g * 420
-        k = ease(ramp(T, t0 + 0.4 + g * 1.6, t0 + 1.4 + g * 1.6))
-        for i, (v, colr, lab) in enumerate(((a_, K.GOLD, "AI right"), (a_ + (b_ - a_) * k, K.MAGENTA, "AI wrong"))):
-            x = gx - 90 + i * 180
-            hgt = 6.0 * v
-            c.drawRect(skia.Rect.MakeLTRB(x - 60, base - hgt, x + 60, base), paint(colr, 0.92))
-            c.drawRect(skia.Rect.MakeLTRB(x - 60, base - hgt, x + 60, base), paint((0, 0, 0), 0.6, stroke=4))
-            D.text(c, f"{round(v)}%", x, base - hgt - 22, 54, "limelight-400", (255, 255, 255), tag="chartv%d%d" % (g, i), shadow=(0, 0, 0))
+        gx = 320 + g * 440
+        tg = t0 if g == 0 else (t1 if t1 is not None else t0 + 1.4)
+        k = ease(ramp(T, tg + 0.2, tg + 1.0))
+        for i, (v, colr, lab) in enumerate(((a_, K.GOLD, "correct hint"), (b_, K.MAGENTA, "wrong hint"))):
+            x = gx - 95 + i * 190
+            hgt = 5.2 * v * (k if i == 1 else 1.0)
+            c.drawRect(skia.Rect.MakeLTRB(x - 62, base - hgt, x + 62, base), paint(colr, 0.95))
+            c.drawRect(skia.Rect.MakeLTRB(x - 62, base - hgt, x + 62, base), paint((0, 0, 0), 0.6, stroke=4))
+            if i == 0 or k > 0.6:
+                D.text(c, f"{round(v)}%", x, base - hgt - 22, 54, "limelight-400", (255, 255, 255), tag="chartv%d%d" % (g, i), shadow=(0, 0, 0))
             D.text(c, lab, x, base + 46, 30, "jost-500", (240, 220, 240), tag="chartl%d%d" % (g, i))
-        D.text(c, name, gx, base + 96, 32, "jost-600", (255, 200, 240), tag="chartg%d" % g)
-    D.text(c, "Dratsch et al., Radiology, 2023", 540, base + 150, 32, "cormorant-500i", (255, 200, 240), tag="chart")
+        D.text(c, name, gx, base + 98, 32, "jost-600", (255, 200, 240), tag="chartg%d" % g)
+        if focus is not None:
+            if g == focus:
+                c.drawRect(skia.Rect.MakeLTRB(gx - 200, y + 120, gx + 200, base + 125), paint(K.MAGENTA, 0.9, stroke=6))
+                K.eglow(c, gx, base - 200, 260, 380, K.MAGENTA, 0.25)
+            else:
+                c.drawRect(skia.Rect.MakeLTRB(gx - 210, y + 100, gx + 210, base + 130), paint((8, 2, 10), 0.72))
+    D.text(c, "Dratsch et al., Radiology, 2023", 540, base + 160, 32, "cormorant-500i", (255, 200, 240), tag="chart")
 
 
 # ------------------------------------------------------------------ the hidden door
@@ -567,7 +616,7 @@ def keyhole(st, T, light=1.0, turn=0.0, eye_k=0.0):
 
 # ------------------------------------------------------------------ ROOM 100: blazing colour
 
-def _blaze_core(c, T, cx, cy, k=1.0, clip=None):
+def _blaze_core(c, T, cx, cy, k=1.0, clip=None, drain=0.0):
     if clip is not None:
         c.save()
         c.clipRect(clip)
@@ -576,10 +625,10 @@ def _blaze_core(c, T, cx, cy, k=1.0, clip=None):
     for i in range(n):
         a0 = T * 0.4 + i * 2 * math.pi / n
         a1 = a0 + 2 * math.pi / n
-        colr = cols[i % len(cols)]
+        colr = mix(cols[i % len(cols)], (220, 0, 20) if i % 2 else (90, 0, 10), drain)
         p = path([(cx, cy), (cx + 2400 * math.cos(a0), cy + 2400 * math.sin(a0)), (cx + 2400 * math.cos(a1), cy + 2400 * math.sin(a1))])
         c.drawPath(p, paint(colr, k))
-    K.glow(c, cx, cy, 700, (255, 255, 255), 0.9 * k, core=1.0)
+    K.glow(c, cx, cy, 700, mix((255, 255, 255), (255, 60, 60), drain), 0.9 * k * (1 - 0.5 * drain), core=1.0 - 0.6 * drain)
     if clip is not None:
         c.restore()
 
@@ -593,9 +642,11 @@ def blaze(st, T, k=1.0, bed=1.0, phone_text=None):
         c.drawRect(skia.Rect.MakeLTRB(100, 1240, 980, 1330), paint((250, 240, 245), bed))
         c.drawRect(skia.Rect.MakeLTRB(90, 1300, 990, 1500), paint((160, 0, 30), bed))
         c.drawPath(D.smooth([(60, 1330), (60, 960), (130, 900), (200, 960), (210, 1330)]), paint((30, 6, 10), bed))
-        F.figure(c, F.lying_path(T, 0.0), 640, 1290, 0.9, rim=(255, 255, 255), side=1, rim2=K.GOLD, rim_w=10, halo=0.5)
-        K.phone(c, 470, 1190, 0.12, -80, None, glow_col=(170, 210, 255), lit=1.0)
-        K.glow(c, 470, 1190, 220, (170, 210, 255), 0.8, core=0.6)
+        c.drawPath(D.oval(150, 1190, 360, 1262), paint((240, 236, 240), bed))                          # the pillow
+        F.lying_nora(c, 1100, 1180, 0.82, key=(255, 240, 230), rim=K.GOLD, eye_k=0.0, T=T)
+        c.drawPath(D.smooth([(520, 1250), (700, 1212), (990, 1222), (990, 1500), (520, 1500)]), paint((160, 0, 30), bed))
+        K.phone(c, 560, 1200, 0.12, -80, None, glow_col=(170, 210, 255), lit=1.0)
+        K.glow(c, 560, 1200, 220, (170, 210, 255), 0.8, core=0.6)
     K.wash(c, (255, 255, 255), 0.06)
 
 
@@ -645,15 +696,16 @@ def hospital(st, T, z=1.0, cx=540, cy=960, doc=1.0, beat_bpm=72):
         pts.append((x, 520 + v))
     c.drawPath(path(pts, closed=False), paint((60, 255, 120), stroke=4))
     K.glow(c, 240, 510, 200, K.GREEN, 0.3)
-    # the bed, Nora propped up, awake
-    c.drawRect(skia.Rect.MakeLTRB(80, 1260, 900, 1340), paint((230, 226, 220)))
-    c.drawRect(skia.Rect.MakeLTRB(80, 1320, 900, 1520), paint((150, 160, 180)))
+    # the bed: a raised pillow, Nora sitting up and tucked in, awake
+    c.drawPath(D.smooth([(110, 1340), (120, 980), (260, 940), (300, 1340)]), paint((236, 230, 226)))
     c.save()
-    c.clipRect(skia.Rect.MakeLTRB(0, 0, W, 1302))
-    F.face_profile(c, 300, 1680, 0.78, key=(255, 200, 150), rim=(255, 210, 160), eye_k=1.0, skin_gel=(255, 180, 130), head=-4)
+    c.clipRect(skia.Rect.MakeLTRB(0, 0, W, 1330))
+    F.face_profile(c, 300, 1740, 0.8, key=(255, 200, 150), rim=(255, 210, 160), eye_k=1.0, skin_gel=(255, 180, 130), head=-4)
     c.restore()
+    c.drawPath(D.smooth([(60, 1330), (300, 1300), (560, 1290), (900, 1300), (900, 1540), (60, 1540)]), paint((170, 178, 196)))
+    c.drawRect(skia.Rect.MakeLTRB(60, 1290, 900, 1312), paint((236, 232, 226)))
     if doc > 0:
-        F.figure(c, F.man_profile_path(T, 0.0, coat=True), 820, 1560, 0.95, rim=(255, 210, 160), side=-1, rim_w=9, halo=0.2,
-                 fill=(34, 26, 28), flip=True)
+        F.figure(c, F.man_profile_path(T, 0.0, coat=True, clipboard=True), 860, 1560, 0.98, rim=(255, 210, 160), side=-1, rim_w=9,
+                 halo=0.2, fill=(34, 26, 28), flip=True)
     c.restore()
     K.dark(c, 540, 960, 520, 1300, 0.35)

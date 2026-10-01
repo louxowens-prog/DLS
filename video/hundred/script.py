@@ -33,7 +33,7 @@ VOICES = {
     DISP: ("af_kore", 1.05, 0.0),
     DOC: ("am_michael", 1.0, 0.0),
 }
-SPEED, PITCH = {"r5": 1.2, "e2": 1.28, "o3": 1.2, "r6": 1.22, "b4": 1.2, "g5": 1.2, "m1": 1.2, "h2": 1.12, "h3": 1.12, "p2": 1.25}, {}                     # r5: "competence" must not blur into "confidence"
+SPEED, PITCH = {"r5": 1.2, "e2": 1.28, "o3": 1.2, "r6": 1.22, "b4": 1.2, "g5": 1.2, "m1": 1.2, "h2": 1.12, "h3": 1.12, "p2": 1.25, "m3": 1.25}, {}                     # r5: "competence" must not blur into "confidence"
 
 # rooms: (key of the first line, colour name, door number or None)
 ROOMS = [("r1", "red", None), ("b1", "blue", "97"), ("g1", "green", "98"), ("m1", "magenta", "99"), ("h6", "blaze", "100")]
@@ -75,8 +75,8 @@ LINES = [
      "Even professional legal AI tools | got at least 1 question in 6 wrong.", 0.2),
     # ---- GREEN: Room 98
     ("g1", AI, "This investment is safe.", None, 0.25),
-    ("g2", N, "Room ninety-eight. Her savings. All of it.", "Room 98. Her savings. All of it.", 0.25),
-    ("g3", N, "No investment is safe. A smooth voice can't change that.", "No investment is safe. | A smooth voice can't change that.", 0.2),
+    ("g2", N, "Room ninety-eight. A woman's life savings. All of it.", "Room 98. | A woman's life savings. All of it.", 0.25),
+    ("g3", N, "No investment is risk-free. A smooth voice can't change that.", "No investment is risk-free. | A smooth voice can't change that.", 0.2),
     ("g4", N, "In 2024, Americans reported losing five point seven billion dollars to investment scams. More than any "
               "other fraud.",
      "In 2024, Americans reported losing | $5.7 billion to investment scams. | More than any other fraud.", 0.2),
@@ -86,9 +86,10 @@ LINES = [
     ("m1", N, "Room ninety-nine. Mirrors.", "Room 99. Mirrors.", 0.25),
     ("m2", N, "This has a name. Automation bias. We defer to the machine, because we assume it knows better.",
      "This has a name. | Automation bias. | We defer to the machine, | because we assume it knows better.", 0.2),
-    ("m3", N, "Even experts. With a wrong AI hint, radiologists fell from eighty percent right to twenty. The most "
-              "experienced, to forty-six.",
-     "Even experts. | With a wrong AI hint, | radiologists fell from 80% right | to 20%. | The most experienced: | to 46%.", 0.15),
+    ("m3", N, "With a correct AI hint, radiologists scored about eighty percent. With a wrong one, the least experienced "
+              "scored twenty. Even the most experienced: forty-six.",
+     "With a correct AI hint, | radiologists scored about 80%. | With a wrong one, | the least experienced scored 20%. | "
+     "Even the most experienced: 46%.", 0.15),
     ("m4", W, "One hundred.", None, 0.3),
     # ---- the hidden door: the paradox
     ("h1", N, "Here's the cruel part.", None, 0.15),

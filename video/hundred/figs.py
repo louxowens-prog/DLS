@@ -147,7 +147,7 @@ def woman_p(c, x, y, s, rim=K.RED, side=1, T=0.0, rim2=None, halo=0.35, stride=0
     figure(c, woman_profile_path(T, stride, head=head, hand=hand), x, y, s, rim, side, rim_w=rim_w, halo=halo, rim2=rim2, flip=flip, fill=fill)
 
 
-def man_profile_path(T=0.0, stride=0.0, push=False, coat=False):
+def man_profile_path(T=0.0, stride=0.0, push=False, coat=False, clipboard=False):
     """A man in profile facing right, 1000 tall: trousers (two legs), a jacket or a long coat, arms forward if pushing."""
     p = skia.Path()
     sw = stride
@@ -165,9 +165,12 @@ def man_profile_path(T=0.0, stride=0.0, push=False, coat=False):
     p.addPath(D.smooth([(-50, -980), (20, -990), (60, -950), (66, -920), (90, -892), (66, -880), (70, -850), (52, -822), (10, -812),
                         (-40, -830), (-64, -890)]))
     if push:
-        _arm(p, 0, -760, 70, 220, 10, 200, 44, 32)
+        _arm(p, 0, -760, 70, 220, 10, 200, 56, 42)
+    elif clipboard:
+        _arm(p, 0, -760, 14, 250, 95, 210, 58, 44)
+        p.addPath(D.rrect(150, -720, 250, -580, 8))
     else:
-        _arm(p, 0, -760, 10 + 26 * sw, 250, 12, 230, 44, 32)
+        _arm(p, 0, -760, 10 + 26 * sw, 250, 12, 230, 56, 42)
     return p
 
 
@@ -403,16 +406,55 @@ def hand_phone(c, x, y, s, T=0.0, screen=None, thumb=0.0, gel=K.RED, glow_col=(2
     c.scale(s, s)
     skin_lit = mix(SKIN, glow_col, 0.35)
     # the palm behind, under the phone's lower half
-    c.drawPath(D.smooth([(-260, 120), (-230, 460), (-60, 700), (200, 720), (300, 500), (250, 200)]), paint(shader=D.rad((60, 300), 600,
-                                                                                                                           [mix(SKIN_D, gel, 0.4), (40, 14, 12), (8, 4, 4)])))
+    c.drawPath(D.smooth([(-280, 120), (-250, 460), (-60, 720), (220, 740), (330, 520), (260, 200)]), paint(shader=D.rad((40, 260), 640,
+                                                                                                                           [mix(mix(SKIN_D, gel, 0.35), (0, 0, 0), 0.4), (24, 10, 10), (6, 3, 3)])))
     K.phone(c, 0, 0, 1.0, 0, screen, glow_col=glow_col, lit=lit)
-    for k in range(4):                                                  # fingertips curling round the left edge
-        fy = -60 + k * 120
-        c.drawPath(D.capsule(-290, fy + 50, -178, fy, 68, 56), paint(shader=D.lin((-290, fy), (-176, fy),
-                   [(14, 6, 6), mix(SKIN_D, gel, 0.3), mix(skin_lit, (0, 0, 0), 0.45)])))
-        c.drawPath(D.oval(-206, fy - 18, -180, fy + 14), paint(mix(skin_lit, (255, 255, 255), 0.2), 0.3))
+    shadow = mix(mix(SKIN_D, gel, 0.35), (0, 0, 0), 0.6)
+    edge = mix(skin_lit, (255, 255, 255), 0.1)
+    for k in range(4):                                                  # fingers curling round the left edge: two joints each
+        fy = -70 + k * 118
+        w0 = 64 - 3 * k
+        pts = [(-300, fy + 70), (-238, fy + 22), (-188, fy - 4)]
+        for j in range(2):
+            (x0, y0), (x1, y1) = pts[j], pts[j + 1]
+            c.drawPath(D.capsule(x0, y0, x1, y1, w0, w0 * 0.86), paint(shadow))
+        c.drawPath(D.smooth([(-262, fy + 40), (-220, fy + 4), (-186, fy - 22)], closed=False), paint(edge, 0.55, stroke=7, blur=3))
+        c.drawLine(-240, fy + 2, -226, fy + 36, paint((0, 0, 0), 0.6, stroke=3))
+        c.drawPath(D.oval(-204, fy - 22, -176, fy + 10), paint(mix(edge, (255, 230, 220), 0.3), 0.5))
     tx, ty = 230 - 220 * thumb, 260 - 160 * thumb + 18 * math.sin(T * 9) * (thumb > 0.05)
-    c.drawPath(D.capsule(320, 560, tx, ty, 92, 74), paint(shader=D.lin((320, 560), (tx, ty), [(16, 6, 6), mix(SKIN_D, gel, 0.45),
-                                                                                             mix(skin_lit, (0, 0, 0), 0.15)])))
-    c.drawPath(D.oval(tx - 30, ty - 24, tx + 26, ty + 22), paint((240, 214, 204), 0.35))
+    c.drawPath(D.capsule(330, 600, (330 + tx) / 2 + 30, (600 + ty) / 2 + 20, 100, 84), paint(shadow))
+    c.drawPath(D.capsule((330 + tx) / 2 + 30, (600 + ty) / 2 + 20, tx, ty, 84, 70), paint(shadow))
+    c.drawPath(D.smooth([((330 + tx) / 2 + 10, (600 + ty) / 2 - 10), (tx - 20, ty - 26)], closed=False), paint(edge, 0.55, stroke=8, blur=3))
+    c.drawPath(D.oval(tx - 28, ty - 26, tx + 22, ty + 16), paint(mix(edge, (255, 230, 220), 0.3), 0.45))
+    c.restore()
+
+
+def lying_nora(c, x, y, s, key=(170, 210, 255), rim=K.RED, eye_k=0.0, T=0.0, key_a=1.0):
+    """Nora lying on her back, head to the left, face up: (x, y) is where her feet would be; she is 1000 * s long and
+    her back rests about 77 * s below y. The face is lit from above, so she reads as a woman, not a shape."""
+    c.save()
+    c.translate(x, y)
+    c.rotate(-90)
+    face_profile(c, 0, 0, s, key=key, rim=rim, eye_k=eye_k, key_a=key_a, T=T)
+    c.restore()
+
+
+def hand_flat(c, x, y, s, gel=K.RED, key=(255, 120, 110), ang=0.0):
+    """A hand lying palm-down on the carpet, fingers loose, coming in from the left edge (local: knuckles at 0, 0)."""
+    c.save()
+    c.translate(x, y)
+    c.rotate(ang)
+    c.scale(s, s)
+    dark = (24, 8, 8)
+    lit = mix(mix(SKIN, gel, 0.45), (0, 0, 0), 0.15)
+    palm = D.smooth([(-420, -70), (-150, -86), (-10, -78), (16, -10), (0, 64), (-140, 92), (-420, 80)])
+    c.drawPath(palm, paint(shader=D.lin((0, -90), (0, 90), [lit, mix(lit, dark, 0.5), dark])))
+    for i, (dy, L, w) in enumerate(((-58, 150, 40), (-14, 172, 42), (30, 162, 40), (70, 120, 34))):
+        pts = [(-10, dy), (L * 0.55, dy + 4 + i * 2), (L, dy + 14 + 4 * i)]
+        for j in range(2):
+            (x0, y0), (x1, y1) = pts[j], pts[j + 1]
+            c.drawPath(D.capsule(x0, y0, x1, y1, w, w * 0.9), paint(shader=D.lin((x0, y0 - w), (x0, y0 + w), [lit, mix(lit, dark, 0.45), dark])))
+        c.drawLine(L * 0.55, dy - w * 0.35, L * 0.55 + 4, dy + w * 0.3, paint((10, 4, 4), 0.6, stroke=3))
+        c.drawPath(D.oval(L - 30, dy + 4 * i, L + 4, dy + 22 + 4 * i), paint(mix(lit, (255, 220, 210), 0.3), 0.6))
+    c.drawPath(D.capsule(-160, -80, -40, -130, 46, 38), paint(shader=D.lin((0, -150), (0, -70), [lit, dark])))     # the thumb
     c.restore()

@@ -60,6 +60,9 @@ SILENCES = [(C["dead1"] + 0.02, f("exterior") + 0.05), (C["dead2"], S("h1") - 0.
 CRASHES = [(C["title"], C["dead1"]), (C["sting3"], C["sting3"] + 0.95), (C["door_open"], S("x1") - 0.35)]
 
 
+STG = []                                         # the stings: their own bus, never ducked, a dip in the music before each
+
+
 def heartbeats(bus, t0, t1, bpm0, bpm1=None, amp=1.0, pan=0.5):
     bpm1 = bpm0 if bpm1 is None else bpm1
     t = t0
@@ -71,13 +74,14 @@ def heartbeats(bus, t0, t1, bpm0, bpm1=None, amp=1.0, pan=0.5):
 
 
 def score(mus, amb, fx):
+    STG.clear()
     # ---------------------------------------------------------------- cold open
     mus.add(P.drone(C["title"] + 0.2, 33, 1.2, seed=1), 0.0, 1.0)
     P.lullaby(mus, 0.25, beat=0.55, amp=0.45, notes=P.LULLABY[:6])
     heartbeats(fx, 0.4, C["sting1"], 64, 70, 0.5)
     amb.add(wide(FX.rain, C["title"], amp=0.35), 0.0, 1.0)
     fx.add(O.thunder(2.0, 0.6, seed=2), 1.25, 1.0, pan=0.3)
-    fx.add(P.sting(1.0, seed=1), C["sting1"], 1.0)                                 # jump scare 1: the phone on the floor
+    STG.append((C["sting1"], P.sting(1.0, seed=1)))                                # jump scare 1: the phone on the floor
     fx.add(P.breath(1.6, 0.8, seed=2, shaky=1.0), C["sting1"] + 0.4, 1.0)
     mus.add(O.music_box(P.LULLABY[:8], rate=lambda u: 1 - 0.6 * u, detune=lambda u: -80 * u, amp=0.5), f("door100"), 1.0, pan=0.55)
     mus.add(P.whispers_inv(C["title"] - f("door100"), 0.6, seed=3), f("door100"), 1.0)
@@ -165,7 +169,7 @@ def score(mus, amb, fx):
         fx.add(FX.thud(0.55, k), Wx("b3", "invented") - 0.2 + k * 0.15, 1.0, pan=0.3 + 0.08 * k)
     fx.add(FX.thud(1.2, 9), Wx("b3", "five") - 0.02, 1.0)
     fx.add(O.timpani(33, 0.8), Wx("b3", "five") - 0.02, 1.0)
-    fx.add(P.sting(1.0, seed=2), C["sting2"], 1.0)                                 # jump scare 2: he turns
+    STG.append((C["sting2"], P.sting(1.0, seed=2)))                                # jump scare 2: he turns
     fx.add(P.growl_words("Sorah", 0.7), C["sting2"] + 0.1, 1.0)
 
     # ---------------------------------------------------------------- ROOM 98
@@ -188,6 +192,10 @@ def score(mus, amb, fx):
         fx.add(P.breath(1.5, 1.0, seed=10 + k, shaky=1.0), tn + 0.3 + k * 1.7, 1.0)
     mus.add(P.drone(f("mirrors") - tn, 32, 0.8, seed=9), tn, 1.0)
 
+    for nm, bpm in (("nb1", 108), ("nb2", 116), ("nb3", 124)):
+        tb_ = f(nm)
+        heartbeats(fx, tb_, nxt(nm), bpm, bpm, 1.3)
+        fx.add(P.breath(1.3, 1.3, seed=hash(nm) % 40, shaky=1.0), tb_ + 0.05, 1.0)
     # ---------------------------------------------------------------- ROOM 99: mirrors
     tm = f("mirrors")
     mus.add(P.drone(C["sting3"] - tm, 33, 0.9, seed=10, sweep=0.2), tm, 1.0)
@@ -197,7 +205,7 @@ def score(mus, amb, fx):
         fx.add(P.tick(0.25, k % 2), tm + k / 0.9, 1.0, pan=0.5)
     for k in range(6):
         mus.add(P.fuzz_bass(33, 0.4, 0.3), f("chart") + 1.2 + k * 1.3, 1.0)
-    fx.add(P.sting(1.1, seed=3), C["sting3"], 1.0)                                 # jump scare 3: the reflection
+    STG.append((C["sting3"], P.sting(1.0, seed=3)))                                # jump scare 3: the reflection
     P.crash_in(mus, C["sting3"], 0.95, level=1.0, seed=4, words="Anakré! Tovéh!")
     mus.add(P.drone(C["dead2"] - S("m4") + 0.1, 32, 0.6, seed=12), S("m4"), 1.0)
     fx.add(P.keys_jingle(0.7, seed=3), E("m4") - 0.1, 1.0, pan=0.55)
@@ -215,7 +223,7 @@ def score(mus, amb, fx):
     fx.add(O.creak(1.2, 1.0, seed=5) if hasattr(O, "creak") else FX.creak(1.2, 1.0, seed=5), C["door_open"] - 0.3, 1.0, pan=0.4)
     # the door opens: the whole band, full volume, the truth in blazing colour
     P.crash_in(mus, C["door_open"], S("x1") - 0.35 - C["door_open"], level=1.0, seed=6, words="Ahvenna! Selenna! Ahvenna!")
-    fx.add(P.sting(1.2, seed=4), C["sting4"], 1.0)                                 # jump scare 4: her own body
+    STG.append((C["sting4"], P.sting(1.0, seed=4)))                                # jump scare 4: her own body
     heartbeats(fx, S("h7"), S("x1") - 0.35, 132, 120, 1.2)
 
     # ---------------------------------------------------------------- the risk at 100%: she rested
@@ -254,7 +262,7 @@ def score(mus, amb, fx):
     tco = f("coda")
     amb.add(wide(FX.rain, TL.total - tco, amp=0.5), tco, 1.0)
     fx.add(P.notify(0.6), S("e4") - 0.25, 1.0, pan=0.55)
-    fx.add(P.sting(1.1, seed=5), C["sting5"], 1.0)                                 # jump scare 5: the phone
+    STG.append((C["sting5"], P.sting(1.0, seed=5)))                                # jump scare 5: the eye snaps open
     mus.add(P.whispers_inv(2.0, 1.0, seed=19), C["sting5"] + 0.3, 1.0)
     mus.add(O.music_box(P.LULLABY[:10], rate=lambda u: 1 - 0.6 * u, detune=lambda u: -120 * u, amp=0.5), f("end") + 0.2, 1.0)
 
@@ -275,7 +283,12 @@ def voices():
     for key in TL.order:
         L = TL.lines[key]
         who = L["who"]
-        up = signal.resample_poly(L["wav"].astype(np.float64), SR, VSR)
+        w0 = L["wav"]
+        if who == N:                                                    # breath under her voice: closer, more of a whisper
+            from voice import whisper
+            br = whisper(w0, keep=0.0, seed=7)
+            w0 = w0 + 0.12 * br * np.sqrt((w0 ** 2).mean() / ((br ** 2).mean() + 1e-12))
+        up = signal.resample_poly(w0.astype(np.float64), SR, VSR)
         if who == DISP:
             up = signal.sosfilt(signal.butter(4, [350 / (SR / 2), 3200 / (SR / 2)], "band", output="sos"), up)
             up = np.tanh(2.0 * up / (np.abs(up).max() + 1e-9))
@@ -318,11 +331,11 @@ def presence(x, f0=3000, gain_db=2.0, q=0.9):
 def build():
     mus, amb, fx = Bus(), Bus(), Bus()
     score(mus, amb, fx)
-    music = reverb(mus.x, 0.25, 1.8) + reverb(fx.x, 0.15, 0.9) + amb.x
+    music = mono_safe(reverb(mus.x, 0.25, 1.8) + reverb(fx.x, 0.15, 0.9), max_ratio=1.0) + amb.x     # the ambience stays wide
     music = signal.sosfilt(signal.butter(4, 35 / (SR / 2), "high", output="sos"), music, axis=1)
     music = np.tanh(1.1 * music) / 1.1
     # the crash-ins at full volume, the rest of the night far below them
-    shape = np.full(N_, -9.0)
+    shape = np.full(N_, -12.0)
     for a, b in CRASHES:
         shape[int(a * SR):int(b * SR)] = 0.0
     k = int(0.02 * SR)
@@ -342,7 +355,6 @@ def build():
     high = signal.lfilter(*signal.butter(2, 4500 / (SR / 2), "high"), music)
     mid = music - low - high
     music = low * (1 - 0.3 * env) + mid * (1 - 0.6 * env) + high * (1 - 0.35 * env)
-    music = mono_safe(music, max_ratio=1.0)
     ref = music[:, int(C["title"] * SR):int(C["dead1"] * SR)]
     music = music * db(-9.0) / (np.sqrt((ref ** 2).mean()) + 1e-12) * db(shape)[None]
     band = lambda x: signal.sosfilt(signal.butter(2, [300 / (SR / 2), 4000 / (SR / 2)], "band", output="sos"), x.mean(axis=0))
@@ -360,7 +372,24 @@ def build():
     k = int(0.25 * SR)
     ride = np.convolve(np.pad(ride, k, mode="edge"), np.ones(k) / k, "same")[k:-k]
     music = music * ride * dead[None]
-    mix = music + vo
+    # the stings: on their own, never ducked, 3 dB over the loudest speech, with the music dipped just before each
+    def rms50(x):
+        k_ = SR // 20
+        e_ = np.sqrt(np.convolve(x ** 2, np.ones(k_) / k_, "same"))
+        return e_
+    vref = np.percentile(rms50(vo.mean(axis=0))[np.abs(vo.mean(axis=0)) > 1e-4], 95)
+    stg = Bus()
+    dip = np.ones(N_)
+    for t_, sg in STG:
+        sg = np.tanh(3.0 * sg / (np.abs(sg).max() + 1e-12)) / np.tanh(3.0)          # denser: more weight per peak
+        pk = rms50(sg).max()
+        stg.add(sg * vref * db(7.0) / (pk + 1e-12), t_, 1.0)
+        i0, i1 = int((t_ - 0.25) * SR), int((t_ + 0.01) * SR)
+        dip[i0:i1] = np.minimum(dip[i0:i1], db(-24))
+    k = int(0.01 * SR)
+    dip = np.convolve(np.pad(dip, k, mode="edge"), np.ones(k) / k, "same")[k:-k]
+    music = music * dip[None]
+    mix = music + vo + reverb(stg.x, 0.2, 1.4, seed=9) * dead[None]
     mix = signal.sosfilt(signal.butter(4, 30 / (SR / 2), "high", output="sos"), mix, axis=1)
     mix = loudness(mix, -14.0)
     a_, b_ = int((TL.total - 1.5) * SR), int(TL.total * SR)
@@ -371,7 +400,7 @@ def build():
 
 
 STEMS = {}
-CEIL = -1.2
+CEIL = -1.6
 
 
 def loudness(x, target):

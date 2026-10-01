@@ -21,7 +21,7 @@ C = {
     "dead1": S("p1") - 1.25,                    # dead silence after the title
     "storm": Wx("p1", "storm"),                 # lightning on "A storm"
     "key_desk": S("p5") - 0.25,
-    "sting2": E("b4") + 0.15,                   # the man at the desk turns his head
+    "sting2": E("b4") + 0.45,                   # the man at the desk turns his head (after a held breath)
     "sting3": E("m3") + 0.1,                    # the reflection that stops nodding
     "dead2": E("m4") + 0.25,                    # dead silence: the seam of the hidden door
     "door_open": E("h5") + 0.15,                # the hidden door opens: blazing colour, the score crashes in

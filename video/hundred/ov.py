@@ -9,7 +9,23 @@ from script import AI, DISP, DOC, N, NORA, W as WH
 from timeline import TL
 
 CAP_SIZE, MAX_W, CX, BASE = 54, 800, 510, 1462
-CAPS = TL.captions()
+HIDE = {"r4"}                                   # the AI's answer is on the phone screen, word by word, as its own caption
+
+
+def _caps():
+    from edit import EDIT
+    cuts = [e[0] for e in EDIT]
+    out = []
+    for t0, t1, s, k in TL.captions():
+        if k in HIDE:
+            continue
+        end = TL.lines[k]["end"]
+        nxt = [x for x in cuts if end - 0.05 < x < t1]                 # never carry a caption over a cut after its line
+        out.append((t0, min([t1] + nxt), s, k))
+    return out
+
+
+CAPS = _caps()
 STYLE = {N: ("jost-600", (255, 255, 255)), AI: ("jost-500", (190, 228, 255)), WH: ("cormorant-500i", (255, 70, 80)),
          NORA: ("jost-600", (255, 214, 150)), DISP: ("jost-600", (230, 255, 236)), DOC: ("jost-600", (255, 255, 255))}
 

@@ -24,7 +24,7 @@ PRE = {
     "e1": 0.6,
     "e4": 0.6,
 }
-TAIL = 3.6
+TAIL = 5.6
 
 
 class Timeline:

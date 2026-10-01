@@ -139,7 +139,7 @@ def lerp(a, b, k):
     return a + (b - a) * k
 
 
-def hotel(st, T, z=1.0, cx=540, cy=1100, flashes=(), dawn=0.0, nora=None, taxi=None, ambulance=None, red_window=True):
+def hotel(st, T, z=1.0, cx=540, cy=1100, flashes=(), dawn=0.0, nora=None, taxi=None, ambulance=None, red_window=True, dy=0.0):
     """The hotel. nora: (x, stride) or None; taxi: 0..1 progress of the tail lights leaving; ambulance: dict or None."""
     c = st.c
     fl = K.flash_at(T, flashes)
@@ -149,13 +149,15 @@ def hotel(st, T, z=1.0, cx=540, cy=1100, flashes=(), dawn=0.0, nora=None, taxi=N
         K.glow(c, 900, 1350, 900, (255, 200, 120), 0.6)
     else:
         K.vgrad(c, 0, 0, W, 1500, (6, 8, 26), (24, 18, 50))
-        K.glow(c, 200, 120, 700, (60, 70, 160), 0.35 + 1.4 * fl)
-        for i in range(5):                                              # cloud masses lit from inside by the storm
-            K.eglow(c, 150 + i * 220, 100 + (i % 2) * 120, 260, 90, (90, 80, 160), 0.15 + 0.8 * fl)
+        K.glow(c, 200, 320, 700, (60, 70, 160), 0.35 + 1.4 * fl)
+        for i in range(6):                                              # cloud masses lit from inside by the storm
+            K.eglow(c, 100 + i * 200, 250 + (i % 2) * 140, 260, 100, (90, 80, 160), 0.15 + 0.8 * fl)
+    if fl > 0.15 and dawn == 0:                                         # the bolts, in the sky above the roofs
+        K.bolt(c, 190, 230, 260 + 330 + dy, seed=int(T * 3) % 7, a=fl, w=11)
+        if fl > 0.5:
+            K.bolt(c, 860, 240, 220 + 300 + dy, seed=int(T * 5) % 9 + 3, a=fl * 0.8, w=5)
     c.save()
-    cam(c, z, cx, cy)
-    if fl > 0.3 and dawn == 0:
-        K.bolt(c, 230, -50, 360, seed=int(T * 3) % 7, a=fl)
+    cam(c, z, cx, cy, 0, dy)
     fac = cached("facade%d" % (dawn > 0), lambda: _facade(dawn > 0))
     img(c, fac)
     if dawn == 0:
@@ -330,7 +332,8 @@ def _red_room():
     return K.surf(W, H, fn)
 
 
-def red_room(st, T, z=1.0, cx=540, cy=960, flashes=(), nora="sit", phone_lit=1.0, head=0.0, hand="phone", pulse=0.0, dx=0.0, dy=0.0):
+def red_room(st, T, z=1.0, cx=540, cy=960, flashes=(), nora="sit", phone_lit=1.0, head=0.0, hand="phone", pulse=0.0, dx=0.0, dy=0.0,
+             key_a=1.0, pale=0.0):
     """Nora's room. nora: 'sit' (up in bed, profile facing the window), 'lie', 'empty' or None."""
     c = st.c
     fl = K.flash_at(T, flashes)
@@ -350,6 +353,9 @@ def red_room(st, T, z=1.0, cx=540, cy=960, flashes=(), nora="sit", phone_lit=1.0
         c.drawLine(x, 240, x, 1150, paint((40, 4, 10), stroke=14))
     c.drawLine(640, 700, 980, 700, paint((40, 4, 10), stroke=14))
     c.drawRect(skia.Rect.MakeLTRB(640, 240, 980, 1150), paint((40, 4, 10), stroke=18))
+    c.drawRect(skia.Rect.MakeLTRB(620, 1150, 1000, 1176), paint((70, 10, 16)))            # the sill, and the key on it
+    if key_a > 0:
+        K.key(c, 860, 1138, 0.36, ang=-4, glint=key_a, T=T)
     # the red gel everywhere, the window's blue beam across the floor in a flash
     K.glow(c, 300, 700, 1000, K.RED, 0.45 + 0.25 * pulse)
     K.beam(c, [(640, 300), (980, 300), (700, 1920), (-200, 1920)], (110, 140, 255), 0.06 + 0.5 * fl, p0=(810, 300), p1=(300, 1900))
@@ -367,11 +373,14 @@ def red_room(st, T, z=1.0, cx=540, cy=960, flashes=(), nora="sit", phone_lit=1.0
             px, py = x0 + 150 * 0.78, y0 - 640 * 0.78
             K.glow(c, px, py, 260, (150, 200, 255), 0.65 * phone_lit, core=0.5)
     elif nora == "lie":
-        F.figure(c, F.lying_path(T, 1.0 - pulse), 760, 1290, 1.0, rim=(120, 160, 255), side=1, rim2=K.RED, halo=0.2, rim_w=8)
-        c.drawRect(skia.Rect.MakeLTRB(560, 1250, 1080, 1500), paint((110, 0, 20)))
+        F.lying_nora(c, 1130, 1176, 0.8, key=mix((180, 200, 255), (150, 170, 190), pale), rim=K.RED, eye_k=0.0, T=T, key_a=1.0 - 0.4 * pale)
+        c.drawPath(D.smooth([(560, 1250), (700, 1215), (900, 1222), (1080, 1230), (1080, 1500), (560, 1500)]), paint((110, 0, 20)))
+        for k in range(7):
+            x = 600 + k * 70
+            c.drawPath(D.smooth([(x, 1236), (x + 20, 1380), (x - 6, 1500)], closed=False), paint((60, 0, 10), 0.6, stroke=6))
         if phone_lit > 0:
-            K.phone(c, 520, 1150, 0.14, -80, None, glow_col=(150, 200, 255), lit=phone_lit)
-            K.glow(c, 520, 1150, 300, (150, 200, 255), 0.5 * phone_lit, core=0.4)
+            K.phone(c, 600, 1190, 0.13, -80, None, glow_col=(150, 200, 255), lit=phone_lit)
+            K.glow(c, 600, 1190, 300, (150, 200, 255), 0.5 * phone_lit, core=0.4)
     K.dark(c, 540, 1000, 300, 1250, 0.45)
     c.restore()
     return fl

@@ -14,8 +14,8 @@ from cues import C, E, S, Wx, words_upto
 from draw import H, W, ease, mix, paint, path, ramp
 from timeline import TL
 
-FLASHES = [0.95, C["storm"], S("r1") - 1.2, S("r1") + 2.6, S("b2") + 0.6, Wx("b3", "invented"), S("g1") - 1.1, S("m1") - 0.6,
-           S("d1") - 0.4]
+FLASHES = [0.95, S("p1") + 0.6, C["storm"], S("r1") - 1.2, S("r1") + 2.6, Wx("r1", "sick") + 0.15, S("r7") + 0.5, S("b2") + 0.6,
+           Wx("b3", "invented"), S("g1") - 1.1, S("m1") - 0.6, S("d1") - 0.4]
 
 
 def stage(bg=(0, 0, 0), **lk):
@@ -77,11 +77,13 @@ def answer_lines(key, T):
 
 def s_eye(T, t, d):
     st = stage(sat=1.35, bloom=0.6)
-    z = 1.0 + 0.08 * t
-    open_k = 0.35 + 0.65 * ease(ramp(t, 0.0, 0.5))
-    pupil = 1.0 + 0.35 * ease(ramp(T, S("o1") + 1.0, S("o1") + 2.2))
+    z = 1.0 + 0.14 * t
+    blink = 1.0 - 0.95 * max(0.0, 1 - abs(t - 2.05) / 0.09)
+    open_k = (0.15 + 0.85 * ease(ramp(t, 0.0, 0.35))) * blink
+    pupil = 0.8 + 0.6 * ease(ramp(T, S("o1") + 1.2, S("o1") + 2.6))
+    dart = (0.25 * math.sin(T * 1.7) + (0.18 if 1.2 < t < 1.6 else 0.0) - (0.2 if 2.6 < t < 3.0 else 0.0), 0.06 * math.sin(T * 2.3))
     fl = K.flash_at(T, [1.3])
-    F.eye(st.c, 540, 860, 1.12 * z, T, open_k, gel=K.RED, pupil=pupil, look=(0.05 * math.sin(T * 7) * (T > 2.2), 0))
+    F.eye(st.c, 540, 860, 1.12 * z, T, open_k, gel=K.RED, pupil=pupil, look=dart, wet=1.0)
     K.glow(st.c, 1000, 300, 900, (130, 160, 255), 1.0 * fl)
     st.lk["flash"] = 0.3 * fl
     return st
@@ -100,8 +102,7 @@ def s_floor(T, t, d):
     scr = chat_screen([("ai", ["Based on your symptoms,", "this is unlikely to be", "serious."], 1.0)], T, header=True)
     K.phone(c, 520, 800, 1.5, -7, scr, glow_col=(150, 200, 255))
     K.key(c, 760, 1290, 0.7, ang=24, glint=0.8, T=T)
-    for k in range(4):                                                  # fingertips, motionless
-        c.drawPath(D.capsule(-40, 1180 + k * 50, 80 + 10 * k, 1150 + k * 56, 50, 40), paint(mix(F.SKIN_D, K.RED, 0.5)))
+    F.hand_flat(c, 190, 1230, 0.95, gel=K.RED, ang=-8)                 # her hand on the carpet, quite still
     c.restore()
     K.dark(c, 540, 900, 380, 1100, 0.6)
     return st
@@ -172,7 +173,7 @@ def s_exterior(T, t, d):
     st = stage(sat=1.35, bloom=0.6)
     stride = math.sin(T * 5.0)
     nx = 300 + 60 * min(t, 4.0)
-    fl = A.hotel(st, T, z=1.05 + 0.03 * t, cy=1250, flashes=FLASHES, nora=(nx, stride), taxi=min(1.0, t / 3.0))
+    fl = A.hotel(st, T, z=1.0 + 0.03 * t, cy=1250, flashes=FLASHES, nora=(nx, stride), taxi=min(1.0, t / 3.0), dy=290)
     st.lk["flash"] = 0.3 * fl
     return st
 
@@ -358,7 +359,7 @@ DOORS = [(4, -1, "97", K.BLUE), (7, 1, "98", K.GREEN), (10, -1, "99", K.MAGENTA)
 
 def s_corr97(T, t, d):
     st = stage(sat=1.4, bloom=0.65)
-    fl = B.corridor(st, T, zc=0.2 + 0.55 * t, doors=DOORS, spill={"97": 1.0}, light=K.BLUE, wall="blue", flashes=FLASHES)
+    fl = B.corridor(st, T, zc=0.2 + 0.55 * t, doors=DOORS, spill={"97": 1.0}, light=K.BLUE, wall="blue", flashes=FLASHES, stranger=15.0)
     st.lk["flash"] = 0.2 * fl
     return st
 
@@ -394,7 +395,7 @@ def s_books(T, t, d):
 
 def s_turn(T, t, d):
     st = stage(sat=1.45, bloom=0.7)
-    B.blue_room(st, T, z=1.9 + 0.3 * t, cx=360, cy=640, turn=ease(ramp(t, 0.0, 0.18)), flashes=[T - t])
+    B.blue_room(st, T, z=1.9 + 0.3 * t, cx=360, cy=640, turn=ease(ramp(t, 0.0, 0.18)), flashes=[T - t], nora_door=0.0)
     st.lk["flash"] = 0.5 * math.exp(-t / 0.1)
     return st
 
@@ -403,7 +404,7 @@ def s_turn(T, t, d):
 
 def s_corr98(T, t, d):
     st = stage(sat=1.4, bloom=0.65)
-    fl = B.corridor(st, T, zc=3.6 + 0.55 * t, doors=DOORS, spill={"98": 1.0}, light=K.GREEN, wall="green", flashes=FLASHES)
+    fl = B.corridor(st, T, zc=3.6 + 0.55 * t, doors=DOORS, spill={"98": 1.0}, light=K.GREEN, wall="green", flashes=FLASHES, stranger=17.0)
     st.lk["flash"] = 0.2 * fl
     return st
 
@@ -458,7 +459,7 @@ def s_mirrors(T, t, d):
 def s_chart(T, t, d):
     st = stage(sat=1.35, bloom=0.45)
     t0 = T - t
-    B.mirrors(st, T, nod=1.0, chart=lambda c: B.bars(c, T, t0 + 1.2, y=330))
+    B.mirrors(st, T, nod=1.0, chart=lambda c: B.bars(c, T, Wx("m3", "wrong") - 0.3, y=330, t1=Wx("m3", "Even")))
     return st
 
 
@@ -566,7 +567,8 @@ def s_room100(T, t, d):
 def s_truth(T, t, d):
     st = stage(sat=1.45, bloom=0.85, blaze=0.3)
     c = st.c
-    B._blaze_core(c, T, 540, 900, 0.55)
+    drain = ease(ramp(t, 0.3, d - 0.3))
+    B._blaze_core(c, T, 540, 900, 0.55, drain=drain)
     c.drawRect(skia.Rect.MakeWH(W, H), paint((0, 0, 0), 0.45))
     scr = chat_screen([("ai", ["Based on your symptoms,", "this is unlikely to be", "serious."], 1.0)], T)
     K.phone(c, 540, 1000, 0.8, -6, scr, glow_col=(160, 205, 255))
@@ -594,7 +596,7 @@ def s_rewind(T, t, d):
     sp = 40 * ease(ramp(t, 0, 0.4)) * (1 - ease(ramp(t, d - 0.4, d)))
     mm = 7 + int(30 - 30 * ramp(t, 0, d)) % 60
     A.clock(st, T, 2, 7 + (60 - (t * sp * 3) % 60) if t < d - 0.35 else 7, ss=-t * 300 if t < d - 0.35 else 0, z=1.05)
-    st.lk["flash"] = 0.25 * (int(t * 12) % 2) * (t < d - 0.35)
+    st.lk["flash"] = 0.1 * (int(t * 5) % 2) * (t < d - 0.35)
     return st
 
 
@@ -715,7 +717,8 @@ def s_coda(T, t, d):
     st = stage(sat=1.4, bloom=0.7)
     on = ease(ramp(T, S("e4") - 0.25, S("e4")))
     scr = chat_screen([("ai", ["Is there anything else", "I can help you with?"], on)], T)
-    A.bedside(st, T, screen=scr, phone_lit=0.05 + 0.95 * on, key_a=1.0, z=1.5 + 0.1 * t, cx=520, cy=1300)
+    A.bedside(st, T, screen=scr, phone_lit=0.05 + 0.95 * on, key_a=0.0, z=1.5 + 0.1 * t, cx=520, cy=1300)
+    K.key(st.c, 540, 930, 0.62, ang=-8, glint=1.0, T=T)
     if T >= C["sting5"]:
         st.lk["flash"] = 0.5 * math.exp(-(T - C["sting5"]) / 0.1)
     return st
@@ -777,7 +780,7 @@ def s_fine(T, t, d):
 
 def s_vault(T, t, d):
     st = stage(sat=1.4, bloom=0.65)
-    B.green_room(st, T, z=2.0 + 0.12 * t, cx=805, cy=900, pour=1.0, key_a=0.0)
+    B.green_room(st, T, z=2.0 + 0.12 * t, cx=805, cy=900, pour=1.0, key_a=0.0, nora_door=0.0)
     return st
 
 
@@ -792,3 +795,117 @@ def s_bias(T, t, d):
     K.eglow(c, 540, 300, 520, 120, K.MAGENTA, 0.4 * a)
     D.text(c, "AUTOMATION BIAS", 540, 330, 84, "limelight-400", (255, 220, 245), tag="biash", a=a, shadow=(0, 0, 0))
     return st
+
+
+# ------------------------------------------------------------------ attempt 2: the extra angles
+
+def s_answer2(T, t, d):
+    """Closer on the answer's last lines."""
+    st = stage(sat=1.3, bloom=0.45)
+    c = st.c
+    c.drawRect(skia.Rect.MakeWH(W, H), paint((24, 2, 6)))
+    K.glow(c, 540, 800, 1000, K.RED, 0.45)
+    msgs = [("me", QUESTION, 1.0), ("ai", answer_lines("r4", T), 1.0)]
+    K.phone(c, 565, 1000, 2.45 + 0.03 * t, -2, chat_screen(msgs, T, header=False), glow_col=(150, 200, 255))
+    return st
+
+
+def s_scalecu(T, t, d):
+    st = stage(sat=1.3, bloom=0.55)
+    c = st.c
+    c.save()
+    A.cam(c, 1.9 + 0.05 * t, 760, 1080)
+    scale_scene(c, T, 4.0)
+    c.restore()
+    return st
+
+
+def _lying_cu(st, T, t, pale=0.0, sweat=0.0, flick=0.0):
+    """Her face on the pillow, close: the red room's light, the phone's glow, the sweat; getting worse."""
+    c = st.c
+    c.drawRect(skia.Rect.MakeWH(W, H), paint(mix((40, 2, 8), (14, 10, 24), pale)))
+    K.glow(c, 300, 700, 1100, mix(K.RED, (80, 60, 140), pale), 0.55 + 0.2 * math.sin(T * (7 - 3 * pale)))
+    c.drawPath(D.oval(-400, 1000, 900, 1700), paint((200, 190, 200), 0.5))                     # the pillow
+    F.lying_nora(c, 4700, 1150, 4.2, key=mix((170, 210, 255), (150, 160, 190), pale), rim=K.RED, eye_k=0.15 * flick, T=T,
+                 key_a=1.0 - 0.35 * pale)
+    if sweat > 0:
+        rng = np.random.default_rng(5)
+        for k in range(9):
+            x, y = rng.uniform(300, 760), rng.uniform(820, 980)
+            c.drawPath(D.oval(x - 6, y - 9, x + 6, y + 9), paint((230, 240, 255), 0.55 * sweat))
+    K.glow(c, 900, 1100, 300, (150, 200, 255), 0.4)
+
+
+def s_nb1(T, t, d):
+    st = stage(sat=1.35, bloom=0.55)
+    _lying_cu(st, T, t, pale=0.15, sweat=1.0)
+    return st
+
+
+def s_nb2(T, t, d):
+    st = stage(sat=1.35, bloom=0.6)
+    fl = A.red_room(st, T, z=1.3, cx=700, cy=1200, flashes=[T - t + 0.2], nora="lie", phone_lit=1.0, pale=0.35)
+    st.lk["flash"] = 0.3 * fl
+    return st
+
+
+def s_nb3(T, t, d):
+    st = stage(sat=1.3, bloom=0.5)
+    _lying_cu(st, T, t, pale=0.6, sweat=1.0, flick=abs(math.sin(T * 9)))
+    return st
+
+
+def s_dialcu(T, t, d):
+    st = stage(sat=1.35, bloom=0.6)
+    c = st.c
+    c.drawRect(skia.Rect.MakeWH(W, H), paint((10, 4, 16)))
+    K.glow(c, 540, 900, 1000, K.RED, 0.35)
+    k = ease(ramp(t, 0.0, d - 0.3))
+    c.save()
+    A.cam(c, 2.4, 540, 820)
+    dial(c, 540, 760, 130, 0.45 - 0.35 * k, "FAILURES CAUGHT", K.RED, T)
+    c.restore()
+    return st
+
+
+def s_alive(T, t, d):
+    """Nora in the hospital bed, close: awake, warm dawn on her face."""
+    st = stage(sat=1.2, bloom=0.6, warm=1.0)
+    c = st.c
+    K.vgrad(c, 0, 0, W, H, (90, 70, 70), (30, 22, 24))
+    for k in range(14):
+        y = 120 + k * 70
+        c.drawRect(skia.Rect.MakeLTRB(560, y, 1080, y + 34), paint((255, 190, 130), 0.55))
+    K.glow(c, 860, 700, 800, (255, 190, 120), 0.6)
+    F.face_profile(c, 320, 4300, 4.3, key=(255, 205, 160), rim=(255, 220, 170), eye_k=1.0, skin_gel=(255, 180, 130), head=-6, T=T)
+    return st
+
+
+def s_eye2(T, t, d):
+    """The last shock: the eye snaps open, wide, in red."""
+    st = stage(sat=1.45, bloom=0.7)
+    F.eye(st.c, 540, 900, 1.3 + 0.3 * t, T, min(1.0, t / 0.06) * 1.05, gel=K.RED, pupil=0.45, look=(0.0, 0.0), refl=True)
+    st.lk["flash"] = 0.45 * math.exp(-t / 0.1)
+    return st
+
+
+def s_emptyroom(T, t, d):
+    """The other ending: the red room, the same night, and she is still lying there."""
+    st = stage(sat=1.1, bloom=0.5)
+    A.red_room(st, T, z=1.15 + 0.04 * t, cx=640, cy=1150, nora="lie", phone_lit=0.5, pale=1.0, key_a=0.6)
+    st.c.drawRect(skia.Rect.MakeWH(W, H), paint((0, 0, 0), 0.3))
+    return st
+
+
+def _chart_focus(T, t, g):
+    st = stage(sat=1.35, bloom=0.45)
+    B.mirrors(st, T, nod=1.0, chart=lambda cc: B.bars(cc, T, Wx("m3", "wrong") - 0.3, y=330, t1=Wx("m3", "Even"), focus=g))
+    return st
+
+
+def s_chartcu1(T, t, d):
+    return _chart_focus(T, t, 0)
+
+
+def s_chartcu2(T, t, d):
+    return _chart_focus(T, t, 1)
