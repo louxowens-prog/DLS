@@ -435,7 +435,7 @@ def build():
 
 
 STEMS = {}
-CEIL = -1.3
+CEIL = -1.8
 
 
 def loudness(x, target):
