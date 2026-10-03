@@ -293,7 +293,7 @@ def s_f_mirror(T, idx):
     if T > Wx("d6", "hear") - 0.1:
         k = K.pop(T, Wx("d6", "hear") - 0.1, 0.2, 0.3)
         c.save()
-        c.translate(800, 560)
+        c.translate(800, 605)
         c.scale(k, k)
         F.fl_rrect(c, -230, -70, 230, 70, 34, (140, 255, 225), outline=6)
         K.text(c, "So right!", 0, 22, 62, "audiowide-400", (20, 40, 60), tag="chat")

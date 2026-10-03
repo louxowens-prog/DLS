@@ -20,7 +20,7 @@ PRE = {
     "d6": 0.5,                    # applause and a laugh for AFFIRMA
     "d10": 2.8,                   # fireworks and applause, then a hard cut to an empty theatre: silence, one cough
     "e1": 0.45,
-    "f1": 0.7,                    # the Channel 99 bumper
+    "f1": 1.3,                    # the Channel 99 bumper
     "f7": 1.2,                    # the quiet beat: the sock comes off
 }
 TAIL = 2.7

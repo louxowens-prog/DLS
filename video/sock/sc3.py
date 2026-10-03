@@ -44,20 +44,26 @@ def layer(c, cx, ybot, w, h, color, t, seed, frost_top=True, top_ell=False):
         K.clay_poly(c, wav, FROST, t, seed + 2, amp=2.0, prints=0, marks=0, gloss=0.35)
 
 
-def flag(c, x, y, text, t, seed=0, color=(255, 236, 90), lean=-6, size=38, side=1):
+def flag(c, x, y, text, t, seed=0, color=(255, 236, 90), lean=-6, size=38, side=1, pole=170):
     """A paper flag on a toothpick, stuck into the clay (side = -1: the flag flies to the left)."""
     bx, by, br = K.boil(t, 1.5, seed)
     c.save()
     c.translate(x + bx, y + by)
     c.rotate(lean + br)
-    c.drawLine(0, 0, 0, -170, paint((210, 170, 110), stroke=7))
+    c.drawLine(0, 0, 0, -pole, paint((210, 170, 110), stroke=7))
     f = K.font("rubik-900", size)
     w = f.measureText(text) + 36
     x0 = 0 if side > 0 else -w
-    c.drawRect(skia.Rect.MakeXYWH(x0 + 4, -176, w, size + 30), paint(INK, 0.3, blur=4))
-    c.drawRect(skia.Rect.MakeXYWH(x0, -180, w, size + 30), paint(color))
-    K.text(c, text, x0 + w / 2, -180 + size + 4, size, "rubik-900", (40, 30, 60), tag="flag")
+    top = -pole - 10
+    c.drawRect(skia.Rect.MakeXYWH(x0 + 4, top + 4, w, size + 30), paint(INK, 0.3, blur=4))
+    c.drawRect(skia.Rect.MakeXYWH(x0, top, w, size + 30), paint(color))
+    K.text(c, text, x0 + w / 2, top + size + 4, size, "rubik-900", (40, 30, 60), tag="flag")
     c.restore()
+
+
+def layer_flag(c, layer_mid, x, text, t, seed, color=(255, 236, 90), side=-1, size=32):
+    """A short flag whose paper hangs right beside the middle of its own layer."""
+    flag(c, x, layer_mid + 20, text, t, seed, color, lean=-4 * side, size=size, side=side, pole=40)
 
 
 def clay_sock(c, x, y, s, t, seed=0, open_=0.0):
@@ -158,10 +164,10 @@ def s_k_layers(T, idx):
     # the bottom layer is studded with clay letters (the internet's text)
     rng = np.random.default_rng(5)
     for i, ch in enumerate("A?#@w!e&"):
-        K.clay_text(c, ch, 270 + i * 70, 1200 - (i % 2) * 60, 50, [(255, 255, 255), (60, 60, 70), (255, 80, 160)][i % 3], t, 60 + i, wobble=1.0)
-    flag(c, 380, 1160, "PRETRAINING", t, 1, lean=-8, side=-1)
+        K.clay_text(c, ch, 350 + i * 64, 1200 - (i % 2) * 60, 50, [(255, 255, 255), (60, 60, 70), (255, 80, 160)][i % 3], t, 60 + i, wobble=1.0)
+    layer_flag(c, 1185, 300, "PRETRAINING", t, 1)
     if n >= 2 and drop[1] >= 1:
-        flag(c, 700, 1030, "POST-TRAINING", t, 2, (140, 255, 200), lean=8)
+        layer_flag(c, 1015, 320, "POST-TRAINING", t, 2, (140, 255, 200), size=30)
         for k in range(3):                                                  # little clay thumbs
             x = 470 + k * 90
             K.clay_ellipse(c, x, 1010, 22, 30, (255, 210, 170), t, 70 + k, amp=0.08, prints=0, marks=0)
@@ -185,9 +191,9 @@ def s_k_layers2(T, idx):
     if k3 >= 1:
         K.clay_poly(c, [(540, 872), (700, 864), (704, 962), (546, 968)], (255, 236, 90), t, 90, amp=2.0, prints=1, marks=0)   # sticky note
         K.text(c, "BE NICE :)", 622, 926, 34, "permanent-marker-400", (40, 40, 60), tag="note")
-        flag(c, 400, 930, "SYSTEM PROMPT", t, 3, (120, 200, 255), lean=-8, side=-1)
-    flag(c, 380, 1160, "PRETRAINING", t, 1, lean=-8, side=-1)
-    flag(c, 680, 1070, "POST-TRAINING", t, 2, (140, 255, 200), lean=6, size=34)
+        layer_flag(c, 920, 345, "SYSTEM PROMPT", t, 3, (120, 200, 255))
+    layer_flag(c, 1200, 330, "PRETRAINING", t, 1)
+    layer_flag(c, 1060, 330, "POST-TRAINING", t, 2, (140, 255, 200), size=30)
     if top >= 1:
         flag(c, 690, ytop - 30, "YOU", t, 4, (255, 120, 190), lean=12, size=56)
     return st.arr

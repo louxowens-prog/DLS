@@ -297,12 +297,14 @@ def s_p_coauthor(T, idx):
     someone(c, 20, -120, 0.75, T, 1.0, seed=80)
     M.cut_text(c, "THE SOMEONE", 20, 200, 92, P["yellow"], 310, T=T)
     K.text(c, "by AI", -40, 320, 64, "permanent-marker-400", WHITE, tag="byline")
-    tw = ramp(T, Wx("b4", "co-authoring") - 0.05, E("b4") - 0.05)
+    tw = ramp(T, Wx("b4", "You're") - 0.15, Wx("b4", "co-authoring") + 0.25)
     if tw > 0:
         tv.scrawl(c, "& YOU", 150, 324, 72, (255, 240, 120), rot=-6, k=tw, tag="byline2")
     c.restore()
     if tw > 0:
-        hx, hy = 540 + 150 * math.cos(math.radians(-3)) - 20 + 120 * tw, 820 + 324 + 10 + 6 * math.sin(T * 20)
+        t_done = Wx("b4", "co-authoring") + 0.25                               # written: the hand gets out of the way
+        away = K.ease(ramp(T, t_done, t_done + 0.3))
+        hx, hy = 540 + 150 * math.cos(math.radians(-3)) - 20 + 120 * tw + 380 * away, 820 + 324 + 10 + 6 * math.sin(T * 20) * (1 - away) + 560 * away
         C.live_hand(c, T, idx, hx + 20, hy - 30, ang=140, pose="fist", prop=lambda L, x, y, a: C.marker(L, x, y, a, (255, 210, 40)),
                     enter=(1180, 1700))
     return st.arr

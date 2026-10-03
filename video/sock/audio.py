@@ -449,7 +449,7 @@ def score(mus, fx, crowd, cr, nosil):
     for k, m in enumerate((72, 76, 79, 84, 88)):
         fx.add(L.note("square", m, 0.12, 0.12), Wx("e5", "Outscoring") - 0.1 + k * 0.08, 1.0)
     # ---- CHANNEL 99
-    fx.add(O.beep(T_STAGE - T_BARS - 0.75, 0.25, 1000.0), T_BARS)
+    fx.add(O.beep(0.55, 0.25, 1000.0), T_BARS)                                    # the bars' tone, until PRESENTS
     fx.add(O.clunk(0.7), T_BARS + 0.55)
     jingle99(cr, mus, T_BARS + 0.62)
     crowd.add(L.applause(2.6, 0.9, seed=8, sparse=True), T_STAGE + 0.2)
@@ -548,6 +548,7 @@ def smooth(x, sec):
 
 STEMS = {}
 CEIL = -2.3
+ANN_NEED, RELIEF_DB = 12.0, 12.0                  # the voice margin the announcer needs; how far the bed comes back in a pause
 
 
 def build():
@@ -590,10 +591,17 @@ def build():
         rv = np.sqrt((bv[a:b] ** 2).mean()) + 1e-12
         rm = np.sqrt((bm[a:b] ** 2).mean()) + 1e-12
         margin = 20 * np.log10(rv / rm)
-        if margin < 16.0:
+        need = ANN_NEED if (Ln["who"] == ANN or key == "d9") else 16.0      # a TV announcer rides over his jingle
+        if margin < need:
             lo, hi = max(0, a - int(0.12 * SR)), min(N_, b + int(0.12 * SR))
-            ride[lo:hi] = np.minimum(ride[lo:hi], db(margin - 16.0))
+            ride[lo:hi] = np.minimum(ride[lo:hi], db(margin - need))
     ride = smooth(ride, 0.15)
+    # duck around the words, not the whole line: in a pause the bed comes back up (by up to 12 dB)
+    va = np.convolve(np.abs(vo.mean(axis=0)), np.ones(SR // 50) / (SR // 50), mode="same")
+    active = va > 0.08 * np.percentile(va[va > 1e-5], 60)
+    active = maximum_filter1d(active.astype(np.uint8), size=int(0.16 * SR)).astype(float)
+    act = smooth(active, 0.05)
+    ride = ride * act + np.minimum(1.0, ride * db(RELIEF_DB)) * (1 - act)
     dead = np.ones(N_)
     for a, b in SILENCES:
         dead[int(a * SR):int(b * SR)] = 0.0
