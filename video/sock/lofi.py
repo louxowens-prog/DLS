@@ -244,6 +244,36 @@ def cough(amp=1.0, seed=0):
     return out * amp / (np.abs(out).max() + 1e-9)
 
 
+def cha_ching(amp=1.0, seed=0):
+    """A cash register: two bright bell strikes, then the drawer sliding out with a clunk."""
+    out = np.zeros(int(0.7 * SR))
+    for t0, f in ((0.0, 2637.0), (0.09, 3520.0)):
+        t = tx(0.4)
+        y = (np.sin(2 * np.pi * f * t) + 0.5 * np.sin(2 * np.pi * f * 2.76 * t)) * np.exp(-t * 11)
+        j = int(t0 * SR)
+        out[j:j + len(y)] += y * 0.6
+    rng = np.random.default_rng(seed)
+    n = int(0.18 * SR)
+    dr = signal.sosfilt(signal.butter(2, [400 / (SR / 2), 2500 / (SR / 2)], "band", output="sos"), rng.normal(0, 1, n))
+    dr *= np.linspace(0.2, 1, n) * 0.25
+    j = int(0.22 * SR)
+    out[j:j + n] += dr
+    t = tx(0.12)
+    out[j + n:j + n + len(t)] += np.sin(2 * np.pi * 110 * t) * np.exp(-t * 40) * 0.8
+    return out * amp / (np.abs(out).max() + 1e-9)
+
+
+def error_chord(amp=1.0):
+    """A computer refusing: a short, hard two-note 'bonk', square waves through a cheap speaker (our own sound)."""
+    out = np.zeros(int(0.6 * SR))
+    for t0, notes in ((0.0, (76, 83)), (0.13, (69, 76))):
+        y = sum(note("square", m, 0.2, 0.5, a=0.002, d=0.05, s=0.6, r=0.08, lp=3500) for m in notes)
+        j = int(t0 * SR)
+        out[j:j + len(y)] += y
+    out = signal.sosfilt(signal.butter(2, [300 / (SR / 2), 4000 / (SR / 2)], "band", output="sos"), out)
+    return out * amp / (np.abs(out).max() + 1e-9)
+
+
 # ------------------------------------------------------------------ the beat grid
 
 class Grid:

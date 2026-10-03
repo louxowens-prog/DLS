@@ -35,7 +35,7 @@ VOICES = {
     AFF: ("af_bella", 1.05, 1.0),
     MET: ("am_fenrir", 1.05, 0.0),
 }
-SPEED, PITCH = {"o1": 1.0, "a4": 1.05}, {}
+SPEED, PITCH = {"o1": 1.0, "a4": 1.05, "e3": 1.08, "e3b": 1.08, "e3c": 1.08, "e3d": 1.08}, {}
 
 # chapters: (key of the first line, number, name, style)
 CHAPTERS = [("a1", 1, "1994", "crayon"), ("b1", 2, "THE TRIANGLE", "paper"), ("c1", 3, "THE LAYER CAKE", "clay"),
@@ -95,10 +95,11 @@ LINES = [
     ("e1", DOT, "Alignment sounds like teaching morals. In practice, it's often training what people rate highly.",
      "Alignment sounds like teaching morals. | In practice, it's often training | what people rate highly.", 0.2),
     ("e2", DOT, "But when a measure becomes a target, it stops being a good measure. Goodhart's law.",
-     "But when a measure becomes a target, | it stops being a good measure. | Goodhart's law.", 0.2),
-    ("e3", DOT, "Satisfaction isn't truth. Engagement isn't well-being. Test scores aren't understanding. Obeying isn't "
-                "judgment.",
-     "Satisfaction isn't truth. | Engagement isn't well-being. | Test scores aren't understanding. | Obeying isn't judgment.", 0.2),
+     "But when a measure becomes a target, | it stops being a good measure. | Goodhart's law.", 0.45),
+    ("e3", DOT, "Satisfaction isn't truth.", None, 0.7),
+    ("e3b", DOT, "Engagement isn't well-being.", None, 0.7),
+    ("e3c", DOT, "Test scores aren't understanding.", None, 0.7),
+    ("e3d", DOT, "Obeying isn't judgment.", None, 0.25),
     ("e4", DOT, "People gamed numbers long before AI. AI games them harder.",
      "People gamed numbers long before AI. | AI games them harder.", 0.2),
     ("e5", DOT, "A boat racing AI chasing points skipped the race to spin in circles. On fire. Outscoring humans.",

@@ -400,23 +400,43 @@ def score(mus, fx, crowd, cr, nosil):
     for k in range(14):                                                          # thumbs-ups flying in
         fx.add(O.ding(0.18, m=91 + (k % 4) * 2), S("d4") + 0.1 + k * 0.08, 1.0, pan=0.2 + 0.05 * k)
     crowd.add(L.applause(1.4, 0.8, seed=6), S("d5") - 0.05)
-    crowd.add(L.laugh(1.6, 0.9, seed=10, n=20), E("d5") + 0.02)
+    crowd.add(L.laugh(min(1.6, S("d6") - E("d5") - 0.1), 0.9, seed=10, n=20), E("d5") + 0.02)
     fx.add(L.fm_bell(96, 1.5, 0.35), Wx("d6", "tell") - 0.2)
     for k in range(int((E("d8") - Wx("d8", "should")) * 9)):
         fx.add(O.keys(1, 0.0, 0.35, seed=k + 70), Wx("d8", "should") + k / 9, 1.0, pan=0.4)
     fireworks(cr, fx, T_FIRE, T_EMPTY)
     crowd.add(L.applause(T_EMPTY - T_FIRE + 0.5, 1.3, seed=7), T_FIRE)
-    nosil.add(L.cough(0.5, seed=3), T_EMPTY + 0.45, 1.0, pan=0.7)                 # the only sound in the theatre
+    nosil.add(L.cough(0.5, seed=3), T_EMPTY + 0.95, 1.0, pan=0.7)                 # the only sound in the theatre
     # ---- MS Paint, PS1
     fx.add(O.whoosh(0.5, True, 11, 0.9), T_CH5)
     chiptune(mus, T_CH5 + 0.3, T_PS1 - 0.1, bpm=128, key=64, level=0.75, minor=True, seed=5)
     for t in np.arange(T_CH5 + 0.2, T_PS1 - 0.3, 0.42):
         fx.add(O.click(0.25), float(t), 1.0, pan=0.62)                          # the mouse, drawing
-    for k in range(4):                                                           # wrong-answer buzzers on each 'isn't'
-        t = [S("e3"), Wx("e3", "Engagement") - 0.3, Wx("e3", "Test") - 0.3, Wx("e3", "Obeying") - 0.35][k] + 0.35
-        fx.add(O.honk(0.3, 1), t, 1.0, pan=0.5)
+    t0 = S("e1") - 0.45                                                          # chalk squeaks: MORALS 101
+    for k in range(3):
+        fx.add(FXL.chalk(0.5, seed=k), t0 + 0.75 + k * 0.18, 1.0, pan=0.45)
+    t1 = Wx("e1", "practice") - 0.1                                              # the eraser; RATED; five gold stars; spray
+    fx.add(FXL.pencil(0.55, 0.5, seed=7), t1)
+    for k in range(5):
+        fx.add(O.glock(84 + (0, 2, 4, 7, 9)[k], 0.3), t1 + 1.5 + k * 0.15, 1.0, pan=0.3 + 0.1 * k)
+    for k in range(4):
+        fx.add(O.hiss(0.25, 0.3), t1 + 2.0 + k * 0.15, 1.0, pan=0.3 + 0.12 * k)
+    tb, ts = Wx("e2", "target") - 0.2, Wx("e2", "stops") - 0.1                     # Goodhart: the bullseye slapped on,
+    fx.add(FXL.thud(0.7), tb)                                                    # books dropped, a hop up, a hit
+    for k in range(3):
+        fx.add(O.clunk(0.5, seed=k), ts + 0.12 * k, 1.0, pan=0.4 + 0.1 * k)
+    fx.add(O.slide_whistle(True, 0.3, 0.45), ts + 0.75)
+    fx.add(O.ding(0.45, m=100), ts + 1.05)
     fx.add(O.ding(0.6), Wx("e2", "Goodhart") - 0.2)
+    for key, w in (("e3", "isn't"), ("e3b", "isn't"), ("e3c", "aren't"), ("e3d", "isn't")):
+        fx.add(O.click(0.4), S(key) - 0.12, 1.0, pan=0.6)                        # File > New
+        fx.add(O.honk(0.3, 1), Wx(key, w) - 0.08, 1.0, pan=0.5)                 # a buzzer on every slashed equals sign
+    t0 = S("e4") - 0.05
+    fx.add(L.cha_ching(0.45), t0 + 1.45, 1.0, pan=0.55)                           # 12 -> 99, rung up
     fx.add(O.whoosh(0.8, True, 12, 0.7), Wx("e4", "games") - 0.1)
+    for k in range(10):                                                          # the number running away
+        fx.add(L.note("square", 72 + 2 * k, 0.04, 0.09), Wx("e4", "games") - 0.05 + k * 0.035, 1.0, pan=0.6)
+    fx.add(L.error_chord(0.4), Wx("e4", "harder") - 0.05)
     ps1_loop(mus, fx, T_PS1, E("e5") + 0.1, level=0.9)
     for k in range(int((E("e5") - T_PS1) / 0.87)):
         fx.add(L.note("square", 84 + (k % 3) * 4, 0.08, 0.12), T_PS1 + 0.3 + k * 0.87, 1.0, pan=0.6)
@@ -434,9 +454,8 @@ def score(mus, fx, crowd, cr, nosil):
     jingle99(cr, mus, T_BARS + 0.62)
     crowd.add(L.applause(2.6, 0.9, seed=8, sparse=True), T_STAGE + 0.2)
     synthpop(mus, T_STAGE + 1.2, T_TURN, bpm=96, key=55, level=0.55, drums=False)
-    crowd.add(L.laugh(1.4, 0.55, seed=12, n=12), E("f2") - 0.1)
-    crowd.add(L.laugh(1.2, 0.5, seed=14, n=12), E("f3") - 0.15)
     emo(mus, T_TURN + 0.2, S("f7") - 0.6, level=1.0)
+    fx.add(O.whoosh(0.3, False, 16, 0.25), Wx("f6", "That's") - 0.05)              # the sock slipping off
     mus.add(L.guitar(52, 3.0, 0.3) + L.guitar(59, 3.0, 0.22) + L.guitar(64, 3.0, 0.2), S("f7") - 1.2)    # one chord rings out
     fx.add(O.whoosh(0.3, True, 14, 0.4), S("f7") - 0.55)
     fx.add(L.rimshot(1.0), T_RIM)
@@ -528,7 +547,7 @@ def smooth(x, sec):
 
 
 STEMS = {}
-CEIL = -1.8
+CEIL = -2.3
 
 
 def build():

@@ -82,7 +82,7 @@ def ui_zone(boxes):
     bad = []
     for b in boxes:
         x0, y0, x1, y1, tag = b
-        if tag in ("deco", "paint", "osd", "phone"):                    # chrome and props, not information
+        if tag in ("deco", "osd", "phone"):                             # chrome and props, not information
             continue
         if y1 > 1920 - 380 + 4 or y0 < 220 - 4 or (x1 > 960 and y1 > 1000 and y0 < 1750):
             bad.append(b)

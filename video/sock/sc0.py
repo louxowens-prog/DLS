@@ -78,7 +78,7 @@ FREEZE = None
 def s_freeze1(T, idx):
     """'I learned that the embarrassing way.' A wider shot; a freeze frame with scribbled labels."""
     global FREEZE
-    t_fz = Wx("o2", "embarrassing") + 0.25
+    t_fz = S("o2") + 0.25
     Tf = min(T, t_fz)
     st = K.Stage()
     c = st.c
@@ -89,7 +89,7 @@ def s_freeze1(T, idx):
     if T >= t_fz:
         tv.freeze_tint(arr, 1.0)
         c = skia.Surface(arr).getCanvas()
-        k1, k2 = ramp(T, t_fz + 0.05, t_fz + 0.45), ramp(T, t_fz + 0.35, t_fz + 0.75)
+        k1, k2 = ramp(T, t_fz + 0.05, t_fz + 0.3), ramp(T, t_fz + 0.15, t_fz + 0.42)
         if T < t_fz + 0.08:
             c.drawRect(skia.Rect.MakeWH(W, H), paint(WHITE, 0.7))
         tv.scribble_arrow(c, 760, 330, 610, 500, WHITE, k=k1, seed=3)
@@ -115,7 +115,8 @@ def s_title(T, idx):
         c.drawCircle(x, y, 2 + 3 * tw, paint((255, 240, 160), 0.4 + 0.6 * tw))
     for i, (x, y, r) in enumerate(((150, 1150, 70), (930, 1020, 90), (880, 1500, 60), (200, 1600, 80))):
         K.cg_star(c, x, y, r, T, seed=i, color=GOLD if i % 2 else (255, 120, 200))
-    C.live_dot(c, T, idx, 540, 2430, 1.02, pose="wave", mood="grin", look=(0, 0), seed=1, who_talks=None,
+    c.drawOval(skia.Rect.MakeLTRB(470, 1795, 820, 1850), paint((40, 0, 60), 0.45, blur=10))            # her shadow, nowhere near her feet
+    C.live_dot(c, T, idx, 540, 1715 + 12 * math.sin(T * 5), 0.62, pose="wave", mood="grin", look=(0, 0), seed=1, who_talks=None,
                sock_open=0.5 + 0.5 * math.sin(T * 14), sock_look=(0.3, -0.2), halo=12)
     k = K.pop(T, t0, 0.35, 0.35)
     c.save()

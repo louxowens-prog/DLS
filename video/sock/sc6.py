@@ -180,15 +180,71 @@ def s_v_confess(T, idx):
     return finish(st.arr, T, idx)
 
 
-def s_v_truth(T, idx):
-    """'AI is real, and powerful.' The laugh track has stopped. One light. The troupe, still."""
+def audience_heads(c, T):
+    """The front row from behind: dark heads and shoulders, rim-lit pink by the stage; a bun, a beanie."""
+    for i, (x, y, k, kind) in enumerate(((70, 1650, 1.0, "bun"), (330, 1730, 1.12, "plain"), (640, 1670, 1.04, "beanie"),
+                                          (930, 1720, 1.18, "plain"))):
+        x += 7 * math.sin(T * 0.8 + i * 2.1)
+        y += 4 * math.sin(T * 1.1 + i)
+        col = (24, 17, 26)
+        c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(x - 200 * k, y + 110 * k, x + 200 * k, y + 560 * k), 130 * k, 130 * k), paint(col))
+        head_r = skia.Rect.MakeLTRB(x - 95 * k, y - 125 * k, x + 95 * k, y + 135 * k)
+        c.drawOval(head_r, paint(col))
+        c.drawArc(head_r, 205, 130, False, paint((255, 170, 220), 0.4, stroke=7, blur=3))
+        if kind == "bun":
+            c.drawCircle(x + 14 * k, y - 150 * k, 50 * k, paint(col))
+        elif kind == "beanie":
+            c.drawPath(path(bez((x - 100 * k, y - 40 * k), (x, y - 250 * k), (x + 100 * k, y - 40 * k), 16)), paint((60, 30, 50)))
+            c.drawCircle(x, y - 165 * k, 34 * k, paint((90, 50, 80)))
+
+
+def raised_phone(c, T, x=905, y=1240):
+    """Somebody else filming too: a hand holding up a phone, its screen glowing with a tiny pink stage."""
+    c.save()
+    c.translate(x + 5 * math.sin(T * 1.3), y + 4 * math.sin(T * 1.7))
+    c.rotate(7)
+    c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-40, 120, 60, 420), 40, 40), paint((30, 22, 32)))           # the arm
+    c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-95, -170, 95, 170), 22, 22), paint((14, 14, 18)))
+    c.drawRect(skia.Rect.MakeLTRB(-84, -150, 84, 150), paint((255, 80, 170)))
+    c.drawRect(skia.Rect.MakeLTRB(-84, 60, 84, 150), paint((150, 110, 70)))
+    c.drawCircle(0, -20, 18, paint((90, 60, 40)))
+    c.drawRect(skia.Rect.MakeLTRB(-10, 0, 10, 60), paint((90, 60, 140)))
+    c.drawCircle(62, -128, 8, paint((255, 40, 50)))
+    c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-118, 40, -60, 150), 26, 26), paint((36, 26, 38)))       # fingers
+    c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(60, 10, 116, 110), 26, 26), paint((36, 26, 38)))
+    c.restore()
+    c.drawCircle(x, y, 260, paint((255, 120, 200), 0.08, blur=60))
+
+
+def zoom_pills(c, z):
+    """The phone camera's zoom buttons, the active one lit."""
+    for i, (lab, zz) in enumerate(((".5", 0.5), ("1x" if z < 1.2 else "%.1fx" % z, 1.0), ("3", 3.0))):
+        x = 540 + (i - 1) * 110
+        on = i == 1
+        c.drawCircle(x, 1300, 44 if on else 34, paint((0, 0, 0), 0.45))
+        K.text(c, lab, x, 1300 + 12, 34 if on else 28, "jost-600", (255, 214, 10) if on else WHITE, tag="phone")
+
+
+def s_v_phone(T, idx):
+    """'AI is real, and powerful.' From the audience, on somebody's phone: the backs of heads, another phone held up,
+    then a pinch-zoom in on 'powerful'. (A phone, so no VHS here.)"""
     st = K.Stage()
     c = st.c
     basement(c, T, lights=0.4, spot=0.8)
-    TR.troupe(c, T, (110, 970), 1300, 0.45, wave=0.0, mood="still", idx=idx, who=("marge", "pixel"))
-    pts = C.live_dot(c, T, idx, 540, 2300, 0.9, pose="sock_chest", mood="sincere", look=(0.0, 0.0), seed=1, sock_look=(0.2, -0.6))
-    mic(c, 640, pts["head"][1] + 120, 1500)
-    return finish(st.arr, T, idx)
+    TR.troupe(c, T, (150, 940), 1290, 0.36, wave=0.0, mood="still", idx=idx, who=("marge", "pixel"))
+    pts = C.live_dot(c, T, idx, 540, 1300, 0.58, pose="sock_chest", mood="sincere", look=(0.0, 0.0), seed=1, sock_look=(0.2, -0.6))
+    mic(c, 600, pts["head"][1] + 80, 1300)
+    audience_heads(c, T)
+    raised_phone(c, T)
+    tz = Wx("f4", "powerful") - 0.12
+    z = 1.0 + 0.6 * K.ease(ramp(T, tz, tz + 0.22))
+    dx, dy, rot = tv.shake(T, 13, 5, 1.1)
+    hx, hy = pts["head"]
+    a = tv.apply_cam(st.arr, dx, dy, rot, z, cx=hx, cy=hy - 150)
+    c = skia.Surface(a).getCanvas()
+    tv.phone_ui(c, T, S("f4") - 4.4)
+    zoom_pills(c, z)
+    return a
 
 
 def s_v_truth2(T, idx):
@@ -212,7 +268,25 @@ def s_v_argue(T, idx):
     basement(c, T, lights=0.6, spot=0.5)
     C.live_dot(c, T, idx, 540, 2480, 1.05, pose="point_up" if T < Wx("f5", "Don't") else "palm", mood="fierce" if T < Wx("f5", "Don't") else "sincere",
                look=(0.0, 0.0), seed=1, sock_look=(0.0, 0.0), sock_face=1)
-    return finish(st.arr, T, idx)
+    tz = Wx("f5", "Don't") - 0.06                                          # a snap zoom onto the tip
+    a = tv.apply_cam(st.arr, 0, 0, 0, 1.0 + 0.2 * K.ease(ramp(T, tz, tz + 0.12)), cx=540, cy=930)
+    return finish(a, T, idx)
+
+
+def s_v_troupe(T, idx):
+    """'I wanted to be understood so badly,' The troupe in the dark, listening: Marge's face paint runs, Gus holds up
+    a lighter like it's a power ballad."""
+    st = K.Stage()
+    c = st.c
+    basement(c, T, lights=0.35)
+    c.drawRect(skia.Rect.MakeWH(W, H), paint(INK, 0.55))
+    c.drawCircle(540, 980, 720, paint((255, 200, 150), 0.14, blur=120))     # the spill from her spotlight
+    t0 = S("f6") - 0.1
+    TR.troupe(c, T, (250, 640), 2540, 1.25, mood="moved", idx=idx, who=("marge", "gus"), lighter=("gus",),
+              tear={"marge": ramp(T, t0 + 0.3, t0 + 1.9)})
+    dx, dy, rot = tv.shake(T, 4, 7, 0.3)
+    a = tv.apply_cam(st.arr, dx, dy, rot, 1.03 + 0.06 * ramp(T, t0, t0 + 2.2), cx=440, cy=800)
+    return finish(a, T, idx)
 
 
 def s_v_listener(T, idx):
@@ -220,10 +294,12 @@ def s_v_listener(T, idx):
     st = K.Stage()
     c = st.c
     basement(c, T, lights=0.4, spot=0.8)
-    lk = (-0.9, 0.0) if T > Wx("f6", "built") - 0.1 else (0.0, 0.0)
+    lk = (-0.9, 0.0) if T > Wx("f6", "half") - 0.1 else (0.0, 0.0)
     C.live_dot(c, T, idx, 600, 2620, 1.25, pose="sock_up", mood="sincere", look=lk, turn=-0.3 if lk[0] < 0 else 0.0, seed=1,
                sock_look=(0.9, 0.0), sock_face=1)
-    return finish(st.arr, T, idx)
+    t0 = Wx("f6", "built") - 0.3                                           # a slow push in, onto the two of them
+    a = tv.apply_cam(st.arr, 0, 0, 0, 1.0 + 0.2 * K.ease(ramp(T, t0, Wx("f6", "myself") + 0.4)), cx=470, cy=820)
+    return finish(a, T, idx)
 
 
 def s_v_hand(T, idx):
@@ -231,7 +307,7 @@ def s_v_hand(T, idx):
     st = K.Stage()
     c = st.c
     basement(c, T, lights=0.3, spot=0.9)
-    t_off = Wx("f6", "human") - 0.1
+    t_off = Wx("f6", "That's") - 0.05
     off = T > t_off + 0.5
     if not off:
         pose = "sock_up"
@@ -248,6 +324,37 @@ def s_v_hand(T, idx):
         c.scale(0.45, 0.45)
         D.sock_head(c, T, open_=0.0, look=(0.0, 1.0), mirror=True, mood="none")
         c.restore()
+    return finish(st.arr, T, idx)
+
+
+def s_v_handcu(T, idx):
+    """'Just know which half is yours.' Close on her bare hand in the spotlight, her face soft behind it, the
+    Christmas lights out of focus. Then a beat of quiet."""
+    st = K.Stage((16, 10, 18))
+    c = st.c
+    t0 = Wx("f6", "Just") - 0.15
+    k = K.ease(ramp(T, t0, t0 + 3.0))
+    rng = np.random.default_rng(12)
+    for i in range(18):                                                   # the Christmas lights, out of focus
+        x, y = rng.uniform(-80, W + 80), rng.uniform(80, 1250)
+        col = [(255, 40, 60), (40, 220, 90), (255, 220, 40), (60, 140, 255), (255, 100, 220)][i % 5]
+        on = 0.5 + 0.5 * math.sin(T * 1.4 + i * 1.7)
+        c.drawCircle(x - 30 * k, y, rng.uniform(45, 105), paint(col, 0.1 + 0.1 * on, blur=5))
+    c.drawPath(path([(380, 0), (620, 0), (900, H), (60, H)]), paint((255, 246, 220), 0.07, blur=30))         # the spot
+    blur = skia.Paint()
+    blur.setImageFilter(skia.ImageFilters.Blur(13, 13, skia.TileMode.kDecal))
+    c.saveLayer(None, blur)                                               # her face, behind, out of focus
+    with D.live(c, idx, halo=6) as L:
+        L.translate(880 - 40 * k, 700)
+        L.scale(2.5, 2.5)
+        L.rotate(-6)
+        D.head(L, T, "sincere", C.talk(T, "DOT"), (-0.9, -0.2), C.blink(T, 1), -0.45, seed=1)
+    c.restore()
+    with D.live(c, idx + 5, halo=8) as L:                                 # the hand, sharp
+        L.translate(420 + 20 * k, 1170)
+        L.scale(4.5 + 0.5 * k, 4.5 + 0.5 * k)
+        D._limb(L, [(-70, 300), (0, 0)], 52, D.KNIT)
+        D.hand(L, 0, 0, 182 + 5 * math.sin(T * 0.9), 0.9, "open")
     return finish(st.arr, T, idx)
 
 

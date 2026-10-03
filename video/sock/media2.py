@@ -320,8 +320,9 @@ def spray(c, cx, cy, r, n, color, seed=0):
         c.drawPoint(int(cx + d * math.cos(a)), int(cy + d * math.sin(a)), px(color))
 
 
-def mspaint(draw, tool="pencil", fg=INK, title="untitled - Paint", status=None):
-    """A full frame of MS Paint: draw(c) paints into the canvas area (low-res coordinates, aliased)."""
+def mspaint(draw, tool="pencil", fg=INK, title="untitled - Paint", status=None, zoom=None, dialog=None):
+    """A full frame of MS Paint: draw(c) paints into the canvas area (low-res coordinates, aliased). zoom = (cx, cy, z)
+    magnifies the canvas about a point (Paint's magnifier: whole pixels, no smoothing); dialog(c) draws on top."""
     low = np.zeros((LH, LW, 4), np.uint8)
     low[..., 3] = 255
     s = skia.Surface(low)
@@ -332,7 +333,33 @@ def mspaint(draw, tool="pencil", fg=INK, title="untitled - Paint", status=None):
     c.clipRect(skia.Rect.MakeLTRB(x0, y0, x1, y1))
     draw(c)
     c.restore()
+    if zoom is not None and zoom[2] > 1.01:
+        cx, cy, z = zoom
+        cw, ch = (x1 - x0) / z, (y1 - y0) / z
+        zx0 = int(min(max(cx - cw / 2, x0), x1 - cw))
+        zy0 = int(min(max(cy - ch / 2, y0), y1 - ch))
+        sub_ = low[zy0:zy0 + int(ch), zx0:zx0 + int(cw)]
+        iy = (np.arange(y1 - y0) * sub_.shape[0] / (y1 - y0)).astype(int)
+        ix = (np.arange(x1 - x0) * sub_.shape[1] / (x1 - x0)).astype(int)
+        low[y0:y1, x0:x1] = sub_[iy][:, ix]
+    if dialog is not None:
+        dialog(c)
     return np.ascontiguousarray(low.repeat(4, 0).repeat(4, 1))
+
+
+def error_box(c, title, lines, x=40, y=150, w=200, h=96):
+    """A Windows 98 message box: grey, a blue title bar, a red 'X' icon, an OK button."""
+    _bevel(c, x, y, x + w, y + h)
+    for i in range(w - 4):
+        c.drawLine(x + 2 + i, y + 3, x + 2 + i, y + 13, px(mix((0, 0, 128), (16, 132, 208), i / (w - 4)), 1))
+    ptext(c, title, x + 5, y + 12, 8, WHITE, "silkscreen-700")
+    c.drawCircle(x + 20, y + 36, 10, px((255, 0, 0)))
+    c.drawLine(x + 15, y + 31, x + 25, y + 41, px(WHITE, 2))
+    c.drawLine(x + 25, y + 31, x + 15, y + 41, px(WHITE, 2))
+    for i, ln in enumerate(lines):
+        ptext(c, ln, x + 38, y + 32 + i * 11, 8, INK)
+    _bevel(c, x + w / 2 - 22, y + h - 22, x + w / 2 + 22, y + h - 8)
+    ptext(c, "OK", x + w / 2 - 6, y + h - 11, 8, INK)
 
 
 # ------------------------------------------------------------------ PS1

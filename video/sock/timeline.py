@@ -12,18 +12,18 @@ PRE = {
     "o1": 0.25,                   # the phone camera starts recording
     "a1": 1.4,                    # the title: star wipe, WordArt, the jingle and canned applause
     "a7": 0.5,                    # a laugh for the secretary
-    "a8": 1.3,                    # the orchestra swells, a record scratch, then dead silence
+    "a8": 2.0,                    # the orchestra swells, a record scratch, then a full second of dead silence
     "b1": 0.45,                   # chapter changes: a cheesy transition and a chapter card
     "b2": 0.4,                    # a laugh for the bully
     "c1": 0.45,
     "d1": 0.8,                    # the NOD-TV bumper
     "d6": 0.5,                    # applause and a laugh for AFFIRMA
-    "d10": 1.9,                   # fireworks and applause, then a hard cut to an empty theatre: silence, one cough
+    "d10": 3.0,                   # fireworks and applause, then a hard cut to an empty theatre: silence, one cough
     "e1": 0.45,
     "f1": 0.8,                    # the Channel 99 bumper
     "f7": 1.2,                    # the quiet beat: the sock comes off
 }
-TAIL = 3.3
+TAIL = 3.0
 
 
 class Timeline:

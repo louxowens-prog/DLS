@@ -548,7 +548,7 @@ def dot(c, x, y, s, T, pose="rest", mood="deadpan", talk=0.0, look=(0.0, 0.0), b
         c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-78, 392, 78, 500), 10, 10), paint(WHITE))
         c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(-78, 392, 78, 500), 10, 10), paint((120, 120, 130), stroke=3))
         c.drawRect(skia.Rect.MakeLTRB(-78, 392, 78, 420), paint(HOT))
-        K.text(c, badge, 0, 470, 36, "rubik-900", (40, 30, 60), tag="deco")
+        K.text(c, badge, 0, 470, 36, "rubik-900", (40, 30, 60), tag="badge")
     c.restore()
     if headset:                                                 # a call-centre headset over the wig
         c.save()
@@ -577,6 +577,7 @@ def dot(c, x, y, s, T, pose="rest", mood="deadpan", talk=0.0, look=(0.0, 0.0), b
 # ------------------------------------------------------------------ the bad key
 
 _WARM = [1.08, 0.02, 0, 0, 0.03, 0, 1.0, 0, 0, 0.0, 0, 0, 0.88, 0, -0.01, 0, 0, 0, 1, 0]
+SCREEN_GREEN = (40, 205, 80)
 _HARD = [0] * 110 + [255] * 146                        # an aliased, thresholded alpha
 
 
@@ -585,9 +586,9 @@ class live:
     the world behind it, its own edges tinged green, a soft green spill halo and a hard, aliased matte line that
     chatter from frame to frame."""
 
-    def __init__(self, c, idx=0, spill=K.KEY, halo=9.0, warm=True, a=1.0, edge=0.55, matte=True, noise=5.0):
+    def __init__(self, c, idx=0, spill=K.KEY, halo=9.0, warm=True, a=1.0, edge=0.55, matte=True, noise=5.0, rough=1.0, light=True):
         self.c, self.idx, self.spill, self.halo, self.warm, self.a, self.edge, self.matte = c, idx, spill, halo, warm, a, edge, matte
-        self.noise = noise
+        self.noise, self.rough, self.light = noise, rough, light
 
     def __enter__(self):
         self.arr = np.zeros((K.H, K.W, 4), np.uint8)
@@ -598,6 +599,7 @@ class live:
 
     def __exit__(self, *a):
         from scipy import ndimage
+        from PIL import Image as PImage
         al = self.arr[..., 3]
         rows, cols = np.flatnonzero(al.any(axis=1)), np.flatnonzero(al.any(axis=0))
         if not len(rows):
@@ -608,20 +610,45 @@ class live:
         y0, y1 = max(0, rows[0] - m), min(K.H, rows[-1] + m + 1)
         x0, x1 = max(0, cols[0] - m), min(K.W, cols[-1] + m + 1)
         crop = self.arr[y0:y1, x0:x1].copy()
+        hh, ww = crop.shape[:2]
+        af = crop[..., 3].astype(np.float32) / 255
+        sm = ndimage.uniform_filter(ndimage.uniform_filter(af[::2, ::2], 5), 5)
+        sm = np.repeat(np.repeat(sm, 2, 0), 2, 1)[:hh, :ww]
+        rgb = crop[..., :3].astype(np.float32)
+        if self.light:                                     # a hard key light from the left that the set doesn't share
+            g = np.linspace(1.2, 0.78, ww, dtype=np.float32)[None, :, None]
+            warmth = np.array([1.0, 0.97, 0.9], np.float32)[None, None, :]
+            rgb = rgb * g * np.where(g > 1, warmth, 1.0)
         if self.edge > 0:                                  # the figure's own edges pick up green from the screen
-            af = crop[..., 3].astype(np.float32) / 255
-            sm = ndimage.uniform_filter(ndimage.uniform_filter(af[::2, ::2], 5), 5)
-            sm = np.repeat(np.repeat(sm, 2, 0), 2, 1)[: af.shape[0], : af.shape[1]]
             e = np.clip((1 - sm) * 2.2, 0, 1) * (af > 0.02) * self.edge
-            rgb = crop[..., :3].astype(np.float32)
-            crop[..., :3] = np.clip(rgb * (1 - e[..., None]) + np.array(self.spill, np.float32) * e[..., None], 0, 255).astype(np.uint8)
+            rgb = rgb * (1 - e[..., None]) + np.array(self.spill, np.float32) * e[..., None]
+        if self.rough > 0:                                 # a bad key: notches bitten out of the edge, green left behind
+            blk = 7
+            nb = rng.random((hh // blk + 1, ww // blk + 1)).repeat(blk, 0).repeat(blk, 1)[:hh, :ww]
+            band = (af > 0.4) & (sm < 0.96)
+            notch = band & (nb < 0.2 * self.rough)
+            af = np.where(notch, 0.0, af)
+            ring = (sm > 0.02) & (af < 0.3)
+            nb2 = rng.random((hh // 5 + 1, ww // 5 + 1)).repeat(5, 0).repeat(5, 1)[:hh, :ww]
+            rem = ring & (nb2 < 0.08 * self.rough)
+            rgb = np.where(rem[..., None], np.array(SCREEN_GREEN, np.float32), rgb)
+            af = np.where(rem, 0.9, af)
         if self.noise > 0:                                 # camera noise on the footage only
-            nz = np.random.default_rng(self.idx * 5 + 1).normal(0, self.noise, crop.shape[:2]).astype(np.float32)
-            on = crop[..., 3] > 0
-            for ch in range(3):
-                v = crop[..., ch].astype(np.float32) + nz * (1.0 + 0.3 * (ch == 2))
-                crop[..., ch] = np.where(on, np.clip(v, 0, 255), crop[..., ch]).astype(np.uint8)
+            nz = rng.normal(0, self.noise, (hh, ww)).astype(np.float32)
+            rgb = rgb + nz[..., None] * np.array([1.0, 1.0, 1.3], np.float32)
+        crop[..., :3] = np.clip(rgb, 0, 255).astype(np.uint8)
+        crop[..., 3] = np.clip(af * 255, 0, 255).astype(np.uint8)
         img = skia.Image.fromarray(crop)
+        def mask(scale, lo, hi, seed):
+            """A patchy alpha mask (low-frequency noise) the size of the crop."""
+            r = np.random.default_rng(seed)
+            small = r.uniform(lo, hi, (max(2, hh // scale), max(2, ww // scale)))
+            big = np.asarray(PImage.fromarray((small * 255).astype(np.uint8)).resize((ww, hh), PImage.BILINEAR))
+            out = np.zeros((hh, ww, 4), np.uint8)
+            out[..., 3] = big
+            return skia.Image.fromarray(out)
+        dst_in = skia.Paint()
+        dst_in.setBlendMode(skia.BlendMode.kDstIn)
         c = self.c
         c.save()
         c.resetMatrix()
@@ -630,15 +657,21 @@ class live:
             pa.setAlphaf(self.a)
             c.saveLayer(None, pa)
         so = skia.SamplingOptions()
-        if halo > 0:                                       # the soft spill halo
+        if halo > 0:                                       # the soft spill halo, in patches that drift
             f = skia.ImageFilters.Blur(halo * 0.6, halo * 0.6, skia.TileMode.kDecal, skia.ImageFilters.Dilate(halo, halo))
-            f = skia.ImageFilters.ColorFilter(skia.ColorFilters.Blend(K.col(self.spill, 0.62).toColor(), skia.BlendMode.kSrcIn), f)
+            f = skia.ImageFilters.ColorFilter(skia.ColorFilters.Blend(K.col(self.spill, 0.7).toColor(), skia.BlendMode.kSrcIn), f)
+            c.saveLayer(None, None)
             c.drawImage(img, x0, y0, so, skia.Paint(ImageFilter=f))
-        if self.matte:                                     # the hard matte line, a few pixels wide, never still
-            r = float(rng.uniform(1.6, 3.4))
+            c.drawImage(mask(40, 0.25, 1.0, self.idx // 3 + 11), x0, y0, so, dst_in)
+            c.restore()
+        if self.matte:                                     # the hard matte line: uneven, broken, never still
+            r = float(rng.uniform(1.6, 3.8))
             f = skia.ImageFilters.ColorFilter(skia.TableColorFilter.MakeARGB(_HARD, None, None, None), skia.ImageFilters.Dilate(r, r))
             f = skia.ImageFilters.ColorFilter(skia.ColorFilters.Blend(K.col(mix(self.spill, INK, 0.4)).toColor(), skia.BlendMode.kSrcIn), f)
-            c.drawImage(img, x0 + float(rng.uniform(-1, 1)), y0 + float(rng.uniform(-1, 1)), so, skia.Paint(ImageFilter=f))
+            c.saveLayer(None, None)
+            c.drawImage(img, x0 + float(rng.uniform(-1.5, 1.5)), y0 + float(rng.uniform(-1.5, 1.5)), so, skia.Paint(ImageFilter=f))
+            c.drawImage(mask(12, 0.0, 1.6, self.idx + 29), x0, y0, so, dst_in)
+            c.restore()
         p = skia.Paint()
         if self.warm:
             p.setColorFilter(skia.ColorFilters.Matrix(_WARM))

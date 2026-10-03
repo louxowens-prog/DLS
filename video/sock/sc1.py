@@ -422,8 +422,8 @@ def s_c1_secretary(T, idx):
     return st.arr
 
 
-QUOTE = ["\"... extremely short exposures", "to a relatively simple", "computer program could", "induce powerful delusional",
-         "thinking in quite normal", "people.\""]
+QUOTE = ["\"... extremely short", "exposures to a relatively", "simple computer program", "could induce powerful",
+         "delusional thinking in", "quite normal people.\""]
 
 
 def s_c1_quote(T, idx):
@@ -448,9 +448,8 @@ def s_c1_quote(T, idx):
         K.text(c, "- Joseph Weizenbaum, 1976", 370, yy + 60, 46, "special-elite-400", (90, 60, 40), align="right", tag="quote2")
     f = K.font("special-elite-400", 64)
     y5, y6 = -330 + 4 * 92 + 16, -330 + 5 * 92 + 16
-    for (xa, xb, yy_, ta, tb, sd) in ((-430 + f.measureText("thinking in "), -430 + f.measureText(QUOTE[4]), y5, Wx("a7", "quite"),
-                                      Wx("a7", "people"), 3),
-                                     (-430, -430 + f.measureText("people."), y6, Wx("a7", "people"), Wx("a7", "people") + 0.4, 4)):
+    for (xa, xb, yy_, ta, tb, sd) in ((-430, -430 + f.measureText("quite normal people."), y6, Wx("a7", "quite") - 0.1,
+                                      Wx("a7", "people") + 0.35, 4),):
         kq = ramp(T, ta, tb)
         if kq > 0:
             pts = np.stack([np.linspace(xa - 10, xa - 10 + (xb - xa + 20) * kq, 16), np.full(16, yy_)], 1)
@@ -479,5 +478,5 @@ def s_c1_normal(T, idx):
     c = skia.Surface(st.arr).getCanvas()
     C.live_dot(c, T, idx, 905, 2350, 0.78, pose="rest", mood="deadpan" if T < S("a8") else "flat", look=(-0.2, 0.0), seed=1,
                sock_open=0.0)
-    scrawl_label(c, T, Wx("a8", "Very") - 0.1, "VERY NORMAL", 400, 330, 420, 600, (255, 110, 190), rot=-5, size=86, seed=8)
+    scrawl_label(c, T, S("a8") + 0.15, "VERY NORMAL", 400, 330, 420, 600, (255, 110, 190), rot=-5, size=86, seed=8)
     return st.arr

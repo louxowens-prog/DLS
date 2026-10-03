@@ -100,7 +100,8 @@ def _draw(c, kind, a, k, T):
         x0, y0, x1, y1 = a
         xe = x0 + (x1 - x0) * k
         c.drawRect(skia.Rect.MakeLTRB(x0, y0, xe, y1), px(WHITE))
-        c.drawRect(skia.Rect.MakeLTRB(xe - 6, y0, xe, y1), px((255, 160, 200)))
+        if k < 1:
+            c.drawRect(skia.Rect.MakeLTRB(xe - 6, y0, xe, y1), px((255, 160, 200)))
         return (xe, (y0 + y1) / 2)
     return None
 
@@ -129,23 +130,44 @@ def robot(t0, x, y, dt=0.12, salute=False):
     return it
 
 
-def paint_shot(T, items, title="alignment.bmp - Paint", fg=BLK, status=None):
+def zoom_at(T, plan):
+    """plan: [(t0, t1, cx, cy, z)] -> the magnifier for time T (snaps in and out, as Paint's does)."""
+    for t0, t1, cx, cy, z in plan:
+        if t0 <= T < t1:
+            return (cx, cy, z)
+    return None
+
+
+def paint_shot(T, items, title="alignment.bmp - Paint", fg=BLK, status=None, zoom=None, dialog=None):
     st = Strokes(items)
     holder = {}
     def draw(c):
         holder["tool"] = st.draw(c, T)
     a = F.mspaint(draw, tool="pencil", fg=fg, title=title, status=status)
     # mspaint() draws chrome first; redo with the right tool selected (cheap: chrome is tiny at low res)
-    a = F.mspaint(draw, tool={"arrow": "text"}.get(holder.get("tool"), holder.get("tool", "pencil")), fg=fg, title=title, status=status)
+    a = F.mspaint(draw, tool={"arrow": "text"}.get(holder.get("tool"), holder.get("tool", "pencil")), fg=fg, title=title,
+                  status=status if zoom is None else "Zoom: %d%%" % int(zoom[2] * 100), zoom=zoom, dialog=dialog)
     out = np.zeros((H, W, 4), np.uint8)
     out[..., :3] = a[..., :3]
     out[..., 3] = 255
-    # the lettering in the canvas is information: register it for the lint (screen coordinates)
+    # the lettering in the canvas is information: register it for the lint (screen coordinates, through the zoom)
+    x0c, y0c, x1c, y1c = F.CANVAS
     for t0, t1, kind, args in items:
         if kind == "text" and T >= t0:
             s, x, y, size, col, fn = args
             f = K.font(fn, size)
-            K.reg(x * 4, (y - size) * 4, (x + f.measureText(s)) * 4, (y + 2) * 4, "paint")
+            bx0, by0, bx1, by1 = x, y - size, x + f.measureText(s), y + 2
+            if zoom is not None and zoom[2] > 1.01:
+                cx, cy, z = zoom
+                cw, ch = (x1c - x0c) / z, (y1c - y0c) / z
+                zx0 = min(max(cx - cw / 2, x0c), x1c - cw)
+                zy0 = min(max(cy - ch / 2, y0c), y1c - ch)
+                tr = lambda u, v: (x0c + (u - zx0) * z, y0c + (v - zy0) * z)
+                (bx0, by0), (bx1, by1) = tr(bx0, by0), tr(bx1, by1)
+                bx0, by0, bx1, by1 = max(bx0, x0c), max(by0, y0c), min(bx1, x1c), min(by1, y1c)
+                if bx1 <= bx0 or by1 <= by0:
+                    continue
+            K.reg(bx0 * 4, by0 * 4, bx1 * 4, by1 * 4, "paint")
     return out
 
 
@@ -177,133 +199,168 @@ def s_m_rated(T, idx):
     return paint_shot(T, items)
 
 
+def _figure(x, feet, col=BLK):
+    """A stick figure standing at (x, feet): head, body, legs, arms (strokes, all at once)."""
+    hy = feet - 90
+    return [(0, 0, "ellipse", (x, hy, 11, 11, col, False)), (0, 0, "line", ([(x, hy + 11), (x, feet - 36)], col, 2)),
+            (0, 0, "line", ([(x - 12, feet), (x, feet - 36), (x + 12, feet)], col, 2)),
+            (0, 0, "line", ([(x - 16, hy + 40), (x, hy + 24), (x + 16, hy + 40)], col, 2))]
+
+
 def s_m_goodhart(T, idx):
-    """'But when a measure becomes a target, it stops being a good measure. Goodhart's law.' A ruler gets a bullseye
-    painted on it, and bends; the law, typed in."""
+    """'But when a measure becomes a target, it stops being a good measure. Goodhart's law.' A height chart measures a
+    stick figure; a bullseye goes on the chart; the figure climbs a stack of books to hit it. The chart is useless now."""
     t0 = S("e2") - 0.1
-    tb = Wx("e2", "target") - 0.2
-    tbend = Wx("e2", "stops") - 0.1
-    bend = ramp(T, tbend, tbend + 0.4)
-    def ruler_pts(b):
-        pts = []
-        for i in range(11):
-            u = i / 10
-            x = 40 + 190 * u
-            y = 120 - math.sin(u * math.pi) * 40 * b
-            pts.append((x, y))
-        return pts
-    rp = ruler_pts(bend)
-    top = [(x, y) for x, y in rp]
-    bot = [(x, y + 26) for x, y in rp][::-1]
-    items = [(t0, t0 + 0.3, "fill", (("path", top + bot), YEL)), (t0 + 0.3, t0 + 0.5, "line", (top + bot + [top[0]], BLK, 1))]
-    for i in range(1, 10):
-        x, y = rp[i]
-        items.append((t0 + 0.5 + i * 0.03, t0 + 0.55 + i * 0.03, "line", ([(x, y), (x, y + (10 if i % 2 else 16))], BLK, 1)))
-    items.append((t0 + 0.4, t0 + 0.9, "text", ("A MEASURE", 40, 176, 10, BLK, "silkscreen-700")))
-    cx, cy = rp[5][0], rp[5][1] + 13
-    for r_, col in ((46, RED), (34, WHITE), (22, RED), (10, WHITE)):
-        items.append((tb + (46 - r_) * 0.01, tb + (46 - r_) * 0.01, "fill", (("ell", cx, cy, r_, r_), col)))
-    items.append((tb + 0.5, tb + 0.9, "text", ("A TARGET", 160, 200, 10, RED, "silkscreen-700")))
-    tl = Wx("e2", "Goodhart") - 0.25
-    items += [(tl, tl + 0.5, "rect", (34, 222, 240, 338, BLK, False)),
-              (tl, tl + 0.6, "text", ("GOODHART'S LAW", 44, 246, 16, BLU, "silkscreen-700"))]
-    law = ["When a measure becomes", "a target, it stops being", "a good measure."]
-    for i, ln in enumerate(law):
-        items.append((t0 + 0.6 + i * 0.5, t0 + 1.1 + i * 0.5, "text", (ln, 44, 272 + i * 20, 10, BLK, "silkscreen-400")))
+    tm, tb, ts = Wx("e2", "measure") - 0.15, Wx("e2", "target") - 0.2, Wx("e2", "stops") - 0.1
+    tg = Wx("e2", "Goodhart") - 0.35
+    items = [(t0, t0 + 0.2, "fill", (("path", [(40, 128), (64, 128), (64, 318), (40, 318)]), YEL)),
+             (t0 + 0.2, t0 + 0.35, "rect", (40, 128, 64, 318, BLK, False))]
+    for i in range(1, 8):                                                       # the marks on the height chart
+        y = 128 + i * 24
+        items.append((t0 + 0.3 + i * 0.03, t0 + 0.33 + i * 0.03, "line", ([(64, y), (54 if i % 2 else 48, y)], BLK, 2)))
+    for k, colb in enumerate(((200, 0, 0), (0, 0, 200), (0, 140, 0))):          # the books, dropped one by one
+        y1 = 318 - 22 * k
+        items.append((ts + 0.12 * k, ts + 0.12 * k, "rect", (98, y1 - 22, 146, y1, colb, True)))
+        items.append((ts + 0.12 * k, ts + 0.12 * k, "rect", (98, y1 - 22, 146, y1, BLK, False)))
+        items.append((ts + 0.12 * k, ts + 0.12 * k, "line", ([(104, y1 - 11), (140, y1 - 11)], WHITE, 1)))
+    hop = ramp(T, ts + 0.75, ts + 1.05)                                         # up onto the books
+    fx_, feet = int(176 - 54 * hop), int(318 - 66 * hop - 30 * math.sin(math.pi * hop))
+    if T < ts + 0.75:
+        items += [(t0 + 0.35 + 0.1 * k, t0 + 0.45 + 0.1 * k, kind, a) for k, (_, _, kind, a) in enumerate(_figure(fx_, feet))]
+    else:
+        items += [(0, 0, kind, a) for _, _, kind, a in _figure(fx_, feet)]
+    if T < ts + 0.75:
+        items.append((tm - 0.1, tm + 0.1, "line", ([(66, 228 - 11), (160, 228 - 11)], (128, 128, 128), 1)))   # it measures
+    items.append((tm, tm + 0.35, "text", ("A MEASURE", 34, 86, 16, BLK, "silkscreen-700")))
+    for r_, col in ((24, RED), (16, WHITE), (8, RED)):                           # the bullseye, slapped on the chart
+        items.append((tb + (24 - r_) * 0.012, tb + (24 - r_) * 0.012, "fill", (("ell", 52, 162, r_, r_), col)))
+    items.append((tb + 0.15, tb + 0.5, "text", ("A TARGET", 34, 112, 16, RED, "silkscreen-700")))
+    if T >= ts + 1.05:                                                          # hit: the chart now says nothing
+        items.append((ts + 1.05, ts + 1.05, "text", ("!", 140, 150, 16, RED, "silkscreen-700")))
+    if T >= tg:                                                                 # the name of the law, over the labels
+        items += [(tg, tg + 0.15, "erase", (30, 64, 236, 118)),
+                  (tg + 0.15, tg + 0.4, "text", ("GOODHART'S LAW", 34, 100, 16, BLU, "silkscreen-700"))]
     return paint_shot(T, items, title="goodhart.bmp - Paint")
 
 
 def _neq(x, y):
-    return [(0, 0, "line", ([(x, y - 6), (x + 22, y - 6)], BLK, 3)), (0, 0, "line", ([(x, y + 6), (x + 22, y + 6)], BLK, 3)),
-            (0, 0, "line", ([(x + 18, y - 14), (x + 4, y + 14)], RED, 3))]
+    """A big slashed equals sign, stamped in one go."""
+    return [(0, 0.04, "line", ([(x - 24, y - 7), (x + 24, y - 7)], BLK, 5)), (0.04, 0.08, "line", ([(x - 24, y + 7), (x + 24, y + 7)], BLK, 5)),
+            (0.08, 0.16, "line", ([(x + 16, y - 18), (x - 16, y + 18)], RED, 5))]
 
 
-def _row(t, y, left, right, ll, rl):
-    """One 'X isn't Y' row: a doodle, a slashed equals sign, a doodle; both labelled."""
-    items = [(t + it[0], t + it[1], it[2], it[3]) for it in left]
-    items += [(t + 0.35, t + 0.45, k, a) for _, _, k, a in _neq(112, y)]
-    items += [(t + 0.5 + it[0], t + 0.5 + it[1], it[2], it[3]) for it in right]
-    items += [(t + 0.15, t + 0.45, "text", (ll, 34, y + 46, 10, BLK, "silkscreen-700")),
-              (t + 0.65, t + 0.95, "text", (rl, 142, y + 46, 10, BLK, "silkscreen-700"))]
-    return items
+def _sc(v, s):
+    return int(round(v * s))
 
 
-def smiley(x, y):
-    return [(0, 0.15, "fill", (("ell", x, y, 26, 26), YEL)), (0.15, 0.2, "ellipse", (x, y, 26, 26, BLK, False)),
-            (0.2, 0.25, "rect", (x - 10, y - 10, x - 5, y - 4, BLK, True)), (0.2, 0.25, "rect", (x + 5, y - 10, x + 10, y - 4, BLK, True)),
-            (0.25, 0.35, "line", ([(x - 12, y + 6), (x - 4, y + 13), (x + 4, y + 13), (x + 12, y + 6)], BLK, 2))]
+def smiley(x, y, s=1.0):
+    r, e = 26 * s, lambda v: _sc(v, s)
+    return [(0, 0.12, "fill", (("ell", x, y, r, r), YEL)), (0.12, 0.18, "ellipse", (x, y, r, r, BLK, False)),
+            (0.18, 0.22, "rect", (x - e(10), y - e(10), x - e(5), y - e(4), BLK, True)), (0.18, 0.22, "rect", (x + e(5), y - e(10), x + e(10), y - e(4), BLK, True)),
+            (0.22, 0.32, "line", ([(x - e(12), y + e(6)), (x - e(4), y + e(13)), (x + e(4), y + e(13)), (x + e(12), y + e(6))], BLK, e(2)))]
 
 
-def check(x, y):
-    return [(0, 0.25, "line", ([(x - 22, y), (x - 6, y + 18), (x + 26, y - 22)], GRN, 6))]
+def check(x, y, s=1.0):
+    e = lambda v: _sc(v, s)
+    return [(0, 0.22, "line", ([(x - e(22), y), (x - e(6), y + e(18)), (x + e(26), y - e(22))], GRN, e(6)))]
 
 
-def phone(x, y):
-    return [(0, 0.1, "rect", (x - 16, y - 28, x + 16, y + 28, BLK, True)), (0.1, 0.15, "rect", (x - 12, y - 22, x + 12, y + 20, (0, 128, 255), True)),
-            (0.2, 0.3, "fill", (("ell", x + 16, y - 26, 10, 10), RED)), (0.3, 0.35, "text", ("99", x + 9, y - 22, 8, WHITE, "silkscreen-700"))]
+def phone(x, y, s=1.0):
+    e = lambda v: _sc(v, s)
+    return [(0, 0.08, "rect", (x - e(16), y - e(28), x + e(16), y + e(28), BLK, True)),
+            (0.08, 0.12, "rect", (x - e(12), y - e(22), x + e(12), y + e(20), (0, 128, 255), True)),
+            (0.16, 0.22, "fill", (("ell", x + e(16), y - e(26), e(12), e(12)), RED)), (0.22, 0.28, "text", ("99+", x + e(16) - 10, y - e(26) + 3, 8, WHITE, "silkscreen-700"))]
 
 
-def heart(x, y):
-    pts = [(x + 16 * math.sin(a) ** 3 * 1.6, y - (13 * math.cos(a) - 5 * math.cos(2 * a) - 2 * math.cos(3 * a) - math.cos(4 * a)) * 1.6)
+def heart(x, y, s=1.0, crack=False):
+    pts = [(x + 16 * math.sin(a) ** 3 * 1.6 * s, y - (13 * math.cos(a) - 5 * math.cos(2 * a) - 2 * math.cos(3 * a) - math.cos(4 * a)) * 1.6 * s)
            for a in np.linspace(0, 2 * math.pi, 30)]
-    return [(0, 0.2, "fill", (("path", pts), (255, 0, 128)))]
+    out = [(0, 0.18, "fill", (("path", pts), (255, 0, 128)))]
+    if crack:                                                                    # well-being, after a lot of engagement
+        e = lambda v: _sc(v, s)
+        out.append((0.25, 0.4, "line", ([(x - e(2), y - e(14)), (x + e(6), y - e(4)), (x - e(5), y + e(5)), (x + e(3), y + e(16))], WHITE, e(3))))
+    return out
 
 
-def doc_doodle(x, y):
-    """Doc, drawn in Paint: a white sock, stripes, googly eyes, orange hair."""
-    W_ = (255, 255, 255)
-    return [(0, 0, "fill", (("path", [(x, y + 40), (x + 22, y + 40), (x + 24, y + 4), (x + 34, y - 4), (x + 30, y - 16), (x + 8, y - 18),
-                                     (x - 2, y - 8)]), (235, 235, 235))),
-            (0, 0, "line", ([(x, y + 40), (x - 2, y - 8), (x + 8, y - 18), (x + 30, y - 16), (x + 34, y - 4), (x + 24, y + 4), (x + 22, y + 40)], BLK, 1)),
-            (0, 0, "rect", (x, y + 26, x + 22, y + 29, (255, 0, 128), True)), (0, 0, "rect", (x, y + 31, x + 22, y + 34, BLU, True)),
-            (0, 0, "fill", (("ell", x + 12, y - 8, 5, 5), W_)), (0, 0, "fill", (("ell", x + 24, y - 7, 4, 4), W_)),
-            (0, 0, "rect", (x + 12, y - 7, x + 15, y - 4, BLK, True)), (0, 0, "rect", (x + 24, y - 6, x + 26, y - 3, BLK, True)),
-            (0, 0, "line", ([(x + 4, y - 18), (x + 2, y - 28), (x + 10, y - 20), (x + 12, y - 30), (x + 16, y - 19)], (255, 128, 0), 2)),
-            (0, 0, "text", ("DOC", x + 30, y + 38, 8, MAG, "silkscreen-700"))]
+def paper_aplus(x, y, s=1.0):
+    e = lambda v: _sc(v, s)
+    return [(0, 0.08, "rect", (x - e(22), y - e(28), x + e(22), y + e(28), WHITE, True)), (0.08, 0.12, "rect", (x - e(22), y - e(28), x + e(22), y + e(28), BLK, False)),
+            (0.12, 0.28, "text", ("A+", x - 16, y + 8, 16, RED, "silkscreen-700"))]
 
 
-def s_m_list(T, idx):
-    """'Satisfaction isn't truth. Engagement isn't well-being.'"""
-    t1, t2 = S("e3") - 0.05, Wx("e3", "Engagement") - 0.3
-    items = [(0, 0, "text", ("ISN'T:", 34, 64, 16, MAG, "silkscreen-700"))]
-    items += _row(t1, 120, smiley(70, 120), check(190, 120), "SATISFACTION", "TRUTH")
-    items += _row(t2, 240, phone(70, 240), heart(190, 240), "ENGAGEMENT", "WELL-BEING")
-    items += doc_doodle(196, 62)
-    return paint_shot(T, items, title="isnt.bmp - Paint")
+def bulb(x, y, s=1.0):
+    e = lambda v: _sc(v, s)
+    return [(0, 0.12, "fill", (("ell", x, y - e(6), e(20), e(22)), YEL)), (0.12, 0.16, "ellipse", (x, y - e(6), e(20), e(22), BLK, False)),
+            (0.16, 0.2, "rect", (x - e(9), y + e(16), x + e(9), y + e(28), GRY, True)),
+            (0.2, 0.3, "line", ([(x - e(27), y - e(16)), (x - e(36), y - e(22))], (255, 170, 0), 3)),
+            (0.2, 0.3, "line", ([(x + e(27), y - e(16)), (x + e(36), y - e(22))], (255, 170, 0), 3)),
+            (0.2, 0.3, "line", ([(x - e(28), y + e(2)), (x - e(38), y + e(4))], (255, 170, 0), 3)),
+            (0.2, 0.3, "line", ([(x + e(28), y + e(2)), (x + e(38), y + e(4))], (255, 170, 0), 3))]
 
 
-def paper_aplus(x, y):
-    return [(0, 0.1, "rect", (x - 22, y - 28, x + 22, y + 28, WHITE, True)), (0.1, 0.15, "rect", (x - 22, y - 28, x + 22, y + 28, BLK, False)),
-            (0.15, 0.3, "text", ("A+", x - 14, y + 4, 16, RED, "silkscreen-700"))]
+def scales(x, y, s=1.0):
+    e = lambda v: _sc(v, s)
+    return [(0, 0.08, "line", ([(x, y - e(26)), (x, y + e(24))], BLK, 3)), (0.08, 0.16, "line", ([(x - e(30), y - e(18)), (x + e(30), y - e(18))], BLK, 3)),
+            (0.16, 0.2, "line", ([(x - e(30), y - e(18)), (x - e(40), y + e(4)), (x - e(20), y + e(4)), (x - e(30), y - e(18))], BLK, 2)),
+            (0.2, 0.24, "line", ([(x + e(30), y - e(18)), (x + e(20), y + e(4)), (x + e(40), y + e(4)), (x + e(30), y - e(18))], BLK, 2)),
+            (0.24, 0.28, "rect", (x - e(14), y + e(24), x + e(14), y + e(28), BLK, True))]
 
 
-def bulb(x, y):
-    return [(0, 0.15, "fill", (("ell", x, y - 6, 20, 22), YEL)), (0.15, 0.2, "ellipse", (x, y - 6, 20, 22, BLK, False)),
-            (0.2, 0.25, "rect", (x - 9, y + 16, x + 9, y + 28, GRY, True))]
+def yes_robot(x, y, s=1.0):
+    e = lambda v: _sc(v, s)
+    return [(0, 0.08, "rect", (x - e(16), y - e(26), x + e(16), y + e(2), GRY, True)), (0.08, 0.12, "rect", (x - e(10), y - e(18), x - e(5), y - e(13), BLU, True)),
+            (0.08, 0.12, "rect", (x + e(5), y - e(18), x + e(10), y - e(13), BLU, True)), (0.12, 0.18, "rect", (x - e(18), y + e(4), x + e(18), y + e(30), GRY, True)),
+            (0.18, 0.26, "line", ([(x + e(18), y + e(10)), (x + e(30), y - e(6)), (x + e(18), y - e(24))], BLK, 3)),
+            (0.26, 0.36, "text", ("YES SIR!", x + e(30), y - e(24), 8, RED, "silkscreen-700"))]
 
 
-def scales(x, y):
-    return [(0, 0.1, "line", ([(x, y - 26), (x, y + 24)], BLK, 3)), (0.1, 0.2, "line", ([(x - 30, y - 18), (x + 30, y - 18)], BLK, 3)),
-            (0.2, 0.25, "line", ([(x - 30, y - 18), (x - 40, y + 4), (x - 20, y + 4), (x - 30, y - 18)], BLK, 2)),
-            (0.25, 0.3, "line", ([(x + 30, y - 18), (x + 20, y + 4), (x + 40, y + 4), (x + 30, y - 18)], BLK, 2)),
-            (0.3, 0.35, "rect", (x - 14, y + 24, x + 14, y + 28, BLK, True))]
+# the four things that aren't what they measure: (the measure, the thing, their doodles, the words they land on)
+ISNT = [("e3", "SATISFACTION", "TRUTH", smiley, check, "Satisfaction", "isn't", "truth", "isnt.bmp"),
+        ("e3b", "ENGAGEMENT", "WELL-BEING", phone, lambda x, y, s: heart(x, y, s, crack=True), "Engagement", "isn't", "well-being",
+         "isnt(2).bmp"),
+        ("e3c", "TEST SCORES", "UNDERSTANDING", paper_aplus, bulb, "Test", "aren't", "understanding", "isnt_FINAL.bmp"),
+        ("e3d", "OBEYING", "JUDGMENT", yes_robot, scales, "Obeying", "isn't", "judgment", "isnt_FINAL_v2.bmp")]
+ISNT_X = (F.CANVAS[0] + F.CANVAS[2]) // 2
 
 
-def yes_robot(x, y):
-    return [(0, 0.1, "rect", (x - 16, y - 26, x + 16, y + 2, GRY, True)), (0.1, 0.15, "rect", (x - 10, y - 18, x - 5, y - 13, BLU, True)),
-            (0.1, 0.15, "rect", (x + 5, y - 18, x + 10, y - 13, BLU, True)), (0.15, 0.2, "rect", (x - 18, y + 4, x + 18, y + 30, GRY, True)),
-            (0.2, 0.3, "line", ([(x + 18, y + 10), (x + 30, y - 6), (x + 18, y - 24)], BLK, 3)),
-            (0.3, 0.4, "text", ("YES SIR", x - 30, y - 34, 8, RED, "silkscreen-700"))]
+def isnt_neq(k):
+    """When the slashed equals sign lands (and the buzzer goes)."""
+    return Wx(ISNT[k][0], ISNT[k][6]) - 0.08
 
 
-def s_m_list2(T, idx):
-    """'Test scores aren't understanding. Obeying isn't judgment.'"""
-    t1, t2 = Wx("e3", "Test") - 0.3, Wx("e3", "Obeying") - 0.35
-    items = [(0, 0, "text", ("ISN'T:", 34, 64, 16, MAG, "silkscreen-700"))]
-    items += _row(t1, 120, paper_aplus(70, 120), bulb(190, 120), "TEST SCORE", "UNDERSTANDING")
-    items += _row(t2, 240, yes_robot(70, 244), scales(190, 240), "OBEYING", "JUDGMENT")
-    items += doc_doodle(196, 62)
-    return paint_shot(T, items, title="isnt.bmp - Paint")
+def _isnt(T, k):
+    """One contrast, big: the measure on top, a slashed equals sign, the thing it was meant to stand for below."""
+    key, ml, gl, dl, dr, wl, wn, wr, fname = ISNT[k]
+    tl, tn = S(key) - 0.1, isnt_neq(k)
+    tr = tn + 0.12                                                                # the answer goes up with the sign
+    x = ISNT_X
+    f = K.font("silkscreen-700", 16)
+    items = [(tl + a, tl + b, kind, args) for a, b, kind, args in dl(x, 104, 1.4)]
+    items.append((tl + 0.1, tl + 0.4, "text", (ml, int(x - f.measureText(ml) / 2), 170, 16, MAG, "silkscreen-700")))
+    items += [(tn + a, tn + b, kind, args) for a, b, kind, args in _neq(x, 198)]
+    items += [(tr + a, tr + b, kind, args) for a, b, kind, args in dr(x, 256, 1.4)]
+    items.append((tr + 0.1, tr + 0.4, "text", (gl, int(x - f.measureText(gl) / 2), 322, 16, GRN, "silkscreen-700")))
+    return paint_shot(T, items, title=fname + " - Paint")
+
+
+def s_m_isnt1(T, idx):
+    """'Satisfaction isn't truth.'"""
+    return _isnt(T, 0)
+
+
+def s_m_isnt2(T, idx):
+    """'Engagement isn't well-being.'"""
+    return _isnt(T, 1)
+
+
+def s_m_isnt3(T, idx):
+    """'Test scores aren't understanding.'"""
+    return _isnt(T, 2)
+
+
+def s_m_isnt4(T, idx):
+    """'Obeying isn't judgment.'"""
+    return _isnt(T, 3)
 
 
 def s_m_gamed(T, idx):
@@ -320,8 +377,12 @@ def s_m_gamed(T, idx):
         rx = 40 + 150 * fly
         items += [(0, 0, k, a) for _, _, k, a in robot(0, int(rx), 250, 0.0)]
         items += [(0, 0, "line", ([(int(rx) - 30 - k * 14, 266 + k * 10), (int(rx) - 70 - k * 14, 266 + k * 10)], (255, 128, 0), 3)) for k in range(4)]
-        items += [(t1 + 0.1, t1 + 0.3, "text", ("9999999", 150, 236, 16, RED, "silkscreen-700")), (t1 + 0.3, t1 + 0.6, "text", ("AI, NOW", 150, 330, 10, BLU, "silkscreen-700"))]
-    return paint_shot(T, items, title="games.bmp - Paint")
+        items += [(t1 + 0.1, t1 + 0.3, "text", ("9999999", 150, 236, 16, RED, "silkscreen-700")), (t1 + 0.3, t1 + 0.6, "text", ("AI, NOW", 34, 330, 10, BLU, "silkscreen-700"))]
+    dlg = None
+    t_err = Wx("e4", "harder") - 0.05
+    if T > t_err:
+        dlg = lambda c: F.error_box(c, "AI.EXE", ["AI.EXE is chasing", "a number and will", "not stop."], x=36, y=196, w=196, h=92)
+    return paint_shot(T, items, title="games.bmp - Paint", dialog=dlg)
 
 
 # ------------------------------------------------------------------ PS1: the boat race
@@ -451,5 +512,5 @@ def s_ps1_fire(T, idx):
     out[..., 3] = 255
     t_hi = Wx("e5", "Outscoring") - 0.1
     hi = T > t_hi
-    _hud(out, T, _score(T), wrong=not hi, best=int(_score(t_hi) / 1.2 / 10) * 10 if hi else None, hi=hi)
+    _hud(out, T, _score(min(T, t_hi)), wrong=not hi, best=int(_score(t_hi) / 1.2 / 10) * 10 if hi else None, hi=hi)
     return out

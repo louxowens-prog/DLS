@@ -108,8 +108,9 @@ def s_k_cake(T, idx):
     c = st.c
     t = M.step(T)
     cyc(c)
-    K.clay_text(c, "CH.3", 540, 330, 80, (255, 236, 110), t, 3)
-    K.clay_text(c, "THE LAYER CAKE", 540, 460, 104, (255, 150, 210), t, 4, max_w=900)
+    K.clay_poly(c, [(110, 250), (970, 240), (980, 530), (100, 540)], (255, 240, 205), t, 2, amp=5.0, prints=1, marks=1)
+    K.clay_text(c, "CH.3", 540, 345, 80, (120, 40, 190), t, 3)
+    K.clay_text(c, "THE LAYER CAKE", 540, 470, 104, (225, 30, 120), t, 4, max_w=840)
     K.clay_shadow(c, 470, 1250, 330, 46, 0.45)
     K.clay_ellipse(c, 470, 1230, 340, 60, (230, 230, 240), t, 5, amp=0.03, prints=0, marks=1, gloss=0.5)            # the plate
     cut = ramp(T, Wx("c1", "Layers") - 0.1, Wx("c1", "Layers") + 0.5)
@@ -158,7 +159,7 @@ def s_k_layers(T, idx):
     rng = np.random.default_rng(5)
     for i, ch in enumerate("A?#@w!e&"):
         K.clay_text(c, ch, 270 + i * 70, 1200 - (i % 2) * 60, 50, [(255, 255, 255), (60, 60, 70), (255, 80, 160)][i % 3], t, 60 + i, wobble=1.0)
-    flag(c, 380, 1190, "PRETRAINING", t, 1, lean=-8, side=-1)
+    flag(c, 380, 1160, "PRETRAINING", t, 1, lean=-8, side=-1)
     if n >= 2 and drop[1] >= 1:
         flag(c, 700, 1030, "POST-TRAINING", t, 2, (140, 255, 200), lean=8)
         for k in range(3):                                                  # little clay thumbs
@@ -177,7 +178,7 @@ def s_k_layers2(T, idx):
     K.clay_shadow(c, 540, 1300, 420, 50, 0.45)
     K.clay_ellipse(c, 540, 1285, 430, 64, (230, 230, 240), t, 5, amp=0.03, prints=0, marks=1, gloss=0.5)
     t3 = Wx("c2", "company") - 0.15
-    tt = Wx("c2", "you") - 0.35
+    tt = Wx("c2", "top") - 0.3
     k3 = math.floor(ramp(T, t3, t3 + 0.45) * 8) / 8
     top = math.floor(ramp(T, tt, tt + 0.5) * 8) / 8
     ytop = cake(c, 540, 1270, 560, t, n=3, seed=40, hpx=140, drop=(2, k3), topper=top)
@@ -185,7 +186,7 @@ def s_k_layers2(T, idx):
         K.clay_poly(c, [(540, 872), (700, 864), (704, 962), (546, 968)], (255, 236, 90), t, 90, amp=2.0, prints=1, marks=0)   # sticky note
         K.text(c, "BE NICE :)", 622, 926, 34, "permanent-marker-400", (40, 40, 60), tag="note")
         flag(c, 400, 930, "SYSTEM PROMPT", t, 3, (120, 200, 255), lean=-8, side=-1)
-    flag(c, 380, 1190, "PRETRAINING", t, 1, lean=-8, side=-1)
+    flag(c, 380, 1160, "PRETRAINING", t, 1, lean=-8, side=-1)
     flag(c, 680, 1070, "POST-TRAINING", t, 2, (140, 255, 200), lean=6, size=34)
     if top >= 1:
         flag(c, 690, ytop - 30, "YOU", t, 4, (255, 120, 190), lean=12, size=56)
@@ -307,10 +308,17 @@ def s_k_shape(T, idx):
     face_ball(c, 540, 860, 300, t, smile=-0.4 + 1.4 * press, seed=200)
     for sx in (-1, 1):
         thumb(c, 540 + sx * (330 - 150 * press), 1060 - 40 * press, sx * (40 - 15 * press), t, 210 + (sx > 0))
+    TAGS = [("POLITE", 290, 700, -30, -1, "politeness"), ("CHEERFUL", 280, 830, -48, -1, "cheerful"),
+            ("CAUTIOUS", 780, 650, 28, 1, "cheerful"), ("WORDY", 800, 830, 48, 1, "tone"), ("SAYS NO NICELY", 430, 600, -12, -1, "tone")]
+    for i, (lab, x, y, lean, side, word) in enumerate(TAGS):
+        t_on = Wx("c4", word) - 0.15 + (0.25 if i in (2, 4) else 0.0)
+        if T > t_on:
+            flag(c, x, y, lab, t, 30 + i, [(255, 236, 90), (140, 255, 200), (120, 200, 255), (255, 170, 210), (255, 255, 255)][i],
+                 lean=lean, size=34, side=side)
     if T > Wx("c4", "scripted") - 0.15:                                    # a script, crossed out
         k = K.pop(T, Wx("c4", "scripted") - 0.15, 0.2, 0.3)
         c.save()
-        c.translate(820, 420)
+        c.translate(820, 330)
         c.rotate(8)
         c.scale(k, k)
         c.drawRect(skia.Rect.MakeXYWH(-120, -150, 240, 300), paint(WHITE))

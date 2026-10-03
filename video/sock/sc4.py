@@ -51,6 +51,24 @@ def crawl(c, T, text, y=1262, t0=0.0, speed=260):
     K.text(c, "NOD NEWS", 100, y + 52, 38, "rubik-900", WHITE, tag="deco")
 
 
+def breaking(c, T, t0, lines, y=610):
+    """NOD NEWS: a static BREAKING bar that slams in (two short lines, readable)."""
+    k = K.pop(T, t0, 0.22, 0.25)
+    if k <= 0:
+        return
+    c.save()
+    c.translate(540, y + 80)
+    c.scale(1.0, k)
+    c.translate(-540, -(y + 80))
+    F.fl(c, path([(20, y), (1060, y), (1060, y + 170), (20, y + 170)]), (20, 10, 40), outline=6)
+    F.fl(c, path([(20, y), (300, y), (330, y + 54), (20, y + 54)]), (230, 30, 50), outline=0)
+    K.text(c, "BREAKING", 160, y + 42, 38, "rubik-900", WHITE, tag="news")
+    K.text(c, "NOD NEWS", 960, y + 42, 30, "rubik-900", GOLD, align="right", tag="news")
+    for i, ln in enumerate(lines):
+        K.text(c, ln, 540, y + 100 + i * 52, 44, "jost-600", WHITE, tag="news")
+    c.restore()
+
+
 def monitor(c, x, y, s, T, draw_screen):
     """A beige CRT on the desk; draw_screen(c, x0, y0, x1, y1) fills the glass."""
     c.save()
@@ -159,7 +177,7 @@ def s_f_desk(T, idx):
     K.text(c, "QUOTA:", 710, 420, 28, "comic-neue-700", INK, tag="deco")
     K.text(c, "500/day", 710, 452, 28, "comic-neue-700", INK, tag="deco")
     C.live_dot(c, T, idx, 740, 2250, 0.86, pose="thumb_up" if T > Wx("d2", "Rating") else "rest", mood="deadpan", look=(-0.8, 0.0),
-               seed=1, headset=True, badge="AI RATER", sock_look=(-0.8, 0.2), sock_face=-1)
+               seed=1, headset=True, sock_look=(-0.8, 0.2), sock_face=-1)
     tv.lower_third(c, T, S("d2") + 0.2, "DOT", "AI rater (day job)", y=1160, x0=40, w=760)
     return st.arr
 
@@ -197,7 +215,7 @@ def s_f_thumbs(T, idx):
         if T < tk:
             continue
         u = min(1.0, (T - tk) / 0.35)
-        sx, sy = rng.uniform(0, W), H + 100
+        sx, sy = rng.uniform(0, W), -120
         side = k % 4
         ex = [rng.uniform(110, 980), rng.uniform(110, 980), rng.uniform(70, 130), rng.uniform(950, 1010)][side]
         ey = [rng.uniform(330, 390), rng.uniform(650, 700), rng.uniform(400, 640), rng.uniform(400, 640)][side]
@@ -303,8 +321,7 @@ def s_f_raters(T, idx):
         F.fl_rrect(c, x - 110, 1280, x + 110, 1420, 40, [(250, 120, 180), (110, 200, 255), (255, 210, 80), (170, 120, 255), (120, 230, 160)][i])
         if i in (0, 1, 3) and T > Wx("d6", "prefer") - 0.2:
             thumbs_btn(c, x + 60, 1120 - 30 * math.sin(T * 10 + i), 40, True)
-    crawl(c, T, "2025: OPENAI ROLLED BACK A CHATGPT UPDATE FOR BEING 'OVERLY FLATTERING'  +++  ", y=640, t0=Wx("d6", "people", 1) - 0.3,
-          speed=330)
+    breaking(c, T, Wx("d6", "people", 1) - 0.25, ["2025: OpenAI rolled back a ChatGPT update", "for being \"overly flattering\""], y=610)
     return st.arr
 
 
@@ -329,7 +346,7 @@ def s_f_ask(T, idx):
     q = "should i bet my savings on a sock puppet musical?"
     typed = q[: int(len(q) * ramp(T, Wx("d8", "should") - 0.05, E("d8") - 0.1))]
     chat(c, 50, 300, 640, 1000, [("dot_41", typed + ("|" if int(T * 3) % 2 == 0 else ""), (220, 30, 120))], T, size=44)
-    C.live_dot(c, T, idx, 360, 2420, 0.9, pose="hold", mood="sincere", look=(-0.2, -0.5), seed=1, headset=True, badge="AI RATER",
+    C.live_dot(c, T, idx, 360, 2420, 0.9, pose="hold", mood="sincere", look=(-0.2, -0.5), seed=1, headset=True,
                sock_look=(0.6, -0.6), sock_face=1)
     return st.arr
 
@@ -361,6 +378,11 @@ def s_f_brilliant(T, idx):
     return st.arr
 
 
+def cut_empty():
+    from edit import EDIT
+    return next(e[0] for e in EDIT if e[1] == "f_empty")
+
+
 def s_f_empty(T, idx):
     """Hard cut: the musical. An empty theatre, one spotlight, one cough. 'It was not.'"""
     st = K.Stage()
@@ -381,10 +403,12 @@ def s_f_empty(T, idx):
     C.live_dot(c, T, idx, 540, 2000, 0.68, pose="sock_chest", mood="sad" if T < S("d10") else "flat", look=(0.0, 0.2), seed=1,
                sock_look=(0.0, 0.6), sock_mood="sad")
     F.audience(c, 1180, T, clap=0.0, rows=3, empty=True)                      # rows of empty red seats
-    if T > E("d9") + 1.15:                                                    # one person, a cough (it's Dad)
+    if T > cut_empty() + 0.5:                                                  # one person, a cough (it's Dad)
         F.fl_oval(c, 870, 1300, 40, 46, (255, 210, 170), outline=6)
         F.fl(c, path([(830, 1260), (910, 1260), (900, 1250), (840, 1250)]), (120, 120, 120), outline=4)
-    if T > S("d10") + 0.6:
-        tv.scrawl(c, "ATTENDANCE: 2", 540, 300 + 40, 70, (255, 240, 120), rot=-4, k=ramp(T, S("d10") + 0.6, S("d10") + 0.9))
-        tv.scrawl(c, "(one was my dad)", 560, 410, 52, WHITE, rot=-3, k=ramp(T, S("d10") + 0.8, S("d10") + 1.2))
+    t_l = cut_empty() + 0.4
+    if T > t_l:
+        tv.scrawl(c, "ATTENDANCE: 2", 720, 705, 70, (255, 240, 120), rot=-4, k=ramp(T, t_l, t_l + 0.3))
+        tv.scrawl(c, "(one was my dad)", 740, 785, 52, WHITE, rot=-3, k=ramp(T, t_l + 0.15, t_l + 0.5))
+        tv.scribble_arrow(c, 820, 830, 864, 1230, WHITE, k=ramp(T, t_l + 0.3, t_l + 0.6), seed=6, bend=0.15)
     return st.arr
