@@ -400,13 +400,13 @@ def score(mus, fx, crowd, cr, nosil):
     for k in range(14):                                                          # thumbs-ups flying in
         fx.add(O.ding(0.18, m=91 + (k % 4) * 2), S("d4") + 0.1 + k * 0.08, 1.0, pan=0.2 + 0.05 * k)
     crowd.add(L.applause(1.4, 0.8, seed=6), S("d5") - 0.05)
-    crowd.add(L.laugh(min(1.6, S("d6") - E("d5") - 0.1), 0.9, seed=10, n=20), E("d5") + 0.02)
+    crowd.add(L.laugh(S("d6") - E("d5") + 0.2, 0.9, seed=10, n=20), E("d5") - 0.3)        # over before the fact
     fx.add(L.fm_bell(96, 1.5, 0.35), Wx("d6", "tell") - 0.2)
     for k in range(int((E("d8") - Wx("d8", "should")) * 9)):
         fx.add(O.keys(1, 0.0, 0.35, seed=k + 70), Wx("d8", "should") + k / 9, 1.0, pan=0.4)
     fireworks(cr, fx, T_FIRE, T_EMPTY)
     crowd.add(L.applause(T_EMPTY - T_FIRE + 0.5, 1.3, seed=7), T_FIRE)
-    nosil.add(L.cough(0.5, seed=3), T_EMPTY + 0.95, 1.0, pan=0.7)                 # the only sound in the theatre
+    nosil.add(L.cough(0.5, seed=3), T_EMPTY + 0.88, 1.0, pan=0.7)                 # the only sound in the theatre
     # ---- MS Paint, PS1
     fx.add(O.whoosh(0.5, True, 11, 0.9), T_CH5)
     chiptune(mus, T_CH5 + 0.3, T_PS1 - 0.1, bpm=128, key=64, level=0.75, minor=True, seed=5)

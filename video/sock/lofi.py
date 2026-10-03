@@ -180,7 +180,7 @@ def laugh(dur=2.2, amp=1.0, seed=0, n=22, swell=0.25):
         out = out + noise * (np.abs(out).mean() * 4)
         out = signal.sosfilt(signal.butter(3, [220 / (SR / 2), 5200 / (SR / 2)], "band", output="sos"), out, axis=1)
         env = np.ones(N)
-        fade = int(0.6 * SR)
+        fade = int(min(0.6, dur) * SR)
         env[int(dur * SR):] = 0
         env[int(dur * SR) - fade:int(dur * SR)] = np.linspace(1, 0, fade) ** 1.5
         out = out * env
