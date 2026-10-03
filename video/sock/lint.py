@@ -6,10 +6,10 @@ import numpy as np
 
 
 def check(T):
-    import draw as hx
+    import diy as K
     from shots import lint, render_frame, ui_zone
-    render_frame(T, post=False)
-    boxes = list(hx.TEXT)
+    render_frame(T)
+    boxes = list(K.TEXT)
     return T, lint(boxes), ui_zone(boxes)
 
 

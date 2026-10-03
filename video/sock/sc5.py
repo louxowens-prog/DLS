@@ -249,12 +249,26 @@ def heart(x, y):
     return [(0, 0.2, "fill", (("path", pts), (255, 0, 128)))]
 
 
+def doc_doodle(x, y):
+    """Doc, drawn in Paint: a white sock, stripes, googly eyes, orange hair."""
+    W_ = (255, 255, 255)
+    return [(0, 0, "fill", (("path", [(x, y + 40), (x + 22, y + 40), (x + 24, y + 4), (x + 34, y - 4), (x + 30, y - 16), (x + 8, y - 18),
+                                     (x - 2, y - 8)]), (235, 235, 235))),
+            (0, 0, "line", ([(x, y + 40), (x - 2, y - 8), (x + 8, y - 18), (x + 30, y - 16), (x + 34, y - 4), (x + 24, y + 4), (x + 22, y + 40)], BLK, 1)),
+            (0, 0, "rect", (x, y + 26, x + 22, y + 29, (255, 0, 128), True)), (0, 0, "rect", (x, y + 31, x + 22, y + 34, BLU, True)),
+            (0, 0, "fill", (("ell", x + 12, y - 8, 5, 5), W_)), (0, 0, "fill", (("ell", x + 24, y - 7, 4, 4), W_)),
+            (0, 0, "rect", (x + 12, y - 7, x + 15, y - 4, BLK, True)), (0, 0, "rect", (x + 24, y - 6, x + 26, y - 3, BLK, True)),
+            (0, 0, "line", ([(x + 4, y - 18), (x + 2, y - 28), (x + 10, y - 20), (x + 12, y - 30), (x + 16, y - 19)], (255, 128, 0), 2)),
+            (0, 0, "text", ("DOC", x + 30, y + 38, 8, MAG, "silkscreen-700"))]
+
+
 def s_m_list(T, idx):
     """'Satisfaction isn't truth. Engagement isn't well-being.'"""
     t1, t2 = S("e3") - 0.05, Wx("e3", "Engagement") - 0.3
     items = [(0, 0, "text", ("ISN'T:", 34, 64, 16, MAG, "silkscreen-700"))]
     items += _row(t1, 120, smiley(70, 120), check(190, 120), "SATISFACTION", "TRUTH")
     items += _row(t2, 240, phone(70, 240), heart(190, 240), "ENGAGEMENT", "WELL-BEING")
+    items += doc_doodle(196, 62)
     return paint_shot(T, items, title="isnt.bmp - Paint")
 
 
@@ -288,6 +302,7 @@ def s_m_list2(T, idx):
     items = [(0, 0, "text", ("ISN'T:", 34, 64, 16, MAG, "silkscreen-700"))]
     items += _row(t1, 120, paper_aplus(70, 120), bulb(190, 120), "TEST SCORE", "UNDERSTANDING")
     items += _row(t2, 240, yes_robot(70, 244), scales(190, 240), "OBEYING", "JUDGMENT")
+    items += doc_doodle(196, 62)
     return paint_shot(T, items, title="isnt.bmp - Paint")
 
 

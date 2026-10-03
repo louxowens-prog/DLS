@@ -63,8 +63,8 @@ def member(c, who, x, y, s, T, wave=0.0, mood="smile", seed=0):
             c.drawLine(-220 + k * 90, 700, -200 + k * 90, 800, paint((200, 200, 210), 0.9, stroke=14))       # duct tape
         _arms(c, (150, 260), T, wave, ((80, 200, 255), (80, 200, 255)), 1)
         c.drawCircle(0, 60, 120, paint(SKINS["marge"]))
-        for sx in (-1, 1):
-            c.drawPath(path([(sx * 34, 0), (sx * 34 + 18, 40), (sx * 34, 90), (sx * 34 - 18, 40)]), paint((40, 110, 255)))
+        for sx in (-1, 1):                                              # painted stars round the eyes
+            c.drawPath(path(D.star_pts(sx * 34, 48, 44, 0.45, rot=sx * 8)), paint((40, 110, 255), stroke=9))
         _face(c, T, 50, SKINS["marge"], mood, seed=seed)
         c.drawCircle(0, 88, 22, paint((255, 40, 60)))
         c.drawPath(path([(-110, -20), (110, -20), (20, -300), (-20, -300)]), paint((255, 120, 20)))                # the cone
@@ -134,8 +134,11 @@ def member(c, who, x, y, s, T, wave=0.0, mood="smile", seed=0):
     c.restore()
 
 
-def troupe(c, T, xs, y, s, wave=0.0, mood="smile", idx=0, halo=7.0, who=("marge", "gus", "pixel", "lou")):
-    """The whole troupe, keyed in like everyone else."""
+def troupe(c, T, xs, y, s, wave=0.0, mood="smile", idx=0, halo=7.0, who=("marge", "gus", "pixel", "lou"), float_=0.0):
+    """The whole troupe, keyed in like everyone else (float_: how far their feet hang above the floor - a bad key -
+    with their shadows thrown the wrong way, up the curtain)."""
     for i, (name, x) in enumerate(zip(who, xs)):
+        if float_ > 0:                                                   # a shadow on the floor - in the wrong place
+            c.drawOval(skia.Rect.MakeLTRB(x + 60, y - 16, x + 60 + 320 * s, y + 14), paint(INK, 0.32, blur=8))
         with D.live(c, idx + i * 3, halo=halo) as L:
-            member(L, name, x, y, s, T, wave, mood, seed=i)
+            member(L, name, x, y - float_ * (1 + 0.15 * math.sin(T * 2 + i)), s, T, wave, mood, seed=i)

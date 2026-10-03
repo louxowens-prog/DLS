@@ -23,14 +23,14 @@ def basement(c, T, lights=1.0, spot=0.0):
     for k in range(10):
         c.drawRect(skia.Rect.MakeXYWH(k * 110, 0, 108, H), paint(mix((120, 82, 50), (96, 64, 38), (k % 3) / 3)))
         c.drawLine(k * 110 + 108, 0, k * 110 + 108, H, paint((60, 38, 22), stroke=4))
-    cur = path([(90, 360), (990, 350), (1010, 1260), (70, 1270)])
+    cur = path([(90, 360), (990, 350), (1010, 1180), (70, 1190)])
     c.drawPath(cur, paint((255, 70, 170)))
     c.save()
     c.clipPath(cur, doAntiAlias=True)
     for k in range(12):
         x = 90 + k * 80
-        c.drawLine(x, 350, x + 20 * math.sin(k), 1270, paint((190, 30, 120), 0.6, stroke=26, blur=14))
-        c.drawLine(x + 30, 350, x + 30 + 10 * math.sin(k), 1270, paint((255, 150, 210), 0.35, stroke=12, blur=8))
+        c.drawLine(x, 350, x + 20 * math.sin(k), 1190, paint((190, 30, 120), 0.6, stroke=26, blur=14))
+        c.drawLine(x + 30, 350, x + 30 + 10 * math.sin(k), 1190, paint((255, 150, 210), 0.35, stroke=12, blur=8))
     c.restore()
     # Christmas lights on a sagging wire
     pts = [(40 + i * 50, 300 + 40 * math.sin(i / 20 * math.pi)) for i in range(21)]
@@ -48,11 +48,12 @@ def basement(c, T, lights=1.0, spot=0.0):
         a = k * 0.4 + T * 1.5
         c.drawCircle(bx + 44 * math.cos(a), by + 44 * math.sin(a) * 0.9, 16, paint(mix((200, 230, 255), (255, 200, 240), (k % 3) / 2)))
         c.drawCircle(bx + 44 * math.cos(a), by + 44 * math.sin(a) * 0.9, 4, paint((120, 120, 140)))
-    # the riser
-    c.drawRect(skia.Rect.MakeLTRB(0, 1250, W, 1330), paint((190, 150, 100)))
-    c.drawRect(skia.Rect.MakeLTRB(0, 1330, W, H), paint((70, 50, 36)))
-    for k in range(6):
-        c.drawLine(k * 200, 1250, k * 200 + 20, 1330, paint((150, 110, 70), stroke=4))
+    # the riser: plywood, deep enough to stand on
+    c.drawPath(path([(0, 1180), (W, 1180), (W, 1350), (0, 1350)]), paint(shader=lin((0, 1180), (0, 1350), [(170, 130, 86), (205, 165, 112)])))
+    c.drawRect(skia.Rect.MakeLTRB(0, 1350, W, H), paint((70, 50, 36)))
+    for k in range(-2, 9):
+        c.drawLine(540 + (k * 150 - 540) * 0.8, 1180, 540 + (k * 150 - 540) * 1.1, 1350, paint((150, 110, 70), stroke=4))
+    c.drawLine(0, 1350, W, 1350, paint((110, 80, 50), stroke=6))
     if spot > 0:
         c.drawRect(skia.Rect.MakeWH(W, H), paint(INK, 0.55 * spot))
         c.drawPath(path([(480, 0), (600, 0), (760, 1300), (320, 1300)]), paint((255, 250, 220), 0.16 * spot))
@@ -116,7 +117,7 @@ def s_v_stage(T, idx):
     c = st.c
     basement(c, T)
     sign(c, T, 410)
-    TR.troupe(c, T, (170, 410, 670, 900), 1300, 0.42, wave=1.0, mood="laugh", idx=idx)
+    TR.troupe(c, T, (170, 410, 670, 900), 1320, 0.42, wave=1.0, mood="laugh", idx=idx, float_=70)
     return finish(st.arr, T, idx)
 
 
@@ -127,8 +128,10 @@ def s_v_family(T, idx):
     basement(c, T)
     sign(c, T, 410)
     walk = K.ease(ramp(T, S("f2") - 0.1, S("f2") + 1.1))
-    TR.troupe(c, T, (120, 300, 790, 960), 1300, 0.42, wave=0.6, mood="smile", idx=idx)
-    C.live_dot(c, T, idx, -200 + 740 * walk, 1300, 0.5, pose="wave" if walk < 1 else "both_up", mood="grin", look=(0.3, 0.0), seed=1,
+    TR.troupe(c, T, (120, 300, 790, 960), 1320, 0.42, wave=0.6, mood="smile", idx=idx, float_=70)
+    dx_ = -200 + 740 * walk
+    c.drawOval(skia.Rect.MakeLTRB(dx_ + 70, 1305, dx_ + 300, 1335), paint(INK, 0.32, blur=8))     # her shadow, in the wrong place
+    C.live_dot(c, T, idx, dx_, 1240 + 10 * math.sin(T * 2.2), 0.5, pose="wave" if walk < 1 else "both_up", mood="grin", look=(0.3, 0.0), seed=1,
                sock_look=(0.6, 0.0))
     tv.lower_third(c, T, S("f2") + 0.4, "THE WRONG ANSWERS", "a basement troupe (est. last Tuesday)", y=1060, x0=40, w=900)
     return finish(st.arr, T, idx)

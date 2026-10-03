@@ -585,8 +585,9 @@ class live:
     the world behind it, its own edges tinged green, a soft green spill halo and a hard, aliased matte line that
     chatter from frame to frame."""
 
-    def __init__(self, c, idx=0, spill=K.KEY, halo=9.0, warm=True, a=1.0, edge=0.55, matte=True):
+    def __init__(self, c, idx=0, spill=K.KEY, halo=9.0, warm=True, a=1.0, edge=0.55, matte=True, noise=5.0):
         self.c, self.idx, self.spill, self.halo, self.warm, self.a, self.edge, self.matte = c, idx, spill, halo, warm, a, edge, matte
+        self.noise = noise
 
     def __enter__(self):
         self.arr = np.zeros((K.H, K.W, 4), np.uint8)
@@ -614,6 +615,12 @@ class live:
             e = np.clip((1 - sm) * 2.2, 0, 1) * (af > 0.02) * self.edge
             rgb = crop[..., :3].astype(np.float32)
             crop[..., :3] = np.clip(rgb * (1 - e[..., None]) + np.array(self.spill, np.float32) * e[..., None], 0, 255).astype(np.uint8)
+        if self.noise > 0:                                 # camera noise on the footage only
+            nz = np.random.default_rng(self.idx * 5 + 1).normal(0, self.noise, crop.shape[:2]).astype(np.float32)
+            on = crop[..., 3] > 0
+            for ch in range(3):
+                v = crop[..., ch].astype(np.float32) + nz * (1.0 + 0.3 * (ch == 2))
+                crop[..., ch] = np.where(on, np.clip(v, 0, 255), crop[..., ch]).astype(np.uint8)
         img = skia.Image.fromarray(crop)
         c = self.c
         c.save()
