@@ -640,6 +640,36 @@ def limit(x, ceil, look=0.005, rel=0.12):
     return x * out[None]
 
 
+def aac_safe(x, target=-1.7, rates=("192k", "256k"), rounds=3):
+    """Round-trip the mix through the AAC encoder at the bitrates we deliver and pull down (briefly, smoothly) any spot
+    where the codec's overshoot would land above the target true peak."""
+    import subprocess
+    import tempfile
+    from scipy.ndimage import minimum_filter1d
+    for _ in range(rounds):
+        g = np.ones(x.shape[1])
+        with tempfile.TemporaryDirectory() as d:
+            write(os.path.join(d, "a.wav"), x)
+            for br in rates:
+                subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", os.path.join(d, "a.wav"), "-c:a", "aac", "-b:a", br,
+                                os.path.join(d, "a.m4a")], check=True)
+                raw = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-i", os.path.join(d, "a.m4a"), "-f", "f32le", "-ac", "2", "-ar",
+                                      str(SR), "-"], check=True, capture_output=True).stdout
+                y = np.frombuffer(raw, np.float32).reshape(-1, 2).T
+                n = min(y.shape[1], x.shape[1])
+                up = signal.resample_poly(y[:, :n], 4, 1, axis=1)
+                pk = np.abs(up).max(axis=0)[: 4 * n].reshape(-1, 4).max(axis=1)
+                gg = np.ones(x.shape[1])
+                gg[:n] = np.minimum(1.0, db(target) / (pk + 1e-12))
+                g = np.minimum(g, gg)
+        if g.min() > 0.995:
+            break
+        g = minimum_filter1d(g, size=int(0.04 * SR))
+        g = smooth(g, 0.03)
+        x = x * g[None]
+    return x
+
+
 def write(path, x):
     x = np.clip(x, -1, 1)
     data = (x.T * 32767).astype(np.int16)
@@ -654,6 +684,6 @@ if __name__ == "__main__":
     import time
     t0 = time.time()
     os.makedirs(os.path.join(HERE, "build"), exist_ok=True)
-    mix = build()
+    mix = aac_safe(build())
     write(os.path.join(HERE, "build", "audio.wav"), mix)
     print("audio", round(mix.shape[1] / SR, 2), "s in", round(time.time() - t0, 1), "s")
