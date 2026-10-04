@@ -28,7 +28,8 @@ def steps_typed(T):
 
 
 def s_o_gears(T, idx):
-    """Machinery: gears, a flywheel, a pendulum, a piston - cut out and pasted down, rearranged on every jump cut."""
+    """Machinery: gears, a flywheel, a pendulum, a piston - press photographs of them, torn into strips and pasted
+    down askew on coloured paper, rearranged on every jump cut."""
     st = K.Stage()
     c = st.c
     SE.machine_room(c, T)
@@ -45,7 +46,16 @@ def s_o_gears(T, idx):
     py = 1400 + 120 * math.sin(T * 9)                                     # a piston
     c.drawRect(skia.Rect.MakeXYWH(820, py, 120, 260), paint((120, 124, 130)))
     c.drawRect(skia.Rect.MakeXYWH(800, py - 30, 160, 40), paint((150, 156, 166)))
-    return st.arr
+    img = CL.halftone(st.arr[..., :3], cell=7)                            # the photographs, printed in dots
+    img = np.dstack([img, np.full(img.shape[:2], 255, np.uint8)])
+    out = K.Stage()
+    SE.void(out.c, [(214, 168, 40), (176, 30, 54), (40, 80, 150)][beat % 3], seed=beat)
+    bands = [(120, 760), (700, 1300), (1240, 1880)]
+    for j, (y0, y1) in enumerate(bands):                                  # torn into strips, pasted askew
+        pts = [(30, y0), (W - 30, y0 + rng.uniform(-30, 30)), (W - 30, y1), (30, y1 + rng.uniform(-30, 30))]
+        CL.pasted(out.c, img, pts, seed=beat * 5 + j, ang=rng.uniform(-3.5, 3.5), dx=rng.uniform(-24, 24), dy=rng.uniform(-10, 10))
+    PR.gear(out.c, rng.uniform(200, 880), rng.uniform(500, 1400), 120, 12, T * 140, colr=(214, 168, 40))   # one in colour, on top
+    return out.arr
 
 
 def s_o_strip(T, idx):
@@ -411,20 +421,17 @@ def s_a_notfake(T, idx):
 
 
 def portrait(c, who, x, y, s, ang=0.0, a=1.0):
-    """A studio portrait, cut out with a white border."""
+    """A press photograph of a stranger, in halftone, cut out with a white border."""
+    def shoot(cc):
+        cc.translate(130, 175)
+        cc.scale(0.8, 0.8)
+        D.head(cc, who, 1.0, "smile", 0.0, (0, 0))
+    img = K.cached("portrait_" + who, lambda: CL.snapshot(260, 300, shoot, bg=(150, 156, 166), cell=5))
     c.save()
     c.translate(x, y)
     c.rotate(ang)
     c.scale(s, s)
-    c.drawRect(skia.Rect.MakeXYWH(-150 + 8, -190 + 12, 300, 380), paint(INK, 0.35 * a, blur=8))
-    c.drawRect(skia.Rect.MakeXYWH(-150, -190, 300, 380), paint((250, 248, 240), a))
-    c.drawRect(skia.Rect.MakeXYWH(-130, -170, 260, 300), paint((120, 130, 140), a))
-    c.save()
-    c.clipRect(skia.Rect.MakeXYWH(-130, -170, 260, 300))
-    c.translate(0, 0)
-    c.scale(0.8, 0.8)
-    D.head(c, who, 1.0, "smile", 0.0, (0, 0))
-    c.restore()
+    CL.photo(c, img, 0, -20, 260, 300, border=20, a=a)
     c.restore()
 
 
@@ -443,16 +450,17 @@ def s_a_faces(T, idx):
         portrait(c, "mira", 750, 760, 0.95, 5)
         if T > t_pick:
             c.drawOval(skia.Rect.MakeLTRB(170, 540, 490, 980), paint((40, 120, 60), stroke=10))
-    keys_l = [(S("a12") - 0.2, "stand"), (t_pick - 0.1, "point_l"), (t_pick + 0.4, "hold")]
+    keys_l = [(S("a12") - 0.2, "stand"), (t_pick - 0.1, "point_l"), (t_pick + 0.4, "point_l")]
     keys_z = [(S("a12") - 0.2, "stand"), (t_swap, "point"), (t_swap + 0.35, "hips")]
-    C.girl(c, "zuza", 210, 1880, 0.62, T, keys_z, mood="sly", look=(0.6, 0))
-    hl = C.girl(c, "lili", 760, 1880, 0.62, T, keys_l, mood="delight" if T > S("a13") else "smile", look=(-0.3, 0.3))
-    if T > t_pick + 0.4:
-        portrait(c, "mira" if swapped else "eva", 600, 820, 1.25, -5)
+    C.girl(c, "zuza", 170, 1800, 0.62, T, keys_z, mood="sly", look=(0.6, 0))
+    hl = C.girl(c, "lili", 820, 1800, 0.62, T, keys_l, mood="delight" if T > S("a13") else "smile", look=(-0.3, 0.3))
+    if T > t_pick + 0.4:                                                 # held out by its bottom edge
+        hx, hy = hl["hand_l"][:2]
+        portrait(c, "mira" if swapped else "eva", hx + 10, hy - 150, 0.95, -5)
     if T > t_swap and T < t_swap + 0.35:                                  # the swap: a blur of hands
         CL.scraps(c, T, t_swap, seed=4, n=10, area=(400, 900, 900, 1200))
     if T > Wx("a13", "earrings") - 0.1:
-        C.label(c, "NOT THE ONE SHE PICKED", 540, 1180, 48, colr=(250, 244, 228), paper=(176, 30, 54), rot=3)
+        C.label(c, "NOT THE ONE SHE PICKED", 540, 460, 48, colr=(250, 244, 228), paper=(176, 30, 54), rot=3)
     return st.arr
 
 

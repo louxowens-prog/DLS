@@ -6,7 +6,7 @@ import collage as CL
 import film as F
 import kit as K
 import ov
-from edit import EDIT, TRANS, mode_at, shot_at
+from edit import EDIT, TRANS, frozen, mode_at, shot_at
 from timeline import FPS, TL
 
 SHOTS = {}
@@ -36,10 +36,11 @@ def shot(name, T, idx):
 def render_frame(T, idx=None, overlays=True):
     K.TEXT.clear()
     idx = int(round(T * FPS)) if idx is None else idx
-    i = shot_at(T)
+    Tp = frozen(T)                                           # a freeze frame holds the picture, not the grain
+    i = shot_at(Tp)
     t0, name, tr, _ = EDIT[i]
-    arr = shot(name, T, idx)
-    F.tone(arr, mode_at(T, i))
+    arr = shot(name, Tp, idx)
+    F.tone(arr, mode_at(Tp, i))
     if tr == "scissors" and i > 0 and T < t0 + TRANS["scissors"]:
         saved = list(K.TEXT)
         prev = shot(EDIT[i - 1][1], T, idx)

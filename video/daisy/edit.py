@@ -11,6 +11,8 @@ EDIT = [
     # ---- cold open
     (0.0, "o_gears", "cut", [(0.0, "blue"), (0.35, "bw"), (0.7, "amber")]),
     (S("o1") - 0.15, "o_strip", "flash", [(0, "full")]),
+    (Wx("o1", "A.") + 0.49, "o_gears", "jump", [(0, "blue"), (Wx("o1", "A.") + 0.64, "red")]),
+    (Wx("o1", "Then") - 0.07, "o_strip", "jump", [(0, "full")]),
     (S("o2") - 0.13, "o_duo", "cut", [(0, "full"), (S("o3") - 0.05, "bw")]),
     (E("o3") + 0.15, "o_window", "cut", [(0, "amber"), (Wx("o4", "Sometimes") - 0.1, "violet")]),
     (E("o4") + 0.05, "title", "scissors", [(0, "full"), (E("o4") + 0.9, "green")]),
@@ -51,7 +53,8 @@ EDIT = [
     (Wx("c7", "about", 1) - 0.12, "c_real", "cut", [(0, "red")]),
     # ---- the banquet
     (E("c7") + 0.1, "d_feast", "scissors", [(0, "full"), (S("d3") - 0.05, "amber")]),
-    (E("d4") + 0.05, "d_fight", "cut", [(0, "full")]),
+    (E("d4") + 0.05, "d_fight", "cut", [(E("d4") + 0.05 + k * 0.22, m) for k, m in
+                                        enumerate(["full", "red", "amber", "full", "green", "violet", "red", "blue", "full", "amber", "red", "bw"])]),
     (S("d5") - 0.2, "d_still", "cut", [(0, "bw")]),
     # ---- epilogue
     (S("e1") - 0.1, "e_clue", "cut", [(0, "full")]),
@@ -62,6 +65,17 @@ EDIT = [
 ]
 
 TRANS = {"scissors": 0.45, "flash": 0.08}
+
+# freeze frames: the picture stops (the grain and the voice go on) - just before each cut to silence
+FREEZES = [(E("a5") - 0.3, S("a6") - 1.05), (S("d5") - 0.5, S("d5") - 0.2)]
+
+
+def frozen(T):
+    """The moment the picture shows at time T (T itself unless a freeze holds an earlier frame)."""
+    for a, b in FREEZES:
+        if a <= T < b:
+            return a
+    return T
 
 
 def shot_at(T):

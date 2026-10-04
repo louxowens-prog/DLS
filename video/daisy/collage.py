@@ -117,6 +117,37 @@ def photo(c, img, x, y, w, h, ang=0.0, border=14, a=1.0, shadow=True, src=None):
     c.restore()
 
 
+def snapshot(w, h, draw, bg=(150, 150, 150), cell=5, ink=(28, 24, 26), paper_=(240, 232, 214)):
+    """A press photograph of a drawing: render it off-screen, then print it in halftone dots (RGBA numpy)."""
+    arr = np.zeros((h, w, 4), np.uint8)
+    arr[..., :3] = bg
+    arr[..., 3] = 255
+    draw(skia.Surface(arr).getCanvas())
+    return np.dstack([halftone(arr[..., :3], cell, ink, paper_), np.full((h, w), 255, np.uint8)])
+
+
+def pasted(c, img, pts, seed=0, ang=0.0, dx=0.0, dy=0.0, rim=(250, 248, 240)):
+    """A torn-out piece of a photograph (img the size of the frame), pasted down at an angle with a white torn rim."""
+    cx = sum(p[0] for p in pts) / len(pts)
+    cy = sum(p[1] for p in pts) / len(pts)
+    c.save()
+    c.translate(cx + dx, cy + dy)
+    c.rotate(ang)
+    c.translate(-cx, -cy)
+    outer = path(torn(pts, seed, 6.0))
+    inner = path(torn([(x + (cx - x) * 0.02, y + (cy - y) * 0.02) for x, y in pts], seed + 1, 3.0))
+    c.save()
+    c.translate(6, 9)
+    c.drawPath(outer, paint(INK, 0.4, blur=8))
+    c.restore()
+    c.drawPath(outer, paint(rim))
+    c.save()
+    c.clipPath(inner, doAntiAlias=True)
+    c.drawImage(K.image(img), 0, 0)
+    c.restore()
+    c.restore()
+
+
 def scissors(c, x, y, ang, open_=0.5, s=1.0, a=1.0):
     """Dressmaker's shears: black handles, steel blades; open_ 0 (shut) .. 1 (wide); ang = direction of the points."""
     c.save()

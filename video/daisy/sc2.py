@@ -288,19 +288,58 @@ def s_d_fight(T, idx):
     PR.oracle(c, 540, 1190, 0.5, T, napkin=True, medal=True, look=(math.sin(T * 20), 0), stuffed=1.0, mouth=0.6)
     c.drawCircle(540, 1190 - 0.5 * 1150, 60, paint((250, 240, 236)))      # a cream pie in the face
     table_spread(c, T, mess=min(1, u / 1.2))
-    rng = K.rng_at(int(u * 6), 3)
-    for i in range(4):                                                   # cakes in flight
-        x = rng.uniform(100, 980)
-        y = rng.uniform(500, 1300)
-        PR.cake(c, x, y, 0.2, lines=(), colr=[(236, 200, 210), (250, 230, 180), (200, 160, 220)][i % 3])
+    wall = K.rng_at(77, 1)                                               # cream thrown at the wall stays there
+    for i in range(18):
+        x, y, r = wall.uniform(60, 1020), wall.uniform(280, 1050), wall.uniform(26, 60)
+        if u > 0.12 + i * 0.11:
+            _splat(c, x, y, r, seed=i, colr=[(250, 240, 236), (236, 190, 200), (120, 60, 50), (90, 160, 80)][i % 4])
     beat = int(u / 0.2)
     zp = ["throw", "throw2", "cower", "throw", "kick", "throw2", "up", "throw", "cower"][beat % 9]
     lp = ["cower", "throw", "throw2", "up", "throw", "cower", "throw2", "kick", "throw"][beat % 9]
-    C.girl(c, "zuza", 200, 2300, 1.0, T, None, zp, mood="wide")
-    C.girl(c, "lili", 880, 2300, 1.0, T, None, lp, mood="delight")
+    hz = C.girl(c, "zuza", 200, 2300, 1.0, T, None, zp, mood="wide")
+    hl = C.girl(c, "lili", 880, 2300, 1.0, T, None, lp, mood="delight")
+    on_them = K.rng_at(78, 2)                                            # and on the duo: faces, dresses
+    for i in range(10):
+        who = hz if i % 2 else hl
+        hx, hy = who["head"][:2]
+        dx, dy = on_them.uniform(-70, 70), on_them.uniform(-40, 420)
+        if u > 0.3 + i * 0.17:
+            _splat(c, hx + dx, hy + dy, on_them.uniform(18, 34), seed=40 + i, colr=[(250, 240, 236), (236, 190, 200)][i % 2])
     chain(c, (380, 1200), (700, 1200), sag=60, T=T, broken=True)
+    rng = K.rng_at(beat, 3)                                              # food in flight, re-thrown on every beat
+    for i in range(7):
+        a = hz["hand_r"] if i % 2 else hl["hand_l"]
+        k = rng.uniform(0.15, 1.0)
+        x = a[0] + (rng.uniform(150, 900) * (1 if i % 2 else -1)) * k
+        y = a[1] - 700 * k + 500 * k * k
+        x = min(1040, max(40, x))
+        kind = i % 5
+        c.save(); c.translate(x, y); c.rotate(rng.uniform(-60, 60))
+        c.drawLine(0, 0, -(1 if i % 2 else -1) * 90, 40, paint(WHITE, 0.35, stroke=10))    # a motion streak
+        if kind == 0:
+            PR.cake(c, 0, 30, 0.28, lines=(), colr=[(236, 200, 210), (250, 230, 180), (200, 160, 220)][i % 3])
+        elif kind == 1:
+            PR.apple(c, 0, 0, 40)
+        elif kind == 2:
+            PR.pear(c, 0, 0, 38)
+        elif kind == 3:
+            PR.jelly(c, 0, 40, 48, T, colr=(200, 40, 60), wob=4)
+        else:
+            c.drawCircle(0, 0, 52, paint((214, 168, 90)))                    # a cream pie
+            c.drawCircle(0, -6, 44, paint((250, 244, 236)))
+        c.restore()
     CL.scraps(c, T, t0, seed=9, n=50, area=(0, 200, W, 1700), fall=600, spin=2)
     return st.arr
+
+
+def _splat(c, x, y, r, seed=0, colr=(250, 240, 236)):
+    rng = K.rng_at(seed, 9)
+    pts = [(x + r * math.cos(a) * rng.uniform(0.6, 1.25), y + r * math.sin(a) * rng.uniform(0.6, 1.25))
+           for a in np.linspace(0, 2 * math.pi, 11, endpoint=False)]
+    c.drawPath(K.smooth(pts), paint(colr))
+    for k in range(3):                                                   # drips
+        a = rng.uniform(-0.6, 0.6)
+        c.drawPath(K.capsule(x + r * 0.5 * math.sin(a) * 2, y, x + r * 0.5 * math.sin(a) * 2, y + r * rng.uniform(0.8, 1.8), r * 0.18, r * 0.12), paint(colr))
 
 
 def s_d_still(T, idx):

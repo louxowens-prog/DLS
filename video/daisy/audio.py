@@ -22,7 +22,7 @@ import fxlib as FXL
 import instr as I
 import orch as O
 from common import E, S, Wx
-from edit import EDIT
+from edit import EDIT, FREEZES
 from script import LILI, MACH, NAR, ZUZA
 from timeline import TL
 from voice import SR as VSR
@@ -403,6 +403,13 @@ def score(mus, fx, nosil):
     fx.add(O.pneumatic(0.35, 0, 0.3), 0.17)
     fx.add(O.pneumatic(0.35, 1, 0.3), 0.87)
 
+    ti = next(e[0] for e in EDIT[1:] if e[1] == "o_gears")             # the machines again, between two steps
+    fx.add(I.ratchet(0.3, 30, 0.4, seed=3), ti, until=ti + 0.32)
+    fx.add(O.clunk(0.5, seed=4), ti, pan=0.4)
+    fx.add(O.tick(0.6, tock=True), ti + 0.15, pan=0.6)
+    for a, _ in FREEZES:                                                  # the projector catches on each freeze frame
+        fx.add(O.click(0.55), a, pan=0.5)
+
     # ---- the Oracle types its reasoning; the harpsichord thinks
     fx.add(O.pop(0.4), c("o_strip"))
     harpsichord(mus, c("o_strip"), S("o3") - 0.05, bpm=104, level=0.5)
@@ -642,8 +649,9 @@ def score(mus, fx, nosil):
     t0, t1 = c("c_agents"), e("c_agents")
     harpsichord(mus, t0, t1, bpm=120, level=0.35, prog=AMIN, pattern=(0, 1, 2, 1))
     fx.add(O.whir(t1 - t0, 0.35, 60), t0, until=t1)
-    for k in range(int((t1 - t0) / 0.6)):
-        fx.add(O.beep(0.05, 0.12, 1400 + 300 * (k % 3)), t0 + 0.2 + k * 0.6, pan=0.6, until=t1)
+    tb0 = Wx("c7", "still")
+    for k in range(int((t1 - tb0) / 0.6)):                               # the terminal's beeps, after the first words
+        fx.add(O.beep(0.04, 0.08, 1400 + 300 * (k % 3)), tb0 + k * 0.6, pan=0.6, until=t1)
     for i, w in enumerate(("fail", "one", "three")):
         tw = Wx("c7", w) - 0.15
         fx.add(O.stamp(0.45), tw, pan=0.3 + 0.2 * i)
