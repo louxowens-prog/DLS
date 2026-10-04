@@ -301,8 +301,8 @@ def s_d_feast(T, idx):
     C.girl(c, "zuza", 150, 2350, 1.05, T, [(S("d1") - 0.2, "stand"), (S("d1") + 0.4, "hips"), (S("d2") - 0.05, "lift_r"), (S("d3") - 0.05, "point"),
                                            (S("d4") + 0.2, "shrug")],
            mood="deadpan", props=(None, shears if T < S("d3") else None), look=(0.7, 0))
-    C.girl(c, "lili", 930, 2350, 1.05, T, [(S("d1") - 0.2, "point_l"), (S("d2") + 0.1, "hold"), (S("d3") + 0.6, "point_l"), (S("d4") - 0.05, "eat")],
-           mood="delight" if T < S("d4") else "chew", look=(-0.7, 0))
+    C.girl(c, "lili", 930, 2350, 1.05, T, [(S("d1") - 0.2, "point_l"), (S("d2") + 0.1, "hold"), (S("d3") + 0.6, "point_l"), (E("d4") + 0.02, "eat")],
+           mood="delight" if T < E("d4") else "chew", look=(-0.7, 0))
     return st.arr
 
 

@@ -362,7 +362,7 @@ def _spy(job):
 
     C.girl = spy
     try:
-        shots.SHOTS[name](T, 0)
+        shots.SHOTS[name.partition("@")[0]](T, 0)
     finally:
         C.girl = orig
     return out
@@ -371,17 +371,23 @@ def _spy(job):
 def joints(doll, nosil):
     """A creak on every snap of a joint; and what the pose does: claps clap, steps tiptoe, eats crunch, throws whoosh."""
     moves = doll_moves()
+    words = [(a, b) for k in TL.order for _, a, b in TL.lines[k]["words"]]
+    on_word = lambda t: any(a - 0.03 <= t <= b for a, b in words)
     for i, (t, who, pose) in enumerate(moves):
         if t < T_FREEZE:
             bus = nosil if in_silence(t) else doll
             pan = 0.3 if who == "zuza" else 0.7
-            bus.add(I.joint(0.75, seed=i * 7 + (1 if who == "zuza" else 2), dur=0.13 if who == "lili" else None), t, pan=pan)
+            if on_word(t):                                                 # under a word: a short dry click, not a squeal
+                bus.add(I.joint(0.3, seed=i * 7 + 3, dur=0.05), t, pan=pan)
+                bus.add(O.woodblock(0.14, 1500 if who == "zuza" else 1800), t, pan=pan)
+            else:
+                bus.add(I.joint(0.75, seed=i * 7 + (1 if who == "zuza" else 2), dur=0.13 if who == "lili" else None), t, pan=pan)
             if pose == "clap":
                 bus.add(O.clap(0.5, seed=i), t + 0.06, pan=pan)
             elif pose in ("step_l", "step_r"):
                 bus.add(I.tiptoe(0.8, seed=i), t + 0.04, pan=pan)
             elif pose == "eat":
-                bus.add(I.crunch(0.8, seed=i), t + 0.12, pan=pan)
+                bus.add(I.crunch(0.8, seed=i), t + 0.18, pan=pan)
             elif pose in ("throw", "throw2"):
                 bus.add(O.whoosh(0.25, True, seed=i, amp=0.5), t, pan=pan)
     return moves
@@ -433,8 +439,8 @@ def score(mus, fx, nosil):
         a, b = Wx(k, w0) - 0.05, Wx(k, w1) + 0.3
         fx.add(I.teleprinter(b - a, 0.45, seed=i), a, pan=0.55)
         fx.add(O.ding(0.25, 96), b, pan=0.6)
-    mus.add(O.glock(84, 0.5), S("o2") + 0.05, pan=0.7)
-    mus.add(O.glock(91, 0.5), S("o2") + 0.16, pan=0.7)
+    mus.add(O.glock(84, 0.5), E("o2") + 0.02, pan=0.7)
+    mus.add(O.glock(91, 0.5), E("o2") + 0.12, pan=0.7)
     mus.add(O.tuba(34, 0.45, 1.0), E("o3") + 0.02, until=c("o_window") + 0.3)
 
     # ---- the painted window: the waltz comes in, the choir on 'painting'
@@ -543,7 +549,7 @@ def score(mus, fx, nosil):
     fanfare(mus, fx, t + 0.22, transpose=2)
     t0, t1 = c("b_banners"), e("b_banners")
     march(mus, t0, t1, bpm=126, level=1.0)
-    for tm in (S("b1") - 0.04, Wx("b1", "Human") - 0.05, Wx("b1", "PhD") - 0.05):
+    for tm in (S("b1") - 0.16, Wx("b1", "Human") - 0.17, Wx("b1", "PhD") - 0.17):
         fx.add(O.stamp(0.55), tm)
         fx.add(O.cymbal(0.45, 1.0), tm, pan=0.62)
     t0, t1 = c("b_iq"), e("b_iq")
@@ -644,8 +650,8 @@ def score(mus, fx, nosil):
 
     t0, t1 = c("c_proofs"), e("c_proofs")
     fx.add(O.pop(0.35), t0)
-    tada(mus, Wx("c5", "Proofs") - 0.05, 0.8)
-    tada(mus, Wx("c5", "Clocks") - 0.05, 0.8, minor=True)
+    tada(mus, Wx("c5", "yes") + 0.25, 0.8)
+    tada(mus, E("c5") + 0.02, 0.8, minor=True)
     tno = Wx("c5", "no") - 0.05
     fx.add(O.whoosh(0.3, False, seed=5, amp=0.4), tno + 0.1, pan=0.3)
     fx.add(I.clang(0.7), tno + 0.48, pan=0.3)
@@ -697,7 +703,7 @@ def score(mus, fx, nosil):
     t0, t1 = c("d_feast"), e("d_feast")
     fx.add(I.snip(0.8, 140), t0)
     fx.add(I.snip(0.7, 141), t0 + 0.12)
-    waltz(mus, t0, t1, bpm=156, level=0.7, lead="brass", bass="tuba", organ=True, choir_pad=True, seed=8)
+    waltz(mus, t0, t1, bpm=156, level=0.7, lead="glock", bass="tuba", organ=True, choir_pad=False, seed=8)
     rng = np.random.default_rng(14)
     tt = t0 + 0.4
     while tt < t1:
@@ -707,7 +713,7 @@ def score(mus, fx, nosil):
     while S("d2") - 0.05 + k * 0.35 < S("d3"):
         fx.add(I.snip(0.4, 150 + k), S("d2") - 0.05 + k * 0.35, pan=0.3)
         k += 1
-    fx.add(I.chomp(0.5, seed=3), S("d4") + 0.25, pan=0.7)
+    fx.add(I.chomp(0.5, seed=3), E("d4") + 0.08, pan=0.7)
 
     t0, t1 = c("d_fight"), c("d_still")
     march(mus, t0, t1, bpm=176, level=0.8, stumble=False, bar0=4)
@@ -962,8 +968,10 @@ def build():
         for key in TL.order:
             a, b = spans[key]
             margin = 20 * np.log10((np.sqrt((bv[a:b] ** 2).mean()) + 1e-12) / (np.sqrt((bb[a:b] ** 2).mean()) + 1e-12))
-            if margin < NEED:
-                gain[key] -= (NEED - margin) + 0.4
+            Ln = TL.lines[key]                                             # the duo's punchlines get the most room
+            need = NEED + ((8.0 if Ln["end"] - Ln["start"] < 1.6 else 5.0) if Ln["who"] in (ZUZA, LILI) else 0.0)
+            if margin < need:
+                gain[key] -= (need - margin) + 0.4
                 short = True
         if not short:
             break
@@ -982,7 +990,7 @@ def build():
     dollx = reverb(doll_x, 0.06, 0.4, seed=4)
     don = np.abs(dollx).max(axis=0) > 1e-4
     dollx = dollx * db(DOLL_DB) / (np.sqrt((dollx[:, don] ** 2).mean()) + 1e-12)
-    dollx = dollx * (ride_fx ** 0.4)[None] * dead[None]
+    dollx = dollx * ((ride_fx ** 0.4) * (1 - act * (1 - db(-8.0))))[None] * dead[None]   # full between words, lower under them
     ns = ns_x * db(-24.0) / (np.abs(ns_x).max() + 1e-12)
     # in the silences, not digital zero: the faint hiss of the optical track, a tick of dust now and then
     rng = np.random.default_rng(21)
@@ -998,7 +1006,7 @@ def build():
     a_, b_ = int((TL.total - 0.5) * SR), int(TL.total * SR)
     mix[:, a_:b_] *= np.linspace(1, 0, b_ - a_) ** 2
     mix[:, b_:] = 0.0
-    STEMS.update(music=music, fx=fxx, vo=vo)
+    STEMS.update(music=music, fx=fxx, vo=vo, doll=dollx, ns=ns)
     return mix
 
 
