@@ -75,7 +75,12 @@ def girl(c, who, x, y, s, T, keys=None, P="stand", **kw):
         P, jolt = D.doll(T, keys)
     kw.setdefault("talk", talk(T, who))
     kw.setdefault("blink", blink(T, 3 if who == "zuza" else 8))
-    return D.figure(c, who, x, y, s, T, P, jolt=jolt * 0.6, **kw)
+    p = skia.Paint()                                                       # a cut-out, lifted off the page: a soft shadow
+    p.setImageFilter(skia.ImageFilters.DropShadow(9 * s / 0.6, 12 * s / 0.6, 6, 6, skia.Color4f(0.06, 0.03, 0.04, 0.5).toColor()))
+    c.saveLayer(None, p)
+    out = D.figure(c, who, x, y, s, T, P, jolt=jolt * 0.6, **kw)
+    c.restore()
+    return out
 
 
 def label(c, s, x, y, size=46, colr=INK, paper=(250, 244, 228), rot=0.0, fname="abril-400", tag="label", a=1.0, pad=(26, 18), edge="cut",

@@ -33,7 +33,7 @@ def s_o_gears(T, idx):
     st = K.Stage()
     c = st.c
     SE.machine_room(c, T)
-    beat = int(T / 0.35)
+    beat = int(T / 0.25)
     rng = K.rng_at(beat, 2)
     for i in range(7):
         r = rng.uniform(90, 300)
@@ -55,7 +55,22 @@ def s_o_gears(T, idx):
         pts = [(30, y0), (W - 30, y0 + rng.uniform(-30, 30)), (W - 30, y1), (30, y1 + rng.uniform(-30, 30))]
         CL.pasted(out.c, img, pts, seed=beat * 5 + j, ang=rng.uniform(-3.5, 3.5), dx=rng.uniform(-24, 24), dy=rng.uniform(-10, 10))
     PR.gear(out.c, rng.uniform(200, 880), rng.uniform(500, 1400), 120, 12, T * 140, colr=(214, 168, 40))   # one in colour, on top
+    _montage_duo(out.c, T, beat)
     return out.arr
+
+
+def _montage_duo(c, T, beat):
+    """Pasted over the machines on the jump cuts: the duo as cut-outs - Zuza snapping her shears, Lili winding the
+    works - and a flash of the prank to come: the shears at the Oracle's forehead."""
+    k = beat % 4
+    if k == 0:
+        sh = lambda cc, x, y, a: CL.scissors(cc, x, y, a + 180, 0.5 + 0.5 * math.sin(T * 30), 1.2)
+        C.girl(c, "zuza", 330, 2150, 1.0, T, None, "lift_r" if beat % 8 == 0 else "point", mood="sly", props=(None, sh), hands=("open", "fist"))
+    elif k == 1:
+        PR.oracle(c, 540, 2500, 1.7, T, look=(0.3, -0.4))
+        CL.scissors(c, 700, 560, 200, 0.5 + 0.5 * math.sin(T * 30), 2.0)
+    elif k == 2:
+        C.girl(c, "lili", 720, 2150, 1.0, T, None, "up" if beat % 8 == 2 else "wave", mood="delight")
 
 
 def s_o_strip(T, idx):
@@ -72,9 +87,11 @@ def s_o_duo(T, idx):
     st = K.Stage()
     c = st.c
     SE.salon(c, T)
-    PR.oracle(c, 540, 1560, 0.8, T, strip=STEPS[:1], look=(0.4 if T < S("o3") else -0.4, 0.2))
-    C.girl(c, "lili", 860, 1830, 0.62, T, [(S("o2") - 0.2, "stand"), (S("o2"), "point_l"), (S("o2") + 0.5, "up")], mood="delight")
-    C.girl(c, "zuza", 210, 1830, 0.62, T, [(S("o2") - 0.2, "stand"), (S("o3") - 0.05, "hips")], mood="deadpan", look=(0.6, 0))
+    PR.oracle(c, 540, 1380, 0.72, T, strip=steps_typed(T), look=(0.4 if T < S("o3") else -0.4, 0.2))
+    C.girl(c, "lili", 860, 1760, 0.62, T, [(S("o1") + 1.5, "stand"), (Wx("o1", "Then"), "point_l"), (Wx("o1", "Therefore"), "stand"),
+                                          (S("o2") - 0.2, "stand"), (S("o2"), "point_l"), (S("o2") + 0.5, "up")], mood="delight")
+    C.girl(c, "zuza", 210, 1760, 0.62, T, [(S("o1") + 1.5, "stand"), (Wx("o1", "noticed"), "hips"), (Wx("o1", "Therefore") + 0.3, "stand"),
+                                          (S("o3") - 0.05, "hips")], mood="deadpan", look=(0.6, 0))
     return st.arr
 
 
@@ -275,24 +292,24 @@ def s_a_used(T, idx):
     score_meter(c, 130, 1480, 0.31 + 0.68 * ease(ramp(T, Wx("a5", "almost") - 0.2, Wx("a5", "time") + 0.1)), 0.75)
     pts = PR.oracle(c, 560, 1560, 0.8, T, mouth=0.2, lamps=True)
     rng = K.rng_at(6, 1)
-    n = int(ramp(T, t0 + 0.3, Wx("a5", "less")) * 60)
+    n = int(ramp(T, t0 + 0.3, Wx("a5", "under")) * 60)
     for i in range(n):                                                    # the slips pile up on the floor
         x, y = rng.uniform(80, 1000), rng.uniform(1560, 1820)
         PR.slip(c, x, y, rng.uniform(-30, 30), SLIP, 0.5)
     for i in range(6):                                                    # and more fly out of the slot
         t_i = t0 + 0.3 + i * 0.7
-        if t_i < T < t_i + 1.2 and T < Wx("a5", "less"):
+        if t_i < T < t_i + 1.2 and T < Wx("a5", "under"):
             u = (T - t_i) / 1.2
             sx, sy = pts["slot"]
             PR.slip(c, sx + (i % 2 * 2 - 1) * 380 * u, sy - 300 * math.sin(u * math.pi) + 500 * u * u, 360 * u * (1 if i % 2 else -1), SLIP, 0.55)
-    if T > Wx("a5", "less") - 0.1:
-        u = ease(ramp(T, Wx("a5", "less"), Wx("a5", "less") + 0.5))
+    if T > Wx("a5", "under") - 0.1:
+        u = ease(ramp(T, Wx("a5", "under"), Wx("a5", "under") + 0.5))
         PR.slip(c, 700 - 160 * u, 1660 - 640 * u, -8 + 4 * u, CONFESS, 0.62 + 0.75 * u, mark=(30, 24, 26), colr=(255, 250, 200))
-        k = K.pop(T, Wx("a5", "less") - 0.05, 0.25, 0.3)
+        k = K.pop(T, Wx("a5", "under") - 0.05, 0.25, 0.3)
         c.save(); c.translate(560, 560); c.scale(k, k); c.translate(-560, -560)
         C.big(c, "UNDER 2%", 560, 560, 170, [(200, 30, 40), (24, 20, 22)], seed=11)
         c.restore()
-        if T > Wx("a5", "written"):
+        if T > Wx("a5", "reasoning"):
             C.label(c, "ADMITTED IT", 820, 700, 46, fname="special-elite-400", rot=-3)
     elif T > Wx("a5", "almost") - 0.1:
         C.label(c, "USED IT 99% OF THE TIME", 560, 560, 50, paper=(250, 196, 30), rot=-3)
@@ -345,7 +362,7 @@ def s_a_tracks(T, idx):
             for k in range(20):
                 c.drawRect(skia.Rect.MakeXYWH(60 + k * 50, yy + 34, 10, 26), paint((90, 70, 50)))
             u = ramp(T, ty, Wx("a7", "digit") + 0.2)
-            x = 120 + 520 * ease(u)
+            x = 200 + 440 * ease(u)
             CL.paper(c, CL.rect_pts(x - 120, yy - 70, x + 120, yy + 34), colr, seed=j + 3)
             f = K.font("abril-400", 50)
             c.drawString(val, x - f.measureText(val) / 2, yy, f, paint(INK))
@@ -391,7 +408,7 @@ def s_a_notfake(T, idx):
     Slips on a line, mostly ticked; then the duo hold up two cards with a slashed equals sign between them."""
     st = K.Stage()
     c = st.c
-    SE.salon(c, T, wall=(150, 180, 170), wall2=(220, 230, 220))
+    SE.salon(c, T, wall=(70, 110, 100), wall2=(120, 150, 140))
     t1 = Wx("a11", "But") - 0.1
     if T < t1:
         c.drawLine(40, 520, 1040, 540, paint((80, 70, 60), stroke=4))
@@ -476,7 +493,7 @@ def s_a_interp(T, idx):
     for j in range(rows):
         s_ = " ".join(f"{rng.uniform(-1, 1):+.3f}" for _ in range(9))
         c.drawString(s_, -40 + (j % 2) * 30 - (T * 20 % 60), 60 + j * 36, f, paint((90, 80, 90), 0.55))
-    t_m = Wx("a14", "Hence") - 0.1
+    t_m = Wx("a14", "That") - 0.1
     mx, my = 540 + 180 * math.sin(T * 0.8), 860 + 120 * math.cos(T * 0.6)
     c.drawCircle(mx, my, 230, paint((250, 248, 236)))
     c.save()
@@ -491,8 +508,10 @@ def s_a_interp(T, idx):
     c.restore()
     c.drawCircle(mx, my, 230, paint((60, 50, 40), stroke=22))
     c.drawPath(K.capsule(mx + 160, my + 160, mx + 330, my + 330, 44, 36), paint((90, 60, 36)))
-    C.girl(c, "zuza", 200, 1840, 0.42, T, None, "point", mood="deadpan")
-    C.girl(c, "lili", 880, 1840, 0.42, T, None, "shrug", mood="wide")
+    CL.paper(c, CL.rect_pts(-20, 1500, W + 20, H + 20), (226, 214, 190), seed=4, edge="torn")      # a strip of plain paper to stand on
+    tm = Wx("a14", "That")
+    C.girl(c, "zuza", 190, 2070, 0.5, T, [(S("a14") - 0.1, "stand"), (S("a14") + 0.5, "point"), (tm, "shrug"), (tm + 0.8, "point")], mood="deadpan")
+    C.girl(c, "lili", 890, 2070, 0.5, T, [(S("a14") - 0.1, "stand"), (S("a14") + 0.9, "shrug"), (tm + 0.3, "hips"), (tm + 1.1, "point_l")], mood="wide")
     C.label(c, "BILLIONS OF NUMBERS", 540, 330, 48, paper=(250, 196, 30), rot=-2)
     if T > t_m:
         k = K.pop(T, t_m, 0.25, 0.3)

@@ -100,7 +100,7 @@ def s_b_broken(T, idx):
         u = T - tc
         PR.slip(c, 260 + j * 200 + 60 * math.sin(u * 3), 1180 + 120 * u, 20 * math.sin(u * 4 + j), [ITEMS[i][:18]], 0.6)
     ci = min(len(cut_set), 2)
-    if T < t0 + 4.0:
+    if True:                                                             # the shears stay on the job
         yy = 420 + 1.1 * (130 + [1, 3, 4][ci] * 70)
         CL.scissors(c, 300 + 60 * math.sin(T * 6), yy - 20, 0, 0.5 + 0.5 * math.sin(T * 26), 0.9)
     C.label(c, "STANFORD AI INDEX 2026", 540, 330, 44, fname="special-elite-400", rot=-1)
@@ -143,7 +143,7 @@ def s_b_leak(T, idx):
     'Answer-key cake!' Lili pipes the answer key onto a cake."""
     st = K.Stage()
     c = st.c
-    SE.salon(c, T, wall=(200, 150, 200), wall2=(236, 220, 236))
+    SE.salon(c, T, wall=(110, 70, 110), wall2=(160, 120, 160))
     t0 = S("b6")
     PR.exam(c, 260, 330, 0.62, -8, ITEMS[:4], title="THE ANSWERS", marks={0: "B", 1: "D", 2: "A", 3: "C"})
     k = ramp(T, Wx("b6", "leak") - 0.2, S("b7") - 0.1)
@@ -234,7 +234,7 @@ def s_b_94(T, idx):
     k = K.pop(T, S("b9") + 0.3, 0.25, 0.3)
     split = ramp(T, t1 + 0.6, t1 + 1.1)
     c.save()
-    c.translate(720, 700)
+    c.translate(640, 700)
     c.scale(k, k)
     for side in (-1, 1):
         c.save()
@@ -242,7 +242,7 @@ def s_b_94(T, idx):
         c.rotate(side * 8 * split)
         c.save()
         c.clipRect(skia.Rect.MakeLTRB(-400 if side < 0 else 0, -400, 0 if side < 0 else 400, 400))
-        f = K.font("abril-400", 300)
+        f = K.font("abril-400", 260)
         c.drawString("94%", -f.measureText("94%") / 2 + 6, 108, f, paint(INK, 0.35))
         c.drawString("94%", -f.measureText("94%") / 2, 100, f, paint((200, 30, 40)))
         c.restore()
@@ -251,10 +251,10 @@ def s_b_94(T, idx):
         c.drawRect(skia.Rect.MakeLTRB(-60 * split, -200, 60 * split, 120), paint((40, 30, 30)))
         CL.scraps(c, T, t1 + 0.8, seed=8, n=6, area=(-60, -100, 60, 120), fall=200)
     c.restore()
-    K.reg(720 - 320, 700 - 230, 720 + 320, 700 + 120, "big")
+    K.reg(640 - 290, 700 - 200, 640 + 290, 700 + 110, "big")
     if T > t1:
-        C.girl(c, "zuza", 260, 1950, 0.66, T, [(t1, "stand"), (t1 + 0.3, "lift_r")], mood="deadpan",
-               props=(None, lambda cc, x, y, a: CL.scissors(cc, x, y, a + 180, 0.5 + 0.5 * math.sin(T * 20), 0.9)), hands=("open", "fist"))
+        C.girl(c, "zuza", 900, 1950, 0.66, T, [(t1, "stand"), (t1 + 0.3, dict(sL=150, eL=20))], mood="deadpan",
+               props=(lambda cc, x, y, a: CL.scissors(cc, x, y, a + 180, 0.5 + 0.5 * math.sin(T * 20), 0.9), None), hands=("fist", "open"))
     if split >= 1:
         C.label(c, "LESS THAN IT SOUNDS", 680, 1000, 44, colr=(250, 244, 228), paper=(24, 20, 22), rot=3)
     return st.arr

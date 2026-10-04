@@ -1,12 +1,14 @@
 """The compositor: the shot for time T (and the outgoing one through a transition), then the print - the colour mode
 of the moment and the 1960s film look - and the captions on top."""
+import math
+
 import numpy as np
 
 import collage as CL
 import film as F
 import kit as K
 import ov
-from edit import EDIT, TRANS, frozen, mode_at, shot_at
+from edit import EDIT, SLICES, TRANS, frozen, mode_at, shot_at
 from timeline import FPS, TL
 
 SHOTS = {}
@@ -27,9 +29,27 @@ def _placeholder(name):
 
 
 def shot(name, T, idx):
-    a = (SHOTS.get(name) or _placeholder(name))(T, idx)
+    """Render a shot; 'name@z' is the same shot punched in by z about the middle of the frame (a jump cut closer)."""
+    base, _, z = name.partition("@")
+    cx, cy = 540.0, 860.0
+    if "@" in z:                                                 # name@zoom@cx@cy
+        z, cx, cy = (lambda p: (p[0], float(p[1]), float(p[2])))(z.split("@"))
+    n0 = len(K.TEXT)
+    a = (SHOTS.get(base) or _placeholder(base))(T, idx)
     if a.shape[2] == 3:
         a = np.dstack([a, np.full(a.shape[:2], 255, np.uint8)])
+    if z:
+        z = float(z)
+        out = np.zeros_like(a)
+        c = __import__("skia").Surface(out).getCanvas()
+        c.translate(cx, cy)
+        c.scale(z, z)
+        c.translate(-cx, -cy)
+        c.drawImage(K.image(a), 0, 0, __import__("skia").SamplingOptions(__import__("skia").FilterMode.kLinear))
+        a = out
+        for i in range(n0, len(K.TEXT)):                         # the lettering moves with the picture
+            x0, y0, x1, y1, tag = K.TEXT[i][:5]
+            K.TEXT[i] = (cx + (x0 - cx) * z, cy + (y0 - cy) * z, cx + (x1 - cx) * z, cy + (y1 - cy) * z, tag) + tuple(K.TEXT[i][5:])
     return np.ascontiguousarray(a)
 
 
@@ -39,8 +59,12 @@ def render_frame(T, idx=None, overlays=True):
     Tp = frozen(T)                                           # a freeze frame holds the picture, not the grain
     i = shot_at(Tp)
     t0, name, tr, _ = EDIT[i]
-    arr = shot(name, Tp, idx)
+    Tc = max(t0, np.floor(Tp * 12 + 1e-6) / 12)              # the things in the picture move on twos, like stop motion
+    arr = shot(name, Tc, idx)
     F.tone(arr, mode_at(Tp, i))
+    for s0, d, x0, y0, x1, y1 in SLICES:                     # sliced into strips and put back together
+        if s0 <= Tp < s0 + d:
+            CL.strips(arr, math.sin(math.pi * (Tp - s0) / d), x0, y0, x1, y1, seed=int(s0 * 10))
     if tr == "scissors" and i > 0 and T < t0 + TRANS["scissors"]:
         saved = list(K.TEXT)
         prev = shot(EDIT[i - 1][1], T, idx)

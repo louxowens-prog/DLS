@@ -39,10 +39,11 @@ def s_c_medal(T, idx):
     keys = [(S("c1") - 0.1, "stand")] + [(S("c1") + 0.3 + i * 0.5, "clap" if i % 2 else "hold") for i in range(10)]
     C.girl(c, "zuza", 160, 1860, 0.56, T, keys, mood="deadpan")
     C.girl(c, "lili", 920, 1860, 0.56, T, keys[:1] + [(t_pin - 0.3, dict(sL=100, eL=30)), (t_pin + 0.4, "up")], mood="delight")
+    if T > t_pin:
+        CL.scraps(c, T, t_pin, seed=5, n=40, area=(0, 200, W, 1500), fall=380)
     C.label(c, "MATH OLYMPIAD 2025", 540, 330, 56, colr=(250, 244, 228), paper=(40, 80, 150), rot=-2)
     if T > t_pin:
         C.label(c, "GOLD-MEDAL LEVEL", 540, 470, 56, paper=(250, 196, 30), rot=2)
-        CL.scraps(c, T, t_pin, seed=5, n=40, area=(0, 200, W, 1500), fall=380)
     return st.arr
 
 
@@ -69,25 +70,36 @@ def s_c_tuesday(T, idx):
 
 
 def s_c_score(T, idx):
-    """'Reading analog clocks? The best AI scored 50.6%. Humans: 90.1%.' Two paper bars."""
+    """'Reading analog clocks? The best AI scored 50.6%. Humans: 90.1%.' A clock held up; then two paper bars; Zuza
+    with the clock, Lili cheering the humans."""
     st = K.Stage()
     c = st.c
     SE.void(c, (230, 222, 204), seed=7)
     C.label(c, "CLOCKBENCH  (AI INDEX 2026)", 540, 330, 44, fname="special-elite-400", rot=-1)
-    base = 1250
-    for j, (lab, val, colr, tw) in enumerate((("BEST AI", 50.6, (176, 30, 54), Wx("c4", "best")), ("HUMANS", 90.1, (40, 80, 150), Wx("c4", "Humans")))):
+    tb, th = Wx("c4", "best"), Wx("c4", "Humans")
+    if T < tb - 0.2:                                                      # the question: a big clock
+        k = K.pop(T, S("c4") - 0.08, 0.2, 0.25)
+        PR.clock(c, 540, 800, 240 * k, 10, 10)
+    base = 1150
+    for j, (lab, val, colr, tw) in enumerate((("BEST AI", 50.6, (176, 30, 54), tb), ("HUMANS", 90.1, (40, 80, 150), th))):
         if T < tw - 0.2:
             continue
         u = ease(ramp(T, tw - 0.2, tw + 0.5))
-        x0 = 170 + j * 420
-        hgt = 760 * val / 100 * u
-        CL.paper(c, CL.rect_pts(x0, base - hgt, x0 + 280, base), colr, seed=j + 1)
-        f = K.font("abril-400", 72)
+        x0 = 240 + j * 340
+        hgt = 640 * val / 100 * u
+        CL.paper(c, CL.rect_pts(x0, base - hgt, x0 + 260, base), colr, seed=j + 1)
+        f = K.font("abril-400", 68)
         s_ = f"{val * u:.1f}%"
-        c.drawString(s_, x0 + 140 - f.measureText(s_) / 2, base - hgt - 30, f, paint(INK))
-        K.reg(x0, base - hgt - 100, x0 + 280, base - hgt - 20, "score")
-        C.label(c, lab, x0 + 140, base + 70, 46, paper=(250, 244, 228), tag="score")
-        PR.clock(c, x0 + 140, base - hgt / 2, 80, 10 if j else 7, 10 if j else 50, numerals=False)
+        c.drawString(s_, x0 + 130 - f.measureText(s_) / 2, base - hgt - 26, f, paint(INK))
+        K.reg(x0, base - hgt - 92, x0 + 260, base - hgt - 16, "score")
+        C.label(c, lab, x0 + 130, base + 64, 44, paper=(250, 244, 228), tag="score")
+        PR.clock(c, x0 + 130, base - hgt / 2, 76, 10 if j else 7, 10 if j else 50, numerals=False)
+    hz = C.girl(c, "zuza", 110, 1640, 0.5, T, [(S("c4") - 0.1, "stand"), (S("c4") + 0.2, "lift_r"), (tb - 0.2, "point"), (th, "hips")],
+                mood="deadpan", look=(0.5, -0.2))
+    if T < tb - 0.2:
+        PR.clock(c, hz["hand_r"][0], hz["hand_r"][1] - 40, 46, 4, 47)
+    C.girl(c, "lili", 970, 1640, 0.5, T, [(S("c4") - 0.1, "stand"), (th - 0.1, "point_l"), (th + 0.5, "up"), (th + 1.1, "point_l")], mood="delight",
+           look=(-0.5, -0.2))
     return st.arr
 
 
@@ -145,8 +157,15 @@ def s_c_jagged(T, idx):
         C.label(c, "A PERSON", 850, base - 450, 34, colr=(40, 80, 150), fname="special-elite-400", paper=(250, 248, 240), rot=-3, tag="hill")
     PR.butterfly(c, 360, base - 555 * u - 100 if u > 0 else 640, 1.45, T, pin=True, colors=((214, 168, 40), (176, 30, 54)), seed=1)
     PR.butterfly(c, 790, base - 112 * u - 40 if u > 0 else 900, 0.3, T, pin=True, colors=((150, 190, 226), (240, 240, 240)), seed=2)
-    C.label(c, "OLYMPIAD PROOFS", 380, 392, 36, fname="special-elite-400", paper=(250, 248, 240), rot=-2)
-    C.label(c, "READING A CLOCK", 790, 1188 if u > 0.5 else 980, 32, fname="special-elite-400", paper=(250, 248, 240), rot=3)
+    C.label(c, "PROOFS", 380, 392, 50, colr=(176, 30, 54), paper=(250, 248, 240), rot=-2)
+    ly = 1190 if u > 0.5 else 980
+    C.label(c, "CLOCKS", 640, ly, 44, colr=(40, 80, 150), paper=(250, 248, 240), rot=3)
+    tby = base - 112 * u - 40 if u > 0 else 900                           # an arrow from the label to the tiny one
+    c.drawLine(720, ly - 40, 784, tby + 26, paint(INK, stroke=4))
+    keys_z = [(S("c6") - 0.1, "stand"), (S("c6") + 0.6, "point"), (tf, "shrug"), (Wx("c6", "jagged"), "point")]
+    keys_l = [(S("c6") - 0.1, "stand"), (S("c6") + 1.0, "hips"), (tf + 0.3, "shrug"), (Wx("c6", "jagged") + 0.2, "hips")]
+    C.girl(c, "zuza", 170, 2060, 0.55, T, keys_z, mood="deadpan", look=(0.4, -0.5))
+    C.girl(c, "lili", 950, 2060, 0.55, T, keys_l, mood="wide", look=(-0.4, -0.5))
     if T > Wx("c6", "jagged") - 0.1:
         k = K.pop(T, Wx("c6", "jagged") - 0.1, 0.18, 0.4)
         c.save(); c.translate(320, 1170); c.scale(k, k); c.translate(-320, -1170)
@@ -180,12 +199,17 @@ def s_c_agents(T, idx):
     SE.salon(c, T, wall=(150, 180, 200), wall2=(220, 228, 236), dots=False)
     terminal(c, 540, 820, 1.2, T, ["> OPEN FILE", "> SAVE AS...", "> ?"])
     C.label(c, "AGENTS ON COMPUTERS", 540, 330, 48, fname="special-elite-400", rot=-1)
+    taps = [(S("c7") - 0.1 + k * 0.32, "hold" if k % 2 else "present") for k in range(12)]
+    C.girl(c, "lili", 970, 1560, 0.45, T, taps, mood="smile", look=(-0.6, -0.2))
+    keys_z = [(S("c7") - 0.1, "stand")] + [(Wx("c7", w) - 0.2, p) for w, p in (("fail", "lift_r"), ("one", "point"), ("three", "lift_r"))]
+    C.girl(c, "zuza", 110, 1560, 0.45, T, keys_z, mood="deadpan", look=(0.6, -0.2))
     for i, (txt, colr, tw) in enumerate((("TRY 1 OK", (40, 120, 60), Wx("c7", "fail")), ("TRY 2 OK", (40, 120, 60), Wx("c7", "one")),
                                          ("TRY 3 FAIL", (200, 30, 40), Wx("c7", "three")))):
         if T > tw - 0.15:
             k = K.pop(T, tw - 0.15, 0.18, 0.4)
-            c.save(); c.translate(230 + i * 270, 1290); c.scale(k, k); c.translate(-(230 + i * 270), -1290)
-            C.label(c, txt, 230 + i * 270, 1290, 40, colr=colr, paper=(250, 244, 228), rot=(-6, 3, -4)[i], tag="stamp")
+            px, py = [(300, 1260), (560, 1260), (815, 1300)][i]
+            c.save(); c.translate(px, py); c.scale(k, k); c.translate(-px, -py)
+            C.label(c, txt, px, py, 36, colr=colr, paper=(250, 244, 228), rot=(-6, 3, -4)[i], tag="stamp")
             c.restore()
     return st.arr
 
@@ -210,6 +234,7 @@ def s_c_sim(T, idx):
     a1 = 30 + 20 * math.sin(u * math.pi)
     PR.robot_arm(c, 330, 1300, 1.0, a1, 60 - 30 * math.sin(u * math.pi))
     C.label(c, "SIMULATION", 540, 330, 56, colr=(250, 244, 228), paper=(40, 120, 124), rot=-2)
+    C.girl(c, "lili", 960, 1700, 0.5, T, [(t0 + k * 0.35, "clap" if k % 2 else "hold") for k in range(10)], mood="delight", look=(-0.6, 0))
     if T > Wx("c7", "eighty") - 0.1:
         C.big(c, "89%", 300, 640, 180, [(40, 120, 60), (24, 20, 22)], seed=14)
     return st.arr
@@ -232,6 +257,8 @@ def s_c_real(T, idx):
     PR.apple(c, 560, 1140, 44)
     PR.robot_arm(c, 260, 1180, 1.0, 50 + 25 * math.sin(T * 9), 70 + 30 * math.sin(T * 7))
     C.label(c, "A REAL HOME", 540, 330, 56, colr=(250, 244, 228), paper=(176, 30, 54), rot=2)
+    C.girl(c, "zuza", 960, 1760, 0.5, T, [(t0, "stand"), (t0 + 0.35, "point_l"), (t0 + 0.8, "cower"), (t0 + 1.6, "hips")], mood="wide",
+           look=(-0.6, 0.2))
     if T > Wx("c7", "twelve") - 0.1:
         C.big(c, "ABOUT 12%", 500, 640, 150, [(200, 30, 40), (24, 20, 22)], seed=15, max_w=760)
     return st.arr
@@ -265,14 +292,32 @@ def s_d_feast(T, idx):
     st = K.Stage()
     c = st.c
     SE.banquet_hall(c, T)
+    for j, (x, y, ang, fn) in enumerate(((190, 560, -8, _food_cake), (890, 520, 7, _food_fruit), (870, 860, -5, _food_jelly))):
+        img = K.cached(f"food_{j}", lambda fn=fn: CL.snapshot(240, 200, fn, bg=(170, 160, 150), cell=5))
+        CL.photo(c, img, x, y, 200, 166, ang=ang, border=12)               # magazine clippings of food, pinned up
     PR.oracle(c, 540, 1190, 0.5, T, napkin=True, medal=True, look=(0.6 if T < S("d2") else -0.6, 0.3))
     table_spread(c, T)
     shears = lambda cc, x, y, a: CL.scissors(cc, x, y, a + 180, 0.5 + 0.5 * math.sin(T * 18), 1.0)
-    C.girl(c, "zuza", 150, 2350, 1.05, T, [(S("d1") - 0.2, "stand"), (S("d2") - 0.05, "lift_r"), (S("d3") - 0.05, "point")],
+    C.girl(c, "zuza", 150, 2350, 1.05, T, [(S("d1") - 0.2, "stand"), (S("d1") + 0.4, "hips"), (S("d2") - 0.05, "lift_r"), (S("d3") - 0.05, "point"),
+                                           (S("d4") + 0.2, "shrug")],
            mood="deadpan", props=(None, shears if T < S("d3") else None), look=(0.7, 0))
-    C.girl(c, "lili", 930, 2350, 1.05, T, [(S("d1") - 0.2, "point_l"), (S("d4") - 0.05, "eat")], mood="delight" if T < S("d4") else "chew",
-           look=(-0.7, 0))
+    C.girl(c, "lili", 930, 2350, 1.05, T, [(S("d1") - 0.2, "point_l"), (S("d2") + 0.1, "hold"), (S("d3") + 0.6, "point_l"), (S("d4") - 0.05, "eat")],
+           mood="delight" if T < S("d4") else "chew", look=(-0.7, 0))
     return st.arr
+
+
+def _food_cake(cc):
+    PR.cake(cc, 120, 170, 0.45, lines=(), candles=3, colr=(236, 200, 210))
+
+
+def _food_fruit(cc):
+    PR.grapes(cc, 90, 90, 16)
+    PR.apple(cc, 150, 130, 40)
+    PR.pear(cc, 70, 150, 34)
+
+
+def _food_jelly(cc):
+    PR.jelly(cc, 120, 160, 70, 0.0, colr=(60, 150, 70))
 
 
 def s_d_fight(T, idx):
@@ -342,6 +387,95 @@ def _splat(c, x, y, r, seed=0, colr=(250, 240, 236)):
         c.drawPath(K.capsule(x + r * 0.5 * math.sin(a) * 2, y, x + r * 0.5 * math.sin(a) * 2, y + r * rng.uniform(0.8, 1.8), r * 0.18, r * 0.12), paint(colr))
 
 
+def s_d_fire(T, idx):
+    """The food fight, close: the paper streamers go up in flames - big, crackling, embers flying."""
+    st = K.Stage()
+    c = st.c
+    SE.banquet_hall(c, T, swing=10 * math.sin(T * 9), chand=False)
+    table_spread(c, T, mess=0.7, seed=2)
+    t0 = next(e[0] for e in __import__("edit").EDIT if e[1] == "d_fire")
+    u = T - t0
+    for i, colr in enumerate(((176, 30, 54), (214, 168, 40), (40, 80, 150), (40, 120, 124))):
+        y0 = 380 + i * 300
+        pts = [(x, y0 + 120 * math.sin(x / 260 + i * 1.3) + 10 * math.sin(T * 6 + x / 50)) for x in range(-80, W + 120, 40)]
+        xb = -80 + (W + 200) * min(1.0, 0.25 + u * 1.1 - i * 0.18)          # burnt up to here, from the left
+        live = [p for p in pts if p[0] >= xb]
+        if len(live) > 1:
+            c.drawPath(path(live, closed=False), paint(colr, stroke=78, cap="butt"))
+            c.drawPath(path(live, closed=False), paint(mix(colr, INK, 0.3), 0.6, stroke=6))
+        burnt = [p for p in pts if p[0] < xb]
+        if len(burnt) > 1:
+            c.drawPath(path(burnt, closed=False), paint((40, 30, 26), 0.8, stroke=20))
+        for x, y in burnt[-7:]:                                           # flames along the burning stretch
+            PR.flame(c, x, y + 30, 1.1, T + x * 0.01 + i)
+        if live:
+            PR.flame(c, live[0][0], live[0][1] + 40, 1.9, T + i)           # the burning front
+    rng = K.rng_at(int(T * 12), 4)
+    for k in range(30):                                                   # embers
+        c.drawCircle(rng.uniform(0, W), rng.uniform(200, 1700), rng.uniform(4, 13), paint((255, 200, 90), rng.uniform(0.5, 1)))
+    for i in range(5):                                                    # smoke
+        y = 500 - ((T * 220 + i * 140) % 700)
+        c.drawCircle(300 + i * 120 + 40 * math.sin(T * 2 + i), y, 90 + i * 10, paint((60, 54, 50), 0.35, blur=30))
+    return st.arr
+
+
+def s_d_pie(T, idx):
+    """The food fight, close: a cream pie flies in and hits the Oracle full in the face."""
+    st = K.Stage()
+    c = st.c
+    SE.banquet_hall(c, T, swing=8 * math.sin(T * 9))
+    t0 = next(e[0] for e in __import__("edit").EDIT if e[1] == "d_pie")
+    hit = t0 + 0.28
+    PR.oracle(c, 540, 2900, 1.9, T, look=(-0.8, 0) if T < hit else (0, 0.3), medal=True, napkin=True, mouth=0.0 if T < hit else 0.7)
+    fx, fy = 540, 2900 - 1.9 * 1110
+    if T < hit:
+        u = (T - t0) / 0.28
+        px, py = -200 + (fx + 40 + 200) * u, fy - 300 + 300 * u
+        c.drawLine(px - 260, py + 40, px - 40, py, paint(WHITE, 0.4, stroke=30))
+        c.drawCircle(px, py, 150, paint((214, 168, 90)))
+        c.drawCircle(px + 6, py - 10, 128, paint((250, 244, 236)))
+    else:
+        k = min(1.0, (T - hit) / 0.12)
+        _splat(c, fx, fy + 10, 260 * (0.6 + 0.4 * k), seed=5, colr=(250, 244, 236))
+        c.save(); c.translate(fx + 20, fy - 120); c.rotate(-30 + 60 * (T - hit))
+        c.drawPath(K.rrect(-150, -20, 150, 20, 10), paint((214, 168, 90)))      # the pie tin, sliding off
+        c.restore()
+        rng = K.rng_at(9, 9)
+        for i in range(16):                                               # cream flying off
+            a, d = rng.uniform(0, 2 * math.pi), (T - hit) * rng.uniform(600, 1400)
+            c.drawCircle(fx + d * math.cos(a), fy + d * math.sin(a) + 900 * (T - hit) ** 2, rng.uniform(10, 26), paint((250, 244, 236)))
+    return st.arr
+
+
+def s_d_cake(T, idx):
+    """The food fight, close: Zuza's shears come down on the cake - snip - and it falls apart in two halves."""
+    st = K.Stage()
+    c = st.c
+    SE.banquet_hall(c, T, table_y=1000)
+    c.drawRect(skia.Rect.MakeLTRB(0, 1060, W, H), paint((246, 242, 232)))
+    t0 = next(e[0] for e in __import__("edit").EDIT if e[1] == "d_cake")
+    ts = t0 + 0.22
+    split = ease(ramp(T, ts, ts + 0.3))
+    for side in (-1, 1):                                                  # the two halves
+        c.save()
+        c.translate(side * 140 * split, 0)
+        c.rotate(side * 9 * split)
+        c.clipRect(skia.Rect.MakeLTRB(0 if side > 0 else -200, 0, W + 200 if side > 0 else 540, H))
+        c.save(); c.translate(540, 1500); c.scale(1.6, 1.6); c.translate(-540, -1500)
+        PR.cake(c, 540, 1500, 1.0, lines=(), tiers=3, colr=(236, 200, 210), candles=3, T=T)
+        c.restore()
+        c.restore()
+    blades = 0.9 - 0.9 * ramp(T, ts - 0.15, ts)                           # the shears closing on the beat
+    CL.scissors(c, 560, 700 + 250 * ramp(T, t0, ts), 90, blades, 3.2)
+    if T > ts:
+        rng = K.rng_at(4, 4)
+        for i in range(18):                                               # crumbs and cream
+            a, d = rng.uniform(-math.pi, 0), (T - ts) * rng.uniform(500, 1200)
+            c.drawCircle(540 + d * math.cos(a), 1000 + d * math.sin(a) + 1200 * (T - ts) ** 2, rng.uniform(8, 20),
+                         paint([(250, 244, 236), (236, 200, 210), (176, 30, 54)][i % 3]))
+    return st.arr
+
+
 def s_d_still(T, idx):
     """(Silence.) 'It can be superhuman in one direction, and brittle an inch away.' The wreck, holding still; a curl
     of smoke from a burnt streamer; the medal still on, the clock on the floor."""
@@ -375,18 +509,28 @@ def s_d_still(T, idx):
 # ------------------------------------------------------------------ epilogue
 
 def s_e_clue(T, idx):
-    """'So: an explanation is a clue, not a confession.' Lili files the reasoning slips in a box marked CLUES."""
+    """(No words, then:) 'So: an explanation is a clue, not a confession.' They put things back: the reasoning slips
+    go into a box marked CLUES."""
     st = K.Stage()
     c = st.c
     SE.salon(c, T)
+    te = E("d5") + 0.35
     rng = K.rng_at(10, 2)
-    left = 1 - ramp(T, S("e1"), S("e1") + 2.8)
+    left = 1 - ramp(T, te + 0.2, te + 3.6)
     for i in range(int(30 * left)):
         PR.slip(c, rng.uniform(80, 1000), rng.uniform(1560, 1820), rng.uniform(-30, 30), ["STEP 1...", "STEP 2..."], 0.5)
-    CL.paper(c, CL.rect_pts(560, 1200, 900, 1480), (150, 104, 64), seed=6)       # the box
-    C.label(c, "CLUES", 730, 1300, 56, paper=(250, 244, 228), tag="box")
-    C.girl(c, "lili", 380, 1850, 0.66, T, [(S("e1") - 0.1, "stand")] + [(S("e1") + 0.4 + i * 0.6, "present" if i % 2 else "hold") for i in range(5)],
-           mood="smile", look=(0.6, 0.3))
+    CL.paper(c, CL.rect_pts(400, 1200, 740, 1480), (150, 104, 64), seed=6)       # the box
+    C.label(c, "CLUES", 570, 1300, 56, paper=(250, 244, 228), tag="box")
+    kl = [(te + 0.3 + i * 0.55, "present" if i % 2 else "hold") for i in range(8)]
+    kz = [(te + 0.55 + i * 0.6, "point_l" if i % 2 else "hold") for i in range(7)]
+    hl = C.girl(c, "lili", 210, 1850, 0.62, T, [(te, "stand")] + kl, mood="smile", look=(0.6, 0.3))
+    hz = C.girl(c, "zuza", 900, 1850, 0.62, T, [(te, "stand")] + kz, mood="deadpan", look=(-0.6, 0.3))
+    for keys, h, hand in ((kl, hl, "hand_r"), (kz, hz, "hand_l")):     # one slip at a time into the box
+        for t, p in keys:
+            if p != "hold" and t < T < t + 0.4:
+                u = (T - t) / 0.4
+                x0, y0 = h[hand][:2]
+                PR.slip(c, x0 + (570 - x0) * u, y0 + (1215 - y0) * u - 160 * math.sin(math.pi * u), 300 * u, ["STEP 1..."], 0.45)
     if T > Wx("e1", "clue") - 0.1:
         C.label(c, "A CLUE,", 540, 340, 64, paper=(250, 196, 30), rot=-3)
     if T > Wx("e1", "not") - 0.1:
@@ -463,7 +607,7 @@ def s_e_end(T, idx):
     clock and daisy chain; Zuza eats a daisy; the frame freezes; THE END - and the Oracle, unasked, prints its
     reasoning for that too."""
     st = K.Stage()
-    t_fz = E("e3") + 0.45
+    t_fz = E("e3") + 0.3
     Tf = min(T, t_fz)
     c = st.c
     SE.field(c, Tf, horizon=760)
@@ -474,13 +618,13 @@ def s_e_end(T, idx):
     C.girl(c, "zuza", 190, 1900, 0.62, Tf, [(S("e2") - 0.15, "stand"), (E("e3") - 0.2, "eat")], mood="deadpan" if Tf < E("e3") else "chew",
            look=(0, 0) if Tf > E("e3") - 0.4 else (0.6, 0), props=(None, (lambda cc, x, y, a: D.daisy(cc, x, y - 10, 30, seed=3))) if Tf > E("e3") - 0.2 else (None, None))
     if T >= t_fz:
-        k2 = K.pop(T, t_fz + 0.15, 0.25, 0.3)
+        k2 = K.pop(T, t_fz + 0.08, 0.25, 0.3)
         c.save(); c.translate(540, 470); c.scale(k2, k2); c.translate(-540, -470)
         C.big(c, "THE END", 540, 500, 170, [(176, 30, 54), (40, 80, 150), (214, 168, 40)], seed=21)
         c.restore()
-        tp = t_fz + 0.55                                                 # the last joke: a slip pasted over the freeze
+        tp = t_fz + 0.3                                                  # the last joke: a slip pasted over the freeze
         if T > tp:
             u = ease(ramp(T, tp, tp + 0.2))
-            PR.slip(c, 540, 1290 - 60 * (1 - u), -4, [typed("THEREFORE:", ramp(T, tp, tp + 0.3)), typed("THE END.", ramp(T, tp + 0.32, tp + 0.6))],
+            PR.slip(c, 540, 1290 - 60 * (1 - u), -4, [typed("THEREFORE:", ramp(T, tp, tp + 0.22)), typed("THE END.", ramp(T, tp + 0.24, tp + 0.45))],
                     1.8, a=u)
     return st.arr

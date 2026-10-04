@@ -32,7 +32,7 @@ def harpsi(m, dur=1.4, amp=1.0, seed=0):
         click = _bp(_noise(n, seed + 5), 2000, 7000) * np.exp(-t / 0.003) * 0.4
         env = np.clip((dur + 0.05 - t) / 0.05, 0, 1)
         _KS[key] = (out + click) * env
-    return amp * _KS[key] * 0.7
+    return amp * _KS[key] * 1.0
 
 
 def musette(notes, dur, amp=1.0, seed=0):

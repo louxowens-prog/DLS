@@ -148,6 +148,26 @@ def pasted(c, img, pts, seed=0, ang=0.0, dx=0.0, dy=0.0, rim=(250, 248, 240)):
     c.restore()
 
 
+def strips(arr, k, x0, y0, x1, y1, seed=0, n=9):
+    """Cut a region of the frame into horizontal strips and slide them apart (k 0..1), white paper edges showing."""
+    if k <= 0.01:
+        return
+    x0, x1, y0, y1 = int(max(0, x0)), int(min(W, x1)), int(max(0, y0)), int(min(H, y1))
+    reg = arr[y0:y1, x0:x1].copy()
+    rng = K.rng_at(seed, 23)
+    edges = np.linspace(0, y1 - y0, n + 1).astype(int)
+    for j in range(n):
+        a, b = edges[j], edges[j + 1]
+        dx = int(rng.uniform(-90, 90) * k)
+        band = np.roll(reg[a:b], dx, axis=1)
+        if dx > 0:
+            band[:, :dx, :3] = (226, 216, 196)                                             # the page behind
+        elif dx < 0:
+            band[:, dx:, :3] = (226, 216, 196)
+        arr[y0 + a:y0 + b, x0:x1] = band
+        arr[y0 + a:y0 + min(b, a + 4), x0:x1, :3] = (246, 240, 226)                        # the cut, a white paper edge
+
+
 def scissors(c, x, y, ang, open_=0.5, s=1.0, a=1.0):
     """Dressmaker's shears: black handles, steel blades; open_ 0 (shut) .. 1 (wide); ang = direction of the points."""
     c.save()
