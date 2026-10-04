@@ -76,8 +76,12 @@ def girl(c, who, x, y, s, T, keys=None, P="stand", **kw):
     kw.setdefault("talk", talk(T, who))
     kw.setdefault("blink", blink(T, 3 if who == "zuza" else 8))
     p = skia.Paint()                                                       # a cut-out, lifted off the page: a soft shadow
-    p.setImageFilter(skia.ImageFilters.DropShadow(9 * s / 0.6, 12 * s / 0.6, 6, 6, skia.Color4f(0.06, 0.03, 0.04, 0.5).toColor()))
-    c.saveLayer(None, p)
+    r = 2.0 + 2.5 * s                                                     # an inked edge round the cut-out
+    ink = skia.ImageFilters.ColorFilter(skia.ColorFilters.Blend(skia.Color4f(0.09, 0.06, 0.08, 1.0).toColor(), skia.BlendMode.kSrcIn),
+                                        skia.ImageFilters.Dilate(r, r))
+    rim = skia.ImageFilters.Merge([ink, None])
+    p.setImageFilter(skia.ImageFilters.DropShadow(9 * s / 0.6, 12 * s / 0.6, 6, 6, skia.Color4f(0.06, 0.03, 0.04, 0.5).toColor(), rim))
+    c.saveLayer(skia.Rect.MakeLTRB(x - 620 * s, y - 1750 * s, x + 620 * s, y + 120 * s), p)
     out = D.figure(c, who, x, y, s, T, P, jolt=jolt * 0.6, **kw)
     c.restore()
     return out

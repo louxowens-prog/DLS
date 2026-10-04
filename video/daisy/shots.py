@@ -88,11 +88,13 @@ SAME_OK = ("caption", "strip", "label", "big", "slip", "chapter", "card", "track
 
 def lint(boxes, ignore=()):
     bad = []
-    bx = [b for b in boxes if b[4] not in ignore and b[4] != "deco"]
+    bx = [b for b in boxes if b[4] not in ignore]
     for i in range(len(bx)):
         for j in range(i + 1, len(bx)):
             a, b = bx[i], bx[j]
             if a[4] == b[4] and a[4] in SAME_OK:
+                continue
+            if "deco" in (a[4], b[4]) and "caption" not in (a[4], b[4]):    # small print only matters under a caption
                 continue
             ox = min(a[2], b[2]) - max(a[0], b[0])
             oy = min(a[3], b[3]) - max(a[1], b[1])

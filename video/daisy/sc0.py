@@ -46,7 +46,7 @@ def s_o_gears(T, idx):
     py = 1400 + 120 * math.sin(T * 9)                                     # a piston
     c.drawRect(skia.Rect.MakeXYWH(820, py, 120, 260), paint((120, 124, 130)))
     c.drawRect(skia.Rect.MakeXYWH(800, py - 30, 160, 40), paint((150, 156, 166)))
-    img = CL.halftone(st.arr[..., :3], cell=7)                            # the photographs, printed in dots
+    img = CL.press(st.arr, cell=7, seed=beat)                             # press photographs of the machines
     img = np.dstack([img, np.full(img.shape[:2], 255, np.uint8)])
     out = K.Stage()
     SE.void(out.c, [(214, 168, 40), (176, 30, 54), (40, 80, 150)][beat % 3], seed=beat)
@@ -71,6 +71,10 @@ def _montage_duo(c, T, beat):
         CL.scissors(c, 700, 560, 200, 0.5 + 0.5 * math.sin(T * 30), 2.0)
     elif k == 2:
         C.girl(c, "lili", 720, 2150, 1.0, T, None, "up" if beat % 8 == 2 else "wave", mood="delight")
+    else:                                                                # the hook: what the film will find
+        PR.slip(c, 540, 1000, -6, CONFESS, 1.6, mark=(30, 24, 26), colr=(255, 250, 200))
+        C.big(c, "UNDER 2%", 540, 640, 190, [(200, 30, 40), (24, 20, 22)], seed=11 + beat)
+        C.label(c, "OWNED UP TO THE SHORTCUT", 540, 1260, 44, colr=(250, 244, 228), paper=(24, 20, 22), rot=-3)
 
 
 def s_o_strip(T, idx):
@@ -227,6 +231,8 @@ def s_a_open(T, idx):
         y = L[i][1] + (L[i + 1][1] - L[i][1]) * u
         ang = math.degrees(math.atan2(L[i + 1][1] - L[i][1], L[i + 1][0] - L[i][0]))
         CL.scissors(c, x, y, ang, 0.5 + 0.5 * math.sin(T * 30), 1.0)
+    C.girl(c, "zuza", 110, 1960, 0.7, T, [(t0 - 0.2, "lift_r"), (t0 + 1.05, "point"), (Wx("a2", "Not"), "hips")], mood="sly", look=(0.6, -0.5))
+    C.girl(c, "lili", 975, 1960, 0.7, T, [(t0 - 0.2, "stand"), (t0 + 1.1, "up"), (Wx("a2", "Not"), "shrug")], mood="wide", look=(-0.6, -0.5))
     if T > Wx("a2", "more") - 0.1:
         C.label(c, "MORE OUTPUT", 300, 400, 54, paper=(250, 196, 30), rot=-6)
     if T > Wx("a2", "recording") - 0.2:
@@ -301,10 +307,12 @@ def s_a_used(T, idx):
         if t_i < T < t_i + 1.2 and T < Wx("a5", "under"):
             u = (T - t_i) / 1.2
             sx, sy = pts["slot"]
-            PR.slip(c, sx + (i % 2 * 2 - 1) * 380 * u, sy - 300 * math.sin(u * math.pi) + 500 * u * u, 360 * u * (1 if i % 2 else -1), SLIP, 0.55)
+            PR.slip(c, sx + (i % 2 * 2 - 1) * 520 * u, sy - 260 - 520 * u + 300 * u * u, 360 * u * (1 if i % 2 else -1), SLIP, 0.55)
+    kz = [(t0 - 0.1, "stand")] + [(t0 + 0.3 + i * 0.7, "present" if i % 2 else "hold") for i in range(6)] + [(Wx("a5", "under") - 0.1, "point_l")]
+    C.girl(c, "zuza", 955, 1880, 0.58, T, kz, mood="deadpan", look=(-0.6, -0.2))
     if T > Wx("a5", "under") - 0.1:
         u = ease(ramp(T, Wx("a5", "under"), Wx("a5", "under") + 0.5))
-        PR.slip(c, 700 - 160 * u, 1660 - 640 * u, -8 + 4 * u, CONFESS, 0.62 + 0.75 * u, mark=(30, 24, 26), colr=(255, 250, 200))
+        PR.slip(c, 640 - 100 * u, 1200 - 180 * u, -8 + 4 * u, CONFESS, 0.62 + 0.75 * u, mark=(30, 24, 26), colr=(255, 250, 200))
         k = K.pop(T, Wx("a5", "under") - 0.05, 0.25, 0.3)
         c.save(); c.translate(560, 560); c.scale(k, k); c.translate(-560, -560)
         C.big(c, "UNDER 2%", 560, 560, 170, [(200, 30, 40), (24, 20, 22)], seed=11)
@@ -323,7 +331,7 @@ def s_a_count(T, idx):
     SE.salon(c, T)
     rng = K.rng_at(7, 1)
     for i in range(70):
-        PR.slip(c, rng.uniform(20, 1060), rng.uniform(1380, 1900), rng.uniform(-40, 40), SLIP, 0.55)
+        PR.slip(c, rng.uniform(20, 1060), rng.uniform(1580, 1900), rng.uniform(-40, 40), SLIP, 0.55)
     h = C.girl(c, "zuza", 440, 1990, 0.86, T, [(S("a6") - 0.6, "stand"), (Wx("a6", "Maybe") - 0.15, "lift_r")], mood="deadpan",
                hands=("open", "hold"))
     if T > Wx("a6", "Maybe") - 0.02:
@@ -368,6 +376,13 @@ def s_a_tracks(T, idx):
             c.drawString(val, x - f.measureText(val) / 2, yy, f, paint(INK))
             K.reg_local(c, x - 120, yy - 70, x + 120, yy + 34, "track")
             C.label(c, lab, 300 if j == 0 else 280, yy - 130, 40, fname="special-elite-400", paper=(250, 244, 228), rot=-2 + 4 * j)
+        hz = C.girl(c, "zuza", 95, 1990, 0.58, T, [(tt - 0.1, "stand"), (tt, "lift_r")], mood="deadpan", look=(0.5, -0.4))
+        hl = C.girl(c, "lili", 985, 1990, 0.58, T, [(tt + 0.25, "stand"), (tt + 0.35, "point_l")], mood="delight", look=(-0.5, -0.4))
+        u0 = ramp(T, tt, Wx("a7", "digit") + 0.2)
+        bx = 200 + 440 * ease(u0)
+        c.drawLine(*hz["hand_r"][:2], bx - 120, 820 - 18, paint((250, 244, 228), 0.8, stroke=4))       # strings to the trains
+        if T > tt + 0.35:
+            c.drawLine(*hl["hand_l"][:2], bx + 120, 1120 - 18, paint((250, 244, 228), 0.8, stroke=4))
         if T > Wx("a7", "digit") + 0.1:
             k = K.pop(T, Wx("a7", "digit") + 0.1, 0.25, 0.12)
             c.save(); c.translate(862, 980); c.scale(k, k); c.translate(-862, -980)
@@ -391,6 +406,9 @@ def s_a_carry(T, idx):
     k = ramp(T, t0, E("a8") + 0.1)
     lines = [typed(l, ramp(k, i / len(CARRY), (i + 1) / len(CARRY))) for i, l in enumerate(CARRY)]
     PR.oracle(c, 540, 1350, 0.85, T, strip=[l for l in lines if l] or [" "], look=(0, 0.3), mouth=C.talk(T, "MACH") * 0.6)
+    C.girl(c, "lili", 950, 1790, 0.55, T, [(t0 - 0.1, "stand"), (t0 + 0.6, "clap"), (t0 + 1.2, "hold"), (t0 + 1.8, "clap")], mood="delight",
+           look=(-0.6, -0.3))
+    C.girl(c, "zuza", 120, 1790, 0.55, T, [(t0 - 0.1, "stand"), (t0 + 1.0, "hips")], mood="deadpan", look=(0.6, -0.3))
     return st.arr
 
 
@@ -427,8 +445,8 @@ def s_a_notfake(T, idx):
             C.label(c, "SAYS WHY", 260, 760, 56, colr=(250, 244, 228), paper=(40, 80, 150), tag="card", rot=-3)
         if T > t1 + 0.5:
             C.label(c, "CAUSED IT", 820, 760, 56, colr=(250, 244, 228), paper=(176, 30, 54), tag="card", rot=3)
-        if T > Wx("a11", "not", 1) - 0.1:
-            k = K.pop(T, Wx("a11", "not", 1) - 0.1, 0.25, 0.3)
+        if T > Wx("a11", "isn't") - 0.1:
+            k = K.pop(T, Wx("a11", "isn't") - 0.1, 0.25, 0.3)
             c.save(); c.translate(540, 740); c.scale(k * 0.62, k * 0.62)
             for dy in (-34, 34):
                 c.drawRect(skia.Rect.MakeXYWH(-120, dy - 16, 240, 32), paint(INK))

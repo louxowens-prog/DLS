@@ -521,7 +521,7 @@ def score(mus, fx, nosil):
     chorale(mus, t0, t1, bpm=66, level=0.5)
     for i in range(4):
         fx.add(O.pop(0.25), S("a11") + 0.25 + i * 0.25, pan=0.4 + 0.07 * i)
-    tn = Wx("a11", "not", 1) - 0.1
+    tn = Wx("a11", "isn't") - 0.1
     mus.add(O.organ([60, 61, 63, 64, 66], 0.8, 0.8), tn, until=t1)
     fx.add(O.stamp(0.5), tn)
 
@@ -642,7 +642,7 @@ def score(mus, fx, nosil):
     fx.add(O.ding(0.35, 96), E("c3") + 0.02, pan=0.6)
 
     t0, t1 = c("c_score"), e("c_score")
-    harpsichord(mus, t0, t1, bpm=120, level=0.38, prog=CMAJ, pattern=(0, 2, 1, 2))
+    harpsichord(mus, t0, t1, bpm=120, level=0.6, prog=CMAJ, pattern=(0, 2, 1, 2))
     for k in range(int((t1 - t0) / 0.5)):
         fx.add(O.tick(0.4, tock=bool(k % 2)), t0 + k * 0.5, pan=0.6, until=t1)
     fx.add(O.slide_whistle(True, 0.7, 0.35), Wx("c4", "best") - 0.2, pan=0.35)
@@ -657,8 +657,8 @@ def score(mus, fx, nosil):
     fx.add(I.clang(0.7), tno + 0.48, pan=0.3)
 
     t0, t1 = c("c_jagged"), e("c_jagged")
-    mus.add(I.choir([62, 65, 68, 71], t1 - t0, 0.5, vowel="u", attack=0.6), t0, until=t1)
-    music_box(mus, t0, t1, 0.35, beats=18, detune=lambda u: 45 * np.sin(u * 9), transpose=12, seed=7)
+    mus.add(I.choir([62, 65, 68, 71], t1 - t0, 0.6, vowel="u", attack=0.6), t0, until=t1)
+    music_box(mus, t0, t1, 0.55, beats=18, detune=lambda u: 45 * np.sin(u * 9), transpose=12, seed=7)
     fx.add(FXL.pencil(0.8, 0.5), S("c6"), pan=0.6)
     tf = Wx("c6", "For") - 0.1
     fx.add(I.tear(0.7, seed=12, dur=0.55), tf)
@@ -669,7 +669,7 @@ def score(mus, fx, nosil):
         mus.add(I.harpsi(m, 1.0, 0.6), tj, pan=0.5, until=t1)
 
     t0, t1 = c("c_agents"), e("c_agents")
-    harpsichord(mus, t0, t1, bpm=120, level=0.35, prog=AMIN, pattern=(0, 1, 2, 1))
+    harpsichord(mus, t0, t1, bpm=120, level=0.55, prog=AMIN, pattern=(0, 1, 2, 1))
     fx.add(O.whir(t1 - t0, 0.35, 60), t0, until=t1)
     tb0 = Wx("c7", "still")
     for k in range(int((t1 - tb0) / 0.6)):                               # the terminal's beeps, after the first words
@@ -683,7 +683,7 @@ def score(mus, fx, nosil):
             fx.add(I.buzzer(0.6), tw + 0.05, pan=0.7)
 
     t0, t1 = c("c_sim"), e("c_sim")
-    music_box(mus, t0, t1, 0.5, beats=12, transpose=19, seed=8)
+    music_box(mus, t0, t1, 0.75, beats=12, transpose=19, seed=8)
     k = 0
     while t0 + k * 0.7 < t1:
         fx.add(I.servo(0.5, 0.6, 200, 330, seed=k), t0 + k * 0.7, pan=0.35, until=t1)
@@ -692,7 +692,7 @@ def score(mus, fx, nosil):
     fx.add(O.pop(0.4), Wx("c7", "eighty") - 0.1)
 
     t0, t1 = c("c_real"), e("c_real")
-    music_box(mus, t0, t1, 0.5, beats=12, transpose=19, seed=9, rate=lambda u: max(0.3, 1 - 0.9 * u), detune=lambda u: -120 * u)
+    music_box(mus, t0, t1, 0.75, beats=12, transpose=19, seed=9, rate=lambda u: max(0.3, 1 - 0.9 * u), detune=lambda u: -120 * u)
     fx.add(I.servo(t1 - t0, 0.55, 200, 260, seed=3, wild=0.35), t0, pan=0.35, until=t1)
     fx.add(O.boing(0.35), t0 + 0.3, pan=0.6)
     fx.add(I.splat(0.6, seed=4), t0 + 0.9, pan=0.6)
@@ -751,8 +751,11 @@ def score(mus, fx, nosil):
     # (silence) - then putting things back: the music box, quietly, a beat with no words
     t0 = c("e_clue") + 0.25
     t1 = e("e_clock")
-    music_box(mus, t0, t1, 0.6, rate=lambda u: 0.82, transpose=12, seed=12)
-    mus.add(O.organ([53, 57, 60], t1 - t0, 0.12), t0, until=t1)
+    music_box(mus, t0, t1, 0.8, rate=lambda u: 0.82, transpose=12, seed=12)
+    mus.add(O.organ([53, 57, 60], t1 - t0, 0.2), t0, until=t1)
+    tk = c("e_mend") + 0.9                                                 # the daisy chain, mended
+    mus.add(O.glock(89, 0.45), tk, pan=0.6)
+    mus.add(O.glock(96, 0.35), tk + 0.08, pan=0.65)
     for k in range(8):
         fx.add(O.page(0.3, seed=200 + k), t0 + 0.1 + k * 0.42, pan=0.3 + 0.08 * k)
     ts = Wx("e1", "score") - 0.25
@@ -895,7 +898,7 @@ def smooth(x, sec):
 
 STEMS = {}
 CEIL = -2.3
-NEED, RELIEF_DB, FX_DB, DOLL_DB = 11.0, 10.0, -24.0, -21.0        # the voice's margin over the bed in the speech band; how far the bed comes back in a pause
+NEED, RELIEF_DB, FX_DB, DOLL_DB = 8.0, 14.0, -24.0, -21.0        # the voice's margin over the bed in the speech band; how far the bed comes back in a pause
 
 
 def buses():
@@ -969,7 +972,7 @@ def build():
             a, b = spans[key]
             margin = 20 * np.log10((np.sqrt((bv[a:b] ** 2).mean()) + 1e-12) / (np.sqrt((bb[a:b] ** 2).mean()) + 1e-12))
             Ln = TL.lines[key]                                             # the duo's punchlines get the most room
-            need = NEED + ((8.0 if Ln["end"] - Ln["start"] < 1.6 else 5.0) if Ln["who"] in (ZUZA, LILI) else 0.0)
+            need = (19.0 if Ln["end"] - Ln["start"] < 1.6 else 16.0) if Ln["who"] in (ZUZA, LILI) else NEED
             if margin < need:
                 gain[key] -= (need - margin) + 0.4
                 short = True

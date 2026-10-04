@@ -388,6 +388,8 @@ def slip(c, x, y, ang, lines, s=1.0, colr=PAPER, ink=(50, 46, 70), mark=None, a=
         c.drawString(ln, -w / 2 + 16, -h / 2 + 40 + i * 34, f, paint(ink, a))
     if mark:
         c.drawOval(skia.Rect.MakeLTRB(-w / 2 - 20, -h / 2 - 16, w / 2 + 20, h / 2 + 16), paint(mark, a, stroke=6))
+    if a > 0.3:
+        K.reg_local(c, -w / 2, -h / 2, w / 2, h / 2, "slip" if s >= 0.6 else "deco")   # writing: keep it clear of the captions
     c.restore()
 
 

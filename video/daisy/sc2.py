@@ -107,7 +107,7 @@ def s_c_proofs(T, idx):
     """'Proofs, yes. Clocks, no.' Lili holds the medal high; she lifts the clock, then lets it drop."""
     st = K.Stage()
     c = st.c
-    SE.salon(c, T, wall=(176, 30, 54), wall2=(236, 170, 160), dots=False)
+    SE.salon(c, T, wall=(120, 24, 40), wall2=(160, 70, 80), dots=False)
     t_c, t_no = Wx("c5", "Clocks") - 0.05, Wx("c5", "no") - 0.05
     keys = [(S("c5") - 0.1, dict(sL=50, eL=70)), (Wx("c5", "Proofs") - 0.05, dict(sL=50, eL=70, sR=150, eR=20)),
             (t_c, dict(sL=120, eL=30, sR=150, eR=20)), (t_no, dict(sL=20, eL=6, sR=150, eR=20))]
@@ -172,7 +172,7 @@ def s_c_jagged(T, idx):
         C.label(c, "JAGGED", 320, 1170, 72, colr=(250, 244, 228), paper=(24, 20, 22), rot=-3)
         c.restore()
     if T < tf:
-        C.label(c, "A MEDICAL MYSTERY?", 540, 270, 46, paper=(250, 196, 30), rot=-2)
+        C.label(c, "IN A PERSON: BAFFLING", 540, 270, 46, paper=(250, 196, 30), rot=-2)
     return st.arr
 
 
@@ -530,11 +530,38 @@ def s_e_clue(T, idx):
             if p != "hold" and t < T < t + 0.4:
                 u = (T - t) / 0.4
                 x0, y0 = h[hand][:2]
-                PR.slip(c, x0 + (570 - x0) * u, y0 + (1215 - y0) * u - 160 * math.sin(math.pi * u), 300 * u, ["STEP 1..."], 0.45)
+                PR.slip(c, x0 + (570 - x0) * u, min(y0, 1260) + (1215 - min(y0, 1260)) * u - 160 * math.sin(math.pi * u), 300 * u, ["STEP 1..."], 0.45)
     if T > Wx("e1", "clue") - 0.1:
         C.label(c, "A CLUE,", 540, 340, 64, paper=(250, 196, 30), rot=-3)
     if T > Wx("e1", "not") - 0.1:
         C.label(c, "NOT A CONFESSION", 540, 480, 56, colr=(250, 244, 228), paper=(24, 20, 22), rot=2)
+    return st.arr
+
+
+def s_e_mend(T, idx):
+    """(No words.) In the meadow they mend the daisy chain the food fight snapped: two dangling halves, hands meet, a
+    knot, a new daisy - and the chain hangs whole between them again."""
+    st = K.Stage()
+    c = st.c
+    SE.field(c, T, horizon=700, density=0.8)
+    t0 = next(e[0] for e in __import__("edit").EDIT if e[1] == "e_mend")
+    tk = t0 + 0.9
+    apart_z, meet_z = dict(sL=10, eL=8, tR=(140, -1080)), dict(sL=10, eL=8, tR=(232, -1150))
+    apart_l, meet_l = dict(sR=10, eR=8, tL=(-140, -1080)), dict(sR=10, eR=8, tL=(-252, -1150))
+    zl = C.girl(c, "zuza", 300, 2250, 1.0, T, [(t0 - 0.1, apart_z), (tk - 0.35, meet_z), (tk + 0.35, apart_z)], mood="deadpan",
+                look=(0.6, 0.2), hands=("open", "fist"))
+    ll = C.girl(c, "lili", 800, 2250, 1.0, T, [(t0 - 0.1, apart_l), (tk - 0.35, meet_l), (tk + 0.35, apart_l)], mood="smile",
+                look=(-0.6, 0.2), hands=("fist", "open"))
+    hz, hl = zl["hand_r"][:2], ll["hand_l"][:2]
+    if T < tk:                                                            # two broken halves, dangling
+        chain(c, hz, (hz[0] - 20, hz[1] + 280), sag=10, T=T, n=5, r=24)
+        chain(c, hl, (hl[0] + 20, hl[1] + 280), sag=10, T=T, n=5, r=24)
+    else:                                                                 # tied: whole again
+        chain(c, hz, hl, sag=80, T=T, r=24)
+        k = K.pop(T, tk, 0.25, 0.4)
+        if k > 0:
+            mx, my = (hz[0] + hl[0]) / 2, (hz[1] + hl[1]) / 2 + 80
+            D.daisy(c, mx, my, 46 * k, rot=T * 40, seed=12)
     return st.arr
 
 
@@ -594,11 +621,6 @@ def s_e_dedication(T, idx):
         w = f.measureText(l)
         c.drawString(l, 530 - w / 2, 560 + i * 84, f, paint((246, 240, 222)))
         K.reg(530 - w / 2, 560 + i * 84 - 46, 530 + w / 2, 560 + i * 84 + 14, "dedication")
-    f2 = K.font("special-elite-400", 27)
-    for i, l in enumerate(SOURCES):
-        w = f2.measureText(l)
-        c.drawString(l, 530 - w / 2, 1090 + i * 40, f2, paint((200, 196, 186)))
-        K.reg(530 - w / 2, 1090 + i * 40 - 22, 530 + w / 2, 1090 + i * 40 + 8, "dedication")
     return st.arr
 
 

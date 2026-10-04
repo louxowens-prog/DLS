@@ -68,6 +68,8 @@ EDIT = [
     (S("d5") - 1.15, "d_still", "cut", [(0, "bw")]),
     # ---- epilogue
     (E("d5") + 0.35, "e_clue", "cut", [(0, "full")]),
+    (E("d5") + 2.35, "e_mend", "cut", [(0, "amber")]),
+    (S("e1") - 0.1, "e_clue", "jump", [(0, "full")]),
     (Wx("e1", "score") - 0.25, "e_sample", "jump", [(0, "amber")]),
     (Wx("e1", "check") - 0.25, "e_clock", "jump", [(0, "full")]),
     (E("e1") + 0.1, "e_dedication", "cut", [(0, "bw")]),

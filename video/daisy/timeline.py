@@ -10,16 +10,16 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 PRE = {
     "o1": 2.2,                    # the machines start up: wheels, a flywheel, the Oracle's teleprinter
-    "a1": 1.6,                    # the title: cut-paper letters, a brass sting, daisies
+    "a1": 1.5,                    # the title: cut-paper letters, a brass sting, daisies
     "a6": 1.0,                    # the shortcut confession count: a hard cut to silence
     "b1": 0.8,                    # chapter card
     "c1": 0.8,                    # chapter card
     "d1": 0.6,                    # the banquet is laid
     "d5": 5.25,                   # the food fight, then a hard cut to silence
-    "e1": 1.3,                    # putting things back, no words: the music box
-    "e2": 2.5,                    # the dedication card
+    "e1": 4.2,                    # putting things back, no words: the music box
+    "e2": 2.4,                    # the dedication card
 }
-TAIL = 2.5
+TAIL = 2.4
 
 
 class Timeline:

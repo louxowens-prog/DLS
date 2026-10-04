@@ -117,13 +117,30 @@ def photo(c, img, x, y, w, h, ang=0.0, border=14, a=1.0, shadow=True, src=None):
     c.restore()
 
 
+def press(rgb, cell=6, seed=0, grain=16.0):
+    """A press photograph of a picture: soft focus, lit from the top left, vignetted, grainy, and printed through a
+    coarse halftone screen laid over the continuous tones - an old newspaper or magazine photo, not a drawing."""
+    from scipy.ndimage import gaussian_filter
+    lum = rgb[..., :3].astype(np.float32) @ np.array([0.3, 0.59, 0.11], np.float32)
+    lum = gaussian_filter(lum, 1.4)
+    h, w = lum.shape
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    light = 1.18 - 0.5 * (0.4 * xx / w + 0.6 * yy / h)
+    vig = 1 - 0.38 * (((xx - w / 2) / (w / 2)) ** 2 + ((yy - h / 2) / (h / 2)) ** 2)
+    lum = lum * light * vig + np.random.default_rng(seed).normal(0, grain, lum.shape)
+    lum = np.clip((lum - 26) * 1.18, 0, 255)
+    tone = np.stack([lum * 1.0, lum * 0.95, lum * 0.84], -1)
+    dots = halftone(np.repeat(lum[..., None], 3, -1).astype(np.uint8), cell).astype(np.float32)
+    return np.clip(0.55 * tone + 0.45 * dots, 0, 255).astype(np.uint8)
+
+
 def snapshot(w, h, draw, bg=(150, 150, 150), cell=5, ink=(28, 24, 26), paper_=(240, 232, 214)):
-    """A press photograph of a drawing: render it off-screen, then print it in halftone dots (RGBA numpy)."""
+    """A press photograph of a drawing: render it off-screen, then print it like a newspaper photo (RGBA numpy)."""
     arr = np.zeros((h, w, 4), np.uint8)
     arr[..., :3] = bg
     arr[..., 3] = 255
     draw(skia.Surface(arr).getCanvas())
-    return np.dstack([halftone(arr[..., :3], cell, ink, paper_), np.full((h, w), 255, np.uint8)])
+    return np.dstack([press(arr, cell, seed=w + h), np.full((h, w), 255, np.uint8)])
 
 
 def pasted(c, img, pts, seed=0, ang=0.0, dx=0.0, dy=0.0, rim=(250, 248, 240)):

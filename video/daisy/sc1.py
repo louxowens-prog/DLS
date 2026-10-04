@@ -39,6 +39,10 @@ def _headline(c, T, t0, s, y, colors, seed, rot):
     c.restore()
 
 
+def _shoot_oracle(cc):
+    PR.oracle(cc, 180, 900, 0.62, 0.0, look=(0.2, -0.2), medal=False)
+
+
 def s_b_banners(T, idx):
     """'91%! Human-level! PhD-level!' Newspaper headlines slap down; Lili cheers on every one."""
     st = K.Stage()
@@ -47,6 +51,9 @@ def s_b_banners(T, idx):
     _headline(c, T, Wx("b1", "Ninety") - 0.1, "91%!", 380, [(200, 30, 40), (24, 20, 22)], 3, -4)
     _headline(c, T, Wx("b1", "Human") - 0.1, "HUMAN-LEVEL!", 620, [(24, 20, 22), (40, 80, 150)], 5, 3)
     _headline(c, T, Wx("b1", "PhD") - 0.1, "PhD-LEVEL!", 860, [(176, 30, 54), (24, 20, 22)], 7, -2)
+    if T > Wx("b1", "Ninety") - 0.1:                                      # the front-page photograph
+        img = K.cached("press_oracle", lambda: CL.snapshot(360, 270, _shoot_oracle, bg=(160, 156, 150), cell=5))
+        CL.photo(c, img, 560, 1110, 340, 255, ang=-3, border=12)
     keys = [(S("b1") - 0.1, "stand"), (Wx("b1", "Ninety") - 0.05, "up"), (Wx("b1", "Human") - 0.05, "wave"), (Wx("b1", "PhD") - 0.05, "up")]
     C.girl(c, "lili", 540, 2560, 0.95, T, keys, mood="delight")
     return st.arr
@@ -98,7 +105,7 @@ def s_b_broken(T, idx):
     for j, i in enumerate(cut_set):                                       # the snipped-out questions, fluttering down
         tc = t0 + 1.2 + j * 1.2
         u = T - tc
-        PR.slip(c, 260 + j * 200 + 60 * math.sin(u * 3), 1180 + 120 * u, 20 * math.sin(u * 4 + j), [ITEMS[i][:18]], 0.6)
+        PR.slip(c, 260 + j * 200 + 60 * math.sin(u * 3), min(1140, 1060 + 120 * u), 20 * math.sin(u * 4 + j), [ITEMS[i][:18]], 0.6)
     ci = min(len(cut_set), 2)
     if True:                                                             # the shears stay on the job
         yy = 420 + 1.1 * (130 + [1, 3, 4][ci] * 70)
