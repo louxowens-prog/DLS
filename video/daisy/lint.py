@@ -6,7 +6,7 @@ import numpy as np
 
 
 def check(T):
-    import diy as K
+    import kit as K
     from shots import lint, render_frame, ui_zone
     render_frame(T)
     boxes = list(K.TEXT)
@@ -24,13 +24,13 @@ if __name__ == "__main__":
     for T, bad, ui in res:
         for a, b in bad:
             n += 1
-            key = (a[4], b[4])
+            key = (a[4], b[4], int(T))
             if key not in seen:
                 seen.add(key)
                 print(f"{T:7.2f}  {a[4]:>10s} {tuple(int(v) for v in a[:4])}  x  {b[4]:<10s} {tuple(int(v) for v in b[:4])}")
         for b in ui:
             u += 1
-            key = ("ui", b[4])
+            key = ("ui", b[4], int(T))
             if key not in seen:
                 seen.add(key)
                 print(f"{T:7.2f}  UI ZONE  {b[4]:>10s} {tuple(int(v) for v in b[:4])}")

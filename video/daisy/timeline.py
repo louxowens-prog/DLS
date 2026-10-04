@@ -16,9 +16,9 @@ PRE = {
     "c1": 0.8,                    # chapter card
     "d1": 0.6,                    # the banquet is laid
     "d5": 1.7,                    # the food fight, then a hard cut to silence
-    "e2": 2.1,                    # the dedication card
+    "e2": 3.0,                    # the dedication card
 }
-TAIL = 1.6
+TAIL = 2.4
 
 
 class Timeline:
