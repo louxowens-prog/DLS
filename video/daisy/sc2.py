@@ -439,9 +439,9 @@ def s_e_end(T, idx):
         c.save(); c.translate(540, 470); c.scale(k2, k2); c.translate(-540, -470)
         C.big(c, "THE END", 540, 500, 170, [(176, 30, 54), (40, 80, 150), (214, 168, 40)], seed=21)
         c.restore()
-        tp = t_fz + 0.75                                                 # the last joke: a slip pasted over the freeze
+        tp = t_fz + 0.55                                                 # the last joke: a slip pasted over the freeze
         if T > tp:
             u = ease(ramp(T, tp, tp + 0.2))
-            PR.slip(c, 540, 1290 - 60 * (1 - u), -4, [typed("THEREFORE:", ramp(T, tp, tp + 0.4)), typed("THE END.", ramp(T, tp + 0.45, tp + 0.8))],
+            PR.slip(c, 540, 1290 - 60 * (1 - u), -4, [typed("THEREFORE:", ramp(T, tp, tp + 0.3)), typed("THE END.", ramp(T, tp + 0.32, tp + 0.6))],
                     1.8, a=u)
     return st.arr

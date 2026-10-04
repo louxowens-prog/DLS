@@ -20,7 +20,7 @@ BUILD = os.path.join(HERE, "build")
 def work(k, a, b, scale, out):
     os.environ["OMP_NUM_THREADS"] = "1"
     from PIL import Image
-    import draw as G
+    import kit as G
     from shots import render_frame
     from timeline import FPS
     w, h = int(G.W * scale) // 2 * 2, int(G.H * scale) // 2 * 2
