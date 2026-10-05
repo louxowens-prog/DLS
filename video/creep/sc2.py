@@ -184,7 +184,7 @@ def s_g_chart(T, idx):
             c.drawCircle(640 + i * 34, base - 6 + (i % 2) * 8, 22, paint((60, 44, 30)))
     gh = 1 - down
     if gh > 0.02:
-        PR.ghost(c, 760, base - hai - 240 + 20 * math.sin(T * 3), 0.55, T, a=gh, mouth=0.6, reach=1.0, light="lamp")
+        PR.ghost(c, 960, base - hai + 60 + 20 * math.sin(T * 3), 0.45, T, a=gh, mouth=0.6, reach=1.0, light="lamp", tail_to=(1000, base))
     CO.label(c, "PRACTICE" if down < 0.5 else "WITHOUT IT", 540, 310, 56, "bangers-400", (255, 226, 0), tag="label", outline=INK, ow=10)
     return st.arr
 
@@ -244,13 +244,12 @@ def s_g_puppet(T, idx):
             FA.lit_fill(cc, sheet, (238, 234, 218), L, rim=0.8, rim_w=6)
             for i in range(6):
                 cc.drawLine(-140, -250 + i * 26, 140, -246 + i * 26, paint((60, 60, 80), 0.4, stroke=4))
-            for sx in (-1, 1):                                          # paper strips down past her ears
-                strip = K.capsule(sx * 150, -120, sx * 140, 120, 46, 30)
-                FA.lit_fill(cc, strip, (238, 234, 218), L, rim=0.6, rim_w=4)
-                cc.drawCircle(sx * 146, -10, 16, paint((10, 10, 20), 0.85))
+            for sx in (-1, 1):                                          # its ink-blot eyes on her forehead
+                cc.drawCircle(sx * 52, -190, 20, paint((10, 10, 20), 0.9))
+                cc.drawPath(K.capsule(sx * 52 - 6, -176, sx * 52 - 8, -140, 8, 5), paint((10, 10, 20), 0.9))
         for i in range(int(12 * wrap)):                                 # typed words across her cheeks
             cc.drawLine(-90, 30 + i * 9, 90, 30 + i * 9, paint((40, 40, 70), 0.18 * wrap, stroke=3))
-    C.person(c, "kit", 540, 760 + nod, 1.5, T, expr=E_, light="green", seed=7, after=mask, tilt=nod * 0.6)
+    C.person(c, "kit", 540, 760 + nod, 1.5, T, expr=E_, light="storm", seed=7, after=mask, tilt=nod * 0.6)
     c.restore()
     for x0, x1 in ((380, 430), (700, 650), (540, 540)):                # the strings
         c.drawLine(x0, 0, x1, 520 + nod, paint((230, 230, 230), 0.7 * wrap, stroke=2))

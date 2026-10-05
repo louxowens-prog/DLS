@@ -57,7 +57,7 @@ def s_s_clinic(T, idx):
     PR.eyebox(c, 690, 420, 0.7, T, on=1.0, look=(0.3 * math.sin(T * 1.5), 0.5))
     C.person(c, "hale", 300, 1040, 1.3, T, expr="smug", light="clinic", gaze=(0.8, -0.3), turn=0.35, seed=4)
     c.restore()
-    stamp(c, "TRUE STORY!", 560, 400, T, Wx("s2", "real") - 0.05)
+    stamp(c, "TRUE STORY!", 330, 560, T, Wx("s2", "real") - 0.05, rot=-14)
     t1 = Wx("s2", "three") - 0.1
     if T > t1:                                                          # a calendar: three months of it
         k = K.pop(T, t1, 0.2, 0.25)
@@ -256,7 +256,7 @@ def s_s_junior(T, idx):
     SE.clinic(c, T, power=0.0, emergency=1.0)
     C.dutch(c, 7, 540, 900)
     C.push(c, T, S("s7") - 0.1, E("s7") + 0.4, 1.0, 1.15, cx=600, cy=700)
-    mv = ramp(T, S("s7"), E("s7") + 0.38)
+    mv = ramp(T, S("s7"), E("s7") + 0.6)
     PR.monitor(c, 680, 620, 0.95, T, scope_screen(T, box=0.0, eye=mv, grin=max(0.0, mv * 2 - 1)), light="red")
     C.person(c, "junior", 300, 1060, 1.5, T, expr="panic" if T > Wx("s7", "see") else "squint", light="red", gaze=(0.9, -0.6), turn=0.4, seed=14)
     c.restore()
@@ -268,30 +268,30 @@ def s_s_thing(T, idx):
     """THE CLIMAX: the growth swells into a latex horror and bursts out of the screen at her."""
     st = K.Stage()
     c = st.c
-    t0 = E("s7") + 0.38
+    t0 = E("s7") + 0.6
     u = T - t0
     CO.shock(c, "red", T, cx=540, cy=760, seed=16, rays=40, bolts=3)
-    if u < 0.9:                                                         # the screen bulges, cracks, bursts
+    if u < 0.75:                                                        # the screen bulges, cracks, bursts
         C.shake(c, T, 10 + 20 * u, seed=3)
 
         def screen(cc, x0, y0, x1, y1):
             PR.tunnel(cc, x0, y0, x1, y1, T)
-            PR.thing(cc, 0, 0, 0.35 + 0.5 * u, T, open_=min(1.0, u * 2), light="red")
-        PR.monitor(c, 540, 760, 1.4 + 0.4 * u, T, screen, light="red")
-        if u > 0.45:
+            PR.thing(cc, 0, 0, 0.35 + 0.6 * u, T, open_=min(1.0, u * 2.4), light="red")
+        PR.monitor(c, 540, 760, 1.4 + 0.5 * u, T, screen, light="red")
+        if u > 0.38:
             for i in range(9):
                 a = i * 0.7
                 c.drawLine(540, 760, 540 + 420 * math.cos(a), 760 + 330 * math.sin(a), paint(WHITE, 0.8, stroke=4))
         c.restore()
-    elif u < 1.55:                                                      # old Hale screams
+    elif u < 1.3:                                                       # old Hale screams
         C.shake(c, T, 8, seed=4)
-        C.push(c, T, t0 + 0.9, t0 + 1.55, 1.0, 1.35, cx=540, cy=820)
+        C.push(c, T, t0 + 0.75, t0 + 1.3, 1.0, 1.35, cx=540, cy=820)
         lying(c, "hale_old", 520, 860, 2.3, T, "scream", "red", ang=-8, gaze=(0, -0.3), seed=13)
         c.restore()
         c.restore()
         CO.splat(c, 220, 380, 70, seed=4)
     else:                                                               # it lunges right at us
-        k = ease(ramp(T, t0 + 1.55, t0 + 2.1))
+        k = ease(ramp(T, t0 + 1.3, t0 + 1.85))
         C.shake(c, T, 14, seed=5)
         PR.thing(c, 540, 820, 1.3 + 1.6 * k, T, open_=1.0, light="red", lunge=k)
         c.restore()
@@ -299,7 +299,7 @@ def s_s_thing(T, idx):
             if k > 0.2 + 0.15 * i:
                 CO.splat(c, x, y, r, seed=10 + i)
     if 0.0 < u < 0.5:
-        CO.sfx(c, "CRAACK!", 540, 320, 120, k=K.pop(T, t0, 0.12, 0.3), rot=-8, fill=(255, 226, 0), fill2=(255, 80, 0))
-    if u > 1.55:
-        CO.sfx(c, "SPLORCH!", 540, 300, 130, k=K.pop(T, t0 + 1.55, 0.12, 0.3), rot=6, fill=(255, 40, 40), fill2=(140, 0, 0))
+        CO.sfx(c, "CRAACK!", 540, 400, 120, k=K.pop(T, t0, 0.12, 0.3), rot=-8, fill=(255, 226, 0), fill2=(255, 80, 0))
+    if u > 1.3:
+        CO.sfx(c, "SPLORCH!", 540, 390, 130, k=K.pop(T, t0 + 1.3, 0.12, 0.3), rot=6, fill=(255, 40, 40), fill2=(140, 0, 0))
     return st.arr

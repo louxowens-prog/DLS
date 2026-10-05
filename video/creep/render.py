@@ -25,7 +25,7 @@ def work(k, a, b, scale, out):
     from timeline import FPS
     w, h = int(G.W * scale) // 2 * 2, int(G.H * scale) // 2 * 2
     cmd = ["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{w}x{h}", "-r", str(FPS),
-           "-i", "-", "-c:v", "libx264", "-preset", "fast", "-crf", "12", "-pix_fmt", "yuv420p",
+           "-i", "-", "-c:v", "libx264", "-preset", "fast", "-crf", "16", "-pix_fmt", "yuv420p",
            "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv", out]
     p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     t0 = time.time()

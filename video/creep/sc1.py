@@ -15,6 +15,11 @@ from common import E, S, Wx
 from kit import INK, WHITE, H, W, mix, paint, path, ramp, ease
 
 
+def cut_t(name):
+    from edit import EDIT
+    return next(e[0] for e in EDIT if e[1] == name)
+
+
 # ------------------------------------------------------------------ the comic's cover
 
 def cover(c, T, art=None):
@@ -318,9 +323,11 @@ def s_o_skills(T, idx):
 def s_o_before(T, idx):
     st = C.page(seed=5)
     c = st.c
-    rows = [(260, 600, "c6", "calculators", "SUMS"), (620, 960, "c6", "GPS", "ROUTES"), (980, 1290, "c6", "routes", "SPELLING")]
+    rows = [(350, 650, "c6", "calculators", "SUMS"), (670, 970, "c6", "GPS", "ROUTES"), (990, 1290, "c6", "routes", "SPELLING")]
+    CO.drip_title(c, "IT HAPPENED BEFORE...", 540, 300, 74, color=(200, 20, 30), seed=7, k=K.pop(T, cut_t("o_before") + 0.05, 0.25, 0.2),
+                  drip=0.4, tag="title")
     for i, (y0, y1, key, word, name) in enumerate(rows):
-        t0 = Wx(key, word) - 0.12
+        t0 = Wx(key, word) - 0.12 if i else cut_t("o_before") + 0.25
         if T < t0:
             continue
         k = K.pop(T, t0, 0.22, 0.12)
@@ -328,7 +335,7 @@ def s_o_before(T, idx):
         sc = sub.c
         if i == 0:
             SE.grad_bg(sc, (60, 40, 50), (30, 20, 30))
-            PR.calculator(sc, 640, 180, 0.7, T, display="28" if T > t0 + 0.6 else "4x7", ang=-8)
+            PR.calculator(sc, 640, 160, 0.66, T, display="28" if T > Wx("c6", "calculators") + 0.5 else "4x7", ang=-8)
             FA.hand(sc, 400, 300, 1.0, -30, skin=FA.CAST["nora"]["skin"], pose="point")
         elif i == 1:
             SE.grad_bg(sc, (20, 40, 60), (10, 14, 24))
@@ -346,6 +353,8 @@ def s_o_before(T, idx):
             K.reg_local(sc, 300, 100, 720, 270, "deco")
         sub.__exit__()
         CO.panel(c, sub.arr[: y1 - y0, : 960], 60, y0, 1020, y1, border=12, rot=(-1.2, 0.8, -0.6)[i], a=min(1.0, k))
+        if T > Wx("c6", "routes") + 0.4:                                 # the old losses, stamped
+            CO.label(c, "TAKEN", 860, y0 + 80, 50, "bangers-400", (200, 20, 30), rot=12, tag="label", a=min(1.0, (T - Wx("c6", "routes") - 0.4) * 4))
         CO.sfx(c, name, 210, y0 + 70, 62, k=k, rot=-6, tag="label")
     return st.arr
 
@@ -447,6 +456,19 @@ def s_v_map(T, idx):
                 sc.drawLine(xx, 40, xx + rng.uniform(-30, 30), 500, paint((90, 110, 160), stroke=5))
         sc.restore()
         sc.drawPath(head, paint(INK, stroke=8))
+        if 0.0 < erase < 1.0:                                           # a pink eraser scrubbing the streets away
+            u = erase
+            ex = 300 + 380 * (0.5 + 0.5 * math.sin(T * 7.0))
+            ey = 90 + 340 * u + 30 * math.sin(T * 11)
+            sc.save()
+            sc.translate(ex, ey)
+            sc.rotate(-25 + 10 * math.sin(T * 7))
+            sc.drawRoundRect(skia.Rect.MakeLTRB(-70, -36, 70, 36), 10, 10, paint((236, 140, 150)))
+            sc.drawRoundRect(skia.Rect.MakeLTRB(-70, -36, -20, 36), 10, 10, paint((70, 90, 160)))
+            sc.drawRoundRect(skia.Rect.MakeLTRB(-70, -36, 70, 36), 10, 10, paint(INK, stroke=5))
+            sc.restore()
+            for j in range(10):
+                sc.drawCircle(ex + rng.uniform(-90, 90), ey + rng.uniform(30, 70), rng.uniform(3, 6), paint((220, 130, 140), 0.8))
         if T > Wx("v4", "three") - 0.1:
             sc.drawRect(skia.Rect.MakeLTRB(780, 100, 960, 300), paint(WHITE))
             sc.drawRect(skia.Rect.MakeLTRB(780, 100, 960, 300), paint(INK, stroke=6))

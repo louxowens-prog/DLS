@@ -46,9 +46,11 @@ def s_r_real(T, idx):
     lit = ease(ramp(T, t0 + 0.2, t0 + 0.6))
     if lit > 0:
         SE.glow(c, 640, 1060, 500, (255, 190, 120), 0.25 * lit)
+    C.push(c, T, t0, E("r2") + 0.3, 1.0, 1.15, cx=520, cy=800)
     C.person(c, "nora", 480, 760, 1.35, T, expr="fear", light="candle" if lit > 0.5 else "plain", gaze=(0.6, 0.5), seed=2)
     PR.candle(c, 680, 1200, 0.9, T, a=lit)
     FA.hand(c, 600, 1290, 1.0, -40, skin=NORA_SKIN, light="candle", pose="grip")
+    c.restore()
     if T < t0 + 0.5:                                                    # the match flaring
         SE.glow(c, 700, 1060, 120, (255, 220, 160), 0.6 * (1 - ramp(T, t0 + 0.3, t0 + 0.5)))
     return st.arr
@@ -80,7 +82,7 @@ def s_r_pill(T, idx):
     SE.glow(c, 540, 820, 600, (255, 180, 110), 0.25)
     sh = math.sin(T * 23) * 4
     PR.pill_bottle(c, 520 + sh, 760, 1.25, ang=-6 + sh * 0.3)
-    FA.hand(c, 300 + sh, 1010, 1.5, -20, skin=NORA_SKIN, light="candle", pose="grip")
+    FA.hand(c, 380 + sh, 1150, 1.5, -70, skin=NORA_SKIN, light="candle", pose="grip")
     c.save()
     c.translate(540, 1240)
     c.rotate(3)

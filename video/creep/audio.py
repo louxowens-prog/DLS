@@ -1,17 +1,19 @@
-"""The soundtrack: an original score, the sound collage against the edit, the voices, the mix.
+"""The soundtrack: an original 1982-style horror-anthology score, the sound collage against the edit, the voices, the
+mix.
 
-The score is a toy band that keeps changing its mind: a brass march for the machines, the title, the headlines and
-the medal; a lopsided waltz (the second beat always a little late) for the window, the faces, the answer-key cake and
-the banquet; a harpsichord for the inside of the machine; an organ for the sober bits; a music box for the meadow
-and for putting things back; a wordless choir for the reveals. Every snap of the dolls' joints creaks (read off the
-choreography itself), the shears snip, the Oracle's teleprinter clatters, clocks tick, bells ring, the food fight
-splats and the streamers crackle.
+Score: an eerie piano motif in D minor (a falling figure that trips on a sharpened seventh), analog string-machine
+pads and synth-brass stabs, an arpeggiator and a pulsing synth bass that drive the tales, a music box for the
+margins and the moral, low rotting drones, a wordless choir for the reveals, a theremin wail for the ghost, and a
+cheesy organ jingle for the mail-order back page. A stinger on every colour shock; thunder on every lightning flash.
 
-Two hard cuts to silence: after the march piles up the slips ('...less than two percent'), nothing but Zuza ('A hundred
-slips. Maybe one confesses.'); and after the food fight, nothing but the narrator ('superhuman in one direction, and
-brittle an inch away'). The voices always sit well clear of the music in the speech band. Loudness -14 LUFS.
+Collage: storm (thunder, rain, wind), the flat (creaks, the lamp), the car (engine, wipers, the sat-nav), the swamp
+(wind, insects), the dorm (typing, paper), the exam (a clock, footsteps), the clinic (a heart monitor, the spotter's
+whine, the unplugging), the cockpit (warnings), the climax (glass, squelch, growl), the reader's night (a low-battery
+chime, a match, a heartbeat, breathing, a rattling pill bottle, a keypad, a dial tone), page turns.
+
+Hard cuts to dead silence: before 'Signal lost.'; before the climax; at the blackout. The exam hall is silent but for
+a clock. Voices always well clear of the music. Loudness -14 LUFS.
 """
-import json
 import os
 import wave
 
@@ -21,9 +23,9 @@ from scipy import signal
 import fxlib as FXL
 import instr as I
 import orch as O
+import synth82 as Y
 from common import E, S, Wx
-from edit import EDIT, FREEZES
-from script import LILI, MACH, NAR, ZUZA
+from edit import EDIT, FREEZE_D, LIGHTNING, PAGES, SHOCKS
 from timeline import TL
 from voice import SR as VSR
 
@@ -36,22 +38,13 @@ def db(v):
     return 10 ** (v / 20)
 
 
-def ramp(t, a, b):
-    return float(np.clip((t - a) / (b - a), 0, 1)) if b > a else float(t >= a)
-
-
 def cut(name):
-    """Start of the shot with this name."""
     return next(e[0] for e in EDIT if e[1] == name)
 
 
 def end(name):
-    """End of the shot with this name: the next cut to a different shot (punch-ins 'name@z' are the same shot)."""
     i = next(j for j, e in enumerate(EDIT) if e[1] == name)
-    j = i + 1
-    while j < len(EDIT) and EDIT[j][1].partition("@")[0] == name:
-        j += 1
-    return EDIT[j][0] if j < len(EDIT) else TL.total
+    return EDIT[i + 1][0] if i + 1 < len(EDIT) else TL.total
 
 
 class Bus:
@@ -59,7 +52,6 @@ class Bus:
         self.x = np.zeros((2, N_))
 
     def add(self, sig, t, gain=1.0, pan=0.5, until=None):
-        """Mix a signal in at time t; until = a hard stop (a 12 ms fade) - every cue ends on its cut."""
         if sig is None:
             return
         sig = np.asarray(sig, dtype=np.float64)
@@ -84,750 +76,414 @@ class Bus:
 
 # ------------------------------------------------------------------ the big moments
 
-T_SIL1 = cut("a_count")                 # the slips: march -> nothing
-T_SIL2 = cut("d_still")                 # the food fight -> nothing
-SILENCES = [(T_SIL1, cut("a_tracks") - 0.005), (T_SIL2, cut("e_clue") + 0.25)]
-T_FREEZE = E("e3") + 0.3
+T_SIG = cut("v_signal")                         # the road goes dead quiet ...
+T_SIGNAL = S("v5")                              # ... until the sat-nav loses its signal
+T_PRE = E("s7")                                 # silence before the thing on the screen
+T_THING = cut("s_thing")                        # the loudest moment
+T_BLACK = cut("r_dark")                         # the power dies
+SILENCES = [(T_SIG + 0.05, T_SIGNAL - 0.02), (T_PRE + 0.02, T_THING), (T_BLACK, S("r1") - 0.05)]
+T_EXAM = cut("g_exam")
 
 
 def in_silence(t):
     return any(a <= t < b for a, b in SILENCES)
 
 
-# ------------------------------------------------------------------ harmony and tunes
+# ------------------------------------------------------------------ harmony
 
-def chord(root, kind="maj"):
-    return [root + i for i in {"maj": (0, 4, 7), "min": (0, 3, 7), "dom": (0, 4, 7, 10), "dim": (0, 3, 6, 9), "maj6": (0, 4, 7, 9)}[kind]]
-
-
-def voicing(root, kind, lo=57):
-    """The chord's tones folded into the octave above lo."""
-    out = []
-    for m in chord(root, kind):
-        while m < lo:
-            m += 12
-        while m >= lo + 12:
-            m -= 12
-        out.append(m)
-    return sorted(out)
+BEAT = 60 / 84
+DM, BB, GM, AA, FF, CC = [50, 57, 62, 65], [46, 53, 58, 62], [43, 55, 58, 62], [45, 52, 57, 61], [41, 53, 57, 60], [48, 55, 60, 64]
+PROG = [DM, BB, GM, AA]
+MOTIF = [(74, 1), (69, 0.5), (70, 0.5), (77, 1), (76, 1), (74, 1), (69, 1), (73, 1.5), (74, 2.5)]   # 9 beats
 
 
-# the march: 2/4 in B-flat, dotted and pompous, eight bars (None = rest)
-MARCH = [[(65, .75), (65, .25), (70, .5), (74, .5)], [(77, 1.0), (74, .5), (70, .5)], [(72, .75), (72, .25), (75, .5), (79, .5)],
-         [(77, 1.5), (None, .5)], [(79, .75), (77, .25), (75, .5), (74, .5)], [(72, .5), (74, .5), (75, .5), (76, .5)],
-         [(77, .5), (82, .5), (81, .5), (72, .5)], [(70, 1.0), (None, 1.0)]]
-MARCH_CH = [(46, "maj"), (46, "maj"), (41, "dom"), (41, "dom"), (51, "maj"), (48, "dom"), (41, "dom"), (46, "maj")]
-
-# the daisy waltz: 3/4 in F, the film's tune (also the music box's)
-DAISY = [[(72, 1), (77, 1), (76, 1)], [(74, 2), (72, 1)], [(70, 1), (74, 1), (72, 1)], [(69, 3)],
-         [(67, 1), (70, 1), (69, 1)], [(67, 1), (65, 1), (64, 1)], [(65, 1), (69, 1), (72, 1)], [(77, 3)]]
-DAISY_CH = [(41, "maj"), (46, "maj6"), (48, "dom"), (41, "maj"), (48, "dom"), (48, "dom"), (41, "maj"), (41, "maj")]
-DAISY_FLAT = [n for bar in DAISY for n in bar]
-
-# the harpsichord's thinking machine: D minor, broken chords
-DM = [(50, "min"), (43, "min"), (45, "dom"), (50, "min"), (46, "maj"), (43, "min"), (45, "maj"), (45, "dom")]
-CMAJ = [(48, "maj"), (45, "min"), (41, "maj"), (43, "dom")]
-AMIN = [(45, "min"), (41, "maj"), (40, "dom"), (45, "min")]
-
-
-class Grid:
-    def __init__(self, t0, bpm, beats=4):
-        self.t0, self.b, self.beats = t0, 60.0 / bpm, beats
-
-    def at(self, bar, beat=0.0):
-        return self.t0 + (bar * self.beats + beat) * self.b
-
-
-# ------------------------------------------------------------------ the pieces
-
-def march(mus, t0, t1, bpm=120, level=1.0, melody=True, drums=True, pah=True, tuba=True, lead="brass", stumble=True, crash=True,
-          level_fn=None, transpose=0, bar0=0):
-    """The toy brass band in 2/4: tuba oom, brass pah, snare and bass drum, the tune on brass doubled by a glockenspiel.
-    stumble: every fourth bar the band trips over an extra half beat (it is a lopsided march)."""
-    b = 60.0 / bpm
+def motif(bus, t0, until, level=1.0, transpose=0, inst="piano", beat=BEAT, pan=0.42):
     t = t0
-    bar = bar0
-    lv = level_fn or (lambda _t: 1.0)
+    while t < until:
+        for m, b in MOTIF:
+            if t >= until:
+                return
+            d = b * beat
+            if inst == "piano":
+                bus.add(O.piano([m + transpose], d), t, level, pan, until=until + 1.0)
+            elif inst == "box":
+                bus.add(O.music_box([(m + transpose + 12, b)], amp=1.0), t, level, pan, until=until + 1.0)
+            t += d
+        t += 1.5 * beat
+
+
+def pads(bus, t0, t1, level=1.0, prog=PROG, bars=2.0, cut_=(500, 2000), seed=0, beat=BEAT):
+    t, i = t0, 0
+    d = bars * 4 * beat
     while t < t1:
-        root, kind = MARCH_CH[bar % 8]
-        root += transpose
-        L = level * lv(t)
-        blen = 2.5 if (stumble and bar % 4 == 3) else 2.0
-        if tuba:
-            mus.add(O.tuba(root - 12 + 12 * (root < 40), b * 0.55, 0.9 * L), t, until=t1 + 0.03)
-            mus.add(O.tuba(root - 5 + 12 * (root < 40), b * 0.55, 0.8 * L), t + b, until=t1 + 0.03)
-        if pah:
-            for pb in (0.5, 1.5) + ((2.0,) if blen > 2 else ()):
-                mus.add(O.brass(voicing(root, kind, 55), b * 0.28, 0.55 * L, seed=bar, bright=0.7), t + pb * b, pan=0.4, until=t1 + 0.03)
-        if drums:
-            for k in range(int(blen)):
-                mus.add(O.kick(0.55 * L, seed=bar), t + k * b, until=t1 + 0.03)
-                mus.add(O.snare(0.28 * L, seed=bar * 3 + k), t + (k + 0.5) * b, pan=0.6, until=t1 + 0.03)
-            if blen > 2:
-                mus.add(O.snare(0.4 * L, seed=bar), t + 2.0 * b, until=t1 + 0.03)
-                mus.add(O.snare(0.3 * L, seed=bar + 1), t + 2.25 * b, until=t1 + 0.03)
-            if crash and bar % 8 == 0:
-                mus.add(O.cymbal(0.45 * L, 1.4), t, pan=0.65, until=t1 + 0.03)
-        if melody:
-            p = 0.0
-            for m, d in MARCH[bar % 8]:
-                if m is not None:
-                    if lead == "brass":
-                        mus.add(I.trumpet(m + transpose, d * b * 0.9, 0.9 * L, seed=bar), t + p * b, pan=0.55, until=t1 + 0.03)
-                        mus.add(O.glock(m + transpose + 12, 0.25 * L), t + p * b, pan=0.7, until=t1 + 0.03)
-                    elif lead == "musette":
-                        mus.add(I.musette([m + transpose, m + transpose - 4], d * b * 0.85, 1.4 * L, seed=bar), t + p * b, pan=0.55, until=t1 + 0.03)
-                    else:
-                        mus.add(O.glock(m + transpose + 12, 0.6 * L), t + p * b, pan=0.6, until=t1 + 0.03)
-                p += d
-        t += blen * b
-        bar += 1
-
-
-def waltz(mus, t0, t1, bpm=168, level=1.0, lead="musette", bass="tuba", limp=0.22, melody=True, transpose=0, organ=False,
-          choir_pad=False, wobble=0.04, bar0=0, seed=0):
-    """The lopsided waltz: oom on one, pah-pah on two and three - but two always lands late, and the tempo wobbles."""
-    b0 = 60.0 / bpm
-    warp = lambda p: np.interp(p, [0, 1, 2, 3], [0, 1 + limp, 2.05, 3])
-    t = t0
-    bar = bar0
-    rng = np.random.default_rng(seed)
-    while t < t1:
-        b = b0 * (1 + wobble * np.sin(bar * 1.7 + seed) + rng.normal(0, wobble * 0.3))
-        root, kind = DAISY_CH[bar % 8]
-        root += transpose
-        bm = root - 12 + 12 * (root < 38) + (7 if bar % 2 else 0)
-        if bass == "tuba":
-            mus.add(O.tuba(bm, b * 0.7, 0.9 * level), t, until=t1 + 0.03)
-        else:
-            mus.add(O.pizz(bm + 12, 1.2 * level, seed=bar), t, until=t1 + 0.03)
-        for k in (1, 2):
-            v = voicing(root, kind, 57)
-            mus.add(I.musette(v, b * 0.32, 0.9 * level, seed=bar * 3 + k), t + warp(k) * b, pan=0.4, until=t1 + 0.03)
-        if organ:
-            mus.add(O.organ(voicing(root, kind, 53), b * 2.9, 0.35 * level), t, pan=0.5, until=t1 + 0.03)
-        if choir_pad and bar % 2 == 0:
-            mus.add(I.choir(voicing(root, kind, 60), b * 5.6, 0.5 * level, vowel="a", seed=bar), t, pan=0.5, until=t1 + 0.03)
-        if melody:
-            p = 0.0
-            for m, d in DAISY[bar % 8]:
-                st, en = warp(p) * b, warp(min(3, p + d)) * b
-                mm = m + transpose
-                if lead == "musette":
-                    mus.add(I.musette([mm], (en - st) * 0.9, 1.5 * level, seed=bar), t + st, pan=0.6, until=t1 + 0.03)
-                elif lead == "reed":
-                    mus.add(O.reed(mm, (en - st) * 0.9, 1.1 * level, seed=bar), t + st, pan=0.6, until=t1 + 0.03)
-                elif lead == "glock":
-                    mus.add(O.glock(mm + 12, 0.7 * level), t + st, pan=0.6, until=t1 + 0.03)
-                    mus.add(I.musette([mm], (en - st) * 0.9, 1.0 * level, seed=bar), t + st, pan=0.55, until=t1 + 0.03)
-                elif lead == "brass":
-                    mus.add(I.trumpet(mm, (en - st) * 0.85, 0.8 * level, seed=bar), t + st, pan=0.6, until=t1 + 0.03)
-                    mus.add(O.glock(mm + 12, 0.35 * level), t + st, pan=0.7, until=t1 + 0.03)
-                p += d
-        t += 3 * b
-        bar += 1
-
-
-def harpsichord(mus, t0, t1, bpm=100, level=1.0, prog=DM, pattern=(0, 2, 1, 2, 3, 2, 1, 2), steps=8, bass=True, pan=0.45, lo=57):
-    """Broken chords in sixteenths on the harpsichord: the machine thinking."""
-    s = 60.0 / bpm / 4
-    t = t0
-    bar = 0
-    while t < t1:
-        root, kind = prog[bar % len(prog)]
-        v = voicing(root, kind, lo)
-        tones = v[:3] + [v[0] + 12]
-        if bass:
-            mus.add(I.harpsi(root - 12 + 12 * (root < 40), 1.2, 0.9 * level), t, pan=0.35, until=t1 + 0.03)
-        for k in range(steps):
-            tk = t + k * s
-            if tk >= t1:
-                break
-            mus.add(I.harpsi(tones[pattern[k % len(pattern)]], 0.7, 0.7 * level, seed=k), tk, pan=pan, until=t1 + 0.03)
-        t += steps * s
-        bar += 1
-
-
-INV_U = [77, 76, 74, 72, 74, 72, 70, 69, 70, 69, 67, 65, 67, 69, 70, 72]
-INV_L = [50, 53, 57, 53, 55, 58, 62, 58, 48, 52, 55, 52, 53, 57, 60, 57]
-
-
-def invention(mus, t0, t1, bpm=100, level=1.0):
-    """Two voices at once, one in each ear, running in contrary motion: two tracks."""
-    e = 60.0 / bpm / 2
-    k = 0
-    while t0 + k * e < t1:
-        t = t0 + k * e
-        mus.add(I.harpsi(INV_U[k % 16], 0.8, 0.75 * level, seed=k), t, pan=0.8, until=t1 + 0.03)
-        mus.add(I.harpsi(INV_L[k % 16], 0.8, 0.8 * level, seed=k + 50), t + (e * 0.5 if k % 4 == 3 else 0), pan=0.2, until=t1 + 0.03)
-        k += 1
-
-
-CHORALE = [(53, 57, 60, 65), (53, 58, 62, 65), (52, 55, 60, 64), (50, 57, 62, 65), (46, 58, 62, 65), (48, 55, 60, 64), (53, 57, 60, 65)]
-
-
-def chorale(mus, t0, t1, bpm=60, level=1.0, chords=CHORALE, beats=2):
-    b = 60.0 / bpm
-    i = 0
-    while t0 + i * beats * b < t1:
-        notes = chords[i % len(chords)]
-        mus.add(O.organ(list(notes), beats * b * 0.97, 0.9 * level), t0 + i * beats * b, until=t1 + 0.03)
-        mus.add(O.organ([notes[0] - 12], beats * b * 0.97, 0.5 * level), t0 + i * beats * b, until=t1 + 0.03)
+        ch = prog[i % len(prog)]
+        bus.add(Y.pad(ch, min(d, t1 - t) + 0.2, cut=cut_, seed=seed + i), t, level, 0.5, until=t1 + 0.4)
+        t += d
         i += 1
 
 
-def music_box(mus, t0, t1, level=1.0, beats=None, rate=None, detune=None, transpose=12, seed=0, pan=0.5):
-    notes = [(m + transpose, d) for m, d in (DAISY_FLAT if beats is None else _first_beats(beats))]
-    mus.add(O.music_box(notes, rate=rate, amp=level, seed=seed, detune=detune), t0, pan=pan, until=t1 + 0.03)
+def arp(bus, t0, t1, level=1.0, prog=PROG, bars=1.0, step=None, beat=BEAT, pattern=(0, 1, 2, 3, 2, 1), octave=12, pan=0.6):
+    step = step or beat / 4
+    t, k = t0, 0
+    while t < t1:
+        bar = int((t - t0) / (bars * 4 * beat))
+        ch = prog[bar % len(prog)]
+        m = ch[pattern[k % len(pattern)] % len(ch)] + octave
+        bus.add(Y.pluck(m, 1.0), t, level, pan + 0.15 * np.sin(k * 0.7), until=t1)
+        t += step
+        k += 1
 
 
-def _first_beats(n):
-    out, acc = [], 0
-    for m, d in DAISY_FLAT * 2:
-        if acc >= n:
-            break
-        out.append((m, d))
-        acc += d
-    return out
+def pulse(bus, t0, t1, level=1.0, prog=PROG, bars=1.0, beat=BEAT):
+    t = t0
+    while t < t1:
+        bar = int((t - t0) / (bars * 4 * beat))
+        root = prog[bar % len(prog)][0] - 12
+        bus.add(Y.bass(root, beat / 2 * 0.8), t, level, 0.5, until=t1)
+        t += beat / 2
 
 
-def fanfare(mus, fx, t, level=1.0, transpose=0):
-    """The chapter fanfare: a snare pickup, ta-ta-ta-taaa on the brass, timpani and a cymbal."""
-    mus.add(O.snare_roll(0.22, 0.5 * level), t - 0.2)
-    for k, m in enumerate((70, 74, 77)):
-        mus.add(I.trumpet(m + transpose, 0.1, 0.9 * level, seed=k), t + k * 0.11, pan=0.55)
-    mus.add(O.brass(voicing(46 + transpose, "maj", 62) + [82 + transpose], 0.55, 1.1 * level, seed=9), t + 0.33)
-    mus.add(O.timpani(34 + transpose, 0.9 * level), t + 0.33)
-    mus.add(O.glock(94 + transpose, 0.4 * level), t + 0.33, pan=0.7)
-    fx.add(O.cymbal(0.5 * level, 1.3), t + 0.33, pan=0.6)
+def stinger(mus, fx, t, color="red", level=1.0):
+    """The colour shock: an orchestra-and-synth stab, a choir shriek, a boom."""
+    root = {"red": 50, "green": 49, "blue": 51, "violet": 48}.get(color, 50)
+    mus.add(O.scare(1.0, seed=int(t * 10), notes=(root - 9, root - 8, root - 3, root + 3, root + 4, root + 10, root + 11)), t, 1.3 * level)
+    mus.add(Y.stab([root, root + 1, root + 6, root + 12], 1.0, 0.9), t, 1.1 * level)
+    mus.add(I.choir([root + 22, root + 23, root + 28], 1.2, 1.0, vowel="a", attack=0.02), t, 0.9 * level)
 
 
-def tada(mus, t, level=1.0, minor=False, transpose=0):
-    if minor:
-        mus.add(O.tuba(41 + transpose, 0.2, 0.9 * level), t)
-        mus.add(O.brass([62 + transpose, 65 + transpose, 68 + transpose], 0.5, 0.8 * level, seed=3, bright=0.5), t + 0.18)
-        mus.add(O.tuba(36 + transpose, 0.5, 0.9 * level), t + 0.18)
-    else:
-        mus.add(O.brass([65 + transpose, 69 + transpose, 72 + transpose], 0.12, 0.9 * level, seed=1), t)
-        mus.add(O.brass([70 + transpose, 74 + transpose, 77 + transpose, 82 + transpose], 0.6, 1.0 * level, seed=2), t + 0.15)
-        mus.add(O.glock(94 + transpose, 0.4 * level), t + 0.15, pan=0.7)
+def page_turn(fx, t, level=1.0):
+    fx.add(O.page(1.0, seed=int(t)), t, 1.4 * level, 0.6)
+    fx.add(O.whoosh(0.4, True, seed=int(t), amp=0.6), t + 0.05, level, 0.4)
 
-
-def stab(mus, t, root, kind="maj", level=1.0, dur=0.3, until=None):
-    mus.add(O.brass(voicing(root, kind, 58), dur, 0.9 * level, seed=int(root), bright=1.1), t, until=until)
-    mus.add(O.tuba(root - 12 + 12 * (root < 40), dur, 0.8 * level), t, until=until)
-
-
-# ------------------------------------------------------------------ the dolls' joints, read off the choreography
-
-def doll_moves():
-    """Every pose change of the duo in the film, with who and what pose: (t, who, pose). Found by running every shot
-    a few times with a spy on common.girl; cached against the shot sources."""
-    import hashlib
-    srcs = ["sc0.py", "sc1.py", "sc2.py", "edit.py", "timeline.py", "script.py", "common.py"]
-    h = hashlib.md5(b"".join(open(os.path.join(HERE, f), "rb").read() for f in srcs)).hexdigest()
-    path = os.path.join(HERE, "build", "moves.json")
-    if os.path.exists(path):
-        d = json.load(open(path))
-        if d.get("hash") == h:
-            return [tuple(x) for x in d["moves"]]
-    from multiprocessing import Pool
-    jobs = []
-    for i, e in enumerate(EDIT):
-        t0, t1 = e[0], (EDIT[i + 1][0] if i + 1 < len(EDIT) else TL.total)
-        ts = list(np.arange(t0 + 0.03, t1, 0.5)) + [t1 - 0.03]
-        jobs += [(e[1], float(t), t0, t1) for t in ts]
-    with Pool(4) as p:
-        res = p.map(_spy, jobs)
-    moves = sorted(set(m for r in res for m in r))
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    json.dump(dict(hash=h, moves=moves), open(path, "w"))
-    return moves
-
-
-def _spy(job):
-    name, T, t0, t1 = job
-    import common as C
-    import shots
-    out = []
-    orig = C.girl
-
-    def spy(c, who, x, y, s, T_, keys=None, P="stand", **kw):
-        if keys:
-            ks = sorted(keys, key=lambda k: k[0])
-            for t, p in ks[1:]:
-                if t0 <= t < t1:
-                    out.append((round(float(t), 4), who, p if isinstance(p, str) else "custom"))
-        return orig(c, who, x, y, s, T_, keys, P, **kw)
-
-    C.girl = spy
-    try:
-        shots.SHOTS[name.partition("@")[0]](T, 0)
-    finally:
-        C.girl = orig
-    return out
-
-
-def joints(doll, nosil):
-    """A creak on every snap of a joint; and what the pose does: claps clap, steps tiptoe, eats crunch, throws whoosh."""
-    moves = doll_moves()
-    words = [(a, b) for k in TL.order for _, a, b in TL.lines[k]["words"]]
-    on_word = lambda t: any(a - 0.03 <= t <= b for a, b in words)
-    for i, (t, who, pose) in enumerate(moves):
-        if t < T_FREEZE:
-            bus = nosil if in_silence(t) else doll
-            pan = 0.3 if who == "zuza" else 0.7
-            if on_word(t):                                                 # under a word: a short dry click, not a squeal
-                bus.add(I.joint(0.3, seed=i * 7 + 3, dur=0.05), t, pan=pan)
-                bus.add(O.woodblock(0.14, 1500 if who == "zuza" else 1800), t, pan=pan)
-            else:
-                bus.add(I.joint(0.75, seed=i * 7 + (1 if who == "zuza" else 2), dur=0.13 if who == "lili" else None), t, pan=pan)
-            if pose == "clap":
-                bus.add(O.clap(0.5, seed=i), t + 0.06, pan=pan)
-            elif pose in ("step_l", "step_r"):
-                bus.add(I.tiptoe(0.8, seed=i), t + 0.04, pan=pan)
-            elif pose == "eat":
-                bus.add(I.crunch(0.8, seed=i), t + 0.18, pan=pan)
-            elif pose in ("throw", "throw2"):
-                bus.add(O.whoosh(0.25, True, seed=i, amp=0.5), t, pan=pan)
-    return moves
-
-
-# ------------------------------------------------------------------ the cue sheet
 
 def score(mus, fx, nosil):
-    from sc0 import STEP_T
-    c, e = cut, end
-
-    # ---- the machines: two and a half seconds of gears, jump-cut every quarter second, the duo pasted in
-    tm = c("o_strip")
-    fx.add(I.ratchet(tm, 26, 0.4), 0.0, until=tm)
-    fx.add(O.whir(tm + 0.2, 0.9, 62), 0.0, until=tm + 0.05)
-    for b in range(int(tm / 0.25) + 1):
-        t = b * 0.25
-        if t >= tm:
-            break
-        k = b % 4
-        mus.add(O.snare(0.35, seed=b), t, until=tm)
-        fx.add(I.joint(0.7, seed=900 + b), t, pan=0.3 if k == 0 else 0.7)
-        if k == 0:
-            stab(mus, t, [46, 41, 51][b // 4 % 3], "maj" if b // 4 % 3 != 1 else "dom", 0.8, 0.22, until=tm)
-            mus.add(O.timpani(34, 0.6), t, until=tm)
-            fx.add(I.snip(0.7, 950 + b), t + 0.06, pan=0.35)
-        elif k == 1:
-            fx.add(I.snip(0.8, 960 + b), t + 0.05, pan=0.6)
-            fx.add(I.snip(0.6, 970 + b), t + 0.15, pan=0.6)
-        elif k == 2:
-            mus.add(O.glock([84, 88, 91][b // 4 % 3], 0.5), t, pan=0.7, until=tm)
-        else:
-            fx.add(O.clunk(0.45, seed=b), t, pan=0.5)
-    fx.add(O.cymbal(0.45, 1.0), 2.0, until=tm + 0.05)
-    fx.add(O.pneumatic(0.35, 0, 0.3), 0.6)
-    fx.add(O.pneumatic(0.35, 1, 0.3), 1.6)
-
-    ti = next(e[0] for e in EDIT[1:] if e[1] == "o_gears")             # the machines again, between two steps
-    fx.add(I.ratchet(0.3, 30, 0.4, seed=3), ti, until=ti + 0.32)
-    fx.add(O.clunk(0.5, seed=4), ti, pan=0.4)
-    fx.add(O.tick(0.6, tock=True), ti + 0.15, pan=0.6)
-    for a, _ in FREEZES:                                                  # the projector catches on each freeze frame
-        fx.add(O.click(0.55), a, pan=0.5)
-
-    # ---- the Oracle types its reasoning; the harpsichord thinks
-    fx.add(O.pop(0.4), c("o_strip"))
-    harpsichord(mus, c("o_strip"), S("o3") - 0.05, bpm=104, level=0.5)
-    for i, (k, w0, w1) in enumerate(STEP_T):
-        a, b = Wx(k, w0) - 0.05, Wx(k, w1) + 0.3
-        fx.add(I.teleprinter(b - a, 0.45, seed=i), a, pan=0.55)
-        fx.add(O.ding(0.25, 96), b, pan=0.6)
-    mus.add(O.glock(84, 0.5), E("o2") + 0.02, pan=0.7)
-    mus.add(O.glock(91, 0.5), E("o2") + 0.12, pan=0.7)
-    mus.add(O.tuba(34, 0.45, 1.0), E("o3") + 0.02, until=c("o_window") + 0.3)
-
-    # ---- the painted window: the waltz comes in, the choir on 'painting'
-    waltz(mus, c("o_window"), e("o_window"), bpm=172, level=0.55, lead="musette", bass="pizz")
-    fx.add(O.pop(0.35), Wx("o4", "window") - 0.15, pan=0.6)
-    tp = Wx("o4", "painting") - 0.15
-    mus.add(I.choir([65, 69, 72, 77], e("o_window") - tp, 0.9, vowel="a", attack=0.15), tp, until=e("o_window"))
-    fx.add(O.stamp(0.45), tp, pan=0.5)
-    fx.add(O.page(0.5, seed=2), tp + 0.4, pan=0.45)
-
-    # ---- the title: snip-snip, a fanfare, cut-out letters popping on
-    t = c("title")
-    fx.add(I.snip(0.8, 1), t)
-    fx.add(I.snip(0.7, 2), t + 0.13)
-    fx.add(I.flutter(0.6, 0.6, 3), t + 0.05)
-    fanfare(mus, fx, t + 0.25)
-    mus.add(I.choir([70, 74, 77, 82], 1.1, 0.6, vowel="a", attack=0.2), t + 0.58, until=e("title"))
-    fx.add(O.pop(0.4), t + 0.05)
-    fx.add(O.pop(0.4), t + 0.4)
-
-    # ---- 1. THE PAINTED WINDOW
-    t = c("a_cut")
-    fx.add(O.pop(0.35), t)
-    for k in range(3):
-        fx.add(I.snip(0.6, 10 + k), t + 0.28 + k * 0.52, pan=0.35)
-    harpsichord(mus, t, e("a_open"), bpm=100, level=0.45)
-    t = c("a_open")
-    for k in range(5):
-        fx.add(I.snip(0.55, 20 + k), t + 0.05 + k * 0.21, pan=0.5)
-    fx.add(I.joint(0.8, 5, 0.32), t + 1.0, pan=0.55)
-    fx.add(O.page(0.5, seed=4), t + 1.05)
-    mus.add(I.choir([62, 65, 69], 1.4, 0.6, vowel="o", attack=0.2), t + 1.05, until=e("a_open"))
-    fx.add(O.page(0.45, seed=5), Wx("a2", "more") - 0.1)
-    fx.add(O.stamp(0.45), Wx("a2", "recording") - 0.2)
-
-    sneak(mus, c("a_shortcut"), e("a_shortcut"))
-    fx.add(O.page(0.4, seed=6), Wx("a3", "shortcut") - 0.1)
-    fx.add(O.slurp(0.45, 0.5), S("a4") + 0.18)
-    fx.add(O.gloop(0.6), S("a4") + 0.45)
-    mus.add(O.glock(89, 0.4), S("a4") + 0.5, pan=0.6)
-
-    # the slips: the march piles up and up - then the cut to silence
-    t0, t1 = c("a_used"), e("a_used")
-    march(mus, t0, t1, bpm=126, level=0.9, level_fn=lambda tt: 0.45 + 0.55 * ramp(tt, t0, t1), stumble=True)
-    a, b = Wx("a5", "almost") - 0.2, Wx("a5", "time") + 0.1
-    fx.add(O.slide_whistle(True, b - a, 0.45), a, pan=0.3)
-    fx.add(O.page(0.4, seed=7), Wx("a5", "almost") - 0.1)
-    for i in range(6):
-        ti = S("a5") + 0.3 + i * 0.7
-        if ti < Wx("a5", "under"):
-            fx.add(I.teleprinter(0.3, 0.35, seed=30 + i), ti, pan=0.55)
-            fx.add(I.flutter(0.8, 0.5, 30 + i), ti + 0.1, pan=0.3 + 0.08 * i)
-    tl = Wx("a5", "under") - 0.05
-    fx.add(O.stamp(0.6), tl)
-    fx.add(O.cymbal(0.45, 1.2), tl, pan=0.6)
-    mus.add(O.brass([58, 61, 66, 71], 0.6, 0.8, seed=4, bright=0.6), tl, until=t1)
-    fx.add(O.keys(8, 0.06, 0.35, seed=8), Wx("a5", "reasoning"), until=t1)
-
-    # (silence) - then the scissors cut us into the wiring, and the harpsichord plays in two voices at once
-    t = c("a_tracks")
-    fx.add(I.snip(0.8, 40), t)
-    fx.add(I.snip(0.7, 41), t + 0.12)
-    fx.add(I.flutter(0.5, 0.6, 40), t + 0.05)
-    invention(mus, t, e("a_tracks"), bpm=100, level=0.6)
-    fx.add(O.pop(0.45), Wx("a7", "thirty") - 0.1)
-    tt = Wx("a7", "two") - 0.1
-    td = Wx("a7", "digit") + 0.2
-    for j in range(2):
-        fx.add(I.ratchet(max(0.1, td - (tt + j * 0.35)), 9 + 3 * j, 0.35, seed=j), tt + j * 0.35, pan=0.25 + 0.5 * j)
-    fx.add(O.tubular(91, 0.5), Wx("a7", "digit") + 0.1, pan=0.6)
-
-    t0, t1 = c("a_carry"), e("a_carry")
-    march(mus, t0, t1, bpm=112, level=0.45, drums=False, lead="musette", stumble=False, crash=False)
-    fx.add(I.teleprinter(E("a8") + 0.1 - S("a8"), 0.3, seed=50), S("a8"), pan=0.55, until=t1)
-    mus.add(O.tuba(31, 0.4, 1.1), c("a_didnot"), until=c("a_didnot") + 0.6)
-
-    t0, t1 = c("a_notfake"), e("a_notfake")
-    chorale(mus, t0, t1, bpm=66, level=0.5)
+    # ---------------- cold open: storm, the cover and its hook
+    t_end = cut("o_window")
+    fx.add(FXL.rain(t_end + 0.2, 0.7), 0.0, 0.9)
+    mus.add(O.drone(6.8, root=26, amp=1.0), 0.1, 0.9, until=Wx("c1", "without"))
+    pads(mus, 0.5, Wx("c1", "without"), 0.8, prog=[DM, BB], bars=1.5, cut_=(400, 1600))
+    motif(mus, 0.7, Wx("c1", "without") - 0.1, 0.9)
+    mus.add(Y.riser(1.6, 0.8), Wx("c1", "without") - 1.6, 0.8)
+    fx.add(Y.creak(1.0, 1.0, seed=1), cut("o_noai") + 0.4, 0.6, 0.3)
+    fx.add(O.click(1.0), Wx("c1", "finding") + 0.25, 1.2, 0.7)
+    fx.add(O.power_down(0.8, 1.0), Wx("c1", "finding") + 0.27, 0.6, 0.7)
+    fx.add(O.squelch(1.0, seed=2, dur=0.4), Wx("c1", "finding") + 0.6 + 0.35, 0.7, 0.6)
+    # ---------------- the reader, the host at the window
+    t0, t1 = cut("o_window"), cut("o_muse")
+    fx.add(FXL.rain(t1 - t0 + 0.5, 0.8, seed=6), t0, 1.0)
+    fx.add(Y.wind(t1 - t0 + 1.0, 1.0, seed=2), t0, 0.7)
+    pads(mus, t0, t1, 1.0, prog=[DM, GM, AA, DM], bars=0.75, cut_=(600, 2600))
+    motif(mus, Wx("c2", "Welcome") - 0.1, t1, 1.0, inst="piano")
+    pulse(mus, Wx("c2", "Welcome"), t1, 0.8, prog=[DM, GM, AA, DM], bars=0.75)
+    mus.add(I.choir([62, 65, 69, 74], 1.6, 1.0, vowel="a", attack=0.05), Wx("c2", "Use") - 0.05, 1.0, until=t1 + 0.5)
+    mus.add(Y.stab([50, 57, 62, 65, 69], 1.0, 1.2), Wx("c2", "Use") - 0.05, 1.0)
+    # ---------------- the assistant, Nora
+    t0, t1 = cut("o_muse"), cut("o_skills")
+    fx.add(FXL.rain(t1 - t0 + 0.3, 0.5, seed=7), t0, 0.7)
+    fx.add(FXL.room_tone(t1 - t0, 1.0), t0, 1.0)
+    pads(mus, t0, t1, 0.6, prog=[DM, BB], bars=0.6, cut_=(300, 1000))
+    fx.add(Y.wake_chime(1.0), S("c3") - 0.35, 1.2, 0.65)
+    fx.add(O.whoosh(0.35, False, seed=3, amp=0.7), Wx("c4", "summarize"), 0.8, 0.3)
+    fx.add(O.page(1.0, seed=9), Wx("c4", "summarize") + 0.4, 1.0, 0.2)
+    # ---------------- the skills handed over
+    t0, t1 = cut("o_skills"), cut("o_before")
+    page_turn(fx, t0)
+    pulse(mus, t0 + 0.1, t1, 1.0, prog=[DM, DM, BB, AA], bars=0.5)
+    pads(mus, t0, Wx("c5", "lose"), 0.7, prog=[DM, BB], bars=1.0, cut_=(500, 2400))
+    for i, w in enumerate(("Write", "Navigate", "Remember", "Decide")):
+        mus.add(Y.stab([62 + i * 2, 69 + i * 2], 1.0, 0.4), Wx("c5", w) - 0.03, 0.9)
+    fx.add(Y.riser(0.9, 0.7, f0=400, f1=2500), Wx("c5", "Hand") - 0.2, 0.7)
     for i in range(4):
-        fx.add(O.pop(0.25), S("a11") + 0.25 + i * 0.25, pan=0.4 + 0.07 * i)
-    tn = Wx("a11", "isn't") - 0.1
-    mus.add(O.organ([60, 61, 63, 64, 66], 0.8, 0.8), tn, until=t1)
-    fx.add(O.stamp(0.5), tn)
-
-    t0, t1 = c("a_faces"), e("a_faces")
-    waltz(mus, t0, t1, bpm=176, level=0.55, lead="reed", bass="pizz", seed=3, bar0=0)
-    ts = Wx("a12", "Secretly") - 0.1
-    fx.add(O.whoosh(0.35, True, seed=3, amp=0.6), ts)
-    fx.add(O.slide_whistle(True, 0.35, 0.35), ts + 0.05, pan=0.6)
-    for k, m in enumerate((88, 91, 96)):
-        mus.add(O.glock(m, 0.45), Wx("a13", "earrings") - 0.1 + k * 0.08, pan=0.7)
-
-    t0, t1 = c("a_interp"), e("a_interp")
-    harpsichord(mus, t0, t1, bpm=132, level=0.42, prog=DM[::2] + DM[1::2])
-    fx.add(O.keys(int((t1 - t0) * 6), 1 / 6, 0.12, seed=9), t0, pan=0.4, until=t1)
-    th = Wx("a14", "That") - 0.1
-    mus.add(I.choir([62, 66, 69, 74], t1 - th, 0.8, vowel="a", attack=0.12), th, until=t1)
-    fx.add(O.pop(0.45), th)
-
-    refrain(mus, fx, c("a_refrain"), e("a_refrain"), seed=1)
-
-    # ---- 2. THE ANSWER-KEY CAKE
-    t = c("b_card")
-    fx.add(I.snip(0.8, 60), t)
-    fx.add(I.snip(0.7, 61), t + 0.12)
-    fanfare(mus, fx, t + 0.22, transpose=2)
-    t0, t1 = c("b_banners"), e("b_banners")
-    march(mus, t0, t1, bpm=126, level=1.0)
-    for tm in (S("b1") - 0.16, Wx("b1", "Human") - 0.17, Wx("b1", "PhD") - 0.17):
-        fx.add(O.stamp(0.55), tm)
-        fx.add(O.cymbal(0.45, 1.0), tm, pan=0.62)
-    t0, t1 = c("b_iq"), e("b_iq")
-    march(mus, t0, t1, bpm=126, level=0.5, melody=False, pah=False, crash=False, bar0=3)
-    fx.add(FXL.pencil(0.35, 0.6), Wx("b2", "But") + 0.3, pan=0.55)
-
-    t0, t1 = c("b_broken"), e("b_broken")
-    harpsichord(mus, t0, t1, bpm=100, level=0.45, prog=DM[4:] + DM[:4])
+        fx.add(O.slurp(0.5, 0.8), Wx("c5", "Hand") + 0.2 * i + 0.2, 0.6, 0.3 + 0.13 * i)
+    mus.add(I.choir([74, 70, 67, 62], 2.0, 1.0, vowel="o", attack=0.3, gliss=-5), Wx("c5", "lose") - 0.3, 0.8, until=t1)
+    mus.add(O.drone(2.0, root=26, amp=1.0), Wx("c5", "lose") - 0.4, 0.8, until=t1)
+    # ---------------- it happened before
+    t0, t1 = cut("o_before"), cut("o_more")
+    page_turn(fx, t0)
+    arp(mus, t0 + 0.1, t1, 0.8, prog=[DM, BB, GM, AA], bars=0.5, pattern=(0, 2, 1, 3))
+    pulse(mus, t0 + 0.1, t1, 0.7, prog=[DM, BB, GM, AA], bars=0.5)
+    for k, ch in enumerate("4x7"):
+        fx.add(Y.beep(1800 + 200 * k, 0.05), Wx("c6", "calculators") + 0.1 * k, 0.8, 0.4)
+    fx.add(Y.beep(1300, 0.12), Wx("c6", "GPS") + 0.1, 0.8, 0.6)
+    fx.add(Y.beep(1650, 0.12), Wx("c6", "GPS") + 0.25, 0.8, 0.6)
+    fx.add(O.keys(5, 0.08, 1.0, seed=2), Wx("c6", "routes") + 0.1, 0.8, 0.5)
+    # ---------------- AI can take far more
+    t0, t1 = cut("o_more"), cut("v_title")
+    mus.add(O.drone(t1 - t0 + 0.6, root=25, amp=1.0), t0, 1.2, until=t1 + 0.3)
+    mus.add(Y.pad([38, 45, 50, 51], t1 - t0, 1.0, cut=(300, 3000), attack=0.2), t0, 1.0, until=t1 + 0.3)
+    # ---------------- tale one
+    t0, t1 = cut("v_title"), cut("v_car")
+    page_turn(fx, t0)
+    mus.add(I.choir([62, 65, 70], t1 - t0, 1.0, vowel="a", attack=0.4), t0 + 0.2, 0.9, until=t1 + 0.3)
+    mus.add(Y.stab([50, 57, 62, 65], 1.0, 1.0), S("v1") + 0.6, 0.8)
+    motif(mus, S("v1") - 0.1, t1, 0.8, inst="piano", beat=BEAT * 0.8)
+    fx.add(Y.wind(t1 - t0 + 0.5, 0.8, seed=3), t0, 0.6)
+    # the car
+    t0, t1 = cut("v_car"), cut("v_map")
+    fx.add(Y.engine(cut("v_signal") - t0 + 0.2, 1.0), t0, 1.1, until=cut("v_signal") + 0.05)
+    fx.add(FXL.rain(cut("v_signal") - t0, 0.9, seed=8), t0, 0.9, until=cut("v_signal") + 0.05)
     k = 0
-    while t0 + 0.2 + k * 0.24 < min(t1, S("b3") + 4.0):
-        fx.add(I.snip(0.3, 70 + k), t0 + 0.2 + k * 0.24, pan=0.35)
+    while t0 + 0.2 + k * 0.91 < t1:
+        fx.add(Y.wiper(1.0, seed=k), t0 + 0.2 + k * 0.91, 0.8, 0.3 + 0.4 * (k % 2))
         k += 1
-    for j in range(3):
-        tc = S("b3") + 1.2 + j * 1.2
-        fx.add(I.snip(0.8, 90 + j), tc, pan=0.35)
-        fx.add(I.flutter(1.0, 0.5, 90 + j), tc + 0.05, pan=0.3 + 0.2 * j)
-    fx.add(O.stamp(0.55), Wx("b3", "two") - 0.1)
-
-    t0, t1 = c("b_months"), Wx("b5", "beaten") - 0.1
-    fx.add(O.pop(0.35), t0)
-    n = 22
-    for i in range(n):                                               # the harpsichord runs faster and faster
-        u = i / n
-        ti = t0 + (t1 - t0) * (1 - (1 - u) ** 1.7)
-        mus.add(I.harpsi([62, 65, 69, 74, 77, 81][i % 6] + (i // 6) * 2, 0.4, 0.6), ti, pan=0.4)
-    for i in range(6):
-        ti = S("b5") + 0.4 + i * (t1 - S("b5") - 0.4) / 6
-        fx.add(I.tear(0.45, seed=i, dur=0.25), ti, pan=0.3 + 0.08 * i)
-        fx.add(O.whoosh(0.3, True, seed=i, amp=0.35), ti + 0.05, pan=0.7 - 0.08 * i)
-    stab(mus, t1, 46, "dom", 0.9, 0.35, until=e("b_months"))
-    fx.add(O.cymbal(0.4, 1.0), t1, pan=0.6, until=e("b_months"))
-
-    t0, t1 = c("b_leak"), e("b_feed")
-    waltz(mus, t0, t1, bpm=164, level=0.55, lead="musette", bass="tuba", seed=5)
-    a, b = Wx("b6", "leak") - 0.2, S("b7") - 0.1
-    k = 0
-    while a + k * 0.32 < b:
-        fx.add(O.squelch(0.25, seed=k, dur=0.2), a + k * 0.32, pan=0.6)
-        k += 1
-    tada(mus, S("b7") - 0.1, 0.8)
-    tb = S("b8")
+    fx.add(Y.wake_chime(0.8), S("v2") - 0.3, 1.0, 0.7)
+    arp(mus, t0, cut("v_signal"), 0.85, prog=[DM, DM, BB, AA], bars=1.0, pattern=(0, 1, 2, 3, 2, 1, 0, 2))
+    pulse(mus, t0, cut("v_signal"), 0.8, prog=[DM, DM, BB, AA])
+    pads(mus, t0, cut("v_signal"), 0.6, prog=[DM, BB, GM, AA], bars=1.0, cut_=(400, 1500))
+    # the map panel: freeze
+    t0 = cut("v_map")
+    fx.add(O.stamp(1.0), t0 + 0.05, 0.9, 0.5)
     for k in range(3):
-        fx.add(I.chomp(0.7, seed=k), tb + 0.2 + k * 0.25, pan=0.5)
-    fx.add(O.gloop(0.5), tb + 1.0)
-    fx.add(O.pop(0.4), tb + 1.0, pan=0.6)
-
-    t0, t1 = c("b_fresh"), e("b_fresh")
-    harpsichord(mus, t0, t1, bpm=133, level=0.42, prog=CMAJ, pattern=(0, 1, 2, 3, 2, 1, 0, 1))
-    k = 0
-    while t0 + k * 0.9 < t1:
-        fx.add(O.stamp(0.35), t0 + k * 0.9, pan=0.5)
-        fx.add(O.page(0.3, seed=k), t0 + k * 0.9 + 0.15, pan=0.5)
-        k += 1
-    fx.add(I.joint(0.35, 77, min(4.0, t1 - t0)), t0, pan=0.62, until=t1)
-    fx.add(O.page(0.4, seed=12), Wx("b8", "fresh") - 0.1)
-    mus.add(O.glock(84, 0.4), Wx("b8", "fresh") - 0.1, pan=0.7)
-
-    t0, t1 = c("b_94"), e("b_94")
-    tb = Wx("b9", "But") - 0.1
-    mus.add(O.organ([53, 57, 60, 65], tb - t0, 0.45), t0, until=tb)
-    for i in range(5):
-        mus.add(O.marimba(65 + [0, 2, 4, 5, 7][i], 0.6), S("b9") + i * 0.12, pan=0.35)
-    fx.add(O.stamp(0.5), S("b9") + 0.3)
+        fx.add(O.page(0.6, seed=20 + k), Wx("v4", "three") + 0.25 * k, 0.6, 0.7)
+    mus.add(O.music_box([(m + 12, b) for m, b in MOTIF], amp=1.0), Wx("v4", "worse"), 0.5, 0.4, until=cut("v_signal"))
+    # SILENCE ... then the signal goes
+    t0 = T_SIGNAL
+    fx.add(Y.error_tone(1.0), t0 - 0.02, 1.2, 0.5)
+    stinger(mus, fx, t0 - 0.02, "red", 0.7)
+    fx.add(O.heartbeat(4, 100, 1.0), t0 + 0.4, 0.8)
+    t0, t1 = cut("v_cross"), cut("v_cabbie")
+    fx.add(Y.wind(t1 - t0 + 0.8, 1.2, seed=4), t0 - 0.6, 1.0)
+    fx.add(Y.footsteps(3, 0.38, 1.0, seed=6), t0 + 0.05, 0.7, 0.4)                # Vera's heels on the wet road
+    fx.add(Y.skitter(t1 - t0, 0.6, seed=4, rate=12), t0, 0.4, 0.8)
+    mus.add(O.drone(t1 - t0 + 1.0, root=26, amp=1.0), t0 - 0.8, 1.0, until=t1)
+    mus.add(I.choir([61, 62, 68], t1 - t0, 1.0, vowel="u", attack=0.5), t0, 0.7, until=t1)
+    # the cabbies: a warmer turn - use it and it grows
+    t0, t1 = cut("v_cabbie"), cut("v_bones")
+    page_turn(fx, t0)
+    pads(mus, t0 + 0.1, t1, 0.8, prog=[[50, 57, 62, 66], [47, 54, 59, 62], [43, 55, 59, 62], [45, 52, 57, 61]], bars=0.9, cut_=(700, 2600))
+    arp(mus, t0 + 0.2, t1, 0.6, prog=[[50, 57, 62, 66], [47, 54, 59, 62], [43, 55, 59, 62], [45, 52, 57, 61]], bars=0.9, pattern=(0, 1, 2, 3))
+    fx.add(FXL.rain(Wx("v7", "grow") - t0, 0.5, seed=9), t0, 0.6, until=Wx("v7", "grow"))
+    mus.add(I.choir([66, 69, 74], 1.4, 1.0, vowel="a", attack=0.2), Wx("v7", "grow"), 0.7, until=t1)
+    mus.add(O.sparkle(1.0, seed=3), Wx("v7", "grows"), 0.8)
+    # fifteen years on
+    t0, t1 = cut("v_bones"), cut("g_title")
+    fx.add(Y.wind(t1 - t0 + 0.5, 1.0, seed=5), t0, 0.9)
+    fx.add(Y.skitter(t1 - t0, 1.0, seed=5, rate=25), t0, 0.5, 0.7)
+    fx.add(Y.creak(1.4, 1.0, seed=3, f0=70, f1=30), t0 + 0.6, 0.8, 0.3)
+    fx.add(Y.creak(1.1, 1.0, seed=4, f0=60, f1=35), Wx("v8", "Recalculating") - 0.4, 0.7, 0.7)
+    mus.add(O.drone(t1 - t0, root=26, amp=1.0), t0, 1.0, until=t1)
+    mus.add(I.choir([62, 63, 69], Wx("v8", "forever") - t0, 1.0, vowel="o", attack=1.5), t0, 0.8, until=Wx("v8", "forever"))
+    for k in range(6):
+        fx.add(Y.beep(1100, 0.06), t0 + 0.3 + k * 0.8, 0.35, 0.5)
+    # ---------------- tale two
+    t0, t1 = cut("g_title"), cut("g_dorm")
+    page_turn(fx, t0)
+    mus.add(O.theremin(500, 900, t1 - t0, 1.0), t0 + 0.2, 0.7, until=t1 + 0.2)
+    mus.add(Y.stab([49, 56, 61, 64], 1.0, 1.0), S("g1") + 0.4, 0.8)
+    pads(mus, t0, t1, 0.7, prog=[GM, AA], bars=0.6)
+    # the dorm: 2 a.m.
+    t0, t1 = cut("g_dorm"), cut("g_exam")
+    fx.add(FXL.room_tone(t1 - t0, 1.0, hum=True), t0, 1.0)
+    for k in range(int((cut("g_split") - t0) / 0.5)):
+        fx.add(O.tick(0.5, tock=k % 2 == 1), t0 + k * 0.5, 0.5, 0.2)
+    fx.add(O.keys(10, 0.09, 1.0, seed=4), S("g2") + 0.3, 1.0, 0.5)
+    pulse(mus, t0, cut("g_split"), 0.7, prog=[GM, GM, AA, DM])
+    motif(mus, t0 + 0.2, cut("g_split"), 0.6, transpose=-7, inst="piano")
+    fx.add(O.reverse_swell(1.0, 1.0), cut("g_ghost") - 0.9, 0.8, 0.6)
+    fx.add(FXL.paper_flutter(2.0, 1.0), cut("g_ghost") + 0.2, 0.9, 0.7)
+    fx.add(O.keys(30, 0.06, 1.0, seed=5), cut("g_ghost") + 0.6, 0.9, 0.6, until=cut("g_split"))
+    mus.add(O.theremin(600, 1100, cut("g_split") - cut("g_ghost"), 1.0), cut("g_ghost") + 0.2, 0.6, until=cut("g_split"))
+    mus.add(Y.stab([62, 66, 69], 1.0, 0.5), Wx("g3", "Nine") - 0.05, 0.8)
+    # help vs write
+    mus.add(Y.stab([62, 66, 69, 74], 1.0, 1.0, bright=6000), Wx("g3", "Help") - 0.1, 0.9)
+    mus.add(I.choir([66, 69, 74], 1.6, 1.0, vowel="a", attack=0.2), Wx("g3", "Help"), 0.6, until=Wx("g3", "Write"))
+    mus.add(Y.stab([49, 50, 56], 1.0, 1.0, bright=1800), Wx("g3", "Write") - 0.1, 1.0)
+    mus.add(O.drone(1.6, root=26), Wx("g3", "Write"), 0.8, until=cut("g_quote"))
+    # the words crawl away
+    t0, t1 = cut("g_quote"), cut("g_chart")
+    pads(mus, t0, t1, 0.7, prog=[GM, DM, AA, DM], bars=0.8, cut_=(400, 1400))
+    mus.add(O.music_box([(m + 5, b) for m, b in MOTIF], amp=1.0, detune=lambda u: -40 * u), t0 + 0.3, 0.5, 0.4, until=t1)
+    fx.add(Y.skitter(t1 - Wx("g4", "couldn't") + 1.6, 1.3, seed=6, rate=60), Wx("g4", "couldn't") - 1.6, 0.9, 0.5, until=t1)
+    mus.add(Y.stab([50, 53, 56], 1.0, 0.8), Wx("g4", "83%") - 0.05, 1.0)
+    # the chart: up, then down into the grave
+    t0, t1 = cut("g_chart"), cut("g_exam")
+    page_turn(fx, t0)
+    pulse(mus, t0 + 0.1, Wx("g5", "Without") - 0.1, 0.8, prog=[GM, AA])
+    fx.add(Y.riser(Wx("g5", "jumped") + 0.4 - (t0 + 0.6), 0.8, f0=300, f1=2400), t0 + 0.6, 0.8)
+    mus.add(Y.stab([62, 66, 69, 74], 1.0, 0.8, bright=6000), Wx("g5", "jumped") + 0.3, 0.9)
+    mus.add(I.choir([74, 70, 66, 62], 1.8, 1.0, vowel="o", gliss=-7), Wx("g5", "Without") - 0.1, 0.8)
+    mus.add(O.timpani(38, 1.0), Wx("g5", "17%") + 0.15, 1.2)
+    fx.add(Y.earth(1.0), Wx("g5", "17%") + 0.2, 1.1)
+    mus.add(O.drone(t1 - Wx("g5", "17%"), root=26), Wx("g5", "17%"), 0.8, until=t1)
+    # the exam: silence but for the clock
+    t0, t1 = T_EXAM, cut("g_blank")
+    fx.add(FXL.room_tone(t1 - t0, 0.6, hum=False), t0, 1.0)
+    for k in range(int((t1 - t0) / 0.5) + 1):
+        fx.add(O.tick(1.0, tock=k % 2 == 1), t0 + 0.05 + k * 0.5, 0.9, 0.7)
+    fx.add(Y.footsteps(4, 0.42, 1.0, seed=3), t0 + 0.08, 1.0, 0.62)          # the examiner's heels in the silence
+    mus.add(Y.pad([43, 50, 55], t1 - S("g6"), 1.0, cut=(200, 700), attack=1.0), S("g6"), 0.6, until=t1)
+    # blank
+    t0, t1 = cut("g_blank"), cut("g_puppet")
+    fx.add(O.heartbeat(5, 140, 1.0), t0 + 0.1, 1.0)
+    mus.add(O.strings([86, 87, 93], t1 - t0, 1.0), t0, 0.8, until=t1)
+    # the puppet
+    t0, t1 = cut("g_puppet"), cut("s_title")
+    mus.add(O.music_box([(m, b) for m, b in MOTIF], rate=lambda u: 1 - 0.55 * u, detune=lambda u: -90 * u, amp=1.0), t0 + 0.2, 0.7, 0.5,
+            until=t1)
+    mus.add(O.drone(t1 - t0, root=26), t0, 0.7, until=t1)
+    fx.add(FXL.paper_flutter(1.4, 1.0, seed=3), t0, 0.8, 0.5)
+    for k in range(5):
+        fx.add(Y.creak(0.5, 0.8, seed=10 + k, f0=110, f1=70), t0 + 1.4 + k * 0.62, 0.4, 0.3 + 0.1 * k)
+    mus.add(I.choir([62, 65, 69, 74], 1.4, 1.0, vowel="a", attack=0.2), Wx("g8", "Now") - 0.05, 0.6, until=t1)
+    # ---------------- tale three
+    t0, t1 = cut("s_title"), cut("s_clinic")
+    page_turn(fx, t0)
+    mus.add(Y.stab([47, 54, 59, 62], 1.0, 1.0), S("s1") + 0.4, 0.8)
+    mus.add(I.choir([59, 62, 66], t1 - t0, 1.0, vowel="u", attack=0.4), t0 + 0.2, 0.8, until=t1 + 0.2)
+    motif(mus, S("s1") - 0.1, t1, 0.7, transpose=-3, inst="piano")
+    # the clinic
+    t0, t1 = cut("s_clinic"), cut("s_shout")
+    fx.add(Y.monitor(cut("s_unplug") - t0, 72, 1.0), t0, 0.5, 0.65)
+    fx.add(Y.engine(cut("s_unplug") - t0, 0.4, seed=3), t0, 0.4)
+    pulse(mus, t0, t1, 0.75, prog=[BB, BB, AA, AA])
+    pads(mus, t0, t1, 0.7, prog=[BB, AA, DM, AA], bars=0.8)
+    fx.add(O.stamp(1.0), Wx("s2", "real") - 0.05, 1.2, 0.5)
+    fx.add(Y.thud(1.0), Wx("s2", "real") - 0.05, 0.6)
     for k in range(3):
-        fx.add(I.snip(0.7, 100 + k), tb + 0.62 + k * 0.17, pan=0.4)
-    fx.add(I.tear(0.5, seed=9, dur=0.45), tb + 0.65)
-    mus.add(I.sad_trombone(0.7), tb + 1.15, until=t1)
-
-    refrain(mus, fx, c("b_refrain"), e("b_refrain"), seed=2)
-
-    # ---- 3. THE GOLD MEDAL CLOCK
-    t = c("c_card")
-    fx.add(I.snip(0.8, 110), t)
-    fx.add(I.snip(0.7, 111), t + 0.12)
-    fanfare(mus, fx, t + 0.22, transpose=4)
-    t0, t1 = c("c_medal"), e("c_medal")
-    march(mus, t0, t1, bpm=120, level=0.8)
-    tpin = Wx("c1", "gold") - 0.15
-    fx.add(O.cymbal(0.5, 1.4), tpin, pan=0.6)
-    for k, m in enumerate((82, 86, 89, 94)):
-        mus.add(O.glock(m, 0.4), tpin + k * 0.06, pan=0.7)
-    fx.add(I.flutter(2.5, 0.5, 120), tpin)
-    fx.add(O.stamp(0.45), tpin + 0.02)
-
-    for k in range(int((e("c_tuesday") - c("c_clock")) / 0.5) + 1):   # the clock, alone
-        fx.add(O.tick(0.9, tock=bool(k % 2)), c("c_clock") + k * 0.5, pan=0.5, until=e("c_tuesday"))
-    k3 = lambda u: S("c3") + u * (E("c3") - S("c3"))
-    fx.add(I.teleprinter(k3(0.6) - k3(0.0), 0.4, seed=130), k3(0.0), pan=0.55)
-    fx.add(I.teleprinter(k3(1.0) - k3(0.7), 0.4, seed=131), k3(0.7), pan=0.55)
-    fx.add(O.ding(0.35, 96), E("c3") + 0.02, pan=0.6)
-
-    t0, t1 = c("c_score"), e("c_score")
-    harpsichord(mus, t0, t1, bpm=120, level=0.6, prog=CMAJ, pattern=(0, 2, 1, 2))
-    for k in range(int((t1 - t0) / 0.5)):
-        fx.add(O.tick(0.4, tock=bool(k % 2)), t0 + k * 0.5, pan=0.6, until=t1)
-    fx.add(O.slide_whistle(True, 0.7, 0.35), Wx("c4", "best") - 0.2, pan=0.35)
-    fx.add(O.slide_whistle(True, 0.75, 0.4), Wx("c4", "Humans") - 0.2, pan=0.65)
-
-    t0, t1 = c("c_proofs"), e("c_proofs")
-    fx.add(O.pop(0.35), t0)
-    tada(mus, Wx("c5", "yes") + 0.25, 0.8)
-    tada(mus, E("c5") + 0.02, 0.8, minor=True)
-    tno = Wx("c5", "no") - 0.05
-    fx.add(O.whoosh(0.3, False, seed=5, amp=0.4), tno + 0.1, pan=0.3)
-    fx.add(I.clang(0.7), tno + 0.48, pan=0.3)
-
-    t0, t1 = c("c_jagged"), e("c_jagged")
-    mus.add(I.choir([62, 65, 68, 71], t1 - t0, 0.6, vowel="u", attack=0.6), t0, until=t1)
-    music_box(mus, t0, t1, 0.55, beats=18, detune=lambda u: 45 * np.sin(u * 9), transpose=12, seed=7)
-    fx.add(FXL.pencil(0.8, 0.5), S("c6"), pan=0.6)
-    tf = Wx("c6", "For") - 0.1
-    fx.add(I.tear(0.7, seed=12, dur=0.55), tf)
-    fx.add(O.whoosh(0.4, True, seed=12, amp=0.4), tf)
-    tj = Wx("c6", "jagged") - 0.1
-    fx.add(O.stamp(0.55), tj)
-    for m in (50, 51, 56, 57, 62, 63):
-        mus.add(I.harpsi(m, 1.0, 0.6), tj, pan=0.5, until=t1)
-
-    t0, t1 = c("c_agents"), e("c_agents")
-    harpsichord(mus, t0, t1, bpm=120, level=0.55, prog=AMIN, pattern=(0, 1, 2, 1))
-    fx.add(O.whir(t1 - t0, 0.35, 60), t0, until=t1)
-    tb0 = Wx("c7", "still")
-    for k in range(int((t1 - tb0) / 0.6)):                               # the terminal's beeps, after the first words
-        fx.add(O.beep(0.04, 0.08, 1400 + 300 * (k % 3)), tb0 + k * 0.6, pan=0.6, until=t1)
-    for i, w in enumerate(("fail", "one", "three")):
-        tw = Wx("c7", w) - 0.15
-        fx.add(O.stamp(0.45), tw, pan=0.3 + 0.2 * i)
-        if i < 2:
-            mus.add(O.ding(0.3, 91), tw + 0.05, pan=0.4 + 0.2 * i)
+        fx.add(O.page(0.7, seed=30 + k), Wx("s2", "three") - 0.1 + 0.25 * k, 0.6, 0.8)
+    t_pull = Wx("s2", "without") - 0.05
+    fx.add(O.click(1.0), t_pull, 1.2, 0.8)
+    fx.add(O.power_down(1.0, 1.0), t_pull + 0.02, 0.8, 0.7)
+    fx.add(Y.beep(1040, 1.2), t_pull + 0.4, 0.25, 0.65)
+    mus.add(Y.stab([46, 53, 58], 1.0, 0.7), Wx("s2", "28") - 0.05, 0.9)
+    mus.add(Y.stab([45, 51, 56], 1.0, 1.0, bright=2000), Wx("s2", "22") - 0.05, 1.0)
+    mus.add(O.timpani(33, 1.0), Wx("s2", "22") - 0.05, 0.9)
+    # show me!
+    t0, t1 = cut("s_shout"), cut("s_pilot")
+    for k in range(int((t1 - t0) / (np.pi / 9)) + 1):
+        tb = t0 + (np.pi / 18) + k * np.pi / 9
+        fx.add(O.clunk(1.0, seed=k), tb, 0.9, 0.7)
+    # the cockpit
+    t0, t1 = cut("s_pilot"), cut("s_years")
+    page_turn(fx, t0)
+    fx.add(Y.engine(t1 - t0, 1.0, seed=5), t0, 0.8)
+    fx.add(FXL.rain(t1 - t0, 0.9, seed=11), t0, 0.7)
+    pads(mus, t0, Wx("s5", "quit"), 0.7, prog=[GM, AA], bars=1.0, cut_=(300, 900))
+    motif(mus, t0 + 0.3, Wx("s5", "quit") - 0.1, 0.5, transpose=-12, inst="box")
+    fx.add(Y.whoop(t1 - Wx("s5", "quit"), 1.0), Wx("s5", "quit") + 0.1, 0.9, 0.5, until=t1)
+    fx.add(Y.alarm(t1 - Wx("s5", "quit"), 1.0, rate=5), Wx("s5", "quit") + 0.3, 0.5, 0.6, until=t1)
+    mus.add(O.scare(1.0, seed=8), Wx("s5", "quit") - 0.05, 1.0)
+    mus.add(O.drone(t1 - Wx("s5", "quit"), root=27), Wx("s5", "quit"), 0.9, until=t1)
+    fx.add(O.heartbeat(5, 120, 1.0), Wx("s5", "when"), 0.8)
+    # twenty years later
+    t0, t1 = cut("s_years"), cut("s_junior")
+    page_turn(fx, t0)
+    fx.add(Y.monitor(t1 - t0, 58, 1.0, f=880), t0 + 0.2, 0.5, 0.65)
+    mus.add(O.music_box([(m - 2, b) for m, b in MOTIF], amp=1.0, detune=lambda u: -30 * u), t0 + 0.3, 0.6, 0.4, until=cut("s_ward"))
+    pads(mus, t0, t1, 0.6, prog=[GM, DM], bars=1.0, cut_=(300, 1000))
+    fx.add(Y.buzz(t1 - Wx("s6", "without") + 0.1, 1.0), Wx("s6", "without") - 0.1, 0.8, 0.4)
+    fx.add(O.power_down(1.0, 1.0), Wx("s6", "without") + 0.3, 0.6, 0.7)
+    # I can't see anything ... (silence) ... the thing
+    t0, t1 = cut("s_junior"), T_PRE
+    fx.add(Y.alarm(t1 - t0, 1.0, rate=6, f=1300), t0, 0.6, 0.6, until=t1)
+    mus.add(O.drone(t1 - t0, root=27), t0, 1.0, until=t1)
+    mus.add(Y.riser(t1 - t0, 1.0, f0=200, f1=2600), t0, 1.0, until=t1)
+    t0, t1 = T_THING, T_BLACK
+    stinger(mus, fx, t0, "red", 1.4)
+    fx.add(Y.crack(1.0, seed=1), t0 + 0.02, 1.6, 0.5)
+    fx.add(O.thunder(2.2, 1.0, seed=9), t0, 1.4, until=t1)
+    fx.add(O.growl(t1 - t0, 1.0), t0 + 0.15, 1.6, until=t1)
+    fx.add(I.smash(1.0, seed=3), t0 + 0.38, 1.4, 0.4)
+    fx.add(O.squelch(1.0, seed=4, dur=0.5), t0 + 0.75, 1.5, 0.6)
+    fx.add(I.splat(1.0, seed=5), t0 + 1.3, 1.6, 0.4)
+    fx.add(O.squelch(1.0, seed=6, dur=0.6), t0 + 1.35, 1.5, 0.6)
+    mus.add(I.choir([74, 75, 80, 81], t1 - t0, 1.0, vowel="a", attack=0.05), t0 + 0.1, 1.2, until=t1)
+    mus.add(O.scare(1.0, seed=12, drive=2.0), t0 + 1.3, 1.4, until=t1)
+    mus.add(Y.pad([38, 39, 44, 50, 51], t1 - t0, 1.0, cut=(800, 4000), attack=0.05), t0, 1.4, until=t1)
+    # ---------------- the reader: no music to speak of. Just the night.
+    t0 = S("r1") - 0.1
+    fx.add(Y.low_batt(1.0), t0, 1.1, 0.5)
+    fx.add(Y.low_batt(1.0), t0 + 0.9, 0.9, 0.5)
+    t_die = Wx("r1", "Nora") + 0.35
+    fx.add(O.power_down(0.6, 1.0), t_die, 0.6, 0.5)
+    r_end = cut("r_pocket")
+    fx.add(FXL.rain(r_end - t_die + 0.5, 0.45, seed=12), t_die, 0.6)
+    mus.add(O.drone(r_end - t_die, root=24), t_die + 0.2, 0.5, until=r_end)
+    fx.add(Y.match(1.0), cut("r_real") + 0.1, 1.1, 0.6)
+    fx.add(I.crackle(r_end - cut("r_real") - 0.5, 0.5), cut("r_real") + 0.6, 0.35, 0.6)
+    fx.add(O.heartbeat(int((r_end - S("r2")) / 0.75), 80, 1.0), S("r2"), 0.6)
+    fx.add(Y.breath(cut("r_pill") - cut("r_father"), 1.0, rate=1.4), cut("r_father"), 0.9, 0.5)
+    for k in range(int((cut("r_door") - cut("r_father")) / 0.4)):
+        fx.add(Y.tick(1.0), cut("r_father") + 0.1 + k * 0.4, 0.6, 0.8)
+    fx.add(Y.rattle(cut("r_door") - cut("r_pill"), 1.0, rate=9), cut("r_pill"), 0.8, 0.4)
+    fx.add(Y.footsteps(2, 0.45, 1.0, seed=9, hard=False), cut("r_door") - 0.05, 0.9, 0.5)
+    fx.add(Y.creak(1.4, 1.0, seed=7, f0=50, f1=25), cut("r_door") + 0.35, 1.0, 0.4)
+    fx.add(FXL.rain(cut("r_number") - cut("r_door"), 1.2, seed=13), cut("r_door") + 0.3, 1.0, until=cut("r_number"))
+    fx.add(Y.wind(cut("r_number") - cut("r_door") + 0.5, 1.0, seed=8), cut("r_door"), 0.7, until=cut("r_number") + 0.3)
+    for k, d in enumerate("07"):
+        fx.add(Y.dtmf(d), cut("r_number") + 0.25 + 0.35 * k, 1.0, 0.6)
+    fx.add(Y.dial_tone(cut("r_muse") - cut("r_number") - 1.0), cut("r_number") + 1.0, 0.6, 0.5, until=cut("r_muse"))
+    # the host in the glass, the turn on the reader
+    t0, t1 = cut("r_pocket"), cut("m_close")
+    fx.add(O.reverse_swell(1.4, 1.0), t0 + 0.1, 0.8)
+    mus.add(O.drone(t1 - t0, root=25), t0, 0.9, until=t1)
+    mus.add(I.choir([61, 62, 67], cut("r_point") - t0, 1.0, vowel="u", attack=0.8), t0 + 0.2, 0.8, until=cut("r_point") + 0.2)
+    stinger(mus, fx, cut("r_point"), "green", 0.9)
+    mus.add(Y.pad([37, 44, 49, 50], t1 - cut("r_point"), 1.0, cut=(400, 2400), attack=0.1), cut("r_point"), 0.9, until=t1)
+    # ---------------- the moral: the music box alone, then gently hopeful
+    t0, t1 = cut("m_close"), cut("m_host")
+    mus.add(O.music_box([(m, b) for m, b in MOTIF] * 2, amp=1.0, rate=lambda u: 0.75), t0 + 0.4, 0.9, 0.5, until=cut("m_habits"))
+    pads(mus, t0 + 0.5, cut("m_habits"), 0.45, prog=[DM, BB, GM, AA], bars=1.0, cut_=(300, 900))
+    fx.add(I.crackle(cut("m_habits") - t0, 0.4), t0, 0.3, 0.3)
+    page_turn(fx, cut("m_habits"))
+    hope = [[50, 57, 62, 66], [46, 53, 58, 62], [43, 55, 59, 62], [45, 52, 57, 61]]
+    pads(mus, cut("m_habits"), t1, 0.6, prog=hope, bars=0.75, cut_=(600, 2200))
+    arp(mus, cut("m_habits") + 0.1, t1, 0.5, prog=hope, bars=0.75, pattern=(0, 2, 1, 3), pan=0.55)
+    for w in ("explain", "Draft", "Find", "sum"):
+        mus.add(O.celesta(86 if w != "sum" else 90, 1.0), Wx("m2", w) - 0.1, 0.5, 0.6)
+    # ---------------- the host's last word
+    t0, t1 = cut("m_host"), cut("m_back")
+    stinger(mus, fx, t0, "violet", 1.0)
+    mus.add(O.organ([50, 57, 62, 65, 69], t1 - t0), t0 + 0.1, 0.9, until=t1 + 0.2)
+    mus.add(I.choir([62, 65, 69, 74], t1 - t0, 1.0, vowel="a", attack=0.1), t0 + 0.2, 0.8, until=t1 + 0.2)
+    # ---------------- the back page: a cheesy mail-order organ jingle
+    t0, t1 = cut("m_back"), TL.total
+    page_turn(fx, t0)
+    jb = 60 / 132
+    prog = [[48, 52, 55, 60], [45, 48, 52, 57], [41, 45, 48, 53], [43, 47, 50, 55]]
+    t, k = t0 + 0.3, 0
+    tune = [72, 76, 79, 76, 77, 76, 74, 72, 69, 72, 74, 76, 74, 72, 71, 67]
+    while t < t1 - 1.6:
+        ch = prog[(k // 4) % 4]
+        mus.add(O.organ(ch[1:], jb * 0.5), t, 0.5, 0.45, until=t1 - 1.5)
+        mus.add(Y.bass(ch[0] - 12, jb * 0.5), t, 0.6, 0.5, until=t1 - 1.5)
+        mus.add(O.glock(tune[k % len(tune)], 1.0), t, 0.5, 0.6, until=t1 - 1.5)
+        t += jb
+        k += 1
+    t_end = E("m5") + 0.3
+    mus.add(Y.stab([50, 57, 62, 65, 69], 1.0, 1.4), t_end, 1.0)
+    fx.add(O.thunder(2.0, 1.0, seed=14), t_end, 0.9, until=t1)
+    # ---------------- the live action freezing into a comic panel before each page turn: a snap and a hit
+    for i, e in enumerate(EDIT):
+        if i > 0 and e[2] == "page" and EDIT[i - 1][1] not in PAGES:
+            tf = e[0] - FREEZE_D
+            fx.add(O.click(1.0), tf, 0.9, 0.5)
+            mus.add(Y.stab([50, 57, 62], 1.0, 0.5, bright=3000), tf, 0.5)
+    # ---------------- thunder on the lightning, and the stingers on the colour shocks
+    for t, s in LIGHTNING:
+        if t < 0.1 or abs(t - T_THING) < 0.5:
+            fx.add(O.thunder(2.6, 1.0, seed=int(t * 7)), max(0.0, t), 1.0 * s, until=None)
         else:
-            fx.add(I.buzzer(0.6), tw + 0.05, pan=0.7)
-
-    t0, t1 = c("c_sim"), e("c_sim")
-    music_box(mus, t0, t1, 0.75, beats=12, transpose=19, seed=8)
-    k = 0
-    while t0 + k * 0.7 < t1:
-        fx.add(I.servo(0.5, 0.6, 200, 330, seed=k), t0 + k * 0.7, pan=0.35, until=t1)
-        fx.add(O.woodblock(0.35, 1200), t0 + k * 0.7 + 0.55, pan=0.6, until=t1)
-        k += 1
-    fx.add(O.pop(0.4), Wx("c7", "eighty") - 0.1)
-
-    t0, t1 = c("c_real"), e("c_real")
-    music_box(mus, t0, t1, 0.75, beats=12, transpose=19, seed=9, rate=lambda u: max(0.3, 1 - 0.9 * u), detune=lambda u: -120 * u)
-    fx.add(I.servo(t1 - t0, 0.55, 200, 260, seed=3, wild=0.35), t0, pan=0.35, until=t1)
-    fx.add(O.boing(0.35), t0 + 0.3, pan=0.6)
-    fx.add(I.splat(0.6, seed=4), t0 + 0.9, pan=0.6)
-    fx.add(I.smash(0.7, seed=5), t0 + 0.97, pan=0.75)
-    fx.add(O.stamp(0.45), Wx("c7", "twelve") - 0.1)
-
-    # ---- the banquet: a grand waltz, then the food fight, then nothing
-    t0, t1 = c("d_feast"), e("d_feast")
-    fx.add(I.snip(0.8, 140), t0)
-    fx.add(I.snip(0.7, 141), t0 + 0.12)
-    waltz(mus, t0, t1, bpm=156, level=0.7, lead="glock", bass="tuba", organ=True, choir_pad=False, seed=8)
-    rng = np.random.default_rng(14)
-    tt = t0 + 0.4
-    while tt < t1:
-        fx.add(I.clink(0.45, seed=int(tt * 10)), tt, pan=rng.uniform(0.3, 0.7))
-        tt += rng.uniform(0.5, 1.1)
-    k = 0
-    while S("d2") - 0.05 + k * 0.35 < S("d3"):
-        fx.add(I.snip(0.4, 150 + k), S("d2") - 0.05 + k * 0.35, pan=0.3)
-        k += 1
-    fx.add(I.chomp(0.5, seed=3), E("d4") + 0.08, pan=0.7)
-
-    t0, t1 = c("d_fight"), c("d_still")
-    march(mus, t0, t1, bpm=176, level=0.8, stumble=False, bar0=4)
-    tf = c("d_fire")                                                      # the streamers go up
-    fx.add(I.crackle(c("d_pie") - tf, 1.0, seed=7), tf, pan=0.5, until=c("d_pie"))
-    fx.add(O.whoosh(0.5, True, seed=33, amp=0.6), tf, pan=0.4)
-    tp_ = c("d_pie")                                                      # the pie
-    fx.add(O.whoosh(0.28, True, seed=34, amp=0.6), tp_, pan=0.2)
-    fx.add(I.splat(1.0, seed=35), tp_ + 0.28, pan=0.5)
-    fx.add(O.slide_whistle(False, 0.4, 0.4), tp_ + 0.3, pan=0.6)
-    tk = c("d_cake")                                                      # the cake, on the beat
-    fx.add(I.snip(1.0, 36), tk + 0.22, pan=0.5)
-    fx.add(O.stamp(0.5), tk + 0.24)
-    fx.add(I.splat(0.6, seed=37), tk + 0.5, pan=0.3)
-    mus.add(I.choir([72, 76, 79, 84], t1 - t0, 0.6, vowel="a", attack=0.05, gliss=5), t0, until=t1)
-    music_box(mus, t0, t1, 0.4, rate=lambda u: 2.2, transpose=24, seed=11)
-    fx.add(I.crackle(t1 - t0 - 0.1, 0.6, seed=1), t0 + 0.1, pan=0.6, until=t1)
-    fx.add(FXL.creak(t1 - t0, 0.5, seed=3), t0, pan=0.5, until=t1)
-    rng = np.random.default_rng(15)
-    tt = t0
-    while tt < t1:
-        fx.add(I.splat(rng.uniform(0.25, 0.5), seed=int(tt * 100)), tt, pan=rng.uniform(0.2, 0.8), until=t1)
-        tt += rng.uniform(0.09, 0.2)
-    for k in range(int((t1 - t0) / 0.2) + 1):                            # every beat a new pose: creaks and throws
-        tk = t0 + k * 0.2
-        fx.add(I.joint(0.6, seed=500 + k), tk, pan=0.3 if k % 2 else 0.7, until=t1)
-        if k % 2 == 0:
-            fx.add(O.whoosh(0.22, True, seed=k, amp=0.45), tk, pan=0.5, until=t1)
-    for k in range(int((t1 - t0) / 0.45) + 1):
-        fx.add(O.cymbal(0.28, 0.8, seed=k), t0 + k * 0.45, pan=0.4 + 0.2 * (k % 2), until=t1)
-    fx.add(I.smash(0.5, seed=6), t0 + 0.8, pan=0.3, until=t1)
-    fx.add(I.smash(0.45, seed=7), t0 + 1.7, pan=0.7, until=t1)
-    mus.add(O.snare_roll(t1 - t0, 0.4), t0, until=t1)
-
-    # (silence) - then putting things back: the music box, quietly, a beat with no words
-    t0 = c("e_clue") + 0.25
-    t1 = e("e_clock")
-    music_box(mus, t0, t1, 0.8, rate=lambda u: 0.82, transpose=12, seed=12)
-    mus.add(O.organ([53, 57, 60], t1 - t0, 0.2), t0, until=t1)
-    tk = c("e_mend") + 0.9                                                 # the daisy chain, mended
-    mus.add(O.glock(89, 0.45), tk, pan=0.6)
-    mus.add(O.glock(96, 0.35), tk + 0.08, pan=0.65)
-    for k in range(8):
-        fx.add(O.page(0.3, seed=200 + k), t0 + 0.1 + k * 0.42, pan=0.3 + 0.08 * k)
-    ts = Wx("e1", "score") - 0.25
-    fx.add(O.whoosh(0.3, False, seed=21, amp=0.35), ts + 0.2)
-    fx.add(I.clink(0.55, seed=21), ts + 0.8, pan=0.55)
-    fx.add(O.page(0.35, seed=22), Wx("e1", "mind") - 0.1)
-    tc = Wx("e1", "check") - 0.25
-    fx.add(O.tick(0.5), tc + 0.5)
-    fx.add(O.clock_bell(0.4, 74), tc + 0.8, pan=0.65)
-    fx.add(O.page(0.35, seed=23), Wx("e1", "clock") - 0.1)
-
-    t0, t1 = c("e_dedication"), e("e_dedication")
-    chorale(mus, t0, t1, bpm=50, level=0.7, chords=[(53, 57, 60, 65), (53, 58, 62, 65), (53, 57, 60, 65)], beats=2)
-    fx.add(O.projector(t1 - t0, 0.25), t0, until=t1)
-
-    # the meadow, the last line, the freeze, THE END - and the Oracle's last piece of reasoning
-    t0 = c("e_end")
-    fx.add(O.pop(0.35), t0)
-    music_box(mus, t0 + 0.15, T_FREEZE, 0.55, transpose=12, seed=13)
-    fx.add(FXL.birds(T_FREEZE - t0, 1.4, seed=5), t0, until=T_FREEZE)
-    fx.add(I.crunch(0.8, seed=31), E("e3") - 0.05, pan=0.3)
-    fx.add(O.click(0.6), T_FREEZE)
-    tb = T_FREEZE + 0.08
-    mus.add(O.brass(voicing(46, "maj", 62) + [82], 0.9, 1.1, seed=12), tb)
-    mus.add(O.tuba(34, 0.9, 1.0), tb)
-    mus.add(O.timpani(34, 0.9), tb)
-    mus.add(O.glock(94, 0.45), tb, pan=0.7)
-    fx.add(O.cymbal(0.5, 1.6), tb, pan=0.6)
-    tp = T_FREEZE + 0.3
-    fx.add(I.teleprinter(0.45, 0.45, seed=300), tp, pan=0.55)
-    fx.add(O.ding(0.4, 96), tp + 0.48, pan=0.6)
+            fx.add(O.thunder(2.6, 1.0, seed=int(t * 7)), t, 0.9 * s)
+    for t, col in SHOCKS:
+        if abs(t - T_THING) < 0.5 or abs(t - cut("m_host")) < 0.3:
+            continue
+        stinger(mus, fx, t, col, 0.9)
 
 
-def sneak(mus, t0, t1):
-    """Tiptoeing: pizzicato on the off-beats, a bassoon creeping up in D minor."""
-    b = 60.0 / 132
-    line = [50, None, 45, None, 50, 53, 52, None, 50, None, 45, None, 49, 52, 50, None]
-    bsn = [(38, 2), (41, 2), (40, 2), (37, 2)]
-    k = 0
-    while t0 + k * b / 2 < t1:
-        m = line[k % 16]
-        if m is not None:
-            mus.add(O.pizz(m, 1.0, seed=k), t0 + k * b / 2, pan=0.4, until=t1 + 0.03)
-        k += 1
-    t = t0
-    i = 0
-    while t < t1:
-        m, d = bsn[i % 4]
-        mus.add(O.reed(m + 12, d * b * 0.8, 0.9, seed=i, dark=True), t, pan=0.6, until=t1 + 0.03)
-        t += d * b
-        i += 1
+def host_room(x):
+    """The host: a theatrical hall, long and dark."""
+    return reverb(x, 0.18, 1.2, seed=11)
 
 
-def refrain(mus, fx, t0, t1, seed=0):
-    """The meadow refrain: the music box plays the opening of the daisy tune; birds."""
-    fx.add(O.pop(0.35), t0)
-    music_box(mus, t0 + 0.08, t1, 0.6, beats=8, transpose=12, seed=seed)
-    fx.add(FXL.birds(t1 - t0, 1.4, seed=seed), t0, until=t1)
-
-
-# ------------------------------------------------------------------ voices and the mix
-
-def oracle(x):
-    """The Oracle: a little tin speaker - band-limited, a faint ring, a short metallic slap."""
+def phone_voice(x):
+    """The assistant: a small speaker - band-limited, a glassy shimmer, slightly doubled."""
     t = np.arange(len(x)) / SR
-    y = x * (0.82 + 0.18 * np.sin(2 * np.pi * 47 * t))
-    y = signal.sosfilt(signal.butter(4, [260 / (SR / 2), 4200 / (SR / 2)], "band", output="sos"), y)
-    d = int(0.007 * SR)
-    out = y.copy()
-    for k in range(1, 4):
-        out[k * d:] += (0.32 ** k) * y[:-k * d]
-    return out
+    y = signal.sosfilt(signal.butter(4, [320 / (SR / 2), 5200 / (SR / 2)], "band", output="sos"), x)
+    d = int(0.011 * SR)
+    y2 = np.zeros_like(y)
+    y2[d:] = y[:-d]
+    return y * 0.85 + y2 * 0.3 * (1 + 0.2 * np.sin(2 * np.pi * 0.7 * t))
 
 
 def reverb(x, wet=0.1, rt60=0.8, seed=8):
@@ -839,24 +495,35 @@ def reverb(x, wet=0.1, rt60=0.8, seed=8):
     return x * (1 - wet) + y * wet
 
 
+PANS = {"NORA": 0.48, "VERA": 0.42, "KIT": 0.5, "PROF": 0.6, "HALE": 0.44, "JUNIOR": 0.42, "MUSE": 0.58}
+
+
 def voices():
-    """The narrator close and dry; the duo with a little room; the Oracle through its tin speaker."""
-    dry, wet = np.zeros((2, N_)), np.zeros((2, N_))
+    """The narrator close and dry; the host in her echoing hall; the cast with a little room; the assistant in a box."""
+    dry, room, hall = np.zeros((2, N_)), np.zeros((2, N_)), np.zeros((2, N_))
     for key in TL.order:
         Ln = TL.lines[key]
         who = Ln["who"]
         up = signal.resample_poly(Ln["wav"].astype(np.float64), SR, VSR)
-        if who == MACH:
-            up = oracle(up)
+        if who == "MUSE":
+            up = phone_voice(up)
         r = np.sqrt((up ** 2).mean()) + 1e-12
-        lvl = {NAR: -16.0, ZUZA: -16.0, LILI: -16.0, MACH: -16.5}.get(who, -16.0)
-        up = up * db(lvl) / r
-        pan = {ZUZA: 0.44, LILI: 0.56}.get(who, 0.5)
+        up = up * db({"NAR": -16.0, "HOST": -15.5, "MUSE": -16.5}.get(who, -16.0)) / r
+        pan = PANS.get(who, 0.5)
         sig = np.stack([up * np.sqrt(1 - pan), up * np.sqrt(pan)]) * np.sqrt(2)
         i = int(Ln["start"] * SR)
         j = min(N_, i + sig.shape[1])
-        (wet if who in (ZUZA, LILI, MACH) else dry)[:, i:j] += sig[:, : j - i]
-    return dry + reverb(wet, 0.1, 0.6, seed=5)
+        tgt = dry if who == "NAR" else (hall if who == "HOST" else room)
+        tgt[:, i:j] += sig[:, : j - i]
+    # a last echo of the cackle as the comic closes
+    L4 = TL.lines["m4"]
+    a = int((Wx("m4", "Ahahahaha") - L4["start"]) * VSR)
+    cack = signal.resample_poly(L4["wav"][a:].astype(np.float64), SR, VSR)
+    cack = cack * db(-22.0) / (np.sqrt((cack ** 2).mean()) + 1e-12)
+    i = int((E("m5") + 0.9) * SR)
+    j = min(N_, i + len(cack))
+    hall[:, i:j] += np.stack([cack, cack])[:, : j - i]
+    return dry + reverb(room, 0.12, 0.5, seed=5) + host_room(hall)
 
 
 def compress(x, ratio=2.5, pct=70, rel=0.15):
@@ -898,41 +565,36 @@ def smooth(x, sec):
 
 STEMS = {}
 CEIL = -2.3
-NEED, RELIEF_DB, FX_DB, DOLL_DB = 8.0, 14.0, -24.0, -21.0        # the voice's margin over the bed in the speech band; how far the bed comes back in a pause
+RELIEF_DB, FX_DB = 14.0, -23.0
+NEED = {"NAR": 10.0, "HOST": 12.0}                 # the voice's margin over the bed in the speech band (the cast: 15)
 
 
 def buses():
-    """The score, collage and silence-proof buses (cached in build/ when DZ_CACHE is set, to re-mix quickly)."""
     path = os.path.join(HERE, "build", "buses.npz")
-    if os.environ.get("DZ_CACHE") == "load" and os.path.exists(path):
+    if os.environ.get("CS_CACHE") == "load" and os.path.exists(path):
         d = np.load(path)
-        return d["mus"].astype(np.float64), d["fx"].astype(np.float64), d["ns"].astype(np.float64), d["doll"].astype(np.float64)
-    mus, fx, nosil, doll = Bus(), Bus(), Bus(), Bus()
+        return d["mus"].astype(np.float64), d["fx"].astype(np.float64), d["ns"].astype(np.float64)
+    mus, fx, nosil = Bus(), Bus(), Bus()
     score(mus, fx, nosil)
-    joints(doll, nosil)
-    if os.environ.get("DZ_CACHE"):
-        np.savez(path, mus=mus.x.astype(np.float32), fx=fx.x.astype(np.float32), ns=nosil.x.astype(np.float32),
-                 doll=doll.x.astype(np.float32))
-    return mus.x, fx.x, nosil.x, doll.x
+    if os.environ.get("CS_CACHE"):
+        np.savez(path, mus=mus.x.astype(np.float32), fx=fx.x.astype(np.float32), ns=nosil.x.astype(np.float32))
+    return mus.x, fx.x, nosil.x
 
 
 def build():
-    mus_x, fx_x, ns_x, doll_x = buses()
-    music = mono_safe(reverb(mus_x, 0.16, 1.1), max_ratio=1.0)
-    music = signal.sosfilt(signal.butter(4, 35 / (SR / 2), "high", output="sos"), music, axis=1)
+    mus_x, fx_x, ns_x = buses()
+    music = mono_safe(reverb(mus_x, 0.2, 1.4), max_ratio=1.0)
+    music = signal.sosfilt(signal.butter(4, 32 / (SR / 2), "high", output="sos"), music, axis=1)
     music = np.tanh(1.1 * music) / 1.1
-    fxx = reverb(fx_x, 0.08, 0.5, seed=3)
-    fxx = signal.sosfilt(signal.butter(4, 40 / (SR / 2), "high", output="sos"), fxx, axis=1)
+    fxx = reverb(fx_x, 0.1, 0.6, seed=3)
+    fxx = signal.sosfilt(signal.butter(4, 35 / (SR / 2), "high", output="sos"), fxx, axis=1)
     vo = compress(presence(voices(), 3000, 2.5))
-    # levels: the band where it plays for itself (the headline march), the collage a little under it
-    ref = music[:, int(cut("b_banners") * SR):int(end("b_banners") * SR)]
-    music = music * db(-16.0) / (np.sqrt((ref ** 2).mean()) + 1e-12)
-    fight = np.zeros(N_, bool)
-    fight[int(cut("d_fight") * SR):int(end("d_fight") * SR)] = True
-    on = (np.abs(fxx).max(axis=0) > 1e-4) & ~fight
+    # levels: the music where it plays for itself (the host's welcome), the collage under it
+    ref = music[:, int(cut("o_host") * SR):int(end("o_host") * SR)]
+    music = music * db(-15.0) / (np.sqrt((ref ** 2).mean()) + 1e-12)
+    on = np.abs(fxx).max(axis=0) > 1e-4
     fxx = fxx * db(FX_DB) / (np.sqrt((fxx[:, on] ** 2).mean()) + 1e-12)
     music_pre, fx_pre = music.copy(), fxx.copy()
-    # duck the music under the words: slow, by band
     from scipy.ndimage import maximum_filter1d
     raw = np.convolve(np.abs(vo.mean(axis=0)), np.ones(SR // 20) / (SR // 20), mode="same")
     raw = np.clip(raw / (np.percentile(raw[raw > 1e-5], 80) + 1e-9), 0, 1)
@@ -941,7 +603,6 @@ def build():
     high = signal.lfilter(*signal.butter(2, 4500 / (SR / 2), "high"), music)
     mid = music - low - high
     music = low * (1 - 0.3 * env) + mid * (1 - 0.6 * env) + high * (1 - 0.35 * env)
-    # then ride each line, music and collage together, until the voice has its margin in the speech band
     band = lambda x: signal.sosfilt(signal.butter(2, [300 / (SR / 2), 4000 / (SR / 2)], "band", output="sos"), x.mean(axis=0))
     bv = band(vo)
     bmus, bfx = band(music), band(fxx)
@@ -958,21 +619,20 @@ def build():
             a, b = spans[key]
             lo, hi = max(0, a - int(0.12 * SR)), min(N_, b + int(0.12 * SR))
             r[lo:hi] = np.minimum(r[lo:hi], db(gain[key]))
-            rf[lo:hi] = np.minimum(rf[lo:hi], db(0.8 * gain[key]))
+            rf[lo:hi] = np.minimum(rf[lo:hi], db(0.85 * gain[key]))
         r, rf = smooth(r, 0.15), smooth(rf, 0.15)
-        r = r * act + np.minimum(1.0, r * db(RELIEF_DB)) * (1 - act)         # in a pause the bed comes back up
+        r = r * act + np.minimum(1.0, r * db(RELIEF_DB)) * (1 - act)
         rf = rf * act + np.minimum(1.0, rf * db(RELIEF_DB)) * (1 - act)
         return r, rf
 
-    for _ in range(6):
+    for _ in range(8):
         ride, ride_fx = rides()
         bb = bmus * ride + bfx * ride_fx
         short = False
         for key in TL.order:
             a, b = spans[key]
             margin = 20 * np.log10((np.sqrt((bv[a:b] ** 2).mean()) + 1e-12) / (np.sqrt((bb[a:b] ** 2).mean()) + 1e-12))
-            Ln = TL.lines[key]                                             # the duo's punchlines get the most room
-            need = (19.0 if Ln["end"] - Ln["start"] < 1.6 else 16.0) if Ln["who"] in (ZUZA, LILI) else NEED
+            need = NEED.get(TL.lines[key]["who"], 15.0)
             if margin < need:
                 gain[key] -= (need - margin) + 0.4
                 short = True
@@ -983,38 +643,32 @@ def build():
     for a, b in SILENCES:
         dead[int(a * SR):int(b * SR)] = 0.0
     dead = np.convolve(dead, np.ones(int(0.004 * SR)) / int(0.004 * SR), "same")
-    # the ride bites hardest in the speech band; the tuba below and the glockenspiel above keep more of their level
     lo_ = signal.lfilter(*signal.butter(2, 250 / (SR / 2), "low"), music)
     hi_ = signal.lfilter(*signal.butter(2, 4500 / (SR / 2), "high"), music)
     music = (music - lo_ - hi_) * ride[None] + (lo_ + hi_) * np.sqrt(ride)[None]
-    music = music * dead[None]
-    fxx = fxx * ride_fx[None] * dead[None]
-    # the dolls' joints: their own bus, ducked only a little - they are short, and they are the joke
-    dollx = reverb(doll_x, 0.06, 0.4, seed=4)
-    don = np.abs(dollx).max(axis=0) > 1e-4
-    dollx = dollx * db(DOLL_DB) / (np.sqrt((dollx[:, don] ** 2).mean()) + 1e-12)
-    dollx = dollx * ((ride_fx ** 0.4) * (1 - act * (1 - db(-8.0))))[None] * dead[None]   # full between words, lower under them
-    ns = ns_x * db(-24.0) / (np.abs(ns_x).max() + 1e-12)
-    # in the silences, not digital zero: the faint hiss of the optical track, a tick of dust now and then
+    # the climax: the loudest moment in the film
+    boost = np.ones(N_)
+    boost[int(T_THING * SR):int(T_BLACK * SR)] = db(4.0)
+    boost = smooth(boost, 0.01)
+    music = music * dead[None] * boost[None]
+    fxx = fxx * ride_fx[None] * dead[None] * boost[None]
+    ns = ns_x * db(-24.0) / (np.abs(ns_x).max() + 1e-12) if np.abs(ns_x).max() > 0 else ns_x
     rng = np.random.default_rng(21)
     hiss = signal.sosfilt(signal.butter(2, [400 / (SR / 2), 6000 / (SR / 2)], "band", output="sos"), rng.normal(0, 1, N_))
-    pops = (rng.uniform(0, 1, N_) > 0.99985) * rng.uniform(-1, 1, N_) * 6
-    hiss = (hiss + signal.sosfilt(signal.butter(2, 3000 / (SR / 2), "high", output="sos"), pops)) * db(-50.0)
-    hiss = hiss * (1 - dead)
-    mix = music + fxx + dollx + vo + ns + np.stack([hiss, hiss])
+    hiss = hiss * db(-52.0) * (1 - dead)
+    mix = music + fxx + vo + ns + np.stack([hiss, hiss])
     report(music_pre, fx_pre, music, fxx, vo)
     mix = signal.sosfilt(signal.butter(4, 30 / (SR / 2), "high", output="sos"), mix, axis=1)
     mix = signal.sosfilt(signal.butter(2, 15000 / (SR / 2), "low", output="sos"), mix, axis=1)
     mix = loudness(mix, -14.0)
-    a_, b_ = int((TL.total - 0.5) * SR), int(TL.total * SR)
+    a_, b_ = int((TL.total - 0.4) * SR), int(TL.total * SR)
     mix[:, a_:b_] *= np.linspace(1, 0, b_ - a_) ** 2
     mix[:, b_:] = 0.0
-    STEMS.update(music=music, fx=fxx, vo=vo, doll=dollx, ns=ns)
+    STEMS.update(music=music, fx=fxx, vo=vo)
     return mix
 
 
 def report(music_pre, fx_pre, music, fxx, vo):
-    """Per line: the voice's margin over the bed in the speech band; per shot: music, collage and voice levels."""
     band = lambda x: signal.sosfilt(signal.butter(2, [300 / (SR / 2), 4000 / (SR / 2)], "band", output="sos"), x.mean(axis=0))
     bb, bv = band(music + fxx), band(vo)
     rms = lambda y: 20 * np.log10(np.sqrt((y ** 2).mean()) + 1e-9)
@@ -1023,13 +677,13 @@ def report(music_pre, fx_pre, music, fxx, vo):
         Ln = TL.lines[key]
         a, b = int(Ln["start"] * SR), int(Ln["end"] * SR)
         mg = rms(bv[a:b]) - rms(bb[a:b])
-        if mg < NEED - 1.0:
+        if mg < NEED.get(Ln["who"], 15.0) - 1.0:
             low.append(f"{key} {mg:.1f}")
     print("lines under the margin:", ", ".join(low) or "none")
     rows = []
     for i, e in enumerate(EDIT):
         a, b = int(e[0] * SR), int((EDIT[i + 1][0] if i + 1 < len(EDIT) else TL.total) * SR)
-        rows.append(f"{e[1]:>13s} pre: mus {rms(music_pre[:, a:b]):6.1f} fx {rms(fx_pre[:, a:b]):6.1f} | mix: mus {rms(music[:, a:b]):6.1f} "
+        rows.append(f"{e[1]:>14s} pre: mus {rms(music_pre[:, a:b]):6.1f} fx {rms(fx_pre[:, a:b]):6.1f} | mix: mus {rms(music[:, a:b]):6.1f} "
                     f"fx {rms(fxx[:, a:b]):6.1f} vo {rms(vo[:, a:b]):6.1f}")
     print("\n".join(rows))
 
@@ -1065,8 +719,6 @@ def limit(x, ceil, look=0.005, rel=0.12):
 
 
 def aac_safe(x, target=-1.7, rates=("192k", "256k"), rounds=3):
-    """Round-trip the mix through the AAC encoder at the bitrates we deliver and pull down (briefly, smoothly) any spot
-    where the codec's overshoot would land above the target true peak."""
     import subprocess
     import tempfile
     from scipy.ndimage import minimum_filter1d

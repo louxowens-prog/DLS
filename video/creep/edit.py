@@ -51,7 +51,7 @@ EDIT = [
     (S("s6") - 0.12, "s_years", "page", {}),
     (Wx("s6", "And") - 0.1, "s_ward", "cut", {"night": 0.2}),
     (S("s7") - 0.1, "s_junior", "cut", {"night": 0.2}),
-    (E("s7") + 0.38, "s_thing", "redflash", {}),
+    (E("s7") + 0.6, "s_thing", "redflash", {}),
     # ---- the reader: the risk at 100%
     (S("r1") - 0.5, "r_dark", "cut", {"night": 0.6}),
     (S("r2") - 0.12, "r_real", "cut", {"plain": 0.9}),
@@ -70,16 +70,20 @@ EDIT = [
     (E("m4") + 0.3, "m_back", "page", {}),
 ]
 
-TRANS = {"page": 0.55, "zoom": 0.4, "flash": 0.1, "redflash": 0.12}
+TRANS = {"page": 0.55, "zoom": 0.5, "flash": 0.1, "redflash": 0.12}
+
+# shots that are comic pages already (everything else is 'live' and freezes into a panel before a page turn)
+PAGES = {"o_cover", "o_skills", "o_before", "v_title", "v_map", "v_cabbie", "g_title", "g_split", "g_chart", "s_title", "m_habits", "m_back"}
+FREEZE_D = 0.5
 
 # lightning strikes: (time, strength); the score puts a thunder crack on each
 LIGHTNING = [(0.02, 0.9), (2.1, 0.5), (S("c2") - 0.04, 0.85), (Wx("c2", "Lose") - 0.02, 0.5), (S("v1") - 0.55, 0.6),
              (Wx("v8", "forever") - 0.04, 0.8), (S("g1") - 0.5, 0.6), (S("s1") - 0.5, 0.6), (Wx("s5", "quit") - 0.05, 0.9),
-             (E("s7") + 0.36, 1.0), (S("r5") + 0.4, 0.35), (Wx("m4", "Ahahahaha") - 0.03, 0.9), (Wx("m4", "Ahahahaha") + 0.45, 0.6)]
+             (E("s7") + 0.58, 1.0), (S("r5") + 0.4, 0.35), (Wx("m4", "Ahahahaha") - 0.03, 0.9), (Wx("m4", "Ahahahaha") + 0.45, 0.6)]
 
 # colour shocks: the background drops to one flat colour (the score puts a stinger on each)
 SHOCKS = [(Wx("c1", "without") + 0.02, "green"), (Wx("c6", "AI") - 0.08, "blue"), (Wx("v8", "forever") - 0.05, "red"),
-          (S("g7") - 0.08, "green"), (S("s3") - 0.06, "red"), (E("s7") + 0.38, "red"), (S("m4") - 0.1, "violet")]
+          (S("g7") - 0.08, "green"), (S("s3") - 0.06, "red"), (E("s7") + 0.6, "red"), (S("m4") - 0.1, "violet")]
 
 # the reader's real night: the narrator's boxes go plain
 PLAIN = [(S("r2") - 0.2, S("r5") - 0.1)]

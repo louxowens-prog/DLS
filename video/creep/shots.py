@@ -9,7 +9,7 @@ import comic as CO
 import film as F
 import kit as K
 import ov
-from edit import EDIT, LIGHTNING, TRANS, look_at, shot_at
+from edit import EDIT, FREEZE_D, LIGHTNING, PAGES, TRANS, look_at, shot_at
 from timeline import FPS, TL
 
 SHOTS = {}
@@ -64,21 +64,41 @@ def lightning(T):
     return min(1.0, v)
 
 
+def freeze_start(i):
+    """A live shot that ends on a page turn freezes into an inked comic panel for its last FREEZE_D seconds."""
+    if i + 1 >= len(EDIT) or EDIT[i + 1][2] != "page" or EDIT[i][1].partition("@")[0] in PAGES:
+        return None
+    return EDIT[i + 1][0] - FREEZE_D
+
+
+def frame(i, T, idx):
+    """Shot i at time T, frozen into a comic panel at its end when it leads into a page turn."""
+    name = EDIT[i][1]
+    tf = freeze_start(i)
+    if tf is None or T < tf:
+        return shot(name, T, idx)
+    saved = list(K.TEXT)
+    a = shot(name, tf, idx)
+    K.TEXT[:] = saved                                        # the frozen panel is a picture now
+    CO.comicize(a, K.ease(min(1.0, (T - tf) / 0.16)))
+    return CO.to_panel(a, min(1.0, (T - tf) / 0.3), rect=(60, 250, 1020, 1330), rot=-1.6, seed=i)
+
+
 def render_frame(T, idx=None, overlays=True):
     K.TEXT.clear()
     idx = int(round(T * FPS)) if idx is None else idx
     i = shot_at(T)
     t0, name, tr, _ = EDIT[i]
-    arr = shot(name, T, idx)
+    arr = frame(i, T, idx)
     if i > 0 and tr in TRANS and T < t0 + TRANS[tr]:
         k = (T - t0) / TRANS[tr]
         if tr == "page":
             saved = list(K.TEXT)
-            prev = shot(EDIT[i - 1][1], t0 - 1 / FPS, idx)
+            prev = frame(i - 1, t0 - 1 / FPS, idx)
             K.TEXT[:] = saved
             arr = CO.page_turn(prev, arr, k)
-        elif tr == "zoom":
-            arr = CO.panel_zoom(arr, k)
+        elif tr == "zoom":                                   # the comic panel comes alive as it fills the frame
+            arr = CO.panel_zoom(CO.comicize(arr, 1 - K.ease(min(1.0, k * 1.3))), k)
         elif tr == "flash":
             F.flash_frame(arr, (255, 250, 240), 1 - k)
         elif tr == "redflash":
