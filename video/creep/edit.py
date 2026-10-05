@@ -25,7 +25,7 @@ EDIT = [
     (S("v1") - 0.6, "v_title", "page", {}),
     (S("v2") - 0.15, "v_car", "zoom", NIGHT),
     (S("v4") - 0.1, "v_map", "cut", {}),
-    (Wx("v4", "declined") - 0.1, "v_map@1.55@540@1035", "cut", {}),
+    (Wx("v4", "declined") - 0.1, "v_map@1.3@540@1035", "cut", {}),
     (E("v4") + 0.12, "v_signal", "cut", NIGHT),
     (S("v6") - 0.1, "v_cross", "cut", {"night": 0.35}),
     (S("v7") - 0.1, "v_cabbie", "page", {}),
@@ -37,7 +37,7 @@ EDIT = [
     (S("g3") - 0.1, "g_ghost", "cut", {"night": 0.25}),
     (Wx("g3", "Help") - 0.1, "g_split", "cut", {}),
     (S("g4") - 0.1, "g_quote", "cut", {"night": 0.2}),
-    (Wx("g4", "couldn't") - 0.1, "g_quote@1.45@540@1060", "cut", {"night": 0.2}),
+    (Wx("g4", "couldn't") - 0.1, "g_quote@1.45@640@1060", "cut", {"night": 0.2}),
     (S("g5") - 0.1, "g_chart", "page", {}),
     (Wx("g5", "Take") - 0.1, "g_chart@1.25@700@820", "cut", {}),
     (E("g5") + 0.1, "g_exam", "cut", {}),
@@ -54,13 +54,14 @@ EDIT = [
     (S("s6") - 0.12, "s_years", "page", {}),
     (Wx("s6", "And") - 0.1, "s_ward", "cut", {"night": 0.2}),
     (S("s7") - 0.1, "s_junior", "cut", {"night": 0.2}),
-    (E("s7") + 1.0, "s_thing", "redflash", {}),
+    (E("s7") + 1.6, "s_thing", "redflash", {}),
     # ---- the reader: the risk at 100%
     (S("r1") - 0.5, "r_dark", "cut", {"night": 0.6}),
     (S("r2") - 0.12, "r_real", "cut", {"plain": 0.9}),
     (S("r3") - 0.08, "r_father", "cut", {"plain": 0.85}),
     (Wx("r3", "You") - 0.1, "r_pill", "cut", {"plain": 0.85}),
-    (Wx("r3", "The", 1) - 0.08, "r_door", "cut", {"plain": 0.9}),
+    (Wx("r3", "The", 1) - 0.08, "r_call", "cut", {"plain": 0.85}),
+    (Wx("r3", "The", 2) - 0.08, "r_door", "cut", {"plain": 0.9}),
     (Wx("r3", "Your", 1) - 0.08, "r_number", "cut", {"plain": 0.85}),
     (S("r4") - 0.1, "r_muse", "cut", {"plain": 0.8}),
     (E("r4") + 0.35, "r_still", "cut", {"plain": 0.9}),
@@ -83,11 +84,11 @@ FREEZE_D = 0.5
 # lightning strikes: (time, strength); the score puts a thunder crack on each
 LIGHTNING = [(0.02, 0.9), (1.2, 0.5), (S("c2a") - 0.04, 0.85), (Wx("c2", "Atrophy") - 0.02, 0.5), (S("v1") - 0.55, 0.6),
              (Wx("v8", "forever") - 0.04, 0.8), (S("g1") - 0.5, 0.6), (S("s1") - 0.5, 0.6), (Wx("s5", "quit") - 0.05, 0.9),
-             (E("s7") + 0.98, 1.0), (S("r5") + 0.4, 0.35), (S("m4b") - 0.03, 0.9), (S("m4b") + 0.6, 0.6)]
+             (E("s7") + 1.58, 1.0), (S("r5") + 0.4, 0.35), (S("m4b") - 0.03, 0.9), (S("m4b") + 0.6, 0.6)]
 
 # colour shocks: the background drops to one flat colour (the score puts a stinger on each)
 SHOCKS = [(Wx("c1", "fewer") - 0.05, "green"), (Wx("c6", "AI") - 0.08, "blue"), (Wx("v8", "forever") - 0.05, "red"),
-          (S("g7") - 0.08, "green"), (S("s3") - 0.06, "red"), (E("s7") + 1.0, "red"), (S("m4") - 0.1, "violet")]
+          (S("g7") - 0.08, "green"), (S("s3") - 0.06, "red"), (E("s7") + 1.6, "red"), (S("m4") - 0.1, "violet")]
 
 # the reader's real night: the narrator's boxes go plain
 PLAIN = [(S("r2") - 0.2, S("r5") - 0.1)]
@@ -117,7 +118,7 @@ BALLOONS = {
     "g6": dict(x=370, y=330, tail=(620, 560), maxw=460),
     "g7": dict(x=330, y=330, tail=(430, 520), maxw=420, kind="whisper", shake=3.0),
     "s3": dict(x=520, y=380, tail=(540, 720), maxw=520, kind="shout", shake=3.0, size=54),
-    "s7": dict(x=520, y=380, tail=(560, 720), maxw=480, kind="whisper"),
+    "s7": dict(x=330, y=600, tail=(330, 790), maxw=420, kind="whisper"),
     "r1": dict(x=700, y=1330, tail=(600, 1150), maxw=400),
     "r4": dict(x=310, y=330, tail=(430, 520), maxw=400, kind="whisper"),
     "m5": dict(x=440, y=1170, tail=(790, 1190), maxw=500, size=44, until=TL.total - 0.3),

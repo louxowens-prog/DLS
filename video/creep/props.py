@@ -45,28 +45,44 @@ def eyebox(c, x, y, s, T, on=1.0, look=(0.0, 0.0), light="clinic", label="SPOTTE
         g = paint(led, 0.8, blur=8)
         g.setBlendMode(skia.BlendMode.kPlus)
         c.drawCircle(130, 92, 10, g)
-    # the lens
-    c.drawCircle(-20, -10, 92, paint((30, 28, 26)))
-    c.drawCircle(-20, -10, 92, paint(mix(BEIGE_D, INK, 0.5), stroke=8))
-    c.drawCircle(-20, -10, 74, paint((12, 10, 12)))
-    op = max(0.0, 1 - blink)
-    lx, ly = -20 + look[0] * 16, -10 + look[1] * 12
-    if on > 0.02:
-        iris = (230, 20, 20)
-        c.save()
-        c.clipPath(K.oval(-94, -84 + (1 - op) * 74, 54, 64 - (1 - op) * 74), doAntiAlias=True)
-        c.drawCircle(lx, ly, 52, paint(shader=K.rad((lx, ly), 52, [(255, 120, 80), iris, (90, 0, 10)], [0, 0.5, 1]), a=on))
-        for i in range(18):                                             # iris fibres
-            a = 2 * math.pi * i / 18
-            c.drawLine(lx + 16 * math.cos(a), ly + 16 * math.sin(a), lx + 50 * math.cos(a), ly + 50 * math.sin(a), paint((120, 0, 10), 0.5 * on, stroke=2))
-        c.drawCircle(lx, ly, 18, paint(INK, on))
-        c.restore()
-        g = paint((255, 40, 30), 0.65 * on, blur=36)
+    # the thing in the box: a living, bloodshot eye behind a porthole, with plastic shutters for lids
+    ex, ey, R = -20, -10, 80
+    c.drawCircle(ex, ey, R + 14, paint((40, 36, 32)))
+    c.drawCircle(ex, ey, R + 14, paint(mix(BEIGE_D, INK, 0.5), stroke=8))
+    c.save()
+    c.clipPath(K.circle(ex, ey, R), doAntiAlias=True)
+    c.drawCircle(ex, ey, R, paint((20, 6, 8)))
+    alive = on > 0.02
+    sclera = (238, 226, 210) if alive else (150, 146, 140)
+    c.drawCircle(ex, ey, R, paint(shader=K.rad((ex - 20, ey - 24), R * 1.3, [sclera, mix(sclera, (200, 120, 120), 0.4), (90, 30, 30)], [0, 0.65, 1])))
+    rng = K.rng_at(7, 7)
+    for i in range(16):                                                 # bloodshot veins creeping in from the rim
+        a0 = rng.uniform(0, 2 * math.pi)
+        x0, y0 = ex + R * math.cos(a0), ey + R * math.sin(a0)
+        x1, y1 = ex + R * 0.45 * math.cos(a0 + 0.3), ey + R * 0.45 * math.sin(a0 + 0.3)
+        c.drawPath(K.bez_path([(x0, y0), ((x0 + x1) / 2 + rng.uniform(-10, 10), (y0 + y1) / 2 + rng.uniform(-10, 10)), (x1, y1)]),
+                   paint((190, 20, 30), (0.7 if alive else 0.3), stroke=rng.uniform(1.2, 2.6)))
+    lx, ly = ex + look[0] * 22, ey + look[1] * 16
+    ic = (60, 160, 70) if alive else (90, 100, 90)
+    c.drawCircle(lx, ly, 34, paint(mix(ic, INK, 0.3)))
+    c.drawCircle(lx, ly, 30, paint(shader=K.rad((lx, ly), 30, [mix(ic, (255, 240, 120), 0.4), ic, mix(ic, INK, 0.5)], [0, 0.55, 1])))
+    for i in range(20):
+        a0 = 2 * math.pi * i / 20
+        c.drawLine(lx + 12 * math.cos(a0), ly + 12 * math.sin(a0), lx + 29 * math.cos(a0), ly + 29 * math.sin(a0), paint(mix(ic, INK, 0.5), 0.5, stroke=1.5))
+    c.drawOval(skia.Rect.MakeLTRB(lx - 5, ly - 15, lx + 5, ly + 15), paint(INK))      # a slit pupil
+    c.drawOval(skia.Rect.MakeLTRB(lx - 22, ly - 26, lx - 6, ly - 14), paint(WHITE, 0.85 if alive else 0.3))
+    shut = 1.0 - (max(0.0, 1 - blink) if alive else 0.0)                 # the shutters close when it is off or blinking
+    if shut > 0.01:
+        h = R * shut
+        c.drawRect(skia.Rect.MakeLTRB(ex - R, ey - R, ex + R, ey - R + h), paint(mix(BEIGE, INK, 0.15)))
+        c.drawRect(skia.Rect.MakeLTRB(ex - R, ey + R - h, ex + R, ey + R), paint(mix(BEIGE, INK, 0.25)))
+        c.drawLine(ex - R, ey - R + h, ex + R, ey - R + h, paint(INK, 0.6, stroke=3))
+        c.drawLine(ex - R, ey + R - h, ex + R, ey + R - h, paint(INK, 0.6, stroke=3))
+    c.restore()
+    if alive:
+        g = paint((255, 60, 40), 0.25 * on, blur=30)
         g.setBlendMode(skia.BlendMode.kPlus)
-        c.drawCircle(lx, ly, 70, g)
-    else:
-        c.drawCircle(lx, ly, 52, paint((40, 40, 44)))
-        c.drawCircle(lx, ly, 18, paint((20, 20, 22)))
+        c.drawCircle(ex, ey, R, g)
     c.drawOval(skia.Rect.MakeLTRB(-70, -70, -20, -40), paint(WHITE, 0.35, blur=4))
     c.restore()
 
@@ -224,7 +240,7 @@ def gps(c, x, y, s, T, mode="route", k=1.0):
         c.drawPath(K.bez_path([(0, 100), (0, 0), (-150, -30)]), paint((90, 220, 255), stroke=14))
         c.drawPath(path([(-30, 20), (0, -14), (30, 20), (0, 8)]), paint((255, 220, 60)))
         f = K.font("vt323-400", 34)
-        c.drawString("200 FT  TURN LEFT", -140, -60, f, paint(WHITE))
+        c.drawString("200 YDS TURN LEFT", -140, -60, f, paint(WHITE))
         K.reg_local(c, -140, -86, 140, -56, "screen")
     elif mode == "lost":
         on = (math.floor(T * 4) % 2) == 0
@@ -476,7 +492,7 @@ def calculator(c, x, y, s, T, display="0.", L="lamp", ang=0.0):
     c.restore()
 
 
-def pill_bottle(c, x, y, s, label=("HEART TABLETS", "Dose: 0.125 mg", "Each tablet: 0.25 mg"), L="candle", ang=0.0):
+def pill_bottle(c, x, y, s, label=("ASPIRIN", "75 mg", "28 TABLETS"), L="candle", ang=0.0):
     L = FA.Light(L)
     c.save()
     c.translate(x, y)
@@ -485,10 +501,14 @@ def pill_bottle(c, x, y, s, label=("HEART TABLETS", "Dose: 0.125 mg", "Each tabl
     plastic(c, _rr(-110, -200, 110, 220, 22), (210, 120, 40), L)
     plastic(c, _rr(-124, -260, 124, -190, 14), (236, 236, 230), L)
     c.drawRect(skia.Rect.MakeLTRB(-100, -130, 100, 150), paint((246, 244, 236)))
-    for i, (ln, sz) in enumerate(zip(label, (30, 34, 34))):
-        f = K.font("rubik-700" if i else "rubik-900", sz)
-        c.drawString(ln, -f.measureText(ln) / 2, -80 + i * 70, f, paint(INK))
-        K.reg_local(c, -f.measureText(ln) / 2, -80 + i * 70 - sz * 0.8, f.measureText(ln) / 2, -80 + i * 70 + sz * 0.2, "screen")
+    for i, (ln, sz, fn, yy) in enumerate(zip(label, (40, 64, 26), ("rubik-900", "rubik-900", "rubik-700"), (-62, 34, 112))):
+        f = K.font(fn, sz)
+        if f.measureText(ln) > 176:                                    # every line fits inside the label
+            f = K.font(fn, sz * 176 / f.measureText(ln))
+        w = f.measureText(ln)
+        col = (200, 30, 30) if i == 1 else INK
+        c.drawString(ln, -w / 2, yy, f, paint(col))
+        K.reg_local(c, -w / 2, yy - f.getSize() * 0.8, w / 2, yy + f.getSize() * 0.2, "screen")
     c.restore()
 
 

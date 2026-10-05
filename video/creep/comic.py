@@ -16,7 +16,7 @@ from PIL import Image, ImageFilter
 import kit as K
 from kit import H, W, INK, WHITE, mix, paint, path
 
-NEWS = (234, 216, 172)              # yellowed newsprint
+NEWS = (226, 204, 150)              # yellowed newsprint
 BOXY = (255, 222, 70)               # caption-box yellow
 BLOOD, ELEC, SICK, ACID, VIOLET = (212, 8, 24), (24, 70, 255), (120, 210, 40), (186, 255, 60), (92, 20, 140)
 GORE = (226, 0, 22)                 # too-red, comic-book blood

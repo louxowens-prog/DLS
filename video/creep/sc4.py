@@ -77,28 +77,72 @@ def s_r_father(T, idx):
 
 
 def s_r_pill(T, idx):
-    """You can't work out the dose. The label in a shaking hand; the sum she never did herself."""
+    """You can't work out the dose. Aspirin, 75 mg tablets; the note on the fridge says chew 300 mg; a sum she has not done
+    in her head for twenty years."""
     st = K.Stage()
     c = st.c
     SE.grad_bg(c, (30, 26, 22), (10, 8, 8))
     SE.glow(c, 540, 820, 600, (255, 180, 110), 0.25)
-    sh = math.sin(T * 23) * 4
-    PR.pill_bottle(c, 520 + sh, 760, 1.25, ang=-6 + sh * 0.3)
-    FA.hand(c, 380 + sh, 1150, 1.5, -70, skin=NORA_SKIN, light="candle", pose="grip")
-    c.save()
+    C.push(c, T, Wx("r3", "You") - 0.1, Wx("r3", "The", 1), 1.0, 1.06, cx=540, cy=1000)
+    c.save()                                                            # the note from the doctor, on the table
     c.translate(540, 1240)
-    c.rotate(3)
-    c.drawRect(skia.Rect.MakeLTRB(-360, -130, 360, 110), paint((236, 232, 214)))
+    c.rotate(2)
+    c.drawRect(skia.Rect.MakeLTRB(-390, -150, 390, 150), paint((240, 232, 160)))
+    c.drawRect(skia.Rect.MakeLTRB(-390, -150, 390, 150), paint(INK, 0.25, stroke=3))
     c.restore()
-    f = K.font("comic-neue-700", 56)
-    rng = K.rng_at(4, 4)
-    tries = ["0.125 / 0.25 = ?", "HALF? DOUBLE?", "2 TABLETS? 0.5?"]
-    n = min(3, int((T - Wx("r3", "You")) / 0.4) + 1)
+    CO.label(c, "CHEST PAIN? CHEW 300 mg", 540, 1150, 50, "rubik-900", (180, 20, 20), rot=2, tag="label")
+    f = K.font("comic-neue-700", 58)
+    tries = ["300 / 75 = ?", "3?  5?  30?"]
+    n = min(2, int(max(0.0, T - Wx("r3", "can't")) / 0.45) + 1)
     for i in range(n):
-        y = 1172 + i * 62
-        c.drawString(tries[i], 220, y, f, paint((40, 40, 140), 0.9))
-        K.reg(220, y - 46, 220 + f.measureText(tries[i]), y + 12, "deco")
-        c.drawLine(210, y - 18, 230 + f.measureText(tries[i]), y - 22, paint((180, 20, 20), 0.8, stroke=5))
+        y = 1232 + i * 72
+        x = 250 if i == 0 else 290
+        c.drawString(tries[i], x, y, f, paint((40, 40, 140), 0.9))
+        K.reg(x, y - 46, x + f.measureText(tries[i]), y + 12, "deco")
+        if i == 1 or T > Wx("r3", "dose.") + 0.1:
+            c.drawLine(x - 10, y - 18, x + 10 + f.measureText(tries[i]), y - 24, paint((180, 20, 20), 0.8, stroke=5))
+    sh = math.sin(T * 23) * 4
+    PR.pill_bottle(c, 520 + sh, 700, 1.25, ang=-6 + sh * 0.3)
+    FA.hand(c, 400 + sh, 1000, 1.5, -64, skin=NORA_SKIN, light="candle", pose="grip")
+    c.restore()
+    return st.arr
+
+
+def s_r_call(T, idx):
+    """The ambulance? Forty minutes. 999 on the landline; the clock's red wedge sweeps out the wait."""
+    st = K.Stage()
+    c = st.c
+    SE.grad_bg(c, (40, 38, 42), (12, 12, 14))
+    SE.glow(c, 420, 1100, 600, (255, 190, 120), 0.2 * (0.9 + 0.1 * math.sin(T * 11)))
+    t0 = Wx("r3", "The", 1) - 0.08
+    C.push(c, T, t0, Wx("r3", "The", 2), 1.0, 1.08, cx=540, cy=900)
+    # the wall clock, the wait swept out in red
+    cx, cy, r = 690, 640, 160
+    c.drawCircle(cx, cy, r + 14, paint((60, 44, 30)))
+    c.drawCircle(cx, cy, r, paint((236, 228, 206)))
+    k = ease(ramp(T, Wx("r3", "Forty") - 0.05, Wx("r3", "minutes.") + 0.3))
+    if k > 0:
+        wedge = skia.Path()
+        wedge.moveTo(cx, cy)
+        wedge.arcTo(skia.Rect.MakeLTRB(cx - r + 8, cy - r + 8, cx + r - 8, cy + r - 8), -90, 240 * k, False)
+        wedge.close()
+        c.drawPath(wedge, paint((210, 20, 24), 0.85))
+    for h in range(12):
+        a_ = math.radians(h * 30 - 90)
+        c.drawLine(cx + (r - 26) * math.cos(a_), cy + (r - 26) * math.sin(a_), cx + (r - 8) * math.cos(a_), cy + (r - 8) * math.sin(a_),
+                   paint(INK, stroke=8))
+    am = math.radians(-90 + 240 * k)
+    c.drawLine(cx, cy, cx + (r - 30) * math.cos(am), cy + (r - 30) * math.sin(am), paint(INK, stroke=10))
+    c.drawLine(cx, cy, cx + 70 * math.cos(math.radians(-30)), cy + 70 * math.sin(math.radians(-30)), paint(INK, stroke=14))
+    c.drawCircle(cx, cy, 14, paint(INK))
+    # the landline
+    PR.keypad(c, 360, 1060, 0.95, typed="999", L="candle", status="CONNECTED")
+    hov = math.sin(T * 6) * 14
+    FA.hand(c, 470 + hov, 1270, 1.4, -110, skin=NORA_SKIN, light="candle", pose="point")
+    c.restore()
+    if T > Wx("r3", "Forty") - 0.1:
+        kk = K.pop(T, Wx("r3", "Forty") - 0.1, 0.2, 0.15)
+        CO.caption_box(c, "AMBULANCE: 40 MINUTES", 540, 300, maxw=760, size=50, k=kk, rot=-1.5, anchor="top", tag="label")
     return st.arr
 
 
@@ -127,17 +171,16 @@ def s_r_door(T, idx):
 
 
 def s_r_number(T, idx):
-    """Your sister's number? Never learned it. The landline: 999 is jammed in the storm; she starts her sister's number and
-    her finger stops."""
+    """Your sister's number? Never learned it. 0, 7... and her finger stops over the keys."""
     st = K.Stage()
     c = st.c
     SE.grad_bg(c, (40, 40, 44), (14, 14, 16))
     SE.glow(c, 540, 800, 600, (255, 190, 120), 0.18 * (0.9 + 0.1 * math.sin(T * 11)))
     t0 = Wx("r3", "Your", 1) - 0.08
-    busy = T < t0 + 0.7
     C.push(c, T, t0, E("r3") + 0.3, 1.0, 1.12, cx=540, cy=800)
-    PR.keypad(c, 540, 820, 1.25, typed="999" if busy else "07", L="candle", status="ALL LINES BUSY" if busy else "SISTER?")
-    hov = math.sin(T * 5) * 30
+    typed = "0" if T < t0 + 0.6 else "07"
+    PR.keypad(c, 540, 820, 1.25, typed=typed, L="candle", status="SISTER?")
+    hov = math.sin(T * 5) * 30 * ramp(T, t0 + 0.9, t0 + 1.3)
     FA.hand(c, 640 + hov, 1260, 1.6, -100, skin=NORA_SKIN, light="candle", pose="point")
     c.restore()
     return st.arr
@@ -158,22 +201,55 @@ def s_r_muse(T, idx):
 
 
 def s_r_still(T, idx):
-    """The outcome, by implication: the father's breathing stops; the candle gutters out; a long second of black."""
+    """The outcome, on screen: her father slumped in his armchair; his hand loosens on the aspirin bottle, the bottle drops,
+    the hand slips off the armrest and hangs by the candle; the candle gutters out; a long second of black."""
     st = K.Stage((0, 0, 0))
     c = st.c
     t0 = E("r4") + 0.35
-    out = ramp(T, t0 + 0.35, t0 + 0.7)
+    u = T - t0
+    out = ramp(T, t0 + 0.62, t0 + 0.9)
     a = 1 - out
+    L = FA.Light("candle")
     if a > 0:
-        SE.glow(c, 540, 1150, 500, (255, 180, 110), 0.18 * a)
-        chair = K.rrect(260, 600, 860, 1500, 120)
-        c.drawPath(chair, paint((40, 30, 26), 0.8 * a))
-        c.drawPath(K.oval(470, 640, 650, 860), paint((30, 24, 22), 0.8 * a))
-        PR.candle(c, 540, 1360, 0.8, T, a=a)
+        C.push(c, T, t0, t0 + 1.0, 1.0, 1.06, cx=400, cy=1100)
+        SE.glow(c, 200, 1220, 640, (255, 170, 100), 0.34 * a)
+        wing = K.smooth([(330, 1300), (300, 470), (380, 330), (560, 300), (740, 330), (820, 470), (800, 1300)])
+        FA.lit_fill(c, wing, (86, 54, 44), L, rim=0.6)                      # the wing chair
+        slump = ease(ramp(u, 0.0, 0.5))
+        C.person(c, "father", 560, 700 + 40 * slump, 0.95, T, expr="dead", light="candle", seed=21, tilt=-10 - 16 * slump,
+                 blink=1.0, talk=0.0)
+        FA.lit_fill(c, K.rrect(330, 1180, 1000, 1660, 50), (78, 50, 40), L, rim=0.4)   # the seat
+        c.drawRect(skia.Rect.MakeLTRB(-100, 1640, W + 100, H + 100), paint((34, 24, 20)))  # the floor
+        drop = ramp(u, 0.24, 0.5)
+        ang = 160 - 66 * drop ** 2 + (8 * math.sin(min(1.0, max(0.0, u - 0.5) / 0.25) * math.pi) if u > 0.5 else 0)
+        wx, wy = 262 - 14 * drop, 1076 + 22 * drop
+        sleeve = K.capsule(470, 1080, wx + 8, wy, 46, 40)
+        FA.lit_fill(c, K.rrect(140, 1090, 520, 1660, 46), (96, 62, 48), L, rim=0.8)    # the armrest, in front
+        FA.lit_fill(c, sleeve, FA.CAST["father"]["top"], L, rim=0.6)              # his cardigan sleeve along it
+        c.drawRect(skia.Rect.MakeLTRB(20, 1490, 300, 1512), paint((60, 40, 30)))       # the side table, the candle on it
+        c.drawRect(skia.Rect.MakeLTRB(140, 1510, 170, 1640), paint((50, 34, 26)))
+        if u < 0.24:                                                    # the bottle in a loosening grip
+            n0 = len(K.TEXT)
+            PR.pill_bottle(c, 120, 1150, 0.36, ang=20)
+            del K.TEXT[n0:]
+        else:                                                           # it falls; tablets scatter on the floor
+            fall = ramp(u, 0.24, 0.36)
+            n0 = len(K.TEXT)
+            PR.pill_bottle(c, 120 + 200 * fall, 1150 + 510 * fall ** 2, 0.36, ang=20 + 150 * fall)
+            del K.TEXT[n0:]
+            if u > 0.36:
+                rng = K.rng_at(77, 1)
+                sp = ease(ramp(u, 0.36, 0.56))
+                for i in range(9):
+                    dx, dy = rng.uniform(-200, 240), rng.uniform(-20, 50)
+                    c.drawOval(skia.Rect.MakeXYWH(330 + dx * sp - 11, 1690 + dy * sp - 6, 22, 12), paint((240, 236, 226), 0.9))
+        FA.hand(c, wx, wy, 1.25, ang, skin=FA.CAST["father"]["skin"], light="candle", pose="grip" if u < 0.24 else "open", flip=True)
+        PR.candle(c, 150, 1400, 0.8, T, a=a)
+        c.restore()
     if out > 0:                                                          # a thread of smoke where the flame was
         for i in range(6):
-            y = 1180 - out * 60 - i * 40
-            c.drawCircle(540 + 14 * math.sin(T * 3 + i), y, 8 + i * 3, paint((150, 150, 150), 0.12 * (1 - i / 6) * (1 - ramp(T, t0 + 1.0, t0 + 1.6)), blur=6))
+            y = 1260 - out * 60 - i * 40
+            c.drawCircle(150 + 14 * math.sin(T * 3 + i), y, 8 + i * 3, paint((150, 150, 150), 0.12 * (1 - i / 6) * (1 - ramp(T, t0 + 1.0, t0 + 1.4)), blur=6))
     return st.arr
 
 
@@ -322,7 +398,7 @@ def s_m_host(T, idx):
 ADS = [
     ((50, 330, 520, 760), "AMAZING!", "YOUR OWN BRAIN", "Works better with daily use! FREE: you already own one!"),
     ((550, 330, 1030, 610), "LEARN TO READ", "A MAP!", "In just ONE walk! No batteries!"),
-    ((550, 630, 1030, 910), "MEMORIZE", "3 PHONE NUMBERS", "Amaze your family in a blackout!"),
+    ((550, 630, 1030, 910), "MEMORISE", "3 PHONE NUMBERS", "Amaze your family in a blackout!"),
     ((50, 780, 520, 1060), "GROW YOUR OWN", "BRAIN MAP!", "Just add walking. Results in weeks!"),
 ]
 
@@ -343,10 +419,10 @@ def s_m_back(T, idx):
         c.drawRect(skia.Rect.MakeLTRB(x0, y0, x1, y1), paint(INK, stroke=6))
         CO.label(c, a, (x0 + x1) / 2, y0 + 70, 50, "bangers-400", (200, 20, 20), tag="ad")
         CO.label(c, b, (x0 + x1) / 2, y0 + 130, 54, "bangers-400", INK, tag="ad")
-        f = K.font("comic-neue-700", 36)
-        lines = K.wrap(small, f, x1 - x0 - 50)
+        f = K.font("comic-neue-700", 40)
+        lines = K.wrap(small, f, x1 - x0 - 40)
         for j, ln in enumerate(lines):
-            CO.label(c, ln, (x0 + x1) / 2, y0 + 192 + j * 42, 36, "comic-neue-700", (70, 34, 20), tag="ad")
+            CO.label(c, ln, (x0 + x1) / 2, y0 + 190 + j * 46, 40, "comic-neue-700", (20, 10, 10), tag="ad")
         if i == 0:
             PR.brain(c, (x0 + x1) / 2, y1 - 62, 0.26, T, glow=0.6)
     # the coupon

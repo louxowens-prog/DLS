@@ -81,7 +81,7 @@ T_SIGNAL = S("v5")                              # ... until the sat-nav loses it
 T_PRE = E("s7")                                 # silence before the thing on the screen
 T_THING = cut("s_thing")                        # the loudest moment
 T_BLACK = cut("r_dark")                         # the power dies
-T_STILL = cut("r_still") + 0.42                 # the father's breathing stops
+T_STILL = cut("r_still") + 0.56                 # the bottle has fallen; then nothing
 SILENCES = [(T_SIG + 0.05, T_SIGNAL - 0.02), (T_PRE + 0.02, T_THING), (T_BLACK, S("r1") - 0.05), (T_STILL, S("r5") - 0.12)]
 T_EXAM = cut("g_exam")
 
@@ -144,6 +144,15 @@ def pulse(bus, t0, t1, level=1.0, prog=PROG, bars=1.0, beat=BEAT):
         t += beat / 2
 
 
+def ringback(dur):
+    """A British ring: 400 + 450 Hz, on 0.4 s, off 0.2 s, on 0.4 s, off 2 s."""
+    t = np.arange(int(dur * SR)) / SR
+    ph = t % 3.0
+    gate = ((ph < 0.4) | ((ph >= 0.6) & (ph < 1.0))).astype(float)
+    gate = np.convolve(gate, np.ones(int(0.006 * SR)) / int(0.006 * SR), "same")
+    return (np.sin(2 * np.pi * 400 * t) + np.sin(2 * np.pi * 450 * t)) * 0.07 * gate
+
+
 def stinger(mus, fx, t, color="red", level=1.0):
     """The colour shock: an orchestra-and-synth stab, a choir shriek, a boom."""
     root = {"red": 50, "green": 49, "blue": 51, "violet": 48}.get(color, 50)
@@ -184,8 +193,8 @@ def score(mus, fx, nosil):
     fx.add(FXL.room_tone(t1 - t0, 1.0), t0, 1.0)
     pads(mus, t0, t1, 0.6, prog=[DM, BB], bars=0.6, cut_=(300, 1000))
     fx.add(Y.wake_chime(1.0), S("c3") - 0.35, 1.2, 0.65)
-    fx.add(O.whoosh(0.35, False, seed=3, amp=0.7), Wx("c4", "summarize"), 0.8, 0.3)
-    fx.add(O.page(1.0, seed=9), Wx("c4", "summarize") + 0.4, 1.0, 0.2)
+    fx.add(O.whoosh(0.35, False, seed=3, amp=0.7), Wx("c4", "summarise"), 0.8, 0.3)
+    fx.add(O.page(1.0, seed=9), Wx("c4", "summarise") + 0.4, 1.0, 0.2)
     # ---------------- the skills handed over
     t0, t1 = cut("o_skills"), cut("o_before")
     page_turn(fx, t0)
@@ -403,19 +412,24 @@ def score(mus, fx, nosil):
     mus.add(O.drone(r_end - t_die, root=24), t_die + 0.2, 0.5, until=r_end)
     fx.add(Y.match(1.0), cut("r_real") + 0.1, 1.1, 0.6)
     fx.add(I.crackle(r_end - cut("r_real") - 0.5, 0.5), cut("r_real") + 0.6, 0.35, 0.6)
-    fx.add(O.heartbeat(int((r_end - S("r2")) / 0.75), 80, 1.0), S("r2"), 0.6, until=r_end)
+    fx.add(O.heartbeat(int((r_end - S("r2")) / 0.75), 80, 1.0), S("r2"), 0.6, until=cut("r_still") + 0.3)
     fx.add(Y.breath(cut("r_pill") - cut("r_father"), 1.0, rate=1.4), cut("r_father"), 0.9, 0.5)
-    fx.add(Y.breath(r_end - cut("r_muse") + 0.1, 1.0, rate=1.9, seed=4), cut("r_muse"), 1.1, 0.42, until=r_end)    # gasping, then not
+    t_dead = cut("r_still") + 0.15
+    fx.add(Y.breath(t_dead - cut("r_muse") + 0.1, 1.0, rate=1.9, seed=4), cut("r_muse"), 1.1, 0.42, until=t_dead)    # gasping, then not
+    fx.add(Y.thud(1.0, f=110), cut("r_still") + 0.36, 0.45, 0.35)                                 # the bottle hits the floor
+    fx.add(Y.rattle(0.2, 1.0, seed=3, rate=34), cut("r_still") + 0.36, 0.8, 0.3)                  # tablets skittering
     for k in range(int((cut("r_door") - cut("r_father")) / 0.4)):
         fx.add(Y.tick(1.0), cut("r_father") + 0.1 + k * 0.4, 0.6, 0.8)
-    fx.add(Y.rattle(cut("r_door") - cut("r_pill"), 1.0, rate=9), cut("r_pill"), 0.8, 0.4)
+    fx.add(Y.rattle(cut("r_call") - cut("r_pill"), 1.0, rate=9), cut("r_pill"), 0.8, 0.4, until=cut("r_call"))
     fx.add(Y.footsteps(2, 0.45, 1.0, seed=9, hard=False), cut("r_door") - 0.05, 0.9, 0.5)
     fx.add(Y.creak(1.4, 1.0, seed=7, f0=50, f1=25), cut("r_door") + 0.35, 1.0, 0.4)
     fx.add(FXL.rain(cut("r_number") - cut("r_door"), 1.2, seed=13), cut("r_door") + 0.3, 1.0, until=cut("r_number"))
     fx.add(Y.wind(cut("r_number") - cut("r_door") + 0.5, 1.0, seed=8), cut("r_door"), 0.7, until=cut("r_number") + 0.3)
-    for k, d in enumerate("07"):
+    for k, d in enumerate("999"):                                                              # 999, fast, panicking
+        fx.add(Y.dtmf(d, 0.12), cut("r_call") + 0.05 + 0.17 * k, 1.0, 0.6)
+    fx.add(ringback(0.9), cut("r_call") + 0.6, 0.6, 0.6, until=Wx("r3", "Forty") - 0.1)            # the ring, then answered
+    for k, d in enumerate("07"):                                                               # her sister: 0, 7 ... nothing
         fx.add(Y.dtmf(d), cut("r_number") + 0.25 + 0.35 * k, 1.0, 0.6)
-    fx.add(Y.alarm(0.7, 0.6, rate=3, f=480), cut("r_number") + 0.1, 0.5, 0.5)                  # the engaged tone: lines busy
     fx.add(Y.dial_tone(cut("r_muse") - cut("r_number") - 1.4), cut("r_number") + 1.4, 0.5, 0.5, until=cut("r_muse"))
     # the host in the glass, the turn on the reader
     t0, t1 = cut("r_pocket"), cut("m_close")
@@ -568,7 +582,7 @@ def smooth(x, sec):
 
 
 STEMS = {}
-CEIL = -2.3
+CEIL = -3.0
 RELIEF_DB, FX_DB = 14.0, -23.0
 NEED = {"NAR": 10.0, "HOST": 12.0}                 # the voice's margin over the bed in the speech band (the cast: 15)
 
@@ -654,13 +668,18 @@ def build():
     boost = np.ones(N_)
     boost[int(T_THING * SR):int(T_BLACK * SR)] = db(4.0)
     boost = smooth(boost, 0.01)
-    music = music * dead[None] * boost[None]
-    fxx = fxx * ride_fx[None] * dead[None] * boost[None]
+    trim, trim_fx = np.ones(N_), np.ones(N_)
+    for a, b in ((cut("r_real"), T_STILL), (cut("m_close"), cut("m_habits"))):
+        trim[int(a * SR):int(b * SR)] = db(-5.0)
+        trim_fx[int(a * SR):int(b * SR)] = db(-4.0)
+    trim, trim_fx = smooth(trim, 0.3), smooth(trim_fx, 0.3)
+    music = music * dead[None] * boost[None] * trim[None]
+    fxx = fxx * ride_fx[None] * dead[None] * boost[None] * trim_fx[None]
     ns = ns_x * db(-24.0) / (np.abs(ns_x).max() + 1e-12) if np.abs(ns_x).max() > 0 else ns_x
     rng = np.random.default_rng(21)
     hiss = signal.sosfilt(signal.butter(2, [400 / (SR / 2), 6000 / (SR / 2)], "band", output="sos"), rng.normal(0, 1, N_))
-    hiss = hiss * db(-52.0) * (1 - dead)
-    mix = music + fxx + vo + ns + np.stack([hiss, hiss])
+    hiss = hiss * db(-62.0) * (1 - dead)
+    mix = (music + fxx + vo + ns) * dead[None] + np.stack([hiss, hiss])
     mix = macro(mix)
     report(music_pre, fx_pre, music, fxx, vo)
     mix = signal.sosfilt(signal.butter(4, 30 / (SR / 2), "high", output="sos"), mix, axis=1)
@@ -700,7 +719,7 @@ def macro(mix, under=6.0):
     return mix * gain[None]
 
 
-def crush_climax(mix, drive=3.0):
+def crush_climax(mix, drive=2.0):
     """The thing bursting out of the screen: saturate it hard so it is dense and loud under the same peak ceiling."""
     w = np.zeros(mix.shape[1])
     a, b = int(T_THING * SR), int(T_BLACK * SR)
@@ -776,7 +795,7 @@ def limit(x, ceil, look=0.005, rel=0.12):
     return x * out[None]
 
 
-def aac_safe(x, target=-1.7, rates=("192k", "256k"), rounds=3):
+def aac_safe(x, target=-2.2, rates=("192k", "256k"), rounds=3):
     import subprocess
     import tempfile
     from scipy.ndimage import minimum_filter1d

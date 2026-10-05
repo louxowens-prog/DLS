@@ -188,13 +188,13 @@ def cackle(voice, seed=0, n=7, lo=3.0, hi=7.5, end=2.0):
         w = _HA[p]
         env = np.abs(w)
         on = int(np.where(env > 0.05 * env.max())[0][0])
-        d = rng.uniform(0.1, 0.15) if k < n else 0.42
+        d = rng.uniform(0.08, 0.17) if k < n else 0.42
         seg = w[on:on + int(d * SR)].copy()
         fi, fo = int(0.005 * SR), int((0.03 if k < n else 0.25) * SR)
         seg[:fi] *= np.linspace(0, 1, fi)
         seg[-fo:] *= np.linspace(1, 0, fo) ** 1.5
         amp = 0.55 + 0.45 * np.sin(np.pi * min(1.0, u * 1.1)) if k < n else 0.7
         out.append((seg * amp).astype(np.float32))
-        out.append(np.zeros(int(rng.uniform(0.04, 0.06) * SR), np.float32))
+        out.append(np.zeros(int(rng.uniform(0.035, 0.075) * SR), np.float32))
     y = np.concatenate(out)
     return (y / (np.abs(y).max() + 1e-9) * 0.9).astype(np.float32)

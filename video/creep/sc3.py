@@ -141,7 +141,7 @@ def pilot(c, T, x, y, s, expr, light, gaze=(0, 0)):
 
 
 def s_s_pilot(T, idx):
-    """Pilots too: years on autopilot, and the thinking fades first. Then the storm, and the autopilot quits."""
+    """Pilots too: on autopilot, the thinking skills slip more than the hands. Then the storm, and the autopilot quits."""
     st = K.Stage()
     c = st.c
     t_quit = Wx("s5", "quit") - 0.05
@@ -153,7 +153,7 @@ def s_s_pilot(T, idx):
     c.drawRoundRect(skia.Rect.MakeLTRB(70, 1230, 420, 1290), 10, 10, paint((20, 40, 20) if warn < 0.5 else (60, 0, 0)))
     lab = "AUTOPILOT ON" if warn < 0.5 else "AUTOPILOT OFF"
     CO.label(c, lab, 245, 1276, 40, "vt323-400", (120, 255, 140) if warn < 0.5 else (255, 60, 50), tag="screen")
-    fade = ramp(T, Wx("s4", "thinking") - 0.2, Wx("s4", "first") + 0.4)
+    fade = ramp(T, Wx("s4", "thinking") - 0.2, Wx("s4", "slipped") + 0.4)
     if T < t_quit:                                                      # her thought balloon, fading to nothing
         k = 1 - fade
         if k > 0.02:
@@ -174,14 +174,16 @@ def s_s_warn(T, idx):
     """...when you need the skill you stopped using: her hands hover over the controls."""
     st = K.Stage()
     c = st.c
+    C.dutch(c, -13, 540, 900)                                           # the whole cockpit tilts
+    c.scale(1.12, 1.12)
+    c.translate(-60, -100)
     SE.cockpit(c, T, warn=1.0, flash=0.0)
-    C.dutch(c, -13, 540, 900)
     C.push(c, T, Wx("s5", "when") - 0.1, E("s5") + 0.2, 1.0, 1.2, cx=540, cy=760)
     pilot(c, T, 540, 760, 1.9, "panic", "red", gaze=(0.5 * math.sin(T * 7), 0.4))
     c.restore()
-    c.restore()
     for i, x in enumerate((300, 780)):
         FA.hand(c, x, 1250 + 10 * math.sin(T * 13 + i), 1.3, -90 + (25 if i == 0 else -25), skin=PILOT["skin"], light="red", pose="open", flip=i == 1)
+    c.restore()
     return st.arr
 
 
@@ -213,7 +215,6 @@ def s_s_years(T, idx):
     lying(c, "hale_old", 380, 880, 1.25, T, "fear", "clinic", ang=-78, gaze=(0.6, -0.8), seed=13)
     sheet = path([(-60, 1060), (1140, 1000), (1140, H), (-60, H)])
     FA.lit_fill(c, sheet, (200, 220, 230), L, rim=0.6)
-    CO.caption_box(c, "TWENTY YEARS LATER...", 540, 270, maxw=760, size=54, rot=-2, anchor="top", tag="label")
     return st.arr
 
 
@@ -242,8 +243,8 @@ def s_s_junior(T, idx):
     c = st.c
     SE.clinic(c, T, power=0.0, emergency=1.0)
     C.dutch(c, 12, 540, 900)
-    C.push(c, T, S("s7") - 0.1, E("s7") + 0.9, 1.0, 1.2, cx=600, cy=700)
-    mv = ramp(T, S("s7"), E("s7") + 1.0)
+    C.push(c, T, S("s7") - 0.1, E("s7") + 1.5, 1.0, 1.25, cx=600, cy=700)
+    mv = ramp(T, S("s7"), E("s7") + 1.6)
     PR.monitor(c, 680, 620, 0.95, T, scope_screen(T, box=0.0, eye=mv, grin=max(0.0, mv * 2 - 1)), light="red")
     C.person(c, "junior", 300, 1060, 1.5, T, expr="panic" if T > Wx("s7", "see") else "squint", light="red", gaze=(0.9, -0.6), turn=0.4, seed=14)
     c.restore()
@@ -255,7 +256,7 @@ def s_s_thing(T, idx):
     """THE CLIMAX: the growth swells into a latex horror and bursts out of the screen at her."""
     st = K.Stage()
     c = st.c
-    t0 = E("s7") + 1.0
+    t0 = E("s7") + 1.6
     u = T - t0
     CO.shock(c, "red", T, cx=540, cy=760, seed=16, rays=40, bolts=3)
     if u < 0.75:                                                        # the screen bulges, cracks, bursts

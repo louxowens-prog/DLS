@@ -78,7 +78,7 @@ def s_o_cover(T, idx):
     c = st.c
     k = ease(ramp(T, 0.25, 1.5))
     z = K.lerp(2.6, 1.0, k) * (1 + 0.04 * ramp(T, 1.5, 2.7))
-    cx, cy = K.lerp(330, 540, k), K.lerp(990, 870, k)
+    cx, cy = K.lerp(330, 540, k), K.lerp(1070, 870, k)
     c.save()
     c.translate(540, 860)
     c.scale(z, z)
@@ -235,14 +235,14 @@ def s_o_muse(T, idx):
 
 
 def s_o_nora(T, idx):
-    """Just summarize it: Nora, bored, tosses the comic aside."""
+    """Just summarise it: Nora, bored, tosses the comic aside."""
     st = K.Stage()
     c = st.c
     SE.apartment(c, T)
     C.push(c, T, S("c4") - 0.1, E("c4") + 0.3, 1.0, 1.05, cx=560, cy=900)
     C.person(c, "nora", 560, 900, 1.65, T, expr="smug", light="lamp", gaze=(-0.5, 0.3), seed=2, turn=-0.15)
     c.restore()
-    k = ease(ramp(T, Wx("c4", "summarize"), Wx("c4", "summarize") + 0.5))
+    k = ease(ramp(T, Wx("c4", "summarise"), Wx("c4", "summarise") + 0.5))
     comic_in_hands(c, 300 - 380 * k, 1350 + 200 * k, 0.6, -10 - 60 * k, T)
     return st.arr
 
@@ -328,16 +328,17 @@ def s_o_skills(T, idx):
         k = ease(ramp(T, t_hand - 0.1, t_hand + 0.3))
         SE.glow(c, 540, 1220, 300, (90, 180, 255), 0.4 * k)
         PR.phone(c, 540, 1110, 0.75 * K.pop(T, t_hand - 0.1, 0.25, 0.3), 0, T, screen="muse", level=0.5)
-    more = ["CALCULATE", "RESEARCH", "CODE", "PLAN", "TRANSLATE", "SUMMARIZE"]
-    for j, w in enumerate(more):                                        # and the rest of what we hand over, drifting in
-        tj = Wx("c5", "Decide") + 0.12 * j
+    more = ["CALCULATE", "RESEARCH", "CODE", "PLAN", "TRANSLATE", "SUMMARISE"]
+    slots = [(290, 560), (790, 560), (290, 660), (790, 660), (290, 1080), (790, 1080)]
+    for j, (w, (sx, sy)) in enumerate(zip(more, slots)):                # and the rest of what we hand over, each in its own slot
+        tj = t_hand + 0.3 + 0.08 * j
         if T < tj:
             continue
-        u = ease(ramp(T, t_hand + 0.1 * j, t_hand + 0.1 * j + 0.7))
-        x0, y0 = (150 + (j % 3) * 390), (330 + (j // 3) * 860)
-        x, y = K.lerp(x0, 540, u), K.lerp(y0, 1110, u)
-        CO.label(c, w, x, y, 44 * (1 - 0.7 * u), "bangers-400", (250, 240, 220), tag="deco", outline=INK, ow=8, rot=(-8, 6, -4)[j % 3],
-                 a=min(1.0, (T - tj) * 6) * (1 - u))
+        u = ease(ramp(T, t_lose - 0.55 + 0.05 * j, t_lose - 0.05 + 0.05 * j))
+        x, y = K.lerp(sx, 540, u), K.lerp(sy, 1110, u)
+        if u < 0.98:
+            CO.label(c, w, x, y, 46 * (1 - 0.7 * u), "bangers-400", (40, 30, 30), tag="label", rot=(-4, 3)[j % 2],
+                     a=min(1.0, (T - tj) * 6) * (1 - u))
     C.roundel_host(c, T, 540, 755, 120, expr="sly" if T < t_lose else "cackle")
     return st.arr
 
@@ -347,7 +348,7 @@ def s_o_skills(T, idx):
 def s_o_before(T, idx):
     st = C.page(seed=5)
     c = st.c
-    rows = [(350, 650, "c6", "calculators", "SUMS"), (670, 970, "c6", "GPS", "ROUTES"), (990, 1290, "c6", "routes", "SPELLING")]
+    rows = [(350, 650, "c6", "calculators", "SUMS"), (670, 970, "c6", "took", "ROUTES"), (990, 1290, "c6", "GPS", "SPELLING")]
     CO.drip_title(c, "IT HAPPENED BEFORE...", 540, 300, 74, color=(200, 20, 30), seed=7, k=K.pop(T, cut_t("o_before") + 0.05, 0.25, 0.2),
                   drip=0.4, tag="title")
     for i, (y0, y1, key, word, name) in enumerate(rows):
@@ -377,8 +378,8 @@ def s_o_before(T, idx):
             K.reg_local(sc, 300, 100, 720, 270, "deco")
         sub.__exit__()
         CO.panel(c, sub.arr[: y1 - y0, : 960], 60, y0, 1020, y1, border=12, rot=(-1.2, 0.8, -0.6)[i], a=min(1.0, k))
-        if T > Wx("c6", "routes") + 0.4:                                 # the old losses, stamped
-            CO.label(c, "TAKEN", 860, y0 + 80, 50, "bangers-400", (200, 20, 30), rot=12, tag="label", a=min(1.0, (T - Wx("c6", "routes") - 0.4) * 4))
+        if T > Wx("c6", "routes") - 0.1:                                 # the old losses, stamped
+            CO.label(c, "TAKEN", 860, y0 + 80, 50, "bangers-400", (200, 20, 30), rot=12, tag="label", a=min(1.0, (T - Wx("c6", "routes") + 0.1) * 4))
         CO.sfx(c, name, 210, y0 + 70, 62, k=k, rot=-6, tag="label")
     return st.arr
 
@@ -494,11 +495,11 @@ def s_v_map(T, idx):
             for j in range(10):
                 sc.drawCircle(ex + rng.uniform(-90, 90), ey + rng.uniform(30, 70), rng.uniform(3, 6), paint((220, 130, 140), 0.8))
         if T > Wx("v4", "three") - 0.1:
-            sc.drawRect(skia.Rect.MakeLTRB(780, 100, 960, 300), paint(WHITE))
-            sc.drawRect(skia.Rect.MakeLTRB(780, 100, 960, 300), paint(INK, stroke=6))
-            sc.drawRect(skia.Rect.MakeLTRB(780, 100, 960, 150), paint((200, 20, 20)))
+            sc.drawRect(skia.Rect.MakeLTRB(740, 20, 890, 170), paint(WHITE))
+            sc.drawRect(skia.Rect.MakeLTRB(740, 20, 890, 170), paint(INK, stroke=6))
+            sc.drawRect(skia.Rect.MakeLTRB(740, 20, 890, 60), paint((200, 20, 20)))
             yr = 1 + min(2, int((T - Wx("v4", "three") + 0.1) / 0.25))
-            CO.label(sc, f"YEAR {yr}", 870, 250, 50, "bangers-400", INK, tag="deco")
+            CO.label(sc, f"YEAR {yr}", 815, 140, 40, "bangers-400", INK, tag="deco")
         sub.__exit__()
         CO.panel(c, sub.arr[:470, :980], 50, 800, 1030, 1270, border=12, rot=0.8, a=a)
         CO.label(c, "SPATIAL MEMORY", 330, 880, 46, "bangers-400", (200, 20, 20), tag="label", a=a)

@@ -274,7 +274,7 @@ def exam_hall(c, T, dim=0.0):
         c.drawLine(x, 0, x, 160, paint((30, 30, 30), stroke=4))
         c.drawPath(path([(x - 70, 200), (x + 70, 200), (x + 30, 150), (x - 30, 150)]), paint((40, 46, 40)))
         pool(c, x, 700, 260, 520, (255, 250, 220), 0.12 * (1 - dim))
-    CO.fog(c, T, 900, 1500, color=(190, 196, 200), a=0.2, seed=22, n=8, speed=10)
+    CO.fog(c, T, 900, 1500, color=(190, 196, 200), a=0.28, seed=22, n=8, speed=10)
 
 
 def clinic(c, T, power=1.0, emergency=0.0):
@@ -289,7 +289,8 @@ def clinic(c, T, power=1.0, emergency=0.0):
         c.drawOval(skia.Rect.MakeLTRB(300, 120, 780, 260), paint((220, 230, 230), power))
         c.drawOval(skia.Rect.MakeLTRB(330, 140, 750, 240), paint((255, 255, 240), power))
         glow(c, 540, 190, 400, (220, 255, 240), 0.3 * power)
-    CO.fog(c, T, 1150, 1700, color=mix((180, 220, 220), (255, 80, 60), emergency), a=0.22, seed=21, n=7, speed=14)
+    CO.fog(c, T, 1150, 1700, color=mix((180, 220, 220), (255, 80, 60), emergency), a=0.34, seed=21, n=7, speed=14)
+    CO.fog(c, T, 650, 1150, color=mix((170, 210, 210), (255, 80, 60), emergency), a=0.16, seed=24, n=6, speed=9)
     if emergency > 0:
         ph = 0.6 + 0.4 * math.sin(T * 7)
         c.drawCircle(940, 260, 40, paint((255, 30, 20), emergency))
@@ -306,6 +307,7 @@ def ward(c, T, power=1.0):
         c.drawPath(K.bez_path([(x, 160), (x + 48, 600), (x + 10, 1000)]), paint((150, 190, 180), 0.5, stroke=40))
     c.drawLine(880, 300, 880, 1300, paint((180, 190, 190), stroke=10))
     c.drawRoundRect(skia.Rect.MakeLTRB(830, 320, 930, 470), 20, 20, paint((200, 230, 240), 0.7))
+    CO.fog(c, T, 1000, 1700, color=(170, 200, 200), a=0.28, seed=25, n=7, speed=10)
     c.drawRect(skia.Rect.MakeWH(W, H), paint((0, 0, 0), 0.4 * (1 - power)))
 
 
@@ -336,6 +338,7 @@ def cockpit(c, T, warn=0.0, flash=0.0):
         for x in (300, 780):
             c.drawRoundRect(skia.Rect.MakeLTRB(x - 110, 1170, x + 110, 1240), 10, 10, paint((255, 30, 20) if on else (80, 10, 10), warn))
         glow(c, 540, 1200, 500, (255, 20, 10), 0.35 * warn * (1 if on else 0.4))
+    CO.fog(c, T, 980, 1500, color=mix((70, 120, 90), (200, 40, 30), warn), a=0.2, seed=26, n=7, speed=12)
 
 
 def flat_dark(c, T, moon=0.6):

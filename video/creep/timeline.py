@@ -10,18 +10,18 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 PRE = {
     "c1": 0.45,                   # lightning: the screaming doctor on the cover, the camera pulling back
-    "c3": 0.3,                    # Nora on her sofa with the comic, the storm at the window
-    "v1": 0.7,                    # a page turns: tale one's title panel
+    "c3": 0.25,                   # Nora on her sofa with the comic, the storm at the window
+    "v1": 0.6,                    # a page turns: tale one's title panel
     "v5": 1.15,                   # dead silence on the dark road, then the signal goes
-    "g1": 0.7,                    # a page turns: tale two
-    "g6": 0.75,                   # the exam hall, silent but for the examiner's heels
-    "s1": 0.7,                    # a page turns: tale three
-    "r1": 3.35,                   # a second of dead silence, the thing on the screen - the loudest moment - then the power dies
+    "g1": 0.6,                    # a page turns: tale two
+    "g6": 0.6,                    # the exam hall, silent but for the examiner's heels
+    "s1": 0.6,                    # a page turns: tale three
+    "r1": 3.85,                   # a second of dead silence, the thing on the screen - the loudest moment - then the power dies
     "r2": 0.6,                    # silence in the dark flat
-    "m1": 0.8,                    # the comic closes; the quiet beat
-    "m5": 0.6,                    # the back page: the mail-order ads
+    "m1": 0.7,                    # the comic closes; the quiet beat
+    "m5": 0.5,                    # the back page: the mail-order ads
 }
-TAIL = 1.45
+TAIL = 1.05
 
 
 class Timeline:
@@ -37,7 +37,7 @@ class Timeline:
     def _line(self, key, who, spoken, caption, t):
         v, sp, pt = VOICES[who]
         if key in CACKLE:
-            wav = cackle(v, seed=CACKLE[key])
+            wav = cackle(v, **CACKLE[key])
             d = len(wav) / SR
             words = [(spoken, 0.0, d)]
         else:

@@ -140,7 +140,7 @@ def s_g_quote(T, idx):
         FA.hand(c, x, 1240, 1.0, -90 + (40 if i == 0 else -40), skin=KIT_SKIN, light="lamp", pose="grip", flip=i == 1)
     t1 = Wx("g4", "83%") - 0.05
     if T > t1:
-        CO.sfx(c, "83%", 805, 610, 140, k=K.pop(T, t1, 0.25, 0.12), rot=8, fill=(255, 60, 40), fill2=(160, 0, 10), tag="stat")
+        CO.sfx(c, "83%", 770, 610, 140, k=K.pop(T, t1, 0.25, 0.12), rot=8, fill=(255, 60, 40), fill2=(160, 0, 10), tag="stat")
     return st.arr
 
 
