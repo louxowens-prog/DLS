@@ -191,8 +191,10 @@ def score(mus, fx, nosil):
     page_turn(fx, t0)
     pulse(mus, t0 + 0.1, t1, 1.0, prog=[DM, DM, BB, AA], bars=0.5)
     pads(mus, t0, Wx("c5", "lose"), 0.7, prog=[DM, BB], bars=1.0, cut_=(500, 2400))
-    for i, w in enumerate(("Write", "Navigate", "Remember", "Decide")):
-        mus.add(Y.stab([62 + i * 2, 69 + i * 2], 1.0, 0.4), Wx("c5", w) - 0.03, 0.9)
+    words = ("Write", "Navigate", "Remember", "Decide", "Hand")
+    for i, w in enumerate(words[:4]):                                   # a stab in the gap after each word, not on it
+        t_hit = Wx("c5", words[i + 1]) - 0.16
+        mus.add(Y.stab([62 + i * 2, 69 + i * 2], 1.0, 0.25), t_hit, 0.45)
     fx.add(Y.riser(0.9, 0.7, f0=400, f1=2500), Wx("c5", "Hand") - 0.2, 0.7)
     for i in range(4):
         fx.add(O.slurp(0.5, 0.8), Wx("c5", "Hand") + 0.2 * i + 0.2, 0.6, 0.3 + 0.13 * i)
@@ -269,8 +271,9 @@ def score(mus, fx, nosil):
     # ---------------- tale two
     t0, t1 = cut("g_title"), cut("g_dorm")
     page_turn(fx, t0)
-    mus.add(O.theremin(500, 900, t1 - t0, 1.0), t0 + 0.2, 0.7, until=t1 + 0.2)
-    mus.add(Y.stab([49, 56, 61, 64], 1.0, 1.0), S("g1") + 0.4, 0.8)
+    mus.add(O.theremin(500, 900, S("g1") - t0, 1.0), t0 + 0.05, 0.7, until=S("g1") + 0.1)
+    mus.add(O.theremin(600, 1000, t1 - E("g1"), 1.0), E("g1") + 0.05, 0.6, until=t1 + 0.2)
+    mus.add(Y.stab([49, 56, 61, 64], 1.0, 1.0), E("g1") + 0.02, 0.8)
     pads(mus, t0, t1, 0.7, prog=[GM, AA], bars=0.6)
     # the dorm: 2 a.m.
     t0, t1 = cut("g_dorm"), cut("g_exam")
@@ -662,7 +665,9 @@ def build():
     report(music_pre, fx_pre, music, fxx, vo)
     mix = signal.sosfilt(signal.butter(4, 30 / (SR / 2), "high", output="sos"), mix, axis=1)
     mix = signal.sosfilt(signal.butter(2, 15000 / (SR / 2), "low", output="sos"), mix, axis=1)
+    mix = crush_climax(mix)
     mix = loudness(mix, -14.0)
+    mix = post_macro(mix, margin=3.5)
     a_, b_ = int((TL.total - 0.4) * SR), int(TL.total * SR)
     mix[:, a_:b_] *= np.linspace(1, 0, b_ - a_) ** 2
     mix[:, b_:] = 0.0
@@ -692,6 +697,32 @@ def macro(mix, under=6.0):
     g = np.convolve(g, np.ones(7) / 7, "same")
     gain = np.interp(np.arange(mix.shape[1]), np.arange(len(g)) * h, 10 ** (g / 20))
     print(f"macro: climax peak {peak:.1f} dB; frames ridden: {(g < -0.5).sum()} of {len(g)}")
+    return mix * gain[None]
+
+
+def crush_climax(mix, drive=3.0):
+    """The thing bursting out of the screen: saturate it hard so it is dense and loud under the same peak ceiling."""
+    w = np.zeros(mix.shape[1])
+    a, b = int(T_THING * SR), int(T_BLACK * SR)
+    w[a:b] = 1.0
+    w = smooth(w, 0.02)
+    sat = np.tanh(drive * mix / (np.abs(mix[:, a:b]).max() + 1e-9)) * np.abs(mix[:, a:b]).max()
+    return mix * (1 - w)[None] + sat * w[None]
+
+
+def post_macro(mix, margin=3.5):
+    """After the limiter: anywhere outside the climax whose momentary loudness is within `margin` dB of the climax's
+    loudest moment is ridden down, so the climax is plainly the loudest thing in the film."""
+    m, h = momentary(mix)
+    a, b = int(T_THING * SR / h), int(T_BLACK * SR / h)
+    peak = m[a:b].max()
+    g = np.minimum(0.0, (peak - margin) - m)
+    g[a:b] = 0.0
+    from scipy.ndimage import minimum_filter1d
+    g = minimum_filter1d(g, size=11)
+    g = np.convolve(g, np.ones(9) / 9, "same")
+    gain = np.interp(np.arange(mix.shape[1]), np.arange(len(g)) * h, 10 ** (g / 20))
+    print(f"post-macro: climax {peak:.1f} dB; frames ridden {(g < -0.3).sum()} of {len(g)}, deepest {g.min():.1f} dB")
     return mix * gain[None]
 
 
