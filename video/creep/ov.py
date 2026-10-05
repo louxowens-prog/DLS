@@ -52,7 +52,7 @@ def telop(c, T):
         return
     t0, t1, s, key = cap
     who = TL.lines[key]["who"]
-    a = min(1.0, (T - t0) / 0.06, (t1 - T) / 0.05)
+    a = min(1.0, (T - t0) / 0.06)
     k = K.pop(T, t0, 0.16, 0.04) or 1.0
     if who == "NAR" and _plain(T):
         plain_box(c, s, CX, BASE, CAP_SIZE * 0.95, a)
@@ -62,12 +62,33 @@ def telop(c, T):
         CO.host_box(c, s, CX, BASE - 12, MAX_W, CAP_SIZE, k=k, a=a)
 
 
+_B = {}
+
+
+def _balloon_spans():
+    """Each balloon from just before its line until the first of: line end + 0.35 s, the next balloon, the next cut."""
+    if not _B:
+        from edit import BALLOONS, EDIT
+        cuts = [e[0] for e in EDIT]
+        starts = sorted((TL.lines[k]["start"] - 0.06, k) for k in BALLOONS)
+        for n, (t0, key) in enumerate(starts):
+            L = TL.lines[key]
+            t1 = BALLOONS[key].get("until", L["end"] + 0.35)
+            if n + 1 < len(starts):
+                t1 = min(t1, starts[n + 1][0] - 0.04)
+            nxt = [x for x in cuts if x > t0 + 0.1]
+            if nxt and "until" not in BALLOONS[key]:
+                t1 = min(t1, nxt[0])
+            _B[key] = (t0, t1)
+    return _B
+
+
 def balloons(c, T):
     from edit import BALLOONS
+    spans = _balloon_spans()
     for key, spec in BALLOONS.items():
         L = TL.lines[key]
-        t0 = L["start"] - 0.06
-        t1 = spec.get("until", L["end"] + 0.35)
+        t0, t1 = spans[key]
         if not (t0 <= T < t1):
             continue
         k = K.pop(T, t0, 0.2, 0.25)

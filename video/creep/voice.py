@@ -164,3 +164,37 @@ def whisper(wav, keep=0.12, seed=3):
     y = y[: len(wav)]
     y = y * np.sqrt((wav ** 2).mean() / ((y ** 2).mean() + 1e-12))
     return ((1 - keep) * y + keep * wav).astype(np.float32)
+
+
+_HA = {}
+
+
+def cackle(voice, seed=0, n=7, lo=3.0, hi=7.5, end=2.0):
+    """A built witch's cackle: a breath in, then staccato 'ha' bursts (40-60 ms apart) whose pitch climbs and falls
+    back, a crescendo and decrescendo, and a long trailing 'haaa'. Made from the voice's own 'Ha!' at several pitches."""
+    rng = np.random.default_rng(seed)
+    out = []
+    t = np.arange(int(0.28 * SR)) / SR                                   # the breath in
+    br = np.random.default_rng(seed + 1).normal(0, 1, len(t))
+    from scipy import signal
+    br = signal.sosfilt(signal.butter(2, [900 / (SR / 2), 4500 / (SR / 2)], "band", output="sos"), br)
+    out.append((br * (t / t[-1]) ** 2 * 0.05).astype(np.float32))
+    for k in range(n + 1):
+        u = k / n
+        p = lo + (hi - lo) * np.sin(np.pi * min(1.0, u * 1.25)) if k < n else end
+        p = round(p * 2) / 2
+        if p not in _HA:
+            _HA[p] = speak_fx("Ha!", voice, 1.12, p)
+        w = _HA[p]
+        env = np.abs(w)
+        on = int(np.where(env > 0.05 * env.max())[0][0])
+        d = rng.uniform(0.1, 0.15) if k < n else 0.42
+        seg = w[on:on + int(d * SR)].copy()
+        fi, fo = int(0.005 * SR), int((0.03 if k < n else 0.25) * SR)
+        seg[:fi] *= np.linspace(0, 1, fi)
+        seg[-fo:] *= np.linspace(1, 0, fo) ** 1.5
+        amp = 0.55 + 0.45 * np.sin(np.pi * min(1.0, u * 1.1)) if k < n else 0.7
+        out.append((seg * amp).astype(np.float32))
+        out.append(np.zeros(int(rng.uniform(0.04, 0.06) * SR), np.float32))
+    y = np.concatenate(out)
+    return (y / (np.abs(y).max() + 1e-9) * 0.9).astype(np.float32)

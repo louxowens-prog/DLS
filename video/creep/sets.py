@@ -274,6 +274,7 @@ def exam_hall(c, T, dim=0.0):
         c.drawLine(x, 0, x, 160, paint((30, 30, 30), stroke=4))
         c.drawPath(path([(x - 70, 200), (x + 70, 200), (x + 30, 150), (x - 30, 150)]), paint((40, 46, 40)))
         pool(c, x, 700, 260, 520, (255, 250, 220), 0.12 * (1 - dim))
+    CO.fog(c, T, 900, 1500, color=(190, 196, 200), a=0.2, seed=22, n=8, speed=10)
 
 
 def clinic(c, T, power=1.0, emergency=0.0):
@@ -288,6 +289,7 @@ def clinic(c, T, power=1.0, emergency=0.0):
         c.drawOval(skia.Rect.MakeLTRB(300, 120, 780, 260), paint((220, 230, 230), power))
         c.drawOval(skia.Rect.MakeLTRB(330, 140, 750, 240), paint((255, 255, 240), power))
         glow(c, 540, 190, 400, (220, 255, 240), 0.3 * power)
+    CO.fog(c, T, 1150, 1700, color=mix((180, 220, 220), (255, 80, 60), emergency), a=0.22, seed=21, n=7, speed=14)
     if emergency > 0:
         ph = 0.6 + 0.4 * math.sin(T * 7)
         c.drawCircle(940, 260, 40, paint((255, 30, 20), emergency))
@@ -346,6 +348,7 @@ def flat_dark(c, T, moon=0.6):
     for i in range(16):
         c.drawLine(600, 270 + i * 31, 980, 270 + i * 31, paint((20, 20, 24), stroke=10))
     c.drawRect(skia.Rect.MakeLTRB(0, 1240, W, H), paint((20, 20, 22)))
+    CO.fog(c, T, 1000, 1600, color=(120, 126, 136), a=0.16, seed=23, n=7, speed=8)
 
 
 def street(c, T):

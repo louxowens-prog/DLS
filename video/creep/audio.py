@@ -81,7 +81,8 @@ T_SIGNAL = S("v5")                              # ... until the sat-nav loses it
 T_PRE = E("s7")                                 # silence before the thing on the screen
 T_THING = cut("s_thing")                        # the loudest moment
 T_BLACK = cut("r_dark")                         # the power dies
-SILENCES = [(T_SIG + 0.05, T_SIGNAL - 0.02), (T_PRE + 0.02, T_THING), (T_BLACK, S("r1") - 0.05)]
+T_STILL = cut("r_still") + 0.42                 # the father's breathing stops
+SILENCES = [(T_SIG + 0.05, T_SIGNAL - 0.02), (T_PRE + 0.02, T_THING), (T_BLACK, S("r1") - 0.05), (T_STILL, S("r5") - 0.12)]
 T_EXAM = cut("g_exam")
 
 
@@ -152,31 +153,31 @@ def stinger(mus, fx, t, color="red", level=1.0):
 
 
 def page_turn(fx, t, level=1.0):
-    fx.add(O.page(1.0, seed=int(t)), t, 1.4 * level, 0.6)
-    fx.add(O.whoosh(0.4, True, seed=int(t), amp=0.6), t + 0.05, level, 0.4)
+    fx.add(O.page(1.0, seed=int(t)), t, 0.8 * level, 0.6)
+    fx.add(O.whoosh(0.4, True, seed=int(t), amp=0.6), t + 0.05, 0.45 * level, 0.4)
 
 
 def score(mus, fx, nosil):
     # ---------------- cold open: storm, the cover and its hook
     t_end = cut("o_window")
     fx.add(FXL.rain(t_end + 0.2, 0.7), 0.0, 0.9)
-    mus.add(O.drone(6.8, root=26, amp=1.0), 0.1, 0.9, until=Wx("c1", "without"))
-    pads(mus, 0.5, Wx("c1", "without"), 0.8, prog=[DM, BB], bars=1.5, cut_=(400, 1600))
-    motif(mus, 0.7, Wx("c1", "without") - 0.1, 0.9)
-    mus.add(Y.riser(1.6, 0.8), Wx("c1", "without") - 1.6, 0.8)
+    mus.add(O.drone(6.8, root=26, amp=1.0), 0.1, 0.9, until=Wx("c1", "fewer"))
+    pads(mus, 0.5, Wx("c1", "fewer"), 0.8, prog=[DM, BB], bars=1.5, cut_=(400, 1600))
+    motif(mus, 0.7, Wx("c1", "fewer") - 0.1, 0.9)
+    mus.add(Y.riser(1.6, 0.8), Wx("c1", "fewer") - 1.6, 0.8)
     fx.add(Y.creak(1.0, 1.0, seed=1), cut("o_noai") + 0.4, 0.6, 0.3)
-    fx.add(O.click(1.0), Wx("c1", "finding") + 0.25, 1.2, 0.7)
-    fx.add(O.power_down(0.8, 1.0), Wx("c1", "finding") + 0.27, 0.6, 0.7)
-    fx.add(O.squelch(1.0, seed=2, dur=0.4), Wx("c1", "finding") + 0.6 + 0.35, 0.7, 0.6)
+    fx.add(O.click(1.0), Wx("c1", "working") + 0.25, 1.2, 0.7)
+    fx.add(O.power_down(0.8, 1.0), Wx("c1", "working") + 0.27, 0.6, 0.7)
+    fx.add(O.squelch(1.0, seed=2, dur=0.4), Wx("c1", "working") + 0.6 + 0.35, 0.7, 0.6)
     # ---------------- the reader, the host at the window
     t0, t1 = cut("o_window"), cut("o_muse")
     fx.add(FXL.rain(t1 - t0 + 0.5, 0.8, seed=6), t0, 1.0)
     fx.add(Y.wind(t1 - t0 + 1.0, 1.0, seed=2), t0, 0.7)
     pads(mus, t0, t1, 1.0, prog=[DM, GM, AA, DM], bars=0.75, cut_=(600, 2600))
-    motif(mus, Wx("c2", "Welcome") - 0.1, t1, 1.0, inst="piano")
-    pulse(mus, Wx("c2", "Welcome"), t1, 0.8, prog=[DM, GM, AA, DM], bars=0.75)
-    mus.add(I.choir([62, 65, 69, 74], 1.6, 1.0, vowel="a", attack=0.05), Wx("c2", "Use") - 0.05, 1.0, until=t1 + 0.5)
-    mus.add(Y.stab([50, 57, 62, 65, 69], 1.0, 1.2), Wx("c2", "Use") - 0.05, 1.0)
+    motif(mus, S("c2") - 0.1, t1, 1.0, inst="piano")
+    pulse(mus, S("c2"), t1, 0.8, prog=[DM, GM, AA, DM], bars=0.75)
+    mus.add(I.choir([62, 65, 69, 74], 1.6, 1.0, vowel="a", attack=0.05), Wx("c2", "Atrophy") + 0.2, 1.0, until=t1 + 0.5)
+    mus.add(Y.stab([50, 57, 62, 65, 69], 1.0, 1.2), Wx("c2", "Atrophy") + 0.2, 1.0)
     # ---------------- the assistant, Nora
     t0, t1 = cut("o_muse"), cut("o_skills")
     fx.add(FXL.rain(t1 - t0 + 0.3, 0.5, seed=7), t0, 0.7)
@@ -298,10 +299,10 @@ def score(mus, fx, nosil):
     # the chart: up, then down into the grave
     t0, t1 = cut("g_chart"), cut("g_exam")
     page_turn(fx, t0)
-    pulse(mus, t0 + 0.1, Wx("g5", "Without") - 0.1, 0.8, prog=[GM, AA])
-    fx.add(Y.riser(Wx("g5", "jumped") + 0.4 - (t0 + 0.6), 0.8, f0=300, f1=2400), t0 + 0.6, 0.8)
-    mus.add(Y.stab([62, 66, 69, 74], 1.0, 0.8, bright=6000), Wx("g5", "jumped") + 0.3, 0.9)
-    mus.add(I.choir([74, 70, 66, 62], 1.8, 1.0, vowel="o", gliss=-7), Wx("g5", "Without") - 0.1, 0.8)
+    pulse(mus, t0 + 0.1, Wx("g5", "Take") - 0.1, 0.8, prog=[GM, AA])
+    fx.add(Y.riser(Wx("g5", "lifted") + 0.4 - (t0 + 0.6), 0.8, f0=300, f1=2400), t0 + 0.6, 0.8)
+    mus.add(Y.stab([62, 66, 69, 74], 1.0, 0.8, bright=6000), Wx("g5", "lifted") + 0.3, 0.9)
+    mus.add(I.choir([74, 70, 66, 62], 1.8, 1.0, vowel="o", gliss=-7), Wx("g5", "Take") - 0.1, 0.8)
     mus.add(O.timpani(38, 1.0), Wx("g5", "17%") + 0.15, 1.2)
     fx.add(Y.earth(1.0), Wx("g5", "17%") + 0.2, 1.1)
     mus.add(O.drone(t1 - Wx("g5", "17%"), root=26), Wx("g5", "17%"), 0.8, until=t1)
@@ -337,17 +338,15 @@ def score(mus, fx, nosil):
     fx.add(Y.engine(cut("s_unplug") - t0, 0.4, seed=3), t0, 0.4)
     pulse(mus, t0, t1, 0.75, prog=[BB, BB, AA, AA])
     pads(mus, t0, t1, 0.7, prog=[BB, AA, DM, AA], bars=0.8)
-    fx.add(O.stamp(1.0), Wx("s2", "real") - 0.05, 1.2, 0.5)
-    fx.add(Y.thud(1.0), Wx("s2", "real") - 0.05, 0.6)
-    for k in range(3):
-        fx.add(O.page(0.7, seed=30 + k), Wx("s2", "three") - 0.1 + 0.25 * k, 0.6, 0.8)
+    fx.add(O.stamp(1.0), Wx("s2", "22%") + 0.5, 1.2, 0.6)
+    fx.add(Y.thud(1.0), Wx("s2", "22%") + 0.5, 0.6)
     t_pull = Wx("s2", "without") - 0.05
     fx.add(O.click(1.0), t_pull, 1.2, 0.8)
     fx.add(O.power_down(1.0, 1.0), t_pull + 0.02, 0.8, 0.7)
     fx.add(Y.beep(1040, 1.2), t_pull + 0.4, 0.25, 0.65)
-    mus.add(Y.stab([46, 53, 58], 1.0, 0.7), Wx("s2", "28") - 0.05, 0.9)
-    mus.add(Y.stab([45, 51, 56], 1.0, 1.0, bright=2000), Wx("s2", "22") - 0.05, 1.0)
-    mus.add(O.timpani(33, 1.0), Wx("s2", "22") - 0.05, 0.9)
+    mus.add(Y.stab([45, 51, 56], 1.0, 1.0, bright=2000), Wx("s2", "22%") - 0.05, 1.0)
+    mus.add(O.timpani(33, 1.0), Wx("s2", "22%") - 0.05, 0.9)
+    mus.add(Y.stab([46, 53, 58], 1.0, 0.7), Wx("s2", "28%") - 0.05, 0.8)
     # show me!
     t0, t1 = cut("s_shout"), cut("s_pilot")
     for k in range(int((t1 - t0) / (np.pi / 9)) + 1):
@@ -396,13 +395,14 @@ def score(mus, fx, nosil):
     fx.add(Y.low_batt(1.0), t0 + 0.9, 0.9, 0.5)
     t_die = Wx("r1", "Nora") + 0.35
     fx.add(O.power_down(0.6, 1.0), t_die, 0.6, 0.5)
-    r_end = cut("r_pocket")
+    r_end = T_STILL + 0.02
     fx.add(FXL.rain(r_end - t_die + 0.5, 0.45, seed=12), t_die, 0.6)
     mus.add(O.drone(r_end - t_die, root=24), t_die + 0.2, 0.5, until=r_end)
     fx.add(Y.match(1.0), cut("r_real") + 0.1, 1.1, 0.6)
     fx.add(I.crackle(r_end - cut("r_real") - 0.5, 0.5), cut("r_real") + 0.6, 0.35, 0.6)
-    fx.add(O.heartbeat(int((r_end - S("r2")) / 0.75), 80, 1.0), S("r2"), 0.6)
+    fx.add(O.heartbeat(int((r_end - S("r2")) / 0.75), 80, 1.0), S("r2"), 0.6, until=r_end)
     fx.add(Y.breath(cut("r_pill") - cut("r_father"), 1.0, rate=1.4), cut("r_father"), 0.9, 0.5)
+    fx.add(Y.breath(r_end - cut("r_muse") + 0.1, 1.0, rate=1.9, seed=4), cut("r_muse"), 1.1, 0.42, until=r_end)    # gasping, then not
     for k in range(int((cut("r_door") - cut("r_father")) / 0.4)):
         fx.add(Y.tick(1.0), cut("r_father") + 0.1 + k * 0.4, 0.6, 0.8)
     fx.add(Y.rattle(cut("r_door") - cut("r_pill"), 1.0, rate=9), cut("r_pill"), 0.8, 0.4)
@@ -412,7 +412,8 @@ def score(mus, fx, nosil):
     fx.add(Y.wind(cut("r_number") - cut("r_door") + 0.5, 1.0, seed=8), cut("r_door"), 0.7, until=cut("r_number") + 0.3)
     for k, d in enumerate("07"):
         fx.add(Y.dtmf(d), cut("r_number") + 0.25 + 0.35 * k, 1.0, 0.6)
-    fx.add(Y.dial_tone(cut("r_muse") - cut("r_number") - 1.0), cut("r_number") + 1.0, 0.6, 0.5, until=cut("r_muse"))
+    fx.add(Y.alarm(0.7, 0.6, rate=3, f=480), cut("r_number") + 0.1, 0.5, 0.5)                  # the engaged tone: lines busy
+    fx.add(Y.dial_tone(cut("r_muse") - cut("r_number") - 1.4), cut("r_number") + 1.4, 0.5, 0.5, until=cut("r_muse"))
     # the host in the glass, the turn on the reader
     t0, t1 = cut("r_pocket"), cut("m_close")
     fx.add(O.reverse_swell(1.4, 1.0), t0 + 0.1, 0.8)
@@ -450,6 +451,7 @@ def score(mus, fx, nosil):
         mus.add(O.glock(tune[k % len(tune)], 1.0), t, 0.5, 0.6, until=t1 - 1.5)
         t += jb
         k += 1
+    fx.add(O.thunder(2.4, 1.0, seed=31), S("m4b") + 0.6, 1.0)
     t_end = E("m5") + 0.3
     mus.add(Y.stab([50, 57, 62, 65, 69], 1.0, 1.4), t_end, 1.0)
     fx.add(O.thunder(2.0, 1.0, seed=14), t_end, 0.9, until=t1)
@@ -516,9 +518,8 @@ def voices():
         tgt = dry if who == "NAR" else (hall if who == "HOST" else room)
         tgt[:, i:j] += sig[:, : j - i]
     # a last echo of the cackle as the comic closes
-    L4 = TL.lines["m4"]
-    a = int((Wx("m4", "Ahahahaha") - L4["start"]) * VSR)
-    cack = signal.resample_poly(L4["wav"][a:].astype(np.float64), SR, VSR)
+    L4 = TL.lines["m4b"]
+    cack = signal.resample_poly(L4["wav"].astype(np.float64), SR, VSR)
     cack = cack * db(-22.0) / (np.sqrt((cack ** 2).mean()) + 1e-12)
     i = int((E("m5") + 0.9) * SR)
     j = min(N_, i + len(cack))
@@ -657,6 +658,7 @@ def build():
     hiss = signal.sosfilt(signal.butter(2, [400 / (SR / 2), 6000 / (SR / 2)], "band", output="sos"), rng.normal(0, 1, N_))
     hiss = hiss * db(-52.0) * (1 - dead)
     mix = music + fxx + vo + ns + np.stack([hiss, hiss])
+    mix = macro(mix)
     report(music_pre, fx_pre, music, fxx, vo)
     mix = signal.sosfilt(signal.butter(4, 30 / (SR / 2), "high", output="sos"), mix, axis=1)
     mix = signal.sosfilt(signal.butter(2, 15000 / (SR / 2), "low", output="sos"), mix, axis=1)
@@ -666,6 +668,31 @@ def build():
     mix[:, b_:] = 0.0
     STEMS.update(music=music, fx=fxx, vo=vo)
     return mix
+
+
+def momentary(x, win=0.4, hop=0.05):
+    """A K-weighting-ish momentary loudness (dB) every hop seconds."""
+    y = signal.sosfilt(signal.butter(2, 100 / (SR / 2), "high", output="sos"), x.mean(axis=0))
+    y = y + signal.sosfilt(signal.butter(2, 2000 / (SR / 2), "high", output="sos"), y) * 0.6
+    w, h = int(win * SR), int(hop * SR)
+    p = np.convolve(y ** 2, np.ones(w) / w, "same")[::h]
+    return 10 * np.log10(p + 1e-12), h
+
+
+def macro(mix, under=6.0):
+    """Keep the climax the loudest moment by a clear margin: anywhere else whose momentary loudness comes within
+    `under` dB of the climax's peak is ridden down (smoothly) before the loudness normalisation and the limiter."""
+    m, h = momentary(mix)
+    a, b = int(T_THING * SR / h), int(T_BLACK * SR / h)
+    peak = m[a:b].max()
+    g = np.minimum(0.0, (peak - under) - m)
+    g[a:b] = 0.0
+    from scipy.ndimage import minimum_filter1d
+    g = minimum_filter1d(g, size=9)
+    g = np.convolve(g, np.ones(7) / 7, "same")
+    gain = np.interp(np.arange(mix.shape[1]), np.arange(len(g)) * h, 10 ** (g / 20))
+    print(f"macro: climax peak {peak:.1f} dB; frames ridden: {(g < -0.5).sum()} of {len(g)}")
+    return mix * gain[None]
 
 
 def report(music_pre, fx_pre, music, fxx, vo):

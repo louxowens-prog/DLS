@@ -22,7 +22,7 @@ def cut_t(name):
 
 # ------------------------------------------------------------------ the comic's cover
 
-def cover(c, T, art=None):
+def cover(c, T, art=None, banner=1.0):
     """The cover of USE IT OR LOSE IT! - masthead, issue box, the host's roundel, the cover art, the banner."""
     CO.page_bg(c, (236, 222, 186), ghosts=False)
     c.drawRect(skia.Rect.MakeLTRB(30, 236, 1050, 640), paint((180, 14, 24)))
@@ -47,10 +47,13 @@ def cover(c, T, art=None):
         art(c, x0, y0, x1, y1)
     c.restore()
     c.drawRect(skia.Rect.MakeLTRB(x0, y0, x1, y1), paint(INK, stroke=10))
-    # the banner across the corner
+    # the banner across the corner (slammed on once the camera has pulled back)
+    if banner <= 0.01:
+        return
     c.save()
     c.translate(720, 1250)
     c.rotate(-8)
+    c.scale(banner, banner)
     c.drawRect(skia.Rect.MakeLTRB(-330, -48, 330, 48), paint((250, 220, 40)))
     c.drawRect(skia.Rect.MakeLTRB(-330, -48, 330, 48), paint(INK, stroke=6))
     CO.label(c, "BASED ON A TRUE STUDY!", 0, 18, 50, "bangers-400", (180, 14, 24), tag="title")
@@ -63,17 +66,28 @@ def cover_art(T):
         CO.shock(c, "green", T, cx=540, cy=980, seed=3, rays=30, bolts=0)
         PR.monitor(c, 760, 960, 0.78, T, lambda cc, a, b, cc2, d: (PR.tunnel(cc, a, b, cc2, d, T),
                                                                   PR.growth(cc, 10, 20, 70, T, eye=1.0, grin=1.0)), light="green")
-        FA.bust(c, "hale", 330, 1010, 1.35, T, expr="scream", light="green", gaze=(0.6, -0.2), turn=0.25)
+        FA.bust(c, "hale", 330, 1010, 1.35, T, expr="scream", light="green", gaze=(0.6 * math.sin(T * 7), -0.2), turn=0.25, shake=4,
+                talk=0.3 + 0.3 * math.sin(T * 13))
         FA.hand(c, 110, 1180, 1.25, -60, skin=FA.CAST["hale"]["skin"], light="green", pose="open")
     return draw
 
 
 def s_o_cover(T, idx):
+    """Lightning, and we are nose to nose with the screaming doctor on the cover; the camera pulls back to the comic."""
     st = K.Stage()
     c = st.c
-    z = C.push(c, T, 0.0, 2.7, 1.0, 1.05, cx=540, cy=900)
-    cover(c, T, cover_art(T))
+    k = ease(ramp(T, 0.25, 1.5))
+    z = K.lerp(2.6, 1.0, k) * (1 + 0.04 * ramp(T, 1.5, 2.7))
+    cx, cy = K.lerp(330, 540, k), K.lerp(990, 870, k)
+    c.save()
+    c.translate(540, 860)
+    c.scale(z, z)
+    c.translate(-cx, -cy)
+    n0 = len(K.TEXT)
+    cover(c, T, cover_art(T), banner=K.pop(T, 1.55, 0.2, 0.3))
     c.restore()
+    keep = [b for b in K.TEXT[n0:] if b[2] > 0 and b[0] < W and b[3] > 0 and b[1] < H and z < 1.1]
+    K.TEXT[n0:] = keep                                                   # lettering the camera is too close to read
     return st.arr
 
 
@@ -114,10 +128,10 @@ def s_o_noai(T, idx):
     """...without it: the box goes dark, the green square goes, and the growth opens an eye and slips away."""
     st = K.Stage((30, 60, 66))
     c = st.c
-    t_off = Wx("c1", "finding") + 0.25
+    t_off = Wx("c1", "working") + 0.25
     on = 0.0 if T > t_off else 1.0
     SE.clinic(c, T, power=1.0)
-    C.push(c, T, Wx("c1", "finding") - 0.1, E("c1"), 1.12, 1.3, cx=640, cy=760)
+    C.push(c, T, Wx("c1", "working") - 0.1, E("c1"), 1.12, 1.3, cx=640, cy=760)
     eye = ease(ramp(T, t_off + 0.35, t_off + 0.6))
     grin = ease(ramp(T, t_off + 0.6, t_off + 0.9))
     hide = ease(ramp(T, t_off + 1.1, t_off + 1.6))
@@ -133,7 +147,7 @@ def s_o_noai(T, idx):
 def s_o_noai_shock(T, idx):
     st = K.Stage()
     c = st.c
-    t0 = Wx("c1", "without") + 0.02
+    t0 = Wx("c1", "fewer") - 0.05
     CO.shock(c, "green", T, cx=540, cy=760, seed=5)
     C.push(c, T, t0, t0 + 0.8, 1.0, 1.25, cx=540, cy=820)
     FA.bust(c, "hale", 540, 820, 2.3, T, expr="scream", light="green", shake=5, gaze=(0.0, -0.2))
@@ -163,11 +177,11 @@ def s_o_window(T, idx):
     """Ahahaha! Lightning: Aunt Atrophy at the window behind Nora, who reads on."""
     st = K.Stage()
     c = st.c
-    fl = C.hit(T, S("c2") - 0.04, 0.5)
+    fl = C.hit(T, S("c2a") - 0.04, 0.5)
     SE.apartment(c, T, flash=fl)
     c.save()
     c.clipRect(skia.Rect.MakeLTRB(533, 173, 987, 887))
-    k = ease(ramp(T, S("c2") - 0.05, S("c2") + 0.25))
+    k = ease(ramp(T, S("c2a") - 0.05, S("c2a") + 0.25))
     FA.bust(c, "host", 760, 440 + (1 - k) * 300, 1.2, T, expr="cackle", light="green", talk=C.talk(T, "HOST"))
     CO.rain(c, T, 533, 173, 987, 887, n=40, a=0.4, ang=0.05, speed=900, length=40, seed=9)
     c.restore()
@@ -186,8 +200,8 @@ def s_o_host(T, idx):
     st = K.Stage((10, 20, 30))
     c = st.c
     SE.grad_bg(c, (20, 30, 60), (6, 8, 18))
-    C.push(c, T, Wx("c2", "Welcome"), E("c2") + 0.4, 1.0, 1.12, cx=540, cy=760)
-    expr = "sly" if T < Wx("c2", "Use") else "cackle"
+    C.push(c, T, S("c2"), E("c2") + 0.4, 1.0, 1.12, cx=540, cy=760)
+    expr = "sly"
     FA.bust(c, "host", 540, 800, 2.0, T, expr=expr, light="green", talk=C.talk(T, "HOST"), blink=C.blink(T, 5), gaze=(0.0, 0.1))
     c.restore()
     CO.rain(c, T, 0, 0, W, H, n=70, a=0.4, ang=0.04, speed=700, length=50, seed=3)
@@ -196,7 +210,7 @@ def s_o_host(T, idx):
         dx, dy = rng.uniform(0, W), (rng.uniform(0, H) + T * rng.uniform(30, 120)) % H
         c.drawPath(K.capsule(dx, dy - rng.uniform(10, 40), dx, dy, 4, 6), paint((190, 210, 255), 0.35))
     c.drawRect(skia.Rect.MakeWH(W, H), paint((30, 18, 16), stroke=60))
-    t1 = Wx("c2", "Use") - 0.05
+    t1 = Wx("c2", "Atrophy") + 0.2
     if T > t1:
         CO.drip_title(c, "USE IT OR LOSE IT!", 540, 330, 104, color=(130, 255, 70), seed=4, k=K.pop(T, t1, 0.25, 0.3), drip=0.5 + ramp(T, t1, t1 + 1.5))
     return st.arr
@@ -313,7 +327,17 @@ def s_o_skills(T, idx):
     if T > t_hand - 0.1:                                                # the phone that swallows them
         k = ease(ramp(T, t_hand - 0.1, t_hand + 0.3))
         SE.glow(c, 540, 1220, 300, (90, 180, 255), 0.4 * k)
-        PR.phone(c, 540, 1110 + (1 - k) * 700, 0.75, 0, T, screen="muse", level=0.5)
+        PR.phone(c, 540, 1110, 0.75 * K.pop(T, t_hand - 0.1, 0.25, 0.3), 0, T, screen="muse", level=0.5)
+    more = ["CALCULATE", "RESEARCH", "CODE", "PLAN", "TRANSLATE", "SUMMARIZE"]
+    for j, w in enumerate(more):                                        # and the rest of what we hand over, drifting in
+        tj = Wx("c5", "Decide") + 0.12 * j
+        if T < tj:
+            continue
+        u = ease(ramp(T, t_hand + 0.1 * j, t_hand + 0.1 * j + 0.7))
+        x0, y0 = (150 + (j % 3) * 390), (330 + (j // 3) * 860)
+        x, y = K.lerp(x0, 540, u), K.lerp(y0, 1110, u)
+        CO.label(c, w, x, y, 44 * (1 - 0.7 * u), "bangers-400", (250, 240, 220), tag="deco", outline=INK, ow=8, rot=(-8, 6, -4)[j % 3],
+                 a=min(1.0, (T - tj) * 6) * (1 - u))
     C.roundel_host(c, T, 540, 755, 120, expr="sly" if T < t_lose else "cackle")
     return st.arr
 
@@ -385,7 +409,7 @@ def tale_title(c, T, t0, lines, art, colr=(250, 40, 40), seed=0):
     CO.panel(c, sub.arr, 40, 250, 1040, 1290, border=14)
     c.drawRect(skia.Rect.MakeLTRB(40, 250, 1040, 590), paint(shader=K.lin((0, 250), (0, 590), [(0, 0, 0, 0.75), (0, 0, 0, 0.0)])))
     for i, ln in enumerate(lines):
-        CO.drip_title(c, ln, 540, 380 + i * 128, 116, color=colr, seed=seed + i, k=K.pop(T, t0 + 0.15 * i, 0.25, 0.3), drip=0.6 + 0.3 * ramp(T, t0, t0 + 2))
+        CO.drip_title(c, ln, 540, 380 + i * 128, 116, color=colr, seed=seed + i, k=K.pop(T, t0 + 0.15 * i, 0.25, 0.3), drip=0.3 + 0.15 * ramp(T, t0, t0 + 2))
     C.roundel_host(c, T, 170, 1140, 100, expr="cackle" if C.talk(T, "HOST") > 0.05 else "sly")
 
 
@@ -504,7 +528,7 @@ def s_v_cross(T, idx):
     """Which way is home? Vera at the crossroads, the signpost blank, the fog rising."""
     st = K.Stage()
     c = st.c
-    C.dutch(c, -9, 540, 900)
+    C.dutch(c, -13, 540, 900)
     SE.swamp(c, T, fog_a=0.75)
     SE.signpost(c, 820, 1150, 1.0, T, L="green")
     C.person(c, "vera", 380, 900, 1.5, T, expr="fear", light="storm", gaze=(0.8, -0.6), turn=0.3, seed=6, shake=2)

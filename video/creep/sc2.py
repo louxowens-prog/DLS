@@ -140,7 +140,7 @@ def s_g_quote(T, idx):
         FA.hand(c, x, 1240, 1.0, -90 + (40 if i == 0 else -40), skin=KIT_SKIN, light="lamp", pose="grip", flip=i == 1)
     t1 = Wx("g4", "83%") - 0.05
     if T > t1:
-        CO.sfx(c, "83%", 820, 420, 150, k=K.pop(T, t1, 0.25, 0.3), rot=8, fill=(255, 60, 40), fill2=(160, 0, 10), tag="stat")
+        CO.sfx(c, "83%", 805, 610, 140, k=K.pop(T, t1, 0.25, 0.12), rot=8, fill=(255, 60, 40), fill2=(160, 0, 10), tag="stat")
     return st.arr
 
 
@@ -169,8 +169,8 @@ def s_g_chart(T, idx):
     c.drawRect(skia.Rect.MakeLTRB(0, base, W, H), paint((40, 30, 20)))
     for i in range(30):
         c.drawCircle((i * 97) % W, base + 30 + (i * 53) % 200, 6, paint((70, 50, 30)))
-    up = ease(ramp(T, Wx("g5", "jumped") - 0.3, Wx("g5", "jumped") + 0.4))
-    down = ease(ramp(T, Wx("g5", "Without") - 0.1, Wx("g5", "17%") + 0.2))
+    up = ease(ramp(T, Wx("g5", "lifted") - 0.3, Wx("g5", "lifted") + 0.6))
+    down = ease(ramp(T, Wx("g5", "Take") - 0.1, Wx("g5", "17%") + 0.2))
     ctrl = 420
     hai = ctrl * (1 + 0.48 * up) - ctrl * (0.48 + 0.17) * down * 1.0
     if down > 0:
@@ -185,7 +185,7 @@ def s_g_chart(T, idx):
     gh = 1 - down
     if gh > 0.02:
         PR.ghost(c, 960, base - hai + 60 + 20 * math.sin(T * 3), 0.45, T, a=gh, mouth=0.6, reach=1.0, light="lamp", tail_to=(1000, base))
-    CO.label(c, "PRACTICE" if down < 0.5 else "WITHOUT IT", 540, 310, 56, "bangers-400", (255, 226, 0), tag="label", outline=INK, ow=10)
+    CO.label(c, "PRACTICE" if down < 0.5 else "WITHOUT IT", 540, 390, 56, "bangers-400", (255, 226, 0), tag="label", outline=INK, ow=10)
     return st.arr
 
 
@@ -193,6 +193,7 @@ def s_g_exam(T, idx):
     """Silence in the exam hall. No devices, Kit. Explain your argument."""
     st = K.Stage()
     c = st.c
+    C.dutch(c, 10, 540, 900)
     SE.exam_hall(c, T)
     take = ease(ramp(T, Wx("g6", "devices") - 0.2, Wx("g6", "devices") + 0.5))
     C.person(c, "kit", 300, 1030, 1.0, T, expr="fear" if T > Wx("g6", "Explain") else "neutral", light="clinic", gaze=(0.8, -0.8), seed=7)
@@ -202,6 +203,7 @@ def s_g_exam(T, idx):
     PR.phone(c, 420 + 300 * take, 1220 - 280 * take, 0.35, -70 + 70 * take, T, screen="muse", level=0.0)
     FA.hand(c, 560 + 300 * take, 1180 - 280 * take, 0.9, 200, skin=FA.CAST["prof"]["skin"], light="clinic", pose="grip", flip=True)
     c.drawRect(skia.Rect.MakeLTRB(80, 1236, 380, 1256), paint((250, 248, 236)))
+    c.restore()
     return st.arr
 
 
@@ -211,7 +213,7 @@ def s_g_blank(T, idx):
     c = st.c
     t0 = S("g7") - 0.08
     CO.shock(c, "green", T, cx=540, cy=760, seed=12)
-    C.dutch(c, 10, 540, 900)
+    C.dutch(c, 13, 540, 900)
     C.push(c, T, t0, E("g7") + 0.3, 1.0, 1.3, cx=540, cy=820)
     C.person(c, "kit", 540, 820, 2.1, T, expr="panic", light="green", gaze=(0.6 * math.sin(T * 9), -0.3), seed=7, shake=4)
     c.restore()

@@ -104,6 +104,8 @@ def render_frame(T, idx=None, overlays=True):
         elif tr == "redflash":
             F.flash_frame(arr, (230, 10, 20), 1 - k)
     lk = look_at(T, i)
+    if name.partition("@")[0] in PAGES or (tr == "page" and T < t0 + TRANS["page"]):
+        CO.newsprint(arr, 1.4)                               # paper fibre on the printed page
     F.look(arr, T, idx, night=lk.get("night", 0.0), plain=lk.get("plain", 0.0), flash=lightning(T) * lk.get("bolt", 1.0),
            sat=lk.get("sat", 1.16), grain=lk.get("grain", 1.0))
     if lk.get("black"):
@@ -115,7 +117,7 @@ def render_frame(T, idx=None, overlays=True):
     return arr
 
 
-SAME_OK = ("caption", "label", "title", "sfx", "deco", "page", "panel", "screen", "ad", "balloon", "stat")
+SAME_OK = ("caption", "label", "title", "sfx", "deco", "page", "panel", "screen", "stat")
 
 
 def lint(boxes, ignore=()):

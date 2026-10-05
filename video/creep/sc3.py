@@ -52,24 +52,11 @@ def s_s_clinic(T, idx):
     st = K.Stage((30, 60, 66))
     c = st.c
     SE.clinic(c, T)
-    C.push(c, T, S("s2") - 0.2, Wx("s2", "tested"), 1.0, 1.08, cx=640, cy=760)
+    C.push(c, T, S("s2") - 0.2, Wx("s2", "working"), 1.0, 1.08, cx=640, cy=760)
     PR.monitor(c, 690, 760, 0.95, T, scope_screen(T, box=1.0), light="clinic")
     PR.eyebox(c, 690, 420, 0.7, T, on=1.0, look=(0.3 * math.sin(T * 1.5), 0.5))
     C.person(c, "hale", 300, 1040, 1.3, T, expr="smug", light="clinic", gaze=(0.8, -0.3), turn=0.35, seed=4)
     c.restore()
-    stamp(c, "TRUE STORY!", 330, 560, T, Wx("s2", "real") - 0.05, rot=-14)
-    t1 = Wx("s2", "three") - 0.1
-    if T > t1:                                                          # a calendar: three months of it
-        k = K.pop(T, t1, 0.2, 0.25)
-        c.save()
-        c.translate(900, 1130)
-        c.scale(k, k)
-        c.drawRect(skia.Rect.MakeLTRB(-90, -100, 90, 100), paint(WHITE))
-        c.drawRect(skia.Rect.MakeLTRB(-90, -100, 90, -50), paint((200, 20, 20)))
-        c.drawRect(skia.Rect.MakeLTRB(-90, -100, 90, 100), paint(INK, stroke=5))
-        n = 1 + min(2, int((T - t1) / 0.25))
-        CO.label(c, f"{n} MO", 0, 50, 54, "bangers-400", INK, tag="label")
-        c.restore()
     return st.arr
 
 
@@ -80,7 +67,7 @@ def s_s_unplug(T, idx):
     t_pull = Wx("s2", "without") - 0.05
     on = 1.0 - ease(ramp(T, t_pull, t_pull + 0.25))
     SE.clinic(c, T)
-    C.push(c, T, Wx("s2", "tested") - 0.1, Wx("s2", "Detection"), 1.15, 1.3, cx=640, cy=600)
+    C.push(c, T, Wx("s2", "working") - 0.1, Wx("s2", "in"), 1.15, 1.3, cx=640, cy=600)
     PR.monitor(c, 690, 760, 0.95, T, scope_screen(T, box=on), light="clinic")
     PR.eyebox(c, 690, 420, 0.7, T, on=on, look=(0.0, 0.5))
     c.restore()
@@ -96,34 +83,32 @@ def s_s_unplug(T, idx):
 
 
 def s_s_stat(T, idx):
-    """Detection fell from 28 to 22 percent: the growths she now walks past, marked MISSED."""
+    """...found precancerous growths in 22% of patients, down from 28%: the card, stamped REAL STUDY, and the growths on
+    the screen that nobody marks."""
     st = K.Stage()
     c = st.c
     CO.shock(c, (20, 60, 70), T, cx=540, cy=700, seed=14, rays=28, bolts=0)
-    t28, t22 = Wx("s2", "28") - 0.1, Wx("s2", "22") - 0.1
+    t22, t28 = Wx("s2", "22%") - 0.1, Wx("s2", "28%") - 0.1
 
     def screen(cc, x0, y0, x1, y1):
         cx, cy = PR.tunnel(cc, x0, y0, x1, y1, T)
         for i, (gx, gy) in enumerate(((cx - 120, cy + 40), (cx + 110, cy - 50), (cx + 20, cy + 90))):
             PR.growth(cc, gx, gy, 30, T, eye=1.0 if T > t22 else 0.0, grin=1.0 if T > t22 + 0.3 else 0.0)
-            if T > t22 + 0.2 * (i + 1):
+            if T > t28 + 0.2 * i:
                 f = K.font("vt323-400", 34)
                 cc.drawString("MISSED", gx - 46, gy - 40, f, paint((255, 40, 40)))
                 K.reg_local(cc, gx - 46, gy - 66, gx + 46, gy - 36, "screen")
-    PR.monitor(c, 540, 600, 1.0, T, screen, light="clinic")
-    c.save()
-    c.translate(500, 1080)
-    k28 = K.pop(T, t28, 0.2, 0.3)
+    PR.monitor(c, 540, 560, 0.95, T, screen, light="clinic")
+    if T > t22:
+        CO.sfx(c, "22%", 400, 1060, 170, k=K.pop(T, t22, 0.2, 0.35), rot=-4, fill=(255, 70, 50), fill2=(170, 0, 10), tag="stat")
     if T > t28:
-        f = K.font("bangers-400", 150)
-        a28 = 1.0 if T < t22 else 0.45
-        CO.sfx(c, "28%", -230, 0, 150, k=k28, rot=-4, fill=(120, 255, 140), fill2=(30, 160, 60), tag="stat", a=a28)
-        if T > t22:
-            c.drawLine(-360, 40, -100, -60, paint((220, 20, 20), stroke=14))
-            c.drawPath(path([(-60, -30), (60, -30), (60, -60), (110, 0), (60, 60), (60, 30), (-60, 30)]), paint(WHITE))
-            CO.sfx(c, "22%", 230, -10, 140, k=K.pop(T, t22, 0.2, 0.35), rot=5, fill=(255, 70, 50), fill2=(170, 0, 10), tag="stat")
-    c.restore()
-    CO.label(c, "SPOTTED WITHOUT THE AI", 520, 1270, 46, "bangers-400", WHITE, tag="label", outline=INK, ow=10, a=min(1.0, k28))
+        k = K.pop(T, t28, 0.2, 0.3)
+        CO.label(c, "DOWN FROM", 760, 1010, 44, "bangers-400", WHITE, tag="stat", outline=INK, ow=8, a=min(1.0, k))
+        CO.sfx(c, "28%", 760, 1090, 90, k=k, rot=4, fill=(120, 255, 140), fill2=(30, 160, 60), tag="stat")
+    if T > t22:
+        CO.caption_box(c, "PATIENTS WITH A GROWTH FOUND, NO AI", 540, 1170, maxw=860, size=34, rot=-1, anchor="top", tag="label",
+                       fill=(250, 244, 228))
+    stamp(c, "REAL STUDY", 790, 330, T, Wx("s2", "22%") + 0.5, size=80, rot=12)
     return st.arr
 
 
@@ -190,7 +175,7 @@ def s_s_warn(T, idx):
     st = K.Stage()
     c = st.c
     SE.cockpit(c, T, warn=1.0, flash=0.0)
-    C.dutch(c, -8, 540, 900)
+    C.dutch(c, -13, 540, 900)
     C.push(c, T, Wx("s5", "when") - 0.1, E("s5") + 0.2, 1.0, 1.2, cx=540, cy=760)
     pilot(c, T, 540, 760, 1.9, "panic", "red", gaze=(0.5 * math.sin(T * 7), 0.4))
     c.restore()
@@ -243,6 +228,8 @@ def s_s_ward(T, idx):
     SE.clinic(c, T, power=flick)
     PR.monitor(c, 700, 640, 0.85, T, scope_screen(T, box=on, eye=0.0), light="clinic")
     PR.eyebox(c, 700, 330, 0.6, T, on=on, look=(0.2, 0.5))
+    if on < 0.5:
+        CO.label(c, "POWER CUT: AI OFFLINE", 700, 480, 40, "vt323-400", (255, 70, 60), tag="screen", a=0.6 + 0.4 * (math.floor(T * 4) % 2))
     C.person(c, "junior", 330, 1000, 1.35, T, expr="smile" if T < t_fl else "fear", light="clinic", gaze=(0.8, -0.5), turn=0.35, seed=14)
     if T > t_fl:
         c.drawRect(skia.Rect.MakeWH(W, H), paint((0, 0, 0), 0.35 * (1 - flick)))
@@ -254,9 +241,9 @@ def s_s_junior(T, idx):
     st = K.Stage()
     c = st.c
     SE.clinic(c, T, power=0.0, emergency=1.0)
-    C.dutch(c, 7, 540, 900)
-    C.push(c, T, S("s7") - 0.1, E("s7") + 0.4, 1.0, 1.15, cx=600, cy=700)
-    mv = ramp(T, S("s7"), E("s7") + 0.6)
+    C.dutch(c, 12, 540, 900)
+    C.push(c, T, S("s7") - 0.1, E("s7") + 0.9, 1.0, 1.2, cx=600, cy=700)
+    mv = ramp(T, S("s7"), E("s7") + 1.0)
     PR.monitor(c, 680, 620, 0.95, T, scope_screen(T, box=0.0, eye=mv, grin=max(0.0, mv * 2 - 1)), light="red")
     C.person(c, "junior", 300, 1060, 1.5, T, expr="panic" if T > Wx("s7", "see") else "squint", light="red", gaze=(0.9, -0.6), turn=0.4, seed=14)
     c.restore()
@@ -268,7 +255,7 @@ def s_s_thing(T, idx):
     """THE CLIMAX: the growth swells into a latex horror and bursts out of the screen at her."""
     st = K.Stage()
     c = st.c
-    t0 = E("s7") + 0.6
+    t0 = E("s7") + 1.0
     u = T - t0
     CO.shock(c, "red", T, cx=540, cy=760, seed=16, rays=40, bolts=3)
     if u < 0.75:                                                        # the screen bulges, cracks, bursts

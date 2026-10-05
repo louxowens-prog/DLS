@@ -57,7 +57,7 @@ def choir(notes, dur, amp=1.0, vowel="a", seed=0, attack=0.3, gliss=0.0):
         for k, dc in enumerate((-0.09, 0.0, 0.08)):
             v = O.voices(vowel, m + dc, dur, 1.0, seed=seed + 7 * i + k) if not gliss else _gliss_voice(vowel, m + dc, dur, gliss, seed + 7 * i + k)
             out[: len(v)] += v[:n]
-    t = tx(n / SR)[:n]
+    t = np.arange(n) / SR
     env = np.clip(t / attack, 0, 1) * np.clip((dur + 0.1 - t) / 0.25, 0, 1)
     return amp * out * env * 0.18 / max(1, len(notes)) ** 0.5
 

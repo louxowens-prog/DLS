@@ -60,6 +60,7 @@ def s_r_father(T, idx):
     """Your father needs his heart pill."""
     st = K.Stage()
     c = st.c
+    C.push(c, T, S("r3") - 0.1, Wx("r3", "You") + 0.2, 1.0, 1.12, cx=550, cy=800)
     SE.flat_dark(c, T, moon=0.4)
     SE.glow(c, 300, 1150, 600, (255, 180, 110), 0.22)
     chair = K.rrect(200, 520, 900, 1500, 120)
@@ -71,6 +72,7 @@ def s_r_father(T, idx):
     C.person(c, "father", 550, 780 + 4 * gasp, 1.35, T, expr=E_, light="candle", gaze=(-0.4, -0.5), seed=21, tilt=-6, talk=0.0)
     FA.hand(c, 520, 1150, 1.3, -20, skin=FA.CAST["father"]["skin"], light="candle", pose="claw")
     PR.candle(c, 180, 1300, 0.8, T)
+    c.restore()
     return st.arr
 
 
@@ -88,9 +90,9 @@ def s_r_pill(T, idx):
     c.rotate(3)
     c.drawRect(skia.Rect.MakeLTRB(-360, -130, 360, 110), paint((236, 232, 214)))
     c.restore()
-    f = K.font("caveat-700", 60)
+    f = K.font("comic-neue-700", 56)
     rng = K.rng_at(4, 4)
-    tries = ["1.5 / 0.25 = ?", "1.5 x 0.25 ?", "= 3?  = 5?"]
+    tries = ["0.125 / 0.25 = ?", "HALF? DOUBLE?", "2 TABLETS? 0.5?"]
     n = min(3, int((T - Wx("r3", "You")) / 0.4) + 1)
     for i in range(n):
         y = 1172 + i * 62
@@ -104,6 +106,7 @@ def s_r_door(T, idx):
     """The hospital's ten minutes away. You don't know the way. The door open on a dark street; every road the same."""
     st = K.Stage()
     c = st.c
+    C.push(c, T, Wx("r3", "The", 1) - 0.08, Wx("r3", "Your", 1), 1.0, 1.15, cx=540, cy=760)
     SE.street(c, T)
     SE.glow(c, 540, 700, 500, (120, 130, 160), 0.25)
     c.drawRect(skia.Rect.MakeLTRB(0, 0, 160, H), paint((16, 14, 14)))
@@ -119,19 +122,24 @@ def s_r_door(T, idx):
         c.drawLine(780, 1300, 790 + i * 8, 1350 + i * 6, paint((180, 180, 170), stroke=6))
     for i, (x, y, rot) in enumerate(((250, 600, -10), (540, 560, 0), (830, 600, 10))):
         CO.label(c, "?", x, y, 120, "rubik-900", (200, 200, 210), tag="deco", rot=rot, a=0.35 + 0.3 * ramp(T, Wx("r3", "know") - 0.3, Wx("r3", "way") + 0.2))
+    c.restore()
     return st.arr
 
 
 def s_r_number(T, idx):
-    """Your sister's number? Never learned it. Her finger hovers over the keys."""
+    """Your sister's number? Never learned it. The landline: 999 is jammed in the storm; she starts her sister's number and
+    her finger stops."""
     st = K.Stage()
     c = st.c
     SE.grad_bg(c, (40, 40, 44), (14, 14, 16))
-    SE.glow(c, 540, 800, 600, (255, 190, 120), 0.18)
-    typed = "07" if T < Wx("r3", "Never") else "07"
-    PR.keypad(c, 540, 820, 1.25, typed=typed, L="candle")
+    SE.glow(c, 540, 800, 600, (255, 190, 120), 0.18 * (0.9 + 0.1 * math.sin(T * 11)))
+    t0 = Wx("r3", "Your", 1) - 0.08
+    busy = T < t0 + 0.7
+    C.push(c, T, t0, E("r3") + 0.3, 1.0, 1.12, cx=540, cy=800)
+    PR.keypad(c, 540, 820, 1.25, typed="999" if busy else "07", L="candle", status="ALL LINES BUSY" if busy else "SISTER?")
     hov = math.sin(T * 5) * 30
     FA.hand(c, 640 + hov, 1260, 1.6, -100, skin=NORA_SKIN, light="candle", pose="point")
+    c.restore()
     return st.arr
 
 
@@ -146,6 +154,26 @@ def s_r_muse(T, idx):
     sh = math.sin(T * 18) * 6
     PR.phone(c, 560 + sh, 1170, 0.9, -4 + sh * 0.3, T, screen="dead")
     FA.hand(c, 420 + sh, 1290, 1.2, -60, skin=NORA_SKIN, light="plain", pose="grip")
+    return st.arr
+
+
+def s_r_still(T, idx):
+    """The outcome, by implication: the father's breathing stops; the candle gutters out; a long second of black."""
+    st = K.Stage((0, 0, 0))
+    c = st.c
+    t0 = E("r4") + 0.35
+    out = ramp(T, t0 + 0.35, t0 + 0.7)
+    a = 1 - out
+    if a > 0:
+        SE.glow(c, 540, 1150, 500, (255, 180, 110), 0.18 * a)
+        chair = K.rrect(260, 600, 860, 1500, 120)
+        c.drawPath(chair, paint((40, 30, 26), 0.8 * a))
+        c.drawPath(K.oval(470, 640, 650, 860), paint((30, 24, 22), 0.8 * a))
+        PR.candle(c, 540, 1360, 0.8, T, a=a)
+    if out > 0:                                                          # a thread of smoke where the flame was
+        for i in range(6):
+            y = 1180 - out * 60 - i * 40
+            c.drawCircle(540 + 14 * math.sin(T * 3 + i), y, 8 + i * 3, paint((150, 150, 150), 0.12 * (1 - i / 6) * (1 - ramp(T, t0 + 1.0, t0 + 1.6)), blur=6))
     return st.arr
 
 
@@ -281,10 +309,10 @@ def s_m_host(T, idx):
     st = K.Stage()
     c = st.c
     cols = ["violet", "red", "green", "blue"]
-    col_ = cols[int(max(0, T - S("m4")) * 4) % 4] if T > Wx("m4", "Ahahahaha") else "violet"
+    col_ = cols[int(max(0, T - S("m4")) * 4) % 4] if T > S("m4b") else "violet"
     CO.shock(c, col_, T, cx=540, cy=760, seed=30, rays=36, bolts=2)
-    C.push(c, T, S("m4") - 0.1, E("m4") + 0.3, 1.0, 1.4, cx=540, cy=880)
-    expr = "sly" if T < Wx("m4", "Ahahahaha") else "cackle"
+    C.push(c, T, S("m4") - 0.1, E("m4b") + 0.3, 1.0, 1.4, cx=540, cy=880)
+    expr = "sly" if T < S("m4b") else "cackle"
     FA.bust(c, "host", 540, 780, 2.0, T, expr=expr, light="green", talk=C.talk(T, "HOST"), blink=C.blink(T, 5),
             shake=3 if expr == "cackle" else 0)
     c.restore()
@@ -292,10 +320,10 @@ def s_m_host(T, idx):
 
 
 ADS = [
-    ((50, 330, 520, 700), "AMAZING!", "YOUR OWN BRAIN", "Works better with daily use! FREE: you already own one!"),
+    ((50, 330, 520, 760), "AMAZING!", "YOUR OWN BRAIN", "Works better with daily use! FREE: you already own one!"),
     ((550, 330, 1030, 610), "LEARN TO READ", "A MAP!", "In just ONE walk! No batteries!"),
     ((550, 630, 1030, 910), "MEMORIZE", "3 PHONE NUMBERS", "Amaze your family in a blackout!"),
-    ((50, 720, 520, 1000), "GROW YOUR OWN", "HIPPOCAMPUS!", "Just add walking. Results in weeks!"),
+    ((50, 780, 520, 1060), "GROW YOUR OWN", "BRAIN MAP!", "Just add walking. Results in weeks!"),
 ]
 
 
@@ -308,19 +336,19 @@ def s_m_back(T, idx):
     c.drawRect(skia.Rect.MakeLTRB(40, 236, 1040, 310), paint(INK))
     CO.label(c, "SEND NO MONEY! THESE OFFERS NEVER EXPIRE!", 540, 290, 44, "bangers-400", (255, 226, 0), tag="ad")
     for i, ((x0, y0, x1, y1), a, b, small) in enumerate(ADS):
-        t0 = E("m4") + 0.5 + i * 0.12
+        t0 = E("m4b") + 0.45 + i * 0.12
         if T < t0:
             continue
         c.drawRect(skia.Rect.MakeLTRB(x0, y0, x1, y1), paint((250, 244, 220)))
         c.drawRect(skia.Rect.MakeLTRB(x0, y0, x1, y1), paint(INK, stroke=6))
         CO.label(c, a, (x0 + x1) / 2, y0 + 70, 50, "bangers-400", (200, 20, 20), tag="ad")
         CO.label(c, b, (x0 + x1) / 2, y0 + 130, 54, "bangers-400", INK, tag="ad")
-        f = K.font("comic-neue-700", 30)
-        lines = K.wrap(small, f, x1 - x0 - 60)
+        f = K.font("comic-neue-700", 36)
+        lines = K.wrap(small, f, x1 - x0 - 50)
         for j, ln in enumerate(lines):
-            CO.label(c, ln, (x0 + x1) / 2, y0 + 190 + j * 36, 30, "comic-neue-700", (60, 50, 50), tag="ad")
+            CO.label(c, ln, (x0 + x1) / 2, y0 + 192 + j * 42, 36, "comic-neue-700", (70, 34, 20), tag="ad")
         if i == 0:
-            PR.brain(c, (x0 + x1) / 2, y1 - 90, 0.34, T, glow=0.6)
+            PR.brain(c, (x0 + x1) / 2, y1 - 62, 0.26, T, glow=0.6)
     # the coupon
     c.save()
     q = paint(INK, stroke=4)

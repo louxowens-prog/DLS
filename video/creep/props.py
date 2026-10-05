@@ -102,6 +102,12 @@ def growth(c, x, y, r, T, eye=0.0, grin=0.0, a=1.0, flesh=(240, 150, 140)):
     p = smooth([(x - r, y + r * 0.4), (x - r * 0.9, y - r * 0.4), (x - r * 0.3, y - r), (x + r * 0.4, y - r * 0.9), (x + r, y - r * 0.2), (x + r * 0.9, y + r * 0.5)])
     c.drawPath(p, paint(shader=K.rad((x - r * 0.3, y - r * 0.4), r * 1.6, [mix(flesh, WHITE, 0.3), flesh, mix(flesh, (120, 20, 40), 0.6)]), a=a))
     c.drawPath(p, paint((120, 30, 40), 0.6 * a, stroke=2))
+    c.save()
+    c.clipPath(p, doAntiAlias=True)
+    rng = K.rng_at(int(r), 3)
+    for i in range(int(r * 1.2)):                                       # latex pores
+        c.drawCircle(x + rng.uniform(-r, r), y + rng.uniform(-r, r), rng.uniform(0.8, 2.4), paint((120, 30, 50), 0.3 * a))
+    c.restore()
     for i in range(3):                                                  # veins
         c.drawPath(K.bez_path([(x - r * 0.6 + i * r * 0.4, y + r * 0.3), (x - r * 0.4 + i * r * 0.5, y - r * 0.2), (x - r * 0.2 + i * r * 0.4, y - r * 0.6)]),
                    paint((150, 40, 80), 0.5 * a, stroke=1.6))
@@ -409,6 +415,12 @@ def thing(c, x, y, s, T, open_=1.0, light="red", lunge=0.0):
     c.save()
     c.clipPath(body, doAntiAlias=True)
     rng = K.rng_at(9, 9)
+    for i in range(160):                                                # rubbery latex: pores and blotches
+        px, py = rng.uniform(-220, 220), rng.uniform(-200, 200)
+        c.drawCircle(px, py, rng.uniform(1.5, 5), paint((90, 20, 50) if i % 3 else (255, 210, 220), rng.uniform(0.15, 0.45)))
+    for i in range(10):                                                 # wet streaks of slime
+        px, py = rng.uniform(-180, 160), rng.uniform(-170, 120)
+        c.drawPath(K.bez_path([(px, py), (px + 30, py + 10), (px + 60, py + rng.uniform(-10, 30))]), paint(WHITE, 0.4, stroke=rng.uniform(2, 5), blur=1))
     for i in range(14):                                                 # veins and lumps
         x0, y0 = rng.uniform(-200, 200), rng.uniform(-180, 180)
         c.drawPath(K.bez_path([(x0, y0), (x0 + rng.uniform(-60, 60), y0 + rng.uniform(-60, 60)), (x0 + rng.uniform(-90, 90), y0 + rng.uniform(-90, 90))]),
@@ -464,7 +476,7 @@ def calculator(c, x, y, s, T, display="0.", L="lamp", ang=0.0):
     c.restore()
 
 
-def pill_bottle(c, x, y, s, label=("HEART TABLETS", "Dose: 1.5 mg", "Each tablet: 0.25 mg"), L="candle", ang=0.0):
+def pill_bottle(c, x, y, s, label=("HEART TABLETS", "Dose: 0.125 mg", "Each tablet: 0.25 mg"), L="candle", ang=0.0):
     L = FA.Light(L)
     c.save()
     c.translate(x, y)
@@ -497,17 +509,22 @@ def candle(c, x, y, s, T, a=1.0):
     c.restore()
 
 
-def keypad(c, x, y, s, typed="07", L="plain"):
+def keypad(c, x, y, s, typed="07", L="plain", status=None):
+    """A handset's keypad and its little green display (status: a line of small text above the digits)."""
     L = FA.Light(L)
     c.save()
     c.translate(x, y)
     c.scale(s, s)
     plastic(c, _rr(-200, -330, 200, 330, 30), (200, 196, 186), L)
     c.drawRoundRect(skia.Rect.MakeLTRB(-170, -300, 170, -190), 10, 10, paint((150, 170, 140)))
-    f = K.font("vt323-400", 80)
+    f = K.font("vt323-400", 80 if status is None else 64)
     s_ = typed + "_"
-    c.drawString(s_, -150, -218, f, paint((30, 40, 30)))
-    K.reg_local(c, -150, -282, -150 + f.measureText(s_), -212, "screen")
+    c.drawString(s_, -150, -205 if status else -218, f, paint((30, 40, 30)))
+    K.reg_local(c, -150, -255 if status else -282, -150 + f.measureText(s_), -200, "screen")
+    if status:
+        fs = K.font("vt323-400", 40)
+        c.drawString(status, -150, -258, fs, paint((120, 20, 20)))
+        K.reg_local(c, -150, -290, -150 + fs.measureText(status), -252, "screen")
     keys = "123456789*0#"
     fk = K.font("rubik-700", 46)
     for i, ch in enumerate(keys):
