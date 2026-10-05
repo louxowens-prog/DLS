@@ -686,7 +686,7 @@ def build():
     mix = signal.sosfilt(signal.butter(2, 15000 / (SR / 2), "low", output="sos"), mix, axis=1)
     mix = crush_climax(mix)
     mix = loudness(mix, -14.0)
-    mix = post_macro(mix, margin=3.5)
+    mix = post_macro(mix, margin=5.0)
     a_, b_ = int((TL.total - 0.4) * SR), int(TL.total * SR)
     mix[:, a_:b_] *= np.linspace(1, 0, b_ - a_) ** 2
     mix[:, b_:] = 0.0
