@@ -411,7 +411,7 @@ def s_earth(arr, t, d, T):
 
 def s_glass(arr, t, d, T):
     s = G.canvas_of(arr)
-    words = ["The", "glass", "hit", "the", "concrete,", "and…"]
+    words = ["The", "glass", "hit", "the", "concrete,", "and", "then…"]
     f = G.font("jost-400", 64)
     ws = TL.lines["glass"]["words"]
     tsh = C["shatter"]

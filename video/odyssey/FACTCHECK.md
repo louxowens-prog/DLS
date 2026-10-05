@@ -36,5 +36,7 @@ train word problem appears on screen as a worked example rather than in the narr
 The narration was re-voiced with no change to the claims: a blend of the Kokoro voices af_heart (60%) and bf_emma (40%)
 at a natural pace (speed 0.95, was 1.24), with longer pauses after the key lines. "A.I." and "U.S." are now written
 "AI" and "US" for the voice so they are said "ay-eye" and "you-ess" with no stop in the middle, and "Meta's Llama 3"
-became "Llama 3, from Meta" because the voice slurred "Meta's Llama" into one word. The running time went from 2:28 to
+became "Llama 3, from Meta" because the voice slurred "Meta's Llama" into one word. Two lines were nudged for the same
+reason: "Each miss, nudges the numbers" (the voice ran "miss nudges" together) and "The glass hit the concrete, and
+then..." (a bare trailing "and" sounded like "end"). The running time went from 2:28 to
 2:54.
