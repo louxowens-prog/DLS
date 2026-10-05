@@ -1,13 +1,17 @@
-"""Captions over the finished print, in one band clear of the Reels UI, each voice in its own hand: the narrator in
-clean white, Zuza in pale lemon, Lili in pink, the Oracle in typewriter type."""
+"""Lettering over the finished print, in comic hands: the narrator in yellow caption boxes, the host on her dripping
+purple slab, everyone else in speech balloons placed by the edit (the assistant in an electric balloon). During the
+reader's real night the narrator's boxes go plain: white type on black, no comic at all."""
+import math
+
 import skia
 
+import comic as CO
 import kit as K
 from kit import paint
-from script import LILI, MACH, NAR, ZUZA
 from timeline import TL
 
-CAP_SIZE, MAX_W, CX, BASE = 54, 850, 520, 1478
+CAP_SIZE, MAX_W, CX, BASE = 50, 820, 525, 1500
+BOXED = ("NAR", "HOST")
 
 
 def _caps():
@@ -15,6 +19,8 @@ def _caps():
     cuts = [e[0] for e in EDIT]
     out = []
     for t0, t1, s, k in TL.captions():
+        if TL.lines[k]["who"] not in BOXED:
+            continue
         end = TL.lines[k]["end"]
         nxt = [x for x in cuts if end - 0.05 < x < t1]
         out.append((t0, min([t1] + nxt), s, k))
@@ -22,31 +28,61 @@ def _caps():
 
 
 CAPS = _caps()
-STYLE = {NAR: ("rubik-700", (255, 255, 255), 1.0), ZUZA: ("rubik-700", (255, 238, 150), 1.0),
-         LILI: ("rubik-700", (255, 170, 196), 1.0), MACH: ("special-elite-400", (220, 255, 220), 1.12)}
 
 
-def telop(arr, T):
-    cap = next((c for c in CAPS if c[0] <= T < c[1]), None)
+def _plain(T):
+    from edit import PLAIN
+    return any(a <= T < b for a, b in PLAIN)
+
+
+def plain_box(c, s, x, y, size, a):
+    f = K.font("rubik-500", size)
+    lines = K.wrap_balanced(s, f, MAX_W - 60)
+    lh = size * 1.18
+    tw = max(f.measureText(ln) for ln in lines)
+    y0 = y - lh * len(lines) - 18
+    c.drawRect(skia.Rect.MakeLTRB(x - tw / 2 - 26, y0, x + tw / 2 + 26, y + 6), paint((0, 0, 0), 0.82 * a))
+    for i, ln in enumerate(lines):
+        K.text(c, ln, x, y0 + 12 + lh * (i + 0.8), size, "rubik-500", (236, 236, 236), tag="caption", a=a)
+
+
+def telop(c, T):
+    cap = next((cp for cp in CAPS if cp[0] <= T < cp[1]), None)
     if not cap:
         return
     t0, t1, s, key = cap
     who = TL.lines[key]["who"]
-    fname, colr, sc = STYLE[who]
-    size = CAP_SIZE * sc
-    f = K.font(fname, size)
-    lines = K.wrap_balanced(s, f, MAX_W)
-    if len(lines) > 2:
-        size *= 0.86
-        f = K.font(fname, size)
-        lines = K.wrap_balanced(s, f, MAX_W)
     a = min(1.0, (T - t0) / 0.06, (t1 - T) / 0.05)
+    k = K.pop(T, t0, 0.16, 0.04) or 1.0
+    if who == "NAR" and _plain(T):
+        plain_box(c, s, CX, BASE, CAP_SIZE * 0.95, a)
+    elif who == "NAR":
+        CO.caption_box(c, s, CX, BASE, MAX_W, CAP_SIZE, k=k, rot=-0.8, a=a)
+    else:
+        CO.host_box(c, s, CX, BASE - 12, MAX_W, CAP_SIZE, k=k, a=a)
+
+
+def balloons(c, T):
+    from edit import BALLOONS
+    for key, spec in BALLOONS.items():
+        L = TL.lines[key]
+        t0 = L["start"] - 0.06
+        t1 = spec.get("until", L["end"] + 0.35)
+        if not (t0 <= T < t1):
+            continue
+        k = K.pop(T, t0, 0.2, 0.25)
+        a = min(1.0, (t1 - T) / 0.08)
+        kind = spec.get("kind", "speech")
+        if L["who"] == "MUSE":
+            kind = "electric"
+        jit = 0.0
+        if spec.get("shake"):
+            jit = math.sin(T * 60) * spec["shake"]
+        CO.balloon(c, spec.get("text", L["spoken"]), spec["x"] + jit, spec["y"], tail=spec.get("tail"), size=spec.get("size", 48),
+                   maxw=spec.get("maxw", 560), k=k, kind=kind, a=a, rot=spec.get("rot", 0.0), seed=len(key))
+
+
+def overlay(arr, T):
     c = skia.Surface(arr).getCanvas()
-    lh = size * 1.16
-    y = BASE - lh * (len(lines) - 1)
-    wmax = max(f.measureText(ln) for ln in lines)
-    c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(CX - wmax / 2 - 26, y - size * 0.95, CX + wmax / 2 + 26,
-                                                         y + lh * (len(lines) - 1) + size * 0.36), 12, 12), paint((14, 10, 12), 0.66 * a))
-    for ln in lines:
-        K.text(c, ln, CX, y, size, fname, colr, tag="caption", outline=(10, 8, 10), ow=size * 0.12, a=a)
-        y += lh
+    balloons(c, T)
+    telop(c, T)

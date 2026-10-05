@@ -1,18 +1,19 @@
-"""The compositor: the shot for time T (and the outgoing one through a transition), then the print - the colour mode
-of the moment and the 1960s film look - and the captions on top."""
+"""The compositor: the shot for time T (and the outgoing one through a page turn or a panel zoom), then the 1982 print
+(night-for-night, the reader's plain night, lightning), then the comic lettering on top."""
 import math
 
 import numpy as np
+import skia
 
-import collage as CL
+import comic as CO
 import film as F
 import kit as K
 import ov
-from edit import EDIT, SLICES, TRANS, frozen, mode_at, shot_at
+from edit import EDIT, LIGHTNING, TRANS, look_at, shot_at
 from timeline import FPS, TL
 
 SHOTS = {}
-for _m in ("sc0", "sc1", "sc2"):
+for _m in ("sc1", "sc2", "sc3", "sc4"):
     try:
         mod = __import__(_m)
     except ModuleNotFoundError:
@@ -22,17 +23,17 @@ for _m in ("sc0", "sc1", "sc2"):
 
 def _placeholder(name):
     def f(T, idx):
-        st = K.Stage((60, 50, 56))
-        K.text(st.c, name, 540, 960, 70, "abril-400", K.WHITE, tag="ph")
+        st = K.Stage((60, 40, 56))
+        K.text(st.c, name, 540, 960, 70, "bangers-400", K.WHITE, tag="ph")
         return st.arr
     return f
 
 
 def shot(name, T, idx):
-    """Render a shot; 'name@z' is the same shot punched in by z about the middle of the frame (a jump cut closer)."""
+    """Render a shot; 'name@z' is the same shot punched in by z (about 540, 860; or name@z@cx@cy)."""
     base, _, z = name.partition("@")
     cx, cy = 540.0, 860.0
-    if "@" in z:                                                 # name@zoom@cx@cy
+    if "@" in z:
         z, cx, cy = (lambda p: (p[0], float(p[1]), float(p[2])))(z.split("@"))
     n0 = len(K.TEXT)
     a = (SHOTS.get(base) or _placeholder(base))(T, idx)
@@ -41,49 +42,60 @@ def shot(name, T, idx):
     if z:
         z = float(z)
         out = np.zeros_like(a)
-        c = __import__("skia").Surface(out).getCanvas()
+        c = skia.Surface(out).getCanvas()
         c.translate(cx, cy)
         c.scale(z, z)
         c.translate(-cx, -cy)
-        c.drawImage(K.image(a), 0, 0, __import__("skia").SamplingOptions(__import__("skia").FilterMode.kLinear))
+        c.drawImage(K.image(a), 0, 0, skia.SamplingOptions(skia.FilterMode.kLinear))
         a = out
-        for i in range(n0, len(K.TEXT)):                         # the lettering moves with the picture
+        for i in range(n0, len(K.TEXT)):
             x0, y0, x1, y1, tag = K.TEXT[i][:5]
-            K.TEXT[i] = (cx + (x0 - cx) * z, cy + (y0 - cy) * z, cx + (x1 - cx) * z, cy + (y1 - cy) * z, tag) + tuple(K.TEXT[i][5:])
+            K.TEXT[i] = (cx + (x0 - cx) * z, cy + (y0 - cy) * z, cx + (x1 - cx) * z, cy + (y1 - cy) * z, tag)
     return np.ascontiguousarray(a)
+
+
+def lightning(T):
+    """Exposure lift from lightning strikes: a bright first stroke and a flicker."""
+    v = 0.0
+    for t, s in LIGHTNING:
+        d = T - t
+        if 0 <= d < 0.5:
+            v = max(v, s * (math.exp(-d / 0.06) + 0.6 * math.exp(-max(0, d - 0.12) / 0.07) * (d > 0.12)))
+    return min(1.0, v)
 
 
 def render_frame(T, idx=None, overlays=True):
     K.TEXT.clear()
     idx = int(round(T * FPS)) if idx is None else idx
-    Tp = frozen(T)                                           # a freeze frame holds the picture, not the grain
-    i = shot_at(Tp)
+    i = shot_at(T)
     t0, name, tr, _ = EDIT[i]
-    Tc = max(t0, np.floor(Tp * 12 + 1e-6) / 12)              # the things in the picture move on twos, like stop motion
-    arr = shot(name, Tc, idx)
-    F.tone(arr, mode_at(Tp, i))
-    for s0, d, x0, y0, x1, y1 in SLICES:                     # sliced into strips and put back together
-        if s0 <= Tp < s0 + d:
-            CL.strips(arr, math.sin(math.pi * (Tp - s0) / d), x0, y0, x1, y1, seed=int(s0 * 10))
-    if tr == "scissors" and i > 0 and T < t0 + TRANS["scissors"]:
-        saved = list(K.TEXT)
-        prev = shot(EDIT[i - 1][1], T, idx)
-        K.TEXT[:] = saved                                    # the outgoing shot's words don't count
-        F.tone(prev, mode_at(t0 - 0.01, i - 1))
-        k = (T - t0) / TRANS["scissors"]
-        arr = CL.cut_up(prev, k, seed=i, n=4, spread=3.2, under=arr)
-    elif tr == "flash" and T < t0 + TRANS["flash"]:
-        F.flash(arr, [(255, 236, 200), (200, 60, 60), (240, 200, 60)][i % 3], 0.9)
-    F.look(arr, T, idx)
-    if T >= TL.total - 0.02:
+    arr = shot(name, T, idx)
+    if i > 0 and tr in TRANS and T < t0 + TRANS[tr]:
+        k = (T - t0) / TRANS[tr]
+        if tr == "page":
+            saved = list(K.TEXT)
+            prev = shot(EDIT[i - 1][1], t0 - 1 / FPS, idx)
+            K.TEXT[:] = saved
+            arr = CO.page_turn(prev, arr, k)
+        elif tr == "zoom":
+            arr = CO.panel_zoom(arr, k)
+        elif tr == "flash":
+            F.flash_frame(arr, (255, 250, 240), 1 - k)
+        elif tr == "redflash":
+            F.flash_frame(arr, (230, 10, 20), 1 - k)
+    lk = look_at(T, i)
+    F.look(arr, T, idx, night=lk.get("night", 0.0), plain=lk.get("plain", 0.0), flash=lightning(T) * lk.get("bolt", 1.0),
+           sat=lk.get("sat", 1.16), grain=lk.get("grain", 1.0))
+    if lk.get("black"):
+        arr[..., :3] = (arr[..., :3].astype(np.float32) * (1 - lk["black"])).astype(np.uint8)
+    if T >= TL.total - 0.04:
         arr[..., :3] = 0
     if overlays:
-        ov.telop(arr, T)
+        ov.overlay(arr, T)
     return arr
 
 
-SAME_OK = ("caption", "strip", "label", "big", "slip", "chapter", "card", "track", "icing", "meter", "type", "exam", "cal", "score",
-           "banner", "deco", "answer")
+SAME_OK = ("caption", "label", "title", "sfx", "deco", "page", "panel", "screen", "ad", "balloon", "stat")
 
 
 def lint(boxes, ignore=()):
@@ -94,7 +106,7 @@ def lint(boxes, ignore=()):
             a, b = bx[i], bx[j]
             if a[4] == b[4] and a[4] in SAME_OK:
                 continue
-            if "deco" in (a[4], b[4]) and "caption" not in (a[4], b[4]):    # small print only matters under a caption
+            if "deco" in (a[4], b[4]) and "caption" not in (a[4], b[4]) and "balloon" not in (a[4], b[4]):
                 continue
             ox = min(a[2], b[2]) - max(a[0], b[0])
             oy = min(a[3], b[3]) - max(a[1], b[1])

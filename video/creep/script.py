@@ -63,8 +63,8 @@ LINES = [
     ("g2", KIT, "Write my essay.", None, 0.25),
     ("g3", NAR, "Nine in ten UK students now use AI. 'Help me understand' builds a mind. 'Write it for me' doesn't.",
      "Nine in ten UK students now use AI. | 'Help me understand' builds a mind. | 'Write it for me' doesn't.", 0.2),
-    ("g4", NAR, "In a small MIT study, 83% of people who wrote with ChatGPT couldn't quote one sentence of their own essay.",
-     "In a small MIT study, 83% of people | who wrote with ChatGPT couldn't quote | one sentence of their own essay.", 0.2),
+    ("g4", NAR, "In a small MIT study, 83% of people who wrote with a chatbot couldn't quote one sentence of their own essay.",
+     "In a small MIT study, 83% of people | who wrote with a chatbot couldn't quote | one sentence of their own essay.", 0.2),
     ("g5", NAR, "With AI, high-schoolers' practice scores jumped 48%. Without it, they did 17% worse than students who never "
                 "had it.",
      "With AI, high-schoolers' practice scores jumped 48%. | Without it, they did 17% worse | than students who never had it.", 0.25),
