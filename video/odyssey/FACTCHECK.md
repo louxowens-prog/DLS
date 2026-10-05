@@ -10,7 +10,7 @@ original brief.
 | Scientists have collected over 70 definitions of intelligence | Legg & Hutter, *A Collection of Definitions of Intelligence* (arXiv:0706.3639, 2007): "70-odd definitions" | Added to support the brief's claim that there is no single accepted definition. |
 | Working definition: model the world, learn, infer, adapt, plan | The brief's own working definition, shortened | Framed as "a useful one", not *the* definition. |
 | "Artificial" means made with skill, not fake | Etymonline: Latin *artificialis* "of or belonging to art", from *artificium*, *ars* (art, skill) + *facere* (to make) | Added. |
-| "The U.S. standards agency, NIST, counts machines doing tasks that need human-like perception, planning, learning or communication" (narrated) | NIST CSRC glossary entry "artificial intelligence", quoting the FY2019 NDAA §238(g): "…solves tasks requiring human-like perception, cognition, planning, learning, communication, or physical action" | **Corrected**: the brief listed "decision-making". That word is not in this definition. (Another definition in the glossary does mention decisions.) |
+| "The US standards agency, NIST, counts machines doing tasks that need human-like perception, planning, learning or communication" (narrated) | NIST CSRC glossary entry "artificial intelligence", quoting the FY2019 NDAA §238(g): "…solves tasks requiring human-like perception, cognition, planning, learning, communication, or physical action" | **Corrected**: the brief listed "decision-making". That word is not in this definition. (Another definition in the glossary does mention decisions.) |
 | Deep Blue defeated Kasparov, May 1997 | IBM; widely documented | Added a date. |
 | AlphaGo defeated Lee Sedol 4-1, March 2016 | DeepMind; widely documented | Added the score and date. |
 | OpenAI: its models don't store copies of their training data (some text can be memorized) | OpenAI Help Center, "How ChatGPT and our foundation models are developed"; memorization of some training text is documented (e.g. Carlini et al., 2021) | On-screen label, with the memorization caveat added. |
@@ -31,3 +31,10 @@ original brief.
 
 Not used: the 1994 "Mainstream Science on Intelligence" statement (politically loaded context). The brief's
 train word problem appears on screen as a worked example rather than in the narration.
+
+## Narration revision (October 2026)
+The narration was re-voiced with no change to the claims: a blend of the Kokoro voices af_heart (60%) and bf_emma (40%)
+at a natural pace (speed 0.95, was 1.24), with longer pauses after the key lines. "A.I." and "U.S." are now written
+"AI" and "US" for the voice so they are said "ay-eye" and "you-ess" with no stop in the middle, and "Meta's Llama 3"
+became "Llama 3, from Meta" because the voice slurred "Meta's Llama" into one word. The running time went from 2:28 to
+2:54.

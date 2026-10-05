@@ -1,4 +1,4 @@
-"""Female narration with Kokoro-82M v1.0 (Apache-2.0), voice af_heart, run through onnxruntime.
+"""Female narration with Kokoro-82M v1.0 (Apache-2.0), a blend of af_heart and bf_emma, run through onnxruntime.
 
 Weights and voices come from npm mirrors (see setup.sh). Each line is synthesized whole (natural
 prosody), trimmed of edge silence and cached on disk. Caption timing inside a line is estimated from
@@ -40,7 +40,10 @@ def speak(text, voice="af_heart", speed=1.0):
         return np.load(path)
     sess, tok = _load()
     ids = tok.tokenize(tok.phonemize(text, "en-us"))
-    style = np.fromfile(os.path.join(VOICES, voice + ".bin"), dtype=np.float32).reshape(-1, 256)
+    style = 0                                         # a voice, or a blend such as "af_heart:0.6+bf_emma:0.4"
+    for part in voice.split("+"):
+        name, _, wt = part.partition(":")
+        style = style + float(wt or 1) * np.fromfile(os.path.join(VOICES, name + ".bin"), dtype=np.float32).reshape(-1, 256)
     wav = sess.run(None, {"input_ids": np.array([[0, *ids, 0]], np.int64),
                           "style": style[min(len(ids), 509)][None],
                           "speed": np.array([speed], np.float32)})[0][0].astype(np.float32)

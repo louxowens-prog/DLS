@@ -7,8 +7,8 @@ from script import LINES
 from voice import SR, speak, word_times
 
 FPS = 24
-VOICE = "af_heart"
-SPEED = 1.24
+VOICE = "af_heart:0.6+bf_emma:0.4"   # warm, steady, a little mid-Atlantic: a 1968 narrator
+SPEED = 0.95
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 # Seconds of music/visual-only time inserted before a line.
