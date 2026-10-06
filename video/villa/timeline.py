@@ -59,6 +59,10 @@ def treat(wav, kind):
     return w.astype(np.float32)
 
 
+def _norm(w):
+    return "".join(ch for ch in w.lower() if ch.isalnum() or ch == "'")
+
+
 class Timeline:
     def __init__(self):
         self.lines, self.order = {}, []
@@ -114,7 +118,6 @@ class Timeline:
                 else:
                     ends.append(w.endswith("|"))
             nw, m = len(cw), len(sp)
-            times = [(sp[min(m - 1, int(i * m / nw))][1], sp[min(m - 1, max(0, int((i + 1) * m / nw) - 1))][2]) for i in range(nw)]
             groups, cur = [], []
             for i in range(nw):
                 cur.append(i)
@@ -122,10 +125,28 @@ class Timeline:
                     groups.append(cur)
                     cur = []
             nxt_start = self.lines[self.order[n + 1]]["start"] if n + 1 < len(self.order) else self.total
+            # where each chunk starts in the recording: match the chunk's last word (or the next chunk's first word)
+            # among the spoken words, so a caption's figures ("94%" for "ninety-four percent") don't skew the timing
+            starts, pos = [0], 0
+            for j in range(len(groups) - 1):
+                g, g2 = groups[j], groups[j + 1]
+                est, at = pos + len(g), None
+                hits = [k + 1 for k in range(pos, m) if _norm(sp[k][0]) == _norm(cw[g[-1]])]
+                if hits and abs(min(hits, key=lambda k: abs(k - est)) - est) <= 3:
+                    at = min(hits, key=lambda k: abs(k - est))
+                if at is None:
+                    hits = [k for k in range(pos + 1, m) if _norm(sp[k][0]) == _norm(cw[g2[0]])]
+                    if hits and abs(min(hits, key=lambda k: abs(k - est)) - est) <= 3:
+                        at = min(hits, key=lambda k: abs(k - est))
+                if at is None:
+                    at = min(m - 1, int(g2[0] * m / nw))
+                starts.append(min(m - 1, max(pos + 1, at)))
+                pos = starts[-1]
             for j, g in enumerate(groups):
-                t0 = times[g[0]][0]
-                t1 = times[groups[j + 1][0]][0] if j + 1 < len(groups) else min(L["end"] + 0.35, nxt_start - 0.05)
-                out.append((t0 - 0.05, max(t1 - 0.02, times[g[-1]][1]), " ".join(cw[i] for i in g), key))
+                t0 = sp[starts[j]][1]
+                last = sp[starts[j + 1] - 1][2] if j + 1 < len(groups) else sp[-1][2]
+                t1 = sp[starts[j + 1]][1] if j + 1 < len(groups) else min(L["end"] + 0.35, nxt_start - 0.05)
+                out.append((t0 - 0.05, max(t1 - 0.02, last), " ".join(cw[i] for i in g), key))
         return out
 
 
