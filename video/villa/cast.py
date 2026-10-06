@@ -536,12 +536,35 @@ def mannequin(c, x, y, s, T, pose=0, head=0.0, gown=True, cap=True, L=(255, 60, 
     c.translate(head * 18, -960)
     c.rotate(head * 10)
     c.drawOval(skia.Rect.MakeLTRB(-82, -110, 82, 110), paint(pc))
-    if face_k > 0:
+    if face_k > 0:                                             # a porcelain doll's face: glass eyes, painted lashes and lips
+        fk, hx = face_k, head * 26
+        if not cap:                                            # sculpted, painted hair: a 1970s bob
+            c.drawPath(K.smooth([(-86, 10), (-88, -70), (-50, -112), (20, -118), (74, -92), (90, -30), (86, 14), (64, -40),
+                                 (10, -74), (-50, -52), (-70, -10)]), paint((70, 38, 28), fk))
         for sd in (-1, 1):
-            ex = sd * 30 + head * 26
-            c.drawOval(skia.Rect.MakeLTRB(ex - 14, -20, ex + 14, -4), paint((20, 16, 20), face_k))
-            c.drawCircle(ex - 4, -14, 3, paint(WHITE, face_k))
-        c.drawOval(skia.Rect.MakeLTRB(-16 + head * 24, 44, 16 + head * 24, 56), paint((190, 30, 50), face_k))
+            ex = sd * 32 + hx
+            c.drawPath(K.bez_path([(ex - 22, -46), (ex, -58), (ex + 22, -48)]), paint((80, 54, 46), 0.85 * fk, stroke=3.5))
+            eye = K.smooth([(ex - 24, -14), (ex - 8, -27), (ex + 10, -27), (ex + 24, -14), (ex + 8, -4), (ex - 8, -4)])
+            c.drawPath(eye, paint((242, 242, 238), fk))
+            c.save()
+            c.clipPath(eye, doAntiAlias=True)
+            c.drawCircle(ex + head * 5, -15, 11, paint((96, 150, 176), fk))
+            c.drawCircle(ex + head * 5, -15, 11, paint((30, 60, 80), fk, stroke=2))
+            c.drawCircle(ex + head * 5, -15, 5, paint((8, 8, 12), fk))
+            c.drawPath(K.path([(ex - 24, -28), (ex + 24, -28), (ex + 24, -20), (ex - 24, -16)]), paint((160, 140, 150), 0.35 * fk))
+            c.restore()
+            c.drawCircle(ex + head * 5 - 4, -19, 3, paint(WHITE, fk))
+            c.drawPath(K.bez_path([(ex - 24, -14), (ex, -30), (ex + 24, -14)]), paint((30, 20, 24), fk, stroke=3.5))
+            for q in range(5):                                 # painted lashes
+                lx = ex - 18 + q * 9
+                c.drawLine(lx, -24 + abs(q - 2) * 2, lx + sd * 3, -33 + abs(q - 2) * 2, paint((30, 20, 24), fk, stroke=2))
+            c.drawCircle(sd * 50 + hx, 26, 20, paint((236, 120, 130), 0.35 * fk, blur=9))
+        c.drawPath(K.bez_path([(hx - 3, -2), (hx - 8, 24), (hx + 6, 28)]), paint((170, 140, 140), 0.6 * fk, stroke=3))
+        c.drawPath(K.smooth([(hx - 20, 50), (hx - 7, 43), (hx, 47), (hx + 7, 43), (hx + 20, 50), (hx + 6, 58), (hx - 6, 58)]),
+                   paint((178, 26, 48), fk))
+        for sd in (-1, 1):                                     # the hinge lines of a jaw that opens
+            c.drawLine(hx + sd * 24, 54, hx + sd * 28, 96, paint((110, 96, 100), 0.55 * fk, stroke=2))
+        c.drawOval(skia.Rect.MakeLTRB(-50, -96, 6, -70), paint(WHITE, 0.25 * fk, blur=6))
     if cap:
         c.drawPath(K.path([(-120, -104), (0, -140), (120, -104), (0, -76)]), paint((20, 18, 24)))
         c.drawRect(skia.Rect.MakeLTRB(-60, -110, 60, -80), paint((20, 18, 24)))

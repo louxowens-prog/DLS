@@ -19,8 +19,15 @@ CODE = ["def average(marks):", "    total = 0", "    for m in marks:", "        
         "average([])"]
 
 
-def _room(c, T, clock="09:00:40"):
+def clock_at(T):
+    """The wall clock: 09:00:40 at the first frame of the present day, counting on in real time in every angle."""
+    secs = 40 + int(max(0.0, T - cut("r_room")))
+    return f"09:{secs // 60:02d}:{secs % 60:02d}"
+
+
+def _room(c, T, clock=None):
     """A meeting room: white walls, ceiling panels, a glass wall with grey blinds, a digital clock."""
+    clock = clock_at(T) if clock is None else clock
     c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((222, 224, 222)))
     c.drawRect(skia.Rect.MakeLTRB(0, 0, W, 180), paint((236, 238, 238)))
     for k in range(3):
@@ -44,12 +51,13 @@ def s_r_room(T, idx):
     st = K.Stage()
     c = st.c
     t0 = cut("r_room")
-    secs = 40 + int(max(0.0, T - t0))
-    _room(c, T, clock=f"09:00:{min(59, secs):02d}")
+    _room(c, T)
     _flat_face(c, 540, 760, 0.82, "clara_now", T, expr="lost", blink_=blink(T, 21) * 0.3, gaze=(0.0, 0.5))
     c.drawRect(skia.Rect.MakeLTRB(80, 1040, 1000, 1110), paint((244, 244, 242)))
     c.drawRect(skia.Rect.MakeLTRB(80, 1110, 1000, 1130), paint((200, 200, 200)))
     c.drawRoundRect(skia.Rect.MakeLTRB(160, 1000, 360, 1050), 8, 8, paint((80, 84, 92)))        # the phone tray
+    c.drawRect(skia.Rect.MakeLTRB(196, 952, 324, 994), paint((250, 250, 250)))
+    K.text(c, "PHONES", 260, 984, 26, "inter-700", (40, 40, 46), tag="screen")
     for k in range(3):
         c.drawRoundRect(skia.Rect.MakeLTRB(176 + k * 60, 1008, 226 + k * 60, 1044), 6, 6, paint((20, 20, 24)))
     for x, col, hair in ((250, (90, 90, 96), (170, 166, 160)), (830, (24, 24, 28), (24, 18, 16))):   # interviewers from behind
@@ -71,7 +79,7 @@ def s_r_code(T, idx):
     t1 = Wx("r2", "why") - 0.2
     t2 = E("r2") + 0.12
     if T < t1:
-        _room(c, T, clock="09:00:46")
+        _room(c, T)
         c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((222, 224, 222), 0.6))
         _flat_face(c, 540, 820, 1.25, "int1", T, expr="neutral", talk_=talk(T, "INT1"), blink_=blink(T, 31))
     elif T < t2:
@@ -101,7 +109,7 @@ def s_r_diss(T, idx):
     st = K.Stage()
     c = st.c
     if T < S("r4") - 0.15:
-        _room(c, T, clock="09:01:03")
+        _room(c, T)
         c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((222, 224, 222), 0.6))
         _flat_face(c, 540, 820, 1.25, "int2", T, expr="neutral", talk_=talk(T, "INT2"), blink_=blink(T, 41))
     else:
@@ -117,7 +125,7 @@ def s_r_thanks(T, idx):
     """Thank you, Clara. We'll be in touch. The folder closes."""
     st = K.Stage()
     c = st.c
-    _room(c, T, clock="09:01:21")
+    _room(c, T)
     c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((222, 224, 222), 0.6))
     _flat_face(c, 540, 760, 1.15, "int1", T, expr="neutral", talk_=talk(T, "INT1"), blink_=blink(T, 51))
     k = K.ease(ramp(T, cut("r_thanks") + 0.6, cut("r_thanks") + 1.2))

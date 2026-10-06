@@ -13,22 +13,22 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # seconds of picture and music (no voice) before a line
 PRE = {
     "h1": 0.35,                   # the zoom into a porcelain graduate's painted eye
-    "o1": 2.8,                    # the crack, a dead silence, the title card
+    "o1": 2.0,                    # the crack, a dead silence, the title card
     "l1": 0.55,                   # into the alleys
-    "v1": 3.7,                    # deja vu: the same fountain three times, the mannequin at the glass; the villa gate
+    "v1": 5.7,                    # deja vu: the same fountain three times, dead silence, the mannequin at the glass; the gate
     "g1": 0.45,                   # the gallery, the camera dollying in
     "w1": 0.5,                    # the writing room
     "w3": 0.6,                    # the clock: YEAR TWO
     "w6": 0.6,                    # YEAR THREE
-    "c1": 0.95,                   # FINAL YEAR; up into the clockwork
+    "c1": 0.75,                   # FINAL YEAR; up into the clockwork
     "m1": 1.45,                   # the gears jam, dead silence, the falling mannequin
     "x1": 0.55,                   # the corridor to the locked door
     "r1": 1.75,                   # the door opens on white; dead silence; an office
     "r6": 0.3,                    # the rejections
     "p1": 0.45,                   # the dark window
-    "e1": 1.2,                    # her face cracks; silence; the music box returns
+    "e1": 1.05,                   # her face cracks; silence; the music box returns
 }
-TAIL = 2.6                        # the last chime of the clock, and FINE
+TAIL = 3.0                        # the last chime of the clock, ringing out, and FINE
 
 
 def _comb(x, delay_s, fb):

@@ -78,6 +78,9 @@ def s_q_square(T, idx):
     SE.square(c, T, doors=doors, parade=_parade(T), group=ramp(T, t0, end("q_clara")), clara=(500, 1700, 1.0),
               birds=T - (t0 + 0.4))
     c.restore()
+    ka = K.ease(ramp(T, t0 + 0.5, t0 + 1.0)) * (1 - ramp(T, end("q_square") - 0.35, end("q_square")))
+    if ka > 0:                                                  # the location super, as the old films did it
+        K.text(c, "ITALIA, 1974", 540, 330, 64, "italiana-400", (250, 240, 226), tag="title", a=ka, outline=(20, 10, 24), ow=6)
     return st.arr
 
 

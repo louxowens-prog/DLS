@@ -21,7 +21,7 @@ def _grain_bank():
         bank = []
         for i in range(6):
             g = rng.normal(0, 1, (H // 2 + 64, W // 2 + 64, 3)).astype(np.float32)
-            g = cv2.GaussianBlur(g, (0, 0), 0.65)
+            g = cv2.GaussianBlur(g, (0, 0), 0.95)                            # clumps big enough to survive a re-encode
             g = g * 0.65 + g.mean(axis=2, keepdims=True) * 0.35          # grain is mostly in luminance, a little in colour
             g /= g.std()
             bank.append(g.astype(np.float16))
@@ -41,8 +41,8 @@ def _vignette():
 def weave(T, idx):
     """Gate weave: a slow wander plus a frame-to-frame jitter (pixels)."""
     r = np.random.default_rng(idx * 7 + 3)
-    return (0.9 * math.sin(T * 1.3) + 0.5 * math.sin(T * 3.7 + 1) + r.normal(0, 0.35),
-            0.7 * math.sin(T * 1.1 + 2) + 0.4 * math.sin(T * 4.3) + r.normal(0, 0.35))
+    return (1.8 * math.sin(T * 1.3) + 0.9 * math.sin(T * 3.7 + 1) + r.normal(0, 0.5),
+            1.4 * math.sin(T * 1.1 + 2) + 0.8 * math.sin(T * 4.3) + r.normal(0, 0.5))
 
 
 def look(arr, T, idx, diffusion=1.0, halation=1.0, grain=1.0, sat=1.1, fade=1.0, dust=1.0, flick=1.0, plain=0.0,
@@ -96,7 +96,7 @@ def look(arr, T, idx, diffusion=1.0, halation=1.0, grain=1.0, sat=1.1, fade=1.0,
         g = g[oy:oy + H // 2, ox:ox + W // 2].astype(np.float32)
         g = cv2.resize(g, (W, H), interpolation=cv2.INTER_LINEAR)
         l = np.clip(x @ np.array([0.299, 0.587, 0.114], np.float32), 0, 1)[..., None]
-        amp = (0.008 + 0.022 * l * (1 - l) * 4) * grain * (0.35 + 0.65 * film)
+        amp = (0.009 + 0.026 * l * (1 - l) * 4) * grain * (0.35 + 0.65 * film)
         x = x + g * amp
     x = np.clip(x * 255.0, 0, 255).astype(np.uint8)
     # --- gate weave

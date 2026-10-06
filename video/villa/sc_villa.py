@@ -48,7 +48,7 @@ def s_g_gallery(T, idx):
         side = -1 if i % 2 == 0 else 1
         z = 3.2 + i * 2.6
         figs.append((z, side))
-    for z, side in sorted(figs, reverse=True):
+    for n_, (z, side) in enumerate(sorted(figs, reverse=True)):
         pos = (side * 1.45, 0.0, z)
         q = cam.proj(pos)
         if q is None:
@@ -56,9 +56,10 @@ def s_g_gallery(T, idx):
         sc = cam.scale_at(pos) * 1.8 / 1000
         fa = 1 - P.fog_at(cam, pos, density=0.07)
         head = 0.0
-        if i == 2:
-            head = -0.6 * ramp(T, t0 + 1.5, t0 + 2.2)
-        CA.mannequin(c, q[0], q[1], sc, T, pose=1, head=head * side, gown=True, cap=True, L=(255, 90, 190), R=(80, 255, 170), a=fa)
+        if n_ == 4:                                            # as she passes, this one turns its head to watch her
+            head = -0.8 * K.ease(ramp(T, t0 + 1.3, t0 + 2.0))
+        CA.mannequin(c, q[0], q[1], sc, T, pose=[1, 0, 3, 1, 2, 0, 3][n_], head=head * side, gown=True, cap=True, L=(255, 90, 190), R=(80, 255, 170), a=fa,
+                     face_k=0.95)
         PR.paper(c, q[0] + side * -20 * sc * 10, q[1] - 560 * sc, 140 * sc * 1.4, 190 * sc * 1.4, side * 8, T, lines=6, seed=int(z * 10), a=fa)
     pos = (0.0, 0.0, cam.pos[2] + 3.4)
     q = cam.proj(pos)
@@ -66,71 +67,169 @@ def s_g_gallery(T, idx):
     return st.arr
 
 
+def _glove(c, x, y, s, T):
+    """The Governess's hand in a black lace glove, holding something by its right edge: fingers above, thumb below, a
+    lace cuff, a cameo ring; a magenta rim of light along the knuckles."""
+    c.save()
+    c.translate(x, y)
+    c.scale(s, s)
+    glove, rim = (44, 32, 52), (255, 90, 190)
+    c.drawPath(K.smooth([(60, -70), (300, -120), (340, 50), (90, 90), (40, 40)]), paint((26, 18, 30)))      # the sleeve
+    c.drawPath(K.smooth([(-20, -60), (70, -80), (110, 0), (80, 70), (-10, 60), (-40, 0)]), paint(glove))     # the palm
+    for k, (fx, fy, ln) in enumerate(((-30, -50, 120), (-40, -24, 130), (-36, 2, 118), (-26, 26, 96))):       # fingers over the edge
+        c.drawPath(K.capsule(fx + 40, fy, fx + 40 - ln, fy + 6 + k * 2, 30, 22), paint(glove))
+        c.drawLine(fx + 30, fy - 11, fx + 50 - ln, fy - 7 + k * 2, paint(rim, 0.85, stroke=5))
+        c.drawCircle(fx + 40 - ln, fy + 6 + k * 2, 10, paint((70, 56, 84)))
+        for q in range(4):                                                                                     # lace mesh on the glove
+            c.drawCircle(fx + 20 - q * ln / 4, fy + 4 + k * 2, 4, paint((120, 104, 136), 0.6, stroke=1.5))
+    c.drawPath(K.capsule(10, 64, -70, 96, 30, 24), paint(glove))                                          # the thumb, beneath
+    c.drawLine(0, 52, -66, 84, paint((80, 120, 255), 0.7, stroke=4))
+    for k in range(9):                                                                                         # lace at the cuff
+        a = k / 8
+        c.drawCircle(70 + 24 * a, -78 + 160 * a, 11, paint((150, 136, 160), 0.95))
+        c.drawCircle(70 + 24 * a, -78 + 160 * a, 5, paint((26, 18, 30)))
+    c.drawCircle(-50, -26, 18, paint(GOLD))                                                                    # the cameo ring
+    c.drawCircle(-50, -26, 11, paint((240, 230, 220)))
+    c.drawCircle(-56, -32, 4, paint(WHITE, 0.9))
+    c.restore()
+
+
+def _script(c, x, y, w, h, ang, crisp, seed, a=1.0):
+    """An exam script: aged paper with a hand's uneven ink, or (crisp) a perfect white page of even typed lines."""
+    c.save()
+    c.translate(x, y)
+    c.rotate(ang)
+    c.drawRect(skia.Rect.MakeLTRB(-w / 2 + 6, -h / 2 + 8, w / 2 + 6, h / 2 + 8), paint((0, 0, 0), 0.35 * a, blur=6))
+    c.drawRect(skia.Rect.MakeLTRB(-w / 2, -h / 2, w / 2, h / 2), paint((196, 200, 208) if crisp else (214, 196, 160), a))
+    rng = K.rng_at(seed, 17)
+    for k in range(12):
+        yy = -h / 2 + 70 + k * (h - 110) / 12
+        if crisp:
+            c.drawLine(-w / 2 + 40, yy, w / 2 - 40 - (90 if k % 4 == 3 else 0), yy, paint((50, 52, 62), 0.85 * a, stroke=5))
+        else:
+            p = skia.Path()
+            xx = -w / 2 + 40
+            p.moveTo(xx, yy)
+            while xx < w / 2 - 50 - rng.uniform(0, 80):
+                xx += rng.uniform(20, 40)
+                p.lineTo(xx, yy + rng.uniform(-5, 5))
+            c.drawPath(p, paint((60, 50, 90), 0.75 * a, stroke=3.5))
+    if crisp:
+        c.drawCircle(w / 2 - 70, -h / 2 + 70, 34, paint((200, 30, 40), 0.9 * a, stroke=5))
+    c.restore()
+
+
 def s_g_exam(T, idx):
-    """At a UK university, AI answers slipped into real exams: 33 scripts on the examiners' table; 31 stamped PASSED
-    (94% undetected), 2 flagged; then two columns - the AI answers stand taller than the real students'."""
+    """At a UK university, researchers slipped AI answers into real online exams: the examiners' table, then close on
+    the pile of handwritten scripts as a black-gloved hand slides a perfect one in among them. 94% went undetected:
+    PASSED, PASSED, PASSED. On average they outscored the real students: two marble columns, the AI's half a grade
+    higher."""
     st = K.Stage((6, 4, 6))
     c = st.c
     t0 = cut("g_exam")
     t94 = Wx("g2", "Ninety-four")
     tav = Wx("g2", "On")
-
-    cols_k = K.ease(ramp(T, tav - 0.1, tav + 0.5))
+    t_slip = Wx("g2", "researchers") - 0.1
+    t_board = t94 - 0.25
+    t_cols = tav - 0.15
     flagged = {7, 22}
     rng0 = K.rng_at(33, 3)
     tilts = [rng0.uniform(-5, 5) for _ in range(33)]
-
-    def albedo(cc):
-        cc.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((90, 20, 30)))
-        cc.drawRect(skia.Rect.MakeLTRB(40, 380, 1040, 1320), paint((70, 44, 26)))      # the examiners' table, from above
-        cc.drawRect(skia.Rect.MakeLTRB(70, 410, 1010, 1290), paint((30, 70, 40)))      # green baize
-        if cols_k >= 1:
-            return
-        a = 1 - cols_k
-        n_in = int(min(33, max(0, (T - t0) / 0.09)))           # the scripts slid in, one by one
-        for i in range(n_in):
-            r_, k_ = divmod(i, 6)
-            x, y = 160 + k_ * 152, 500 + r_ * 140
-            PR.paper(cc, x, y, 116, 128, tilts[i], T, grade=None, lines=5, seed=i, a=a)
 
     def light(cc):
         G.pool(cc, 540, 800, 760, AMBER, 1.0)
         G.pool(cc, 100, 300, 500, MAGENTA, 0.6)
         G.pool(cc, 980, 1400, 500, EMERALD, 0.5)
-    SE.lit2d(c, albedo, light, amb=(18, 12, 16))
-    if cols_k < 1:
-        a = 1 - cols_k
-        for i in range(33):
-            r_, k_ = divmod(i, 6)
-            x, y = 160 + k_ * 152, 500 + r_ * 140
-            ts = t94 + 0.02 + i * 0.022
-            if T > ts:
-                kk = K.ease(ramp(T, ts, ts + 0.1))
-                c.save()
-                c.translate(x, y + 6)
-                c.rotate(-14)
-                c.scale(1.7 - 0.7 * kk, 1.7 - 0.7 * kk)
-                col = (24, 24, 30) if i in flagged else (210, 20, 34)
-                word = "FLAGGED" if i in flagged else "PASSED"
-                c.drawRoundRect(skia.Rect.MakeLTRB(-56, -22, 56, 22), 4, 4, paint(col, a * kk, stroke=5))
-                K.text(c, word, 0, 11, 27 if i not in flagged else 23, "cinzel-800", col, tag="deco", a=a * kk)
-                c.restore()
-        if T > t94:
-            kk = K.ease(ramp(T, t94, t94 + 0.4))
-            PR.plaque(c, 540, 300, ["94% UNDETECTED"], size=60, a=a * kk, tag="plaque")
-    if cols_k > 0:                                              # two marble columns: the AI answers stand taller
-        a = cols_k
-        grow = K.ease(ramp(T, tav + 0.2, tav + 1.4))
-        for i, (lab, hh, col) in enumerate((("AI ANSWERS", 640, (196, 188, 180)), ("REAL STUDENTS", 470, (150, 140, 132)))):
+
+    if t_slip <= T < t_board:                                   # close: the hand slips a perfect script into the pile
+        zoom(c, T, t_slip, t_board + 0.3, 1.0, 1.14, cx=500, cy=980)
+
+        def albedo2(cc):
+            cc.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((34, 76, 46)))
+            rng = K.rng_at(71, 2)
+            for i in range(400):
+                cc.drawCircle(rng.uniform(0, W), rng.uniform(0, H), rng.uniform(1, 3), paint((20, 50, 30), 0.6))
+
+        def light2(cc):
+            G.pool(cc, 430, 950, 820, AMBER, 1.0)
+            G.pool(cc, 1000, 620, 620, MAGENTA, 0.7)
+            G.pool(cc, 160, 1500, 600, EMERALD, 0.5)
+        SE.lit2d(c, albedo2, light2, amb=(16, 12, 16))
+        u = K.ease(ramp(T, t_slip + 0.2, t_board - 0.6))
+        rng = K.rng_at(72, 1)
+        offs = [(rng.uniform(-22, 22), rng.uniform(-14, 14), rng.uniform(-5, 5)) for _ in range(9)]
+        px, py = 470, 960
+        for i in range(9):
+            if i == 5:
+                sx = px + 520 * (1 - u)
+                _script(c, sx, py - 6, 520, 680, -2 + 3 * (1 - u), True, 99)
+                hold = (sx + 255, py - 40)
+            dx, dy, ang = offs[i]
+            _script(c, px + dx, py + dy - i * 3, 520, 680, ang, False, i)
+        G.pool(c, 420, 760, 420, AMBER, 0.25)
+        if u < 1.0 or T < t_board - 0.2:                        # the hand lets go and withdraws
+            back = K.ease(ramp(T, t_board - 0.5, t_board - 0.05))
+            _glove(c, hold[0] + 560 * back, hold[1], 1.8, T)
+        c.restore()
+        return st.arr
+
+    if T >= t_cols:                                             # two marble columns: the AI's half a grade higher
+        zoom(c, T, t_cols, end("g_exam"), 1.0, 1.1, cx=540, cy=860)
+        G.pool(c, 540, 820, 760, (120, 30, 60), 0.6)
+        G.pool(c, 330, 900, 420, AMBER, 0.5)
+        grow = K.ease(ramp(T, t_cols + 0.2, t_cols + 1.3))
+        for i, (lab, hh, col) in enumerate((("AI ANSWERS", 600, (210, 202, 192)), ("REAL STUDENTS", 545, (150, 140, 132)))):
             x = 330 + i * 420
             top = 1200 - hh * grow
-            c.drawRect(skia.Rect.MakeLTRB(x - 90, top, x + 90, 1200), paint(col, a))
+            c.drawRect(skia.Rect.MakeLTRB(x - 90, top, x + 90, 1200), paint(col))
             for k in range(5):
-                c.drawLine(x - 70 + k * 35, top + 20, x - 70 + k * 35, 1190, paint(mix(col, BLACK, 0.2), a, stroke=4))
-            c.drawRect(skia.Rect.MakeLTRB(x - 110, top - 30, x + 110, top), paint(mix(col, WHITE, 0.2), a))
-            c.drawRect(skia.Rect.MakeLTRB(x - 120, 1200, x + 120, 1240), paint(mix(col, BLACK, 0.15), a))
-            K.text(c, lab, x, 1290, 38, "cinzel-600", (240, 230, 214), tag="label", a=a)
-        PR.plaque(c, 540, 300, ["AVERAGE MARKS"], size=52, a=a, tag="plaque")
+                c.drawLine(x - 70 + k * 35, top + 20, x - 70 + k * 35, 1190, paint(mix(col, BLACK, 0.2), stroke=4))
+            c.drawRect(skia.Rect.MakeLTRB(x - 110, top - 30, x + 110, top), paint(mix(col, WHITE, 0.2)))
+            c.drawRect(skia.Rect.MakeLTRB(x - 120, 1200, x + 120, 1240), paint(mix(col, BLACK, 0.15)))
+            K.text(c, lab, x, 1290, 38, "cinzel-600", (240, 230, 214), tag="label")
+        kl = K.ease(ramp(T, t_cols + 1.2, t_cols + 1.6))
+        if kl > 0:
+            top = 1200 - 600
+            K.text(c, "+\u00bd GRADE", 330, top - 60, 50, "cinzel-800", (255, 90, 110), tag="label", a=kl)
+        c.restore()
+        PR.plaque(c, 540, 330, ["AVERAGE MARK"], size=52, tag="plaque")
+        return st.arr
+
+    # the examiners' table: the scripts slide in; then the stamps
+    if T >= t_board:
+        zoom(c, T, t_board, t_cols, 1.0, 1.12, cx=540, cy=820)
+    else:
+        zoom(c, T, t0, t_slip + 0.3, 1.0, 1.06, cx=540, cy=820)
+
+    def albedo(cc):
+        cc.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((90, 20, 30)))
+        cc.drawRect(skia.Rect.MakeLTRB(40, 380, 1040, 1320), paint((70, 44, 26)))      # the examiners' table, from above
+        cc.drawRect(skia.Rect.MakeLTRB(70, 410, 1010, 1290), paint((30, 70, 40)))      # green baize
+        n_in = 33 if T >= t_board else int(min(33, max(0, (T - t0) / 0.05)))
+        for i in range(n_in):
+            r_, k_ = divmod(i, 6)
+            x, y = 160 + k_ * 152, 500 + r_ * 140
+            PR.paper(cc, x, y, 116, 128, tilts[i], T, grade=None, lines=5, seed=i)
+    SE.lit2d(c, albedo, light, amb=(18, 12, 16))
+    for i in range(33):
+        r_, k_ = divmod(i, 6)
+        x, y = 160 + k_ * 152, 500 + r_ * 140
+        ts = t94 + 0.02 + i * 0.022
+        if T > ts:
+            kk = K.ease(ramp(T, ts, ts + 0.1))
+            c.save()
+            c.translate(x, y + 6)
+            c.rotate(-14)
+            c.scale(1.7 - 0.7 * kk, 1.7 - 0.7 * kk)
+            col = (24, 24, 30) if i in flagged else (210, 20, 34)
+            word = "FLAGGED" if i in flagged else "PASSED"
+            c.drawRoundRect(skia.Rect.MakeLTRB(-56, -22, 56, 22), 4, 4, paint(col, kk, stroke=5))
+            K.text(c, word, 0, 11, 27 if i not in flagged else 23, "cinzel-800", col, tag="deco", a=kk)
+            c.restore()
+    c.restore()
+    if T > t94:                                                 # the plaque stays put while the lens pushes in
+        kk = K.ease(ramp(T, t94, t94 + 0.4))
+        PR.plaque(c, 540, 300, ["94% UNDETECTED"], size=60, a=kk, tag="plaque")
     return st.arr
 
 
@@ -290,21 +389,50 @@ def s_w_desk3(T, idx):
 
 
 def s_w_shelves(T, idx):
-    """88% of UK students use AI on assessed work; nearly 1 in 5 have pasted its words straight in: a cabinet of a
-    hundred porcelain scholars - 88 light up; 18 crack."""
+    """88% of UK students use AI to help with assessed work (mostly to explain things); nearly 1 in 5 have pasted its
+    words straight in. A cabinet of a hundred porcelain scholars, 88 lighting up; then close on one shelf - five of
+    them, and one cracks open on nothing."""
     st = K.Stage((6, 4, 6))
     c = st.c
     t0 = cut("w_shelves")
     t88 = Wx("w5", "Eighty-eight")
     t18 = Wx("w5", "Nearly")
-    zoom(c, T, t0, end("w_shelves"), 1.0, 1.06, cx=540, cy=760)
+    t_close = t18 - 0.2
+    if T >= t_close:                                            # close on one shelf: one in five goes hollow
+        zoom(c, T, t_close, end("w_shelves") + 0.3, 1.0, 1.16, cx=540, cy=900)
+        c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((40, 22, 14)))
+        G.pool(c, 540, 860, 760, (120, 30, 60), 0.55)
+        c.drawRect(skia.Rect.MakeLTRB(0, 1130, W, 1170), paint((96, 60, 36)))
+        c.drawRect(skia.Rect.MakeLTRB(0, 1170, W, 1200), paint((50, 30, 18)))
+        crack_k = ramp(T, t18 + 0.5, t18 + 0.9)
+        for k in range(5):
+            x = 150 + k * 195
+            hollow = k == 3
+            G.pool(c, x, 900, 150, AMBER, 0.55 if not (hollow and crack_k > 0) else 0.15)
+            PR.figurine(c, x, 1140, 1.75, T, "scholar", face_color=(252, 230, 190), seed=k, lit=(255, 170, 70))
+            if hollow and crack_k > 0:                          # its face falls away: nothing inside
+                fx, fy = x, 1140 - 124 * 1.75
+                rng = K.rng_at(5, k)
+                c.drawCircle(fx, fy, 28 * crack_k + 4, paint((4, 2, 4)))
+                c.drawCircle(fx, fy, 28 * crack_k + 4, paint((220, 30, 40), 0.9, stroke=3))
+                for q in range(6):
+                    ang = rng.uniform(0, 6.283)
+                    c.drawLine(fx + math.cos(ang) * 18, fy + math.sin(ang) * 18, fx + math.cos(ang) * 46, fy + math.sin(ang) * 46,
+                               paint((40, 20, 24), 0.9, stroke=3))
+                for q in range(5):                              # flakes of porcelain dropping to the shelf
+                    fall = min(1.0, (T - t18 - 0.5) * 1.6 + q * 0.1)
+                    c.drawCircle(fx + rng.uniform(-30, 30), fy + 40 + fall * 140, 5, paint((240, 226, 200), 0.9 * (1 - fall * 0.5)))
+        k = K.ease(ramp(T, t_close, t_close + 0.3))
+        PR.plaque(c, 540, 380, ["18% PASTED AI TEXT STRAIGHT IN"], size=38, a=k, color=(120, 20, 24))
+        c.restore()
+        return st.arr
+    zoom(c, T, t0, t_close + 0.2, 1.0, 1.14, cx=540, cy=820)
     c.drawRect(skia.Rect.MakeLTRB(60, 360, 1020, 1250), paint((50, 28, 18)))
     G.pool(c, 540, 800, 700, (120, 30, 60), 0.5)
     rng = K.rng_at(88, 1)
     order = list(range(100))
     rng.shuffle(order)
     lit = set(order[:88])
-    cracked = set(order[:18])
     for r in range(10):
         y = 460 + r * 82
         c.drawRect(skia.Rect.MakeLTRB(80, y + 2, 1000, y + 12), paint((86, 54, 32)))
@@ -312,21 +440,14 @@ def s_w_shelves(T, idx):
             i = r * 10 + k
             x = 135 + k * 90
             on = T > t88 + (i % 10) * 0.02 + r * 0.03 and i in lit
-            cr = T > t18 + (i % 7) * 0.05 and i in cracked
-            if on and not cr:
+            if on:
                 G.pool(c, x, y - 52, 40, AMBER, 0.5)
             PR.figurine(c, x, y, 0.42, T, "scholar", face_color=(252, 226, 180) if on else (70, 60, 60), seed=i,
                         lit=(255, 170, 70) if on else (20, 14, 14))
-            if cr:
-                c.drawCircle(x, y - 52, 9, paint((6, 2, 4)))
-                c.drawCircle(x, y - 52, 10, paint((220, 20, 30), 0.9, stroke=2.5))
+    c.restore()
     if T > t88 - 0.1:
         k = K.ease(ramp(T, t88 - 0.1, t88 + 0.3))
-        PR.plaque(c, 540, 300, ["88% USE AI ON ASSESSED WORK"], size=40, a=k)
-    if T > t18 - 0.1:
-        k = K.ease(ramp(T, t18 - 0.1, t18 + 0.3))
-        PR.plaque(c, 540, 1300, ["18% PASTED AI TEXT STRAIGHT IN"], size=36, a=k, color=(120, 20, 24))
-    c.restore()
+        PR.plaque(c, 540, 310, ["88% USE AI FOR ASSESSED WORK", "MOSTLY TO EXPLAIN THINGS"], size=40, sizes=[40, 28], a=k)
     return st.arr
 
 

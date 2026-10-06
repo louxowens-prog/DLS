@@ -152,12 +152,32 @@ def drone(bus, t0, t1, root=33, level=1.0):
     bus.add(O.drone(t1 - t0 + 0.6, root=root, amp=level), t0, 0.6, until=t1)
 
 
+def shriek(dur=1.5, amp=1.0, seed=0):
+    """The scare's top end, which is what a phone speaker plays: a cluster of high bowed strings scraping in semitones
+    and tritones (1-3 kHz, with their overtones) and a hiss of breaking glass (2-7 kHz), all at once, fading fast."""
+    t = np.arange(int(dur * SR)) / SR
+    rng = np.random.default_rng(seed)
+    strings = np.zeros(len(t))
+    for m in (86, 87, 92, 93, 98, 99):
+        f = 440 * 2 ** ((m - 69) / 12)
+        vib = 1 + 0.005 * np.sin(2 * np.pi * rng.uniform(5, 7) * t + rng.uniform(0, 6))
+        ph = np.cumsum(f * vib) / SR + rng.uniform()
+        strings += (2 * (ph % 1.0) - 1) * (0.7 + 0.3 * np.sin(2 * np.pi * rng.uniform(9, 13) * t))
+    bp = lambda x, lo, hi: signal.sosfilt(signal.butter(2, [lo / (SR / 2), hi / (SR / 2)], "band", output="sos"), x)
+    strings = bp(strings, 900, 7000) / 6
+    glass = bp(rng.normal(0, 1, len(t)), 2200, 7500)
+    glass *= np.exp(-t / 0.18)
+    env = np.minimum(1, t / 0.004) * np.exp(-t / 0.5)
+    return amp * np.tanh(2.4 * (strings * 1.4 + glass * 0.8) * env)
+
+
 def stinger(mus, fx, t, level=1.0):
-    """A scare: the orchestra's dissonant stab, an organ cluster, a choir's shriek, a low boom."""
-    mus.add(O.scare(1.0 * level, seed=int(t * 10), notes=(45, 46, 51, 57, 58, 63, 64), drive=1.4), t, 1.0)
-    mus.add(O.organ([57, 58, 63, 64, 69, 70], 1.6, 0.4 * level), t, 0.8)
-    mus.add(I.choir([81, 82, 87], 1.4, 0.45 * level, vowel="a", attack=0.02, gliss=-3.0), t, 0.9)
-    fx.add(Y.thud(1.0, f=42), t, 1.4 * level)
+    """A scare: the orchestra's dissonant stab, an organ cluster, a choir's shriek, glass and high strings, a boom."""
+    mus.add(O.scare(1.0 * level, seed=int(t * 10), notes=(45, 46, 51, 57, 58, 63, 64), drive=1.4), t, 0.35)
+    mus.add(O.organ([57, 58, 63, 64, 69, 70], 1.6, 0.4 * level), t, 0.45)
+    mus.add(I.choir([81, 82, 87], 1.4, 0.45 * level, vowel="a", attack=0.02, gliss=-3.0), t, 1.8)
+    fx.add(shriek(1.5, 1.0, seed=int(t * 10)), t, 3.4 * level)
+    fx.add(Y.thud(1.0, f=42), t, 0.55 * level)
 
 
 def chime(bus, t, level=1.0, m=69):
@@ -189,13 +209,14 @@ def steps(fx, t0, t1, gap=0.5, level=1.0, seed=0, hard=True, pan=0.5):
 T_NOTHING = E("h2") + 0.08                     # after "nothing": silence, then the title
 T_TITLE = cut("t_title")
 T_SCARE1 = end("l_loop") - 0.62                # the mannequin at the glass
+T_EMPTY = cut("l_loop") + 3 * 0.85              # ... after three passes: the window is empty, and nothing makes a sound
 T_JAM = E("c4") + 0.25                         # the gears seize ...
 T_SCARE2 = cut("c_scare")                      # ... and the falling graduate
 T_WHITE = E("x1") + 1.15                       # the door opens on white
 T_ROOM = S("r1") - 0.3                         # the present day's hum comes up
 T_HOLLOW = E("p1") + 0.15                      # her reflection breaks open on nothing
 T_LESSON = cut("e_slate") + 0.25
-SILENCES = [(T_NOTHING, T_TITLE - 0.02), (T_SCARE1 - 0.24, T_SCARE1), (T_JAM, T_SCARE2), (T_WHITE, T_ROOM),
+SILENCES = [(T_NOTHING, T_TITLE - 0.02), (T_EMPTY, T_SCARE1), (T_JAM, T_SCARE2), (T_WHITE, T_ROOM),
             (T_HOLLOW, T_LESSON)]
 
 
@@ -246,10 +267,11 @@ def score(mus, fx):
     # deja vu: the same three notes, a little more out of tune each time
     t0 = cut("l_loop")
     for k in range(3):
-        mus.add(O.music_box([(88, 1), (93, 1), (92, 2)], amp=0.8, detune=lambda u, k=k: [0.0, 45.0, 100.0][k]), t0 + k * 0.58, 0.9, 0.5)
-        fx.add(Y.footsteps(2, 0.22, 1.0, seed=k, hard=True), t0 + k * 0.58 + 0.05, 0.6)
+        mus.add(O.music_box([(88, 1), (93, 1), (92, 2)], amp=0.8, detune=lambda u, k=k: [0.0, 45.0, 100.0][k]), t0 + k * 0.85, 0.9, 0.5)
+        fx.add(Y.footsteps(3, 0.22, 1.0, seed=k, hard=True), t0 + k * 0.85 + 0.05, 0.6)
+        fx.add(O.whispers(0.6, 0.6, seed=30 + k), t0 + k * 0.85 + 0.1, 0.25)
     stinger(mus, fx, T_SCARE1, 1.0)
-    fx.add(I.smash(1.0, seed=5), T_SCARE1 + 0.1, 0.9)
+    fx.add(I.smash(1.0, seed=5), T_SCARE1 + 0.1, 1.5)
     # ---------------- the villa
     fx.add(Y.creak(1.4, 1.0, seed=3, f0=420, f1=180), cut("v_gate") + 0.2, 0.7)
     organ_chord(mus, cut("v_door"), E("v1") - cut("v_door") + 1.0, [33, 45, 52, 57], 0.8)
@@ -307,7 +329,7 @@ def score(mus, fx):
     fx.add(Y.engine(E("c4") - S("c4") + 0.4, 1.0, seed=4), S("c4") - 0.2, 0.6)
     fx.add(Y.riser(0.5, 1.0, f0=900, f1=3200), E("c4") - 0.3, 0.5)                    # the screech as it seizes
     stinger(mus, fx, T_SCARE2 + 0.25, 1.1)
-    fx.add(I.smash(1.0, seed=8), T_SCARE2 + 0.3, 1.0)
+    fx.add(I.smash(1.0, seed=8), T_SCARE2 + 0.3, 1.5)
     # ---------------- the hall of mirrors
     t0, t1 = cut("m_mirrors"), cut("x_door")
     for k, m in enumerate((88, 91, 95, 100)):
@@ -358,9 +380,9 @@ def score(mus, fx):
     tower_bell(fx, t0 + 0.3, 1.0, m=45, dur=6.0)
     fx.add(O.whir(cut("e_fine") - t0, 0.5, f=70), t0, 0.3)
     box_theme(mus, t0 + 0.4, cut("e_fine"), 0.55, cents=20.0, rate=0.9)
-    fx.add(O.clunk(1.0, seed=6), cut("e_fine") - 0.25, 0.6)
-    tower_bell(fx, cut("e_fine") + 0.15, 1.1, m=40, dur=7.0)
-    mus.add(O.strings([45, 57, 64, 69], 1.8, 0.4), cut("e_fine") + 0.15, 0.8)
+    fx.add(O.clunk(1.0, seed=6), E("e3") + 0.05, 0.6)
+    tower_bell(fx, E("e3") + 0.2, 1.1, m=40, dur=7.0)                       # the last stroke, left to ring out
+    mus.add(O.strings([45, 57, 64, 69], 2.6, 0.4), E("e3") + 0.2, 0.8)
 
 
 def warp_depth(t):
@@ -466,8 +488,8 @@ def presence(x, f0=3000, gain_db=2.0, q=0.9):
 
 
 NEED = {"NAR": 11.0}                              # the voice over the bed in the speech band (characters: 13)
-BED = -3.0                                        # the beds' ceiling between lines, against the average line (dB)
-HITS = [(T_TITLE, 4.0, 1.6), (T_SCARE1, 11.0, 1.3), (T_SCARE2 + 0.25, 11.0, 1.3)]   # (time, ceiling dB, seconds)
+BED = -5.0                                        # the beds' ceiling between lines, against the average line (dB)
+HITS = [(T_TITLE, 4.0, 1.6), (T_SCARE1, 16.0, 1.3), (T_SCARE2 + 0.25, 16.0, 1.3)]   # (time, ceiling dB, seconds)
 CEIL = -2.0
 STEMS = {}
 
@@ -547,7 +569,7 @@ def build():
     hiss = signal.sosfilt(signal.butter(2, [400 / (SR / 2), 6000 / (SR / 2)], "band", output="sos"), rng.normal(0, 1, N_))
     mix = mix * dead[None] + np.stack([hiss, hiss]) * db(-72) * (1 - dead)[None]
     mix = loudness(mix, -14.0)
-    a_, b_ = int((TL.total - 0.5) * SR), int(TL.total * SR)
+    a_, b_ = int((TL.total - 1.3) * SR), int(TL.total * SR)
     mix[:, a_:b_] *= np.linspace(1, 0, b_ - a_) ** 2
     mix[:, b_:] = 0.0
     STEMS.update(music=music, fx=fxx, vo=vo)

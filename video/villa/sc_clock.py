@@ -36,33 +36,46 @@ def _mechanism(c, T, speed=1.0, jam=0.0, seed=0):
 
 def s_c_gears(T, idx):
     """You can pass a programming course and still not be able to program: inside the clock, a certificate of a
-    passed course pinned to the works she cannot read; two gauges - 50% with AI, 67% by hand."""
+    passed course pinned to works she cannot read. Then the trial: close on one brass gauge as its needle drops to 50%
+    (with AI); then both, side by side, as the other climbs to 67% (by hand)."""
     st = K.Stage((6, 4, 4))
     c = st.c
     t0 = cut("c_gears")
-    zoom(c, T, t0, end("c_gears"), 1.0, 1.12, cx=540, cy=900)
-    _mechanism(c, T)
-    c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((0, 0, 0), 0.25))
     tt = Wx("c2", "trial")
-    k_cert = 1 - K.ease(ramp(T, tt - 0.4, tt))
-    if k_cert > 0:                                              # the certificate: course passed
+    t_ai = tt - 0.15
+    t_both = Wx("c2", "Coding") - 0.15
+    if T < t_ai:                                                # the certificate in the works
+        zoom(c, T, t0, t_ai + 0.3, 1.0, 1.16, cx=540, cy=760)
+        _mechanism(c, T)
+        c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((0, 0, 0), 0.25))
         c.save()
         c.translate(540, 700)
         c.rotate(-4)
-        c.drawRect(skia.Rect.MakeLTRB(-300, -200, 300, 200), paint(mix(PAPER, (255, 240, 210), 0.2), k_cert))
-        c.drawRect(skia.Rect.MakeLTRB(-280, -180, 280, 180), paint(GOLD, k_cert, stroke=6))
-        K.text(c, "CERTIFICATE", 0, -90, 50, "cinzel-800", INK, tag="plaque", a=k_cert)
-        K.text(c, "PROGRAMMING", 0, -10, 46, "cinzel-600", INK, tag="plaque", a=k_cert)
-        K.text(c, "PASSED", 0, 80, 62, "playfair-700", (190, 20, 30), tag="plaque", a=k_cert)
-        c.drawCircle(200, 130, 40, paint((190, 30, 40), k_cert))
+        c.drawRect(skia.Rect.MakeLTRB(-300, -200, 300, 200), paint(mix(PAPER, (255, 240, 210), 0.2)))
+        c.drawRect(skia.Rect.MakeLTRB(-280, -180, 280, 180), paint(GOLD, stroke=6))
+        K.text(c, "CERTIFICATE", 0, -90, 50, "cinzel-800", INK, tag="plaque")
+        K.text(c, "PROGRAMMING", 0, -10, 46, "cinzel-600", INK, tag="plaque")
+        K.text(c, "PASSED", 0, 80, 62, "playfair-700", (190, 20, 30), tag="plaque")
+        c.drawCircle(200, 130, 40, paint((190, 30, 40)))
         c.restore()
-        CA.walker_back(c, 540, 1580, 0.62, T, walking=False, key=(255, 160, 70), rim=(40, 220, 140), a=k_cert)
-    if T > tt - 0.3:
-        k = K.ease(ramp(T, tt - 0.3, tt + 0.2))
-        v_ai = 50 * K.ease(ramp(T, Wx("c2", "fifty") - 0.4, Wx("c2", "fifty") + 0.2))
-        v_hand = 67 * K.ease(ramp(T, Wx("c2", "Coding") - 0.1, Wx("c2", "sixty-seven") + 0.2))
-        PR.gauge(c, 300, 760, 190, v_ai, "WITH AI", a=k)
-        PR.gauge(c, 780, 760, 190, v_hand, "BY HAND", a=k)
+        CA.walker_back(c, 540, 1580, 0.62, T, walking=False, key=(255, 160, 70), rim=(40, 220, 140))
+        c.restore()
+        return st.arr
+    v_ai = 50 * K.ease(ramp(T, Wx("c2", "fifty") - 0.4, Wx("c2", "fifty") + 0.2))
+    if T < t_both:                                              # one gauge, close: with AI
+        zoom(c, T, t_ai, t_both + 0.2, 1.0, 1.12, cx=540, cy=800)
+        _mechanism(c, T, seed=3)
+        c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((0, 0, 0), 0.45))
+        G.pool(c, 540, 780, 520, AMBER, 0.5)
+        PR.gauge(c, 540, 760, 300, v_ai, "WITH AI")
+        c.restore()
+        return st.arr
+    zoom(c, T, t_both, end("c_gears") + 0.2, 1.0, 1.1, cx=540, cy=840)
+    _mechanism(c, T)
+    c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((0, 0, 0), 0.35))
+    v_hand = 67 * K.ease(ramp(T, Wx("c2", "Coding") - 0.1, Wx("c2", "sixty-seven") + 0.2))
+    PR.gauge(c, 300, 760, 190, 50, "WITH AI")
+    PR.gauge(c, 780, 760, 190, v_hand, "BY HAND")
     c.restore()
     return st.arr
 

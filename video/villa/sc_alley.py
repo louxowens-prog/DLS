@@ -157,10 +157,10 @@ def s_l_stairs(T, idx):
         y = [600, 700, 900, 1040][i] - 40 * K.ease(k)
         PR.paper(c, x, y, 300 * s, 400 * s, [-8, 7, -5, 9][i] + 40 * gone, T, title=lab, lines=7, seed=40 + i,
                  kind="code" if lab == "CODE" else "essay", tag="label", a=1 - gone, title_size=34 * s)
-    if T > Wx("l2", "Reports.") + 0.3:                         # ...and the discussion posts, a little flurry
-        k = ramp(T, Wx("l2", "Reports.") + 0.3, Wx("l2", "Reports.") + 0.8)
-        PR.paper(c, 540, 420 + 40 * k, 260, 160, -4, T, title="DISCUSSION POST", lines=3, seed=60, tag="label", a=K.ease(k),
-                 title_size=26)
+    if T > Wx("l2", "Code.") - 0.1:                            # ...and the discussion posts, drifting down above them
+        k = ramp(T, Wx("l2", "Code.") - 0.1, Wx("l2", "Code.") + 0.3)
+        PR.paper(c, 560, 380 + 50 * K.ease(k), 460, 290, -4, T, title="DISCUSSION POST", lines=4, seed=60, tag="label", a=K.ease(k),
+                 title_size=42)
     c.restore()
     return st.arr
 
@@ -184,7 +184,7 @@ def s_l_name(T, idx):
     return L.compose(f, strength=12.0)
 
 
-def _courtyard(c, T, beat, pose, head, clara_x, glass=0.0):
+def _courtyard(c, T, beat, pose, head, clara_x, glass=0.0, empty=False):
     """The same small piazza every time: a fountain with a weeping stone mask, two arches, a shop window with a
     mannequin behind the glass (it is never standing where it stood before)."""
     def albedo(cc):
@@ -200,8 +200,9 @@ def _courtyard(c, T, beat, pose, head, clara_x, glass=0.0):
     # the shop window (left) and the arch (right)
     c.drawRect(skia.Rect.MakeLTRB(60, 560, 420, 1260), paint((8, 20, 14)))
     G.pool(c, 240, 900, 300, EMERALD, 0.4)
-    CA.mannequin(c, 240 + [0, 10, 40][min(2, beat)], 1240, 0.62, T, pose=pose, head=head, gown=False, cap=False,
-                 L=(60, 230, 150), R=(30, 120, 80), face_k=0.0 if beat < 2 else 0.7)
+    if not empty:
+        CA.mannequin(c, 240 + [0, 10, 40][min(2, beat)], 1240 + [0, 0, 60][min(2, beat)], 0.62 + [0, 0, 0.08][min(2, beat)], T,
+                     pose=pose, head=head, gown=False, cap=False, L=(60, 230, 150), R=(30, 120, 80), face_k=[0.0, 0.8, 1.0][min(2, beat)])
     c.drawRect(skia.Rect.MakeLTRB(60, 560, 420, 1260), paint((120, 255, 180), 0.08))
     c.drawLine(80, 600, 160, 540, paint(WHITE, 0.25, stroke=3))
     c.drawRect(skia.Rect.MakeLTRB(52, 552, 428, 1268), paint((60, 44, 30), stroke=16))
@@ -224,8 +225,9 @@ def _courtyard(c, T, beat, pose, head, clara_x, glass=0.0):
     c.drawOval(skia.Rect.MakeLTRB(mx - 22, my + 34, mx + 22, my + 66), paint((20, 14, 14)))
     c.drawPath(K.smooth([(mx - 240, 1400), (mx - 250, 1330), (mx, 1300), (mx + 250, 1330), (mx + 240, 1400), (mx, 1430)]), paint((128, 118, 108)))
     c.drawOval(skia.Rect.MakeLTRB(mx - 220, 1306, mx + 220, 1350), paint((30, 60, 80)))
-    for k in range(7):                                         # water from the mask's mouth
-        y = my + 60 + ((T * 420 + k * 34) % 250)
+    for k in range(7):                                         # water from the mask's mouth (the third time, it runs upward)
+        f = (T * 420 + k * 34) % 250
+        y = my + 60 + (f if beat < 2 else 250 - f)
         c.drawCircle(mx + 3 * math.sin(k), y, 5, paint((180, 220, 255), 0.6))
     G.pool(c, mx, 1320, 240, AMBER, 0.35)
     # Clara coming out of the arch
@@ -234,20 +236,26 @@ def _courtyard(c, T, beat, pose, head, clara_x, glass=0.0):
 
 
 def s_l_loop(T, idx):
-    """Deja vu: she turns a corner into the same piazza, three times; the mannequin in the window is never where it
-    was. Then dead silence, and it hits the glass."""
+    """Deja vu: she turns the corner into the same piazza - three times. The same fountain, the same three notes; the
+    mannequin in the window is never where it was, and each time it has more of a face. The third time the fountain
+    runs upward. Then the window is empty, there is dead silence, and it hits the glass."""
     st = K.Stage()
     c = st.c
     t0 = cut("l_loop")
     u = T - t0
     scare = end("l_loop") - 0.62
-    if T < scare:
-        beat = min(2, int(u / 0.58))
-        pose = [0, 1, 3][beat]
-        head = [0.0, -0.8, -0.2][beat]
-        bt = u - beat * 0.58
-        SE_x = 860 - bt * 120
-        _courtyard(c, T, beat, pose, head, SE_x)
+    P_ = 0.85
+    hold = t0 + 3 * P_
+    if T < hold:
+        beat = min(2, int(u / P_))
+        bt = u - beat * P_
+        _courtyard(c, T, beat, [0, 1, 3][beat], [0.0, -0.8, -0.2][beat], 860 - min(bt, 0.65) * 190)
+        if bt < 0.07:                                          # each pass begins on the same frame: a flash of deja vu
+            c.drawPaint(paint((255, 255, 255), 0.35 * (1 - bt / 0.07)))
+    elif T < scare:                                            # the window is empty; the lens creeps toward the dark glass
+        zoom(c, T, hold, scare, 1.0, 1.35, cx=240, cy=900)
+        _courtyard(c, T, 2, 3, -0.2, 860 - 0.65 * 190, empty=True)
+        c.restore()
     else:
         k = ramp(T, scare, scare + 0.12)
         shake(c, T, 22 * hit(T, scare + 0.08, 0.4), seed=3)
@@ -259,7 +267,7 @@ def s_l_loop(T, idx):
         c.scale(z, z)
         c.translate(-540, -900)
         CA.mannequin(c, 540, 1900, 0.95, T, pose=3, head=0.0, gown=False, cap=False, L=(80, 255, 170), R=(255, 60, 160),
-                     face_k=1.0)
+                     face_k=1.0, crack=1.0)
         c.restore()
         if k >= 1:                                             # the glass cracks where the face struck it
             rng = K.rng_at(9, 9)
