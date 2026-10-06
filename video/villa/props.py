@@ -12,13 +12,14 @@ from kit import BLACK, GOLD, INK, PAPER, WHITE, mix, paint
 ROMAN = ["XII", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI"]
 
 
-def clock_face(c, x, y, r, hour=9.0, minute=0.0, light=1.0, label=None, label_size=None, tag="plaque", hands_a=1.0):
+def clock_face(c, x, y, r, hour=9.0, minute=0.0, light=1.0, label=None, label_size=None, tag="plaque", hands_a=1.0,
+               dial=(236, 226, 200)):
     """An ornate clock face: gilded ring, enamel dial, Roman numerals, a sun and moon, filigree hands."""
     c.save()
     c.translate(x, y)
     c.drawCircle(0, 0, r * 1.12, paint(mix(GOLD, BLACK, 0.45)))
     c.drawCircle(0, 0, r * 1.08, paint(shader=K.rad((-r * 0.3, -r * 0.3), r * 1.4, [mix(GOLD, WHITE, 0.35), GOLD, mix(GOLD, BLACK, 0.5)])))
-    c.drawCircle(0, 0, r * 0.96, paint(mix((236, 226, 200), BLACK, 0.12 * (1 - light))))
+    c.drawCircle(0, 0, r * 0.96, paint(mix(dial, BLACK, 0.12 * (1 - light))))
     c.drawCircle(0, 0, r * 0.96, paint(shader=K.rad((0, 0), r, [(0, 0, 0, 0.0), (0, 0, 0, 0.0), (60, 40, 20, 0.35)], [0, 0.7, 1])))
     f = K.font("cinzel-600", r * 0.15)
     for i, num in enumerate(ROMAN):
@@ -43,7 +44,7 @@ def clock_face(c, x, y, r, hour=9.0, minute=0.0, light=1.0, label=None, label_si
         c.drawLine(math.cos(a) * r * 0.1, -r * 0.36 + math.sin(a) * r * 0.1, math.cos(a) * r * 0.15, -r * 0.36 + math.sin(a) * r * 0.15,
                    paint(GOLD, stroke=r * 0.012))
     c.drawCircle(0, r * 0.36, r * 0.08, paint((40, 40, 70)))
-    c.drawCircle(r * 0.03, r * 0.35, r * 0.07, paint(mix((236, 226, 200), BLACK, 0.12 * (1 - light))))
+    c.drawCircle(r * 0.03, r * 0.35, r * 0.07, paint(mix(dial, BLACK, 0.12 * (1 - light))))
     if label:
         fl = K.font("cinzel-600", label_size or r * 0.13)
         w = fl.measureText(label)

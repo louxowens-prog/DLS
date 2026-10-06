@@ -78,8 +78,8 @@ def s_r_code(T, idx):
         c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((236, 236, 234)))
         k = K.ease(ramp(T, t1, t1 + 0.35))
         c.save()
-        c.translate(0, 300 * (1 - k))
-        c.rotate(-2)
+        c.translate(-760 * (1 - k), 40 * (1 - k))              # slid across the table from her left
+        c.rotate(-2 - 6 * (1 - k))
         c.drawRect(skia.Rect.MakeLTRB(110, 360, 990, 1290), paint((0, 0, 0), 0.15, blur=12))
         c.drawRect(skia.Rect.MakeLTRB(100, 340, 980, 1280), paint((252, 252, 250)))
         K.text(c, "Q3.", 150, 430, 44, "inter-700", INK, align="left", tag="screen")

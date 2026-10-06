@@ -415,17 +415,35 @@ def _crack(c, k, T):
     if k > 0.5:
         u = min(1.0, (k - 0.5) / 0.5)
         hole = K.smooth([(-40, -50), (20, -70), (70, -30), (60, 30), (10, 50), (-30, 20)])
-        c.save()
-        c.translate(0, 0)
         c.drawPath(hole, paint((0, 0, 0)))                     # nothing inside
-        c.drawPath(hole, paint((60, 50, 60), 0.8, stroke=3))
+        c.save()                                               # the shell's thickness, caught on the lower rim
+        c.clipPath(hole, doAntiAlias=True)
+        c.translate(-7, -9)
+        c.drawPath(hole, paint((0, 0, 0)))
         c.restore()
-        # the shard falling
         c.save()
-        c.translate(30 * u, 260 * u * u)
-        c.rotate(80 * u)
-        c.drawPath(hole, paint((240, 236, 232), 1 - u))
+        c.clipPath(hole, doAntiAlias=True)
+        c.drawPath(hole, paint((150, 120, 170), 0.85, stroke=9))
+        c.translate(-6, -8)
+        c.drawPath(hole, paint((0, 0, 0), 1.0, stroke=10))
         c.restore()
+        c.drawPath(hole, paint((30, 20, 34), 0.9, stroke=2.5))
+        # the shard: it tips forward out of the face (its rough unglazed back turns to us), then drops into the dark
+        if u < 1.0:
+            c.save()
+            c.translate(20 * u, 900 * u * u)
+            c.rotate(-50 * u)
+            fl = math.cos(math.pi * min(1.0, u * 1.6))             # 1 = glazed face, -1 = the back
+            c.scale(0.9 - 0.25 * u, max(0.08, abs(fl)) * (0.9 - 0.25 * u))
+            if fl > 0:
+                c.drawPath(hole, paint(shader=K.lin((-40, -60), (60, 50), [(236, 120, 196), (150, 120, 220), (90, 110, 230)])))
+                c.drawPath(hole, paint((255, 240, 250), 0.35, stroke=2))
+            else:
+                c.drawPath(hole, paint((84, 64, 92)))
+                for j in range(14):
+                    c.drawCircle(rng.uniform(-30, 50), rng.uniform(-50, 30), rng.uniform(1.5, 3.5), paint((40, 30, 46), 0.8))
+                c.drawPath(hole, paint((170, 140, 180), 0.5, stroke=2))
+            c.restore()
         for i in range(30):                                     # dust running out of the hole
             dx = rng.uniform(-30, 50)
             dy = rng.uniform(0, 300) * u

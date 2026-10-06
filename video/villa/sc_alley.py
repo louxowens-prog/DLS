@@ -7,6 +7,7 @@ import skia
 
 import cast as CA
 import gel as G
+import hall as HL
 import kit as K
 import pers as P
 import props as PR
@@ -345,27 +346,36 @@ def s_v_gate(T, idx):
 
 
 def s_v_door(T, idx):
-    """Signorina Clara. Your work is already finished. The Governess in the doorway, a candelabra in her hand, a blue
-    hall behind her; the lens creeps toward eyes that never blink."""
+    """Signorina Clara. Your work is already finished. Inside: the entrance hall - a faded fresco, a grand staircase with
+    a crimson runner, a cracked mirror, a moonlit window, velvet drapes - and the Governess waiting at the foot of the
+    stairs with a candelabra. The zoom lens creeps from the hall to eyes that never blink."""
     st = K.Stage((2, 2, 8))
     c = st.c
     t0 = cut("v_door")
-    zoom(c, T, t0, end("v_door"), 1.0, 1.3, cx=540, cy=700)
-    # the hall behind, cobalt
-    c.drawRect(skia.Rect.MakeLTRB(170, 150, 910, 1920), paint(shader=K.lin((0, 150), (0, 1900), [(20, 30, 110), (6, 8, 40)])))
-    for k in range(6):
-        y = 1300 + k * 70
-        c.drawRect(skia.Rect.MakeLTRB(600 + k * 30, y, 910, y + 14), paint((40, 50, 140), 0.6))
-    G.pool(c, 540, 500, 600, (60, 90, 255), 0.5)
-    # the door frame
-    c.drawRect(skia.Rect.MakeLTRB(90, 120, 250, 1920), paint((40, 22, 14)))
-    c.drawRect(skia.Rect.MakeLTRB(830, 120, 990, 1920), paint((40, 22, 14)))
-    c.drawRect(skia.Rect.MakeLTRB(90, 60, 990, 150), paint((50, 28, 18)))
-    open_ = K.ease(ramp(T, t0, t0 + 0.6))
-    c.drawRect(skia.Rect.MakeLTRB(250 + 580 * open_, 150, 830, 1920), paint((30, 16, 10)))
-    CA.face(c, 540, 700, 1.55, "governess", T, L=(255, 170, 70), R=(70, 100, 255), core=0.4, expr="polite",
+    zoom(c, T, t0, end("v_door") + 0.3, 1.0, 1.85, cx=540, cy=690)
+    SE.lit2d(c, lambda cc: HL.hall_albedo(cc, T), lambda cc: HL.hall_light(cc, T), amb=(30, 24, 32))
+    for x, y, s in HL.newels():
+        PR.candelabra(c, x, y + 4, s * 0.8, T)
+    G.motes(c, T, 260, 300, 820, 1500, n=46, a=0.5, seed=4, size=2.6)
+    # the Governess: her long black dress, then her face and shoulders
+    dress = skia.Path()
+    dress.moveTo(352, 1100)
+    dress.lineTo(728, 1100)
+    dress.cubicTo(720, 1200, 690, 1260, 692, 1330)
+    dress.cubicTo(700, 1520, 770, 1760, 800, 1960)
+    dress.lineTo(280, 1960)
+    dress.cubicTo(310, 1760, 380, 1520, 388, 1330)
+    dress.cubicTo(390, 1260, 360, 1200, 352, 1100)
+    dress.close()
+    c.drawPath(dress, paint((12, 10, 14)))
+    for k, x in enumerate((420, 500, 590, 660)):                   # the folds of the skirt catching the gel light
+        c.drawLine(x + (x - 540) * 0.05, 1340, x + (x - 540) * 0.6, 1950, paint((60, 30, 90) if k % 2 else (90, 40, 30), 0.35, stroke=10, blur=6))
+    CA.face(c, 540, 700, 0.66, "governess", T, L=(255, 170, 70), R=(70, 100, 255), core=0.45, expr="polite",
             talk=talk(T, "GOV"), blink=0.0, gaze=(0.0, 0.0), porc=0.35, glaze=0.6)
-    PR.candelabra(c, 300, 1200, 1.0, T)
-    G.pool(c, 300, 1060, 500, AMBER, 0.35)
+    PR.candelabra(c, 350, 1250, 0.7, T)
+    G.pool(c, 350, 1130, 360, AMBER, 0.3)
+    # heavy velvet curtains framing the doorway
+    HL.drape(c, -20, -40, 230, 1960, color=(110, 10, 30), side=-1, folds=5, tie=0.6)
+    HL.drape(c, 850, -40, 1100, 1960, color=(110, 10, 30), side=1, folds=5, tie=0.6)
     c.restore()
     return st.arr

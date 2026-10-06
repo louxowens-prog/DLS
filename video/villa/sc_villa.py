@@ -41,7 +41,7 @@ def s_g_gallery(T, idx):
     t0 = cut("g_gallery")
     u = T - t0
     cam = P.Cam(pos=(0.0, 1.6, 0.55 * u), f=820, pitch=-1)
-    SE.gallery(c, cam, T, portraits=_portrait, seed=2)
+    SE.gallery(c, cam, T, portraits=_portrait, seed=2, drapes=(100, 8, 30), fresco=True)
     SE.fog_end(c, cam, cam.pos[2] + 26, r=420)
     figs = []
     for i in range(7):

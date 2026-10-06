@@ -79,15 +79,17 @@ def alley(c, cam, T, lights=None, length=40.0, width=3.2, height=9.0, arches=(7.
             lights.append(P.Light((side * (hw - 0.35), 3.1, z), ALLEY_GELS[(i + seed) % len(ALLEY_GELS)], 1.3, 1.5))
     if sky_:
         sky(c, y0=0, y1=1100, seed=seed)
-    # floor: wet cobbles
-    fl = P.floor(-hw, hw, cam.pos[2] - 1, cam.pos[2] + length)
+    # floor: wet cobbles. Every plane is fixed in the world (not to the camera), so its texture holds still as the
+    # camera dollies through it
+    za, zb = -1.0, length + 6.0
+    fl = P.floor(-hw, hw, za, zb)
     with fl.draw(c, cam) as pc:
         if pc is not None:
             P.lit(pc, fl, lights, lambda q: _cobbles(q, fl.ext, stone, seed), spread=1.1)
             P.depth_fog(pc, fl, cam, fog, density)
     # walls
     for side in (-1, 1):
-        wl = P.wall_x(side * hw, cam.pos[2] - 1, cam.pos[2] + length, 0, height, facing=-side)
+        wl = P.wall_x(side * hw, za, zb, 0, height, facing=-side)
 
         def albedo(q, wl=wl, side=side):
             P.stone_blocks(q, wl.ext, stone, seed=seed + side * 3)
@@ -303,8 +305,8 @@ def square(c, T, clock_r=118, doors=0.0, parade=None, group=0.0, clara=None, bir
     for (x0, y0, w, h) in ((70, 852, 70, 170), (250, 1100, 70, 170), (880, 980, 70, 170)):
         G.pool(c, x0 + w / 2, y0 + h / 2, 160, AMBER, 0.35)
     cx, cy = 540, 665
-    clock_face(c, cx, cy, clock_r, 9, 0)
-    G.pool(c, cx, cy, clock_r * 1.6, (255, 210, 140), 0.18)
+    clock_face(c, cx, cy, clock_r, 9, 0, dial=(190, 168, 128))                # old enamel under a lamp, not a light
+    G.pool(c, cx, cy - clock_r * 0.5, clock_r * 1.1, (255, 190, 110), 0.07)
     # the automaton's stage under the clock
     sx, sy = 540, 880
     c.drawRect(skia.Rect.MakeLTRB(sx - 120, sy - 70, sx + 120, sy + 20), paint((12, 8, 10)))
@@ -322,10 +324,12 @@ def square(c, T, clock_r=118, doors=0.0, parade=None, group=0.0, clara=None, bir
     for x in (120, 960):
         G.lantern(c, x, 1240, 0.55, MAGENTA if x < 540 else EMERALD, T, seed=x)
     # people on the square
-    if group < 1:
-        for k in range(6):
-            gx = 640 + k * 34 + group * 260
-            figure_tiny(c, gx, 1640 + (k % 2) * 10, 0.9, T, (40, 30, 34), a=1 - group, seed=k, umbrella=(k == 0))
+    if group < 1:                                              # the tour group, following a red umbrella out of the square
+        coats = [(150, 60, 70), (60, 80, 130), (130, 112, 70), (96, 60, 110), (50, 100, 84), (140, 90, 56), (80, 70, 90)]
+        for k in range(7):
+            gx = 650 + (k % 4) * 46 + (k // 4) * 22 + group * 300
+            figure_tiny(c, gx, 1630 + (k // 4) * 26, 0.85 + 0.05 * (k // 4), T, coats[k], a=1 - group, seed=k, umbrella=(k == 0),
+                        hair=[(40, 26, 24), (120, 90, 60), (30, 24, 26), (160, 150, 140)][k % 4])
     if clara is not None:
         figure_tiny(c, *clara, T, (196, 168, 120), seed=9, scarf=True)
     if birds is not None and birds >= 0:
@@ -340,7 +344,7 @@ def square(c, T, clock_r=118, doors=0.0, parade=None, group=0.0, clara=None, bir
 from props import clock_face, figurine  # noqa: E402  (props imports gel/kit only)
 
 
-def figure_tiny(c, x, y, s, T, coat, a=1.0, seed=0, umbrella=False, scarf=False, walk=True):
+def figure_tiny(c, x, y, s, T, coat, a=1.0, seed=0, umbrella=False, scarf=False, walk=True, hair=None):
     """A small standing or walking figure for wide shots."""
     c.save()
     c.translate(x, y)
@@ -350,7 +354,10 @@ def figure_tiny(c, x, y, s, T, coat, a=1.0, seed=0, umbrella=False, scarf=False,
     c.drawLine(-6, -40, -6 + sw, 0, paint((20, 16, 18), a, stroke=10))
     c.drawLine(6, -40, 6 - sw, 0, paint((20, 16, 18), a, stroke=10))
     c.drawPath(K.smooth([(-22, -40), (-18, -110), (0, -124), (18, -110), (22, -40)]), paint(coat, a))
-    c.drawCircle(0, -140, 15, paint((210, 170, 150), a))
+    c.drawPath(K.smooth([(-22, -40), (-18, -110), (0, -124), (-4, -80), (-6, -40)]), paint(mix(coat, (255, 80, 180), 0.25), 0.5 * a))
+    c.drawCircle(0, -140, 15, paint((176, 136, 124), a))
+    if hair is not None:
+        c.drawPath(K.smooth([(-16, -138), (-14, -154), (0, -158), (14, -154), (16, -138), (0, -148)]), paint(hair, a))
     if scarf:
         c.drawPath(K.smooth([(-16, -150), (0, -160), (16, -150), (12, -130), (-12, -130)]), paint((110, 46, 26), a))
     if umbrella:
@@ -385,28 +392,45 @@ def _damask(pc, ext, base=(110, 18, 36), seed=0):
 
 
 def gallery(c, cam, T, length=30.0, width=4.4, height=5.0, lights=None, portraits=None, end_door=True, fog=(4, 2, 6),
-            density=0.05, wall=(150, 30, 50), seed=0):
+            density=0.05, wall=(150, 30, 50), seed=0, drapes=None, fresco=False):
     """A long villa gallery: a black-and-white marble floor, damask walls hung with portraits (each drawn by
-    portraits(pc, index, w, h) in its frame's local units), sconces in gel colours, the far end in darkness."""
+    portraits(pc, index, w, h) in its frame's local units), sconces in gel colours, the far end in darkness.
+    drapes: a velvet colour for heavy curtains between the portraits; fresco: a faded painted ceiling."""
     hw = width / 2
+    za, zb = -1.0, length + 8.0                                # fixed in the world: textures hold still as the camera moves
     if lights is None:
         cols = [MAGENTA, EMERALD, AMBER, COBALT]
         lights = [P.Light(((-1 if i % 2 == 0 else 1) * (hw - 0.45), 2.7, 1.5 + i * 2.4), cols[i % 4], 2.0, 2.2) for i in range(12)]
-    fl = P.floor(-hw, hw, cam.pos[2] - 1, cam.pos[2] + length)
+    fl = P.floor(-hw, hw, za, zb)
     with fl.draw(c, cam) as pc:
         if pc is not None:
             P.lit(pc, fl, lights, lambda q: _checker(q, fl.ext), spread=1.2)
             P.depth_fog(pc, fl, cam, fog, density)
-    ce = P.ceiling(-hw, hw, cam.pos[2] - 1, cam.pos[2] + length, height)
+    ce = P.ceiling(-hw, hw, za, zb, height)
+
+    def ceil_albedo(q):
+        if fresco:
+            import hall
+            hall.fresco(q, width * P.U, (zb - za) * P.U, seed=seed, medallion=600)
+        else:
+            q.drawPaint(paint((60, 40, 30)))
     with ce.draw(c, cam) as pc:
         if pc is not None:
-            P.lit(pc, ce, lights, lambda q: q.drawPaint(paint((60, 40, 30))), gain=0.6)
+            P.lit(pc, ce, lights, ceil_albedo, gain=0.6 if not fresco else 0.42, amb=(7, 5, 7) if not fresco else (16, 12, 16))
             P.depth_fog(pc, ce, cam, fog, density)
     for side in (-1, 1):
-        wl = P.wall_x(side * hw, cam.pos[2] - 1, cam.pos[2] + length, 0, height, facing=-side)
+        wl = P.wall_x(side * hw, za, zb, 0, height, facing=-side)
 
         def albedo(q, wl=wl, side=side):
             _damask(q, wl.ext, wall, seed + side)
+            if drapes is not None:                             # heavy velvet curtains, tied back, between the portraits
+                import hall
+                u = (2.2 if side < 0 else 3.7) - 0.85
+                while u < wl.ext[2] - 1:
+                    hall.drape(q, (u - 0.32) * P.U, 0, u * P.U, height * P.U, color=drapes, side=-1, folds=3, tie=0.6, fringe=False)
+                    hall.drape(q, u * P.U, 0, (u + 0.32) * P.U, height * P.U, color=drapes, side=1, folds=3, tie=0.6, fringe=False)
+                    q.drawRect(skia.Rect.MakeLTRB((u - 0.4) * P.U, 0, (u + 0.4) * P.U, 0.25 * P.U), paint(mix(drapes, BLACK, 0.3)))
+                    u += 3.0
             if portraits is not None:
                 k = 0
                 u = 2.2 if side < 0 else 3.7
@@ -427,7 +451,7 @@ def gallery(c, cam, T, length=30.0, width=4.4, height=5.0, lights=None, portrait
                 P.lit(pc, wl, lights, albedo)
                 P.depth_fog(pc, wl, cam, fog, density)
     if end_door:
-        ew = P.wall_z(cam.pos[2] + length - 0.5, -hw, hw, 0, height)
+        ew = P.wall_z(zb - 0.5, -hw, hw, 0, height)
         with ew.draw(c, cam) as pc:
             if pc is not None:
                 pc.drawPaint(paint((8, 4, 6)))

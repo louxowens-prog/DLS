@@ -193,6 +193,19 @@ def s_m_mirrors(T, idx):
         else:
             CA.face(c, mx, 860, 0.75, "governess", T, L=(255, 170, 70), R=(70, 100, 255), core=0.4, expr="polite", porc=0.5, blink=0.0)
         c.drawPath(K.path([(mx - 150, 560), (mx - 40, 560), (mx - 150, 760)]), paint(WHITE, 0.08))
+        rng = K.rng_at(41, side + 2)                              # both mirrors cracked: a star where something struck
+        ox, oy = mx + side * 40, 700 if side < 0 else 1080
+        for i in range(11):
+            ang = rng.uniform(0, 6.283)
+            p = skia.Path()
+            x, y = ox, oy
+            p.moveTo(x, y)
+            for j in range(5):
+                x += math.cos(ang + rng.uniform(-0.3, 0.3)) * rng.uniform(20, 70)
+                y += math.sin(ang + rng.uniform(-0.3, 0.3)) * rng.uniform(20, 70)
+                p.lineTo(x, y)
+            c.drawPath(p, paint((236, 242, 250), 0.75, stroke=2.4))
+        c.drawCircle(ox, oy, 10, paint((236, 242, 250), 0.6, stroke=2))
         c.restore()
         PR.frame_gilt(c, mx - 150, 560, mx + 150, 1260, t=16)
     CA.face(c, 540, 930, 0.95, "clara", T, L=(255, 60, 170), R=(70, 100, 255), core=0.5, expr="blank", porc=0.9, cap=True,
@@ -201,50 +214,158 @@ def s_m_mirrors(T, idx):
     return st.arr
 
 
+def _exam_hall(c, T, a=1.0):
+    """The present day through the glass: an exam hall seen from the invigilator's desk - rows of bowed heads, every
+    hand writing on paper. Cold, flat, colourless light."""
+    c.drawRect(skia.Rect.MakeLTRB(0, 0, W, 760), paint((168, 176, 180), a))
+    c.drawRect(skia.Rect.MakeLTRB(0, 760, W, H), paint((112, 112, 108), a))
+    for k in range(3):                                          # tall windows, white sky
+        x0 = 250 + k * 220
+        c.drawRect(skia.Rect.MakeLTRB(x0, 430, x0 + 130, 700), paint((226, 232, 236), a))
+        c.drawLine(x0 + 65, 430, x0 + 65, 700, paint((140, 146, 150), a, stroke=5))
+    rows = [(800, 0.34, 5), (870, 0.46, 4), (965, 0.62, 4), (1100, 0.84, 3), (1290, 1.12, 3)]
+    hair = [(40, 30, 26), (120, 84, 50), (24, 20, 22), (170, 130, 80), (70, 46, 34), (30, 26, 30)]
+    for r, (yd, sc, n) in enumerate(rows):
+        sp = 330 * sc
+        for j in range(n):
+            x = 540 + (j - (n - 1) / 2) * sp
+            seed = r * 7 + j
+            c.drawRoundRect(skia.Rect.MakeLTRB(x - 70 * sc, yd - 120 * sc, x + 70 * sc, yd + 10 * sc), 30 * sc, 30 * sc,
+                            paint([(90, 96, 110), (120, 110, 100), (70, 80, 90), (110, 100, 120)][seed % 4], a))
+            c.drawOval(skia.Rect.MakeLTRB(x - 40 * sc, yd - 150 * sc, x + 40 * sc, yd - 70 * sc), paint((196, 164, 146), a))
+            c.drawOval(skia.Rect.MakeLTRB(x - 44 * sc, yd - 166 * sc, x + 44 * sc, yd - 92 * sc), paint(hair[seed % 6], a))
+            c.drawPath(K.path([(x - 130 * sc, yd), (x + 130 * sc, yd), (x + 150 * sc, yd + 60 * sc), (x - 150 * sc, yd + 60 * sc)]),
+                       paint((168, 146, 112), a))
+            c.drawRect(skia.Rect.MakeLTRB(x - 150 * sc, yd + 60 * sc, x + 150 * sc, yd + 72 * sc), paint((110, 92, 70), a))
+            c.drawPath(K.path([(x - 64 * sc, yd + 8 * sc), (x + 56 * sc, yd + 8 * sc), (x + 62 * sc, yd + 54 * sc), (x - 70 * sc, yd + 54 * sc)]),
+                       paint((240, 240, 234), a))
+            n_ln = int((T * 1.6 + seed * 0.37) % 6)
+            for q in range(n_ln):
+                yy = yd + (16 + q * 7) * sc
+                c.drawLine(x - 56 * sc, yy, x + 40 * sc, yy, paint((60, 70, 120), 0.8 * a, stroke=max(1, 2.2 * sc)))
+            ph = (T * 1.6 + seed * 0.37) % 1.0
+            px, py = x - 50 * sc + 90 * sc * ph, yd + (16 + n_ln * 7) * sc
+            c.drawLine(px, py, px + 30 * sc, py - 46 * sc, paint((24, 24, 34), a, stroke=max(1.5, 5 * sc)))
+            c.drawCircle(px + 30 * sc, py - 46 * sc, 13 * sc, paint((200, 160, 140), a))
+
+
+def _interview_room(c, T, a=1.0):
+    """...and an interview room: two interviewers behind a table, phones in a tray, and an empty chair waiting."""
+    c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((190, 196, 198), a))
+    c.drawRect(skia.Rect.MakeLTRB(0, 1100, W, H), paint((128, 126, 122), a))
+    c.drawRect(skia.Rect.MakeLTRB(230, 430, 520, 720), paint((226, 230, 232), a))
+    for k in range(12):
+        c.drawLine(230, 440 + k * 24, 520, 440 + k * 24, paint((176, 182, 186), a, stroke=4))
+    for x, who in ((380, "int1"), (710, "int2")):
+        CA.face(c, x, 760, 0.5, who, T, L=(236, 236, 232), R=(214, 218, 224), core=0.0, amb=(196, 196, 196), expr="neutral",
+                blink=blink(T, seed=x), a=a)
+    c.drawRect(skia.Rect.MakeLTRB(150, 930, 930, 962), paint((236, 236, 234), a))
+    c.drawRect(skia.Rect.MakeLTRB(170, 962, 910, 1080), paint((206, 206, 204), a))
+    c.drawRect(skia.Rect.MakeLTRB(300, 912, 420, 930), paint((240, 240, 238), a))
+    c.drawRect(skia.Rect.MakeLTRB(650, 902, 730, 930), paint((60, 64, 74), a))
+    c.drawRect(skia.Rect.MakeLTRB(662, 896, 690, 912), paint((20, 20, 24), a))
+    c.drawRect(skia.Rect.MakeLTRB(694, 896, 722, 912), paint((20, 20, 24), a))
+    c.drawRoundRect(skia.Rect.MakeLTRB(430, 1060, 650, 1250), 18, 18, paint((54, 56, 64), a))
+    c.drawRect(skia.Rect.MakeLTRB(410, 1240, 670, 1272), paint((44, 46, 54), a))
+    for x in (424, 656):
+        c.drawLine(x, 1272, x, 1300, paint((30, 30, 36), a, stroke=8))
+
+
 def s_m_super(T, idx):
-    """So universities are bringing back handwritten exams, and employers face-to-face interviews: the present day
-    shows through the glass - pens moving on paper in an exam hall; an interview table, an empty chair."""
-    st = K.Stage((6, 6, 8))
+    """So universities are bringing back handwritten exams, and employers face-to-face interviews. A tall mirror in the
+    hall of mirrors shows a room that is not there: the present day - an exam hall where every hand writes; then an
+    interview room with an empty chair, waiting."""
+    st = K.Stage((4, 8, 6))
     c = st.c
     t0 = cut("m_super")
-    k_int = K.ease(ramp(T, Wx("m2", "employers") - 0.3, Wx("m2", "employers") + 0.4))
-    # the exam hall, from above: pens on paper
-    a1 = 1 - 0.85 * k_int
-    c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((150, 150, 146), a1))
-    for r in range(4):
-        for k in range(2):
-            x0, y0 = 90 + k * 470, 280 + r * 280
-            c.drawRect(skia.Rect.MakeLTRB(x0, y0, x0 + 420, y0 + 240), paint((176, 140, 100), a1))
-            c.drawRect(skia.Rect.MakeLTRB(x0 + 40, y0 + 30, x0 + 300, y0 + 210), paint((90, 120, 190), a1))
-            c.drawRect(skia.Rect.MakeLTRB(x0 + 60, y0 + 50, x0 + 280, y0 + 190), paint((244, 244, 238), a1))
-            n = int((T - t0) * 8 + r * 3 + k * 5) % 9
-            for j in range(n):
-                c.drawLine(x0 + 70, y0 + 66 + j * 14, x0 + 70 + 120 + 60 * math.sin(j + r), y0 + 66 + j * 14, paint((30, 40, 120), a1, stroke=3))
-            px = x0 + 120 + 60 * math.sin(T * 3 + r + k) + 10 * n
-            c.drawLine(px, y0 + 70 + n * 14, px + 70, y0 + 10 + n * 14, paint((20, 20, 30), a1, stroke=8))
-            c.drawCircle(px + 70, y0 + 10 + n * 14, 22, paint((220, 180, 150), a1))
-    K.text(c, "HANDWRITTEN EXAMS", 540, 290, 48, "jost-600", (30, 30, 36), tag="label", a=a1 * (1 - k_int))
-    if k_int > 0:                                               # the interview room: two chairs across a table, one empty
-        c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((214, 216, 212), k_int))
-        c.drawRect(skia.Rect.MakeLTRB(0, 1180, W, H), paint((150, 150, 150), k_int))
-        c.drawRect(skia.Rect.MakeLTRB(160, 900, 920, 940), paint((240, 240, 240), k_int))
-        for x in (330, 750):
-            CA.face(c, x, 640, 0.55, "int1" if x < 540 else "int2", T, L=(240, 240, 236), R=(220, 224, 230), core=0.0,
-                    amb=(200, 200, 200), expr="neutral", a=k_int, blink=0.0)
-        c.drawRect(skia.Rect.MakeLTRB(470, 1060, 610, 1300), paint((60, 60, 70), k_int))
-        c.drawRect(skia.Rect.MakeLTRB(450, 1040, 630, 1080), paint((70, 70, 80), k_int))
-        K.text(c, "FACE-TO-FACE INTERVIEWS", 540, 290, 46, "jost-600", (30, 30, 36), tag="label", a=k_int)
+    k_int = K.ease(ramp(T, Wx("m2", "employers") - 0.35, Wx("m2", "employers") + 0.45))
+    zoom(c, T, t0, end("m_super") + 0.4, 1.0, 1.14, cx=540, cy=820)
+
+    def albedo(cc):
+        cc.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((30, 88, 66)))
+        rng = K.rng_at(31, 2)
+        for i in range(9):
+            for j in range(14):
+                x, y = 60 + i * 130 + (j % 2) * 65, 40 + j * 140
+                cc.drawOval(skia.Rect.MakeLTRB(x - 22, y - 34, x + 22, y + 34), paint((20, 64, 48), 0.8))
+        cc.drawRect(skia.Rect.MakeLTRB(0, 1420, W, H), paint((50, 36, 30)))
+
+    def light(cc):
+        G.pool(cc, 120, 820, 620, MAGENTA, 0.85)
+        G.pool(cc, 960, 820, 620, (60, 90, 255), 0.85)
+        G.pool(cc, 540, 1500, 560, AMBER, 0.5)
+    SE.lit2d(c, albedo, light, amb=(10, 14, 12))
+    mx0, my0, mx1, my1 = 170, 410, 910, 1290
+    glass = skia.Path()
+    glass.addRoundRect(skia.Rect.MakeLTRB(mx0, my0, mx1, my1), 370, 120)
+    c.drawPath(glass, paint((8, 10, 12)))
+    c.save()
+    c.clipPath(glass, doAntiAlias=True)
+    if k_int < 1:
+        _exam_hall(c, T)
+    if k_int > 0:
+        _interview_room(c, T, a=k_int)
+    c.drawPaint(paint((120, 140, 150), 0.12))                   # cold, silvered glass
+    rng = K.rng_at(61, 3)
+    for i in range(16):                                         # the silvering going black at the very edges
+        ang = rng.uniform(0, 2 * math.pi)
+        rx, ry = 540 + math.cos(ang) * rng.uniform(350, 400), 835 + math.sin(ang) * rng.uniform(430, 480)
+        c.drawCircle(rx, ry, rng.uniform(8, 24), paint((10, 12, 10), 0.4, blur=8))
+    c.drawPath(K.path([(mx0, my0 + 120), (mx0 + 260, my0), (mx0 + 380, my0), (mx0, my0 + 420)]), paint(WHITE, 0.06))
+    rng = K.rng_at(43, 1)                                       # an old crack across one corner of the glass
+    p = skia.Path()
+    x, y = mx1 - 40, my0 + 160
+    p.moveTo(x, y)
+    for j in range(7):
+        x -= rng.uniform(20, 60)
+        y += rng.uniform(30, 80)
+        p.lineTo(x, y)
+        if j % 2:
+            c.drawLine(x, y, x + rng.uniform(20, 60), y + rng.uniform(-40, 20), paint((236, 242, 250), 0.4, stroke=1.6))
+    c.drawPath(p, paint((236, 242, 250), 0.55, stroke=2.2))
+    CA.face(c, 540, 820, 1.3, "clara", T, L=(255, 60, 170), R=(70, 100, 255), core=0.5, expr="blank", porc=0.9, blink=0.0,
+            a=0.16 * (1 - k_int), neck=False)
+    c.restore()
+    c.drawPath(glass, paint(mix(GOLD, BLACK, 0.5), stroke=30))
+    c.drawPath(glass, paint(mix(GOLD, WHITE, 0.25), stroke=10))
+    c.drawPath(glass, paint(mix(GOLD, BLACK, 0.3), stroke=3))
+    for x in (90, 990):                                         # candles either side
+        G.candle(c, x, 980, 1.1, T, seed=x)
+    PR.plaque(c, 540, 340, ["HANDWRITTEN EXAMS"], 40, w=600, a=1 - k_int, tag="plaque")
+    if k_int > 0:
+        PR.plaque(c, 540, 340, ["FACE-TO-FACE INTERVIEWS"], 40, w=680, a=k_int, tag="plaque")
+    c.restore()
     return st.arr
 
 
 def s_x_door(T, idx):
-    """Your examination is waiting. A dark corridor; at its end a tall door, the Governess holding out a key on a black
-    ribbon. The key turns; the door opens on a blinding white."""
+    """Your examination is waiting. The Governess, close, holding up a key on a black ribbon; then the corridor, the
+    door at its end turning on its key and opening on a blinding white, and Clara walking into it."""
     st = K.Stage()
     c = st.c
     t0 = cut("x_door")
-    u = T - t0
-    cam = P.Cam(pos=(0.0, 1.6, 0.6 * u), f=900)
+    t_c = E("x1") + 0.05
+    if T < t_c:
+        zoom(c, T, t0, t_c, 1.0, 1.2, cx=540, cy=820)
+        G.pool(c, 140, 700, 700, MAGENTA, 0.55)
+        G.pool(c, 940, 900, 700, (50, 80, 255), 0.6)
+        for i, (bx, by, br) in enumerate(((180, 420, 70), (900, 380, 60), (120, 1260, 90), (980, 1300, 80), (560, 260, 50))):
+            G.pool(c, bx, by, br * (1 + 0.05 * math.sin(T * 7 + i)), AMBER, 0.6)
+        c.drawRect(skia.Rect.MakeLTRB(330, 160, 750, 1500), paint((20, 10, 14), 0.6, blur=30))
+        CA.face(c, 540, 860, 1.45, "governess", T, L=(255, 170, 70), R=(70, 100, 255), core=0.45, expr="polite",
+                talk=talk(T, "GOV"), blink=blink(T, seed=5) * 0.0, porc=0.5)
+        sway = 10 * math.sin(T * 2.4)
+        kx, ky = 830 + sway, 1180
+        c.drawLine(800, 560, kx, ky - 40, paint((8, 6, 8), stroke=7))
+        c.drawCircle(kx, ky, 38, paint(GOLD, stroke=12))
+        c.drawRect(skia.Rect.MakeLTRB(kx - 8, ky + 36, kx + 8, ky + 190), paint(GOLD))
+        for k in range(2):
+            c.drawRect(skia.Rect.MakeLTRB(kx + 8, ky + 140 + k * 30, kx + 40, ky + 156 + k * 30), paint(GOLD))
+        c.drawCircle(kx - 14, ky - 14, 10, G.glow_paint((255, 250, 220), 0.6 + 0.4 * math.sin(T * 5), blur=6))
+        c.restore()
+        return st.arr
+    u = T - t_c
+    cam = P.Cam(pos=(0.0, 1.6, 6.2 + 1.0 * u), f=900)
     lights = [P.Light(((-1 if i % 2 == 0 else 1) * 1.5, 2.6, 2 + i * 2.6), [COBALT, MAGENTA][i % 2], 1.6, 1.8) for i in range(6)]
     SE.gallery(c, cam, T, length=14.0, width=3.4, height=5.0, lights=lights, end_door=False, wall=(60, 50, 90), seed=7)
     zd = 12.5
@@ -259,19 +380,15 @@ def s_x_door(T, idx):
     q = cam.proj((0.0, 2.2, zd))
     if q is not None and op > 0:
         G.pool(c, q[0], q[1], 400 + 1600 * op, (255, 255, 255), 0.9 * op)
-    pos = (0.95, 0.0, zd - 0.6)
-    gq = cam.proj((0.95, 1.65, zd - 0.6))
+    pos = (1.05, 0.0, zd - 0.5)
+    gq = cam.proj((1.05, 1.65, zd - 0.5))
     if gq is not None:
         s = cam.scale_at(pos) / 900
-        CA.face(c, gq[0], gq[1], s * 0.6, "governess", T, L=(255, 170, 70), R=(70, 100, 255), core=0.4, expr="polite",
-                talk=talk(T, "GOV"), blink=0.0, porc=0.5)
-        kx, ky = gq[0] - 160 * s, gq[1] + 520 * s
-        c.drawLine(gq[0] - 40 * s, gq[1] + 300 * s, kx, ky, paint((10, 8, 10), stroke=max(2, 10 * s)))
-        c.drawCircle(kx, ky + 30 * s, 26 * s, paint(GOLD, stroke=max(2, 8 * s)))
-        c.drawLine(kx, ky + 56 * s, kx, ky + 140 * s, paint(GOLD, stroke=max(2, 10 * s)))
+        CA.face(c, gq[0], gq[1], s * 0.75, "governess", T, L=(255, 170, 70), R=(70, 100, 255), core=0.4, expr="polite",
+                blink=0.0, porc=0.5)
     cp = cam.proj((0.0, 0.0, cam.pos[2] + 2.6))
     CA.walker_back(c, cp[0], cp[1], cam.scale_at((0, 0, cam.pos[2] + 2.6)) * 1.72 / 900, T, coat=(20, 18, 24), key=(70, 100, 255),
-                   rim=(255, 60, 170), walking=T < E("x1"))
+                   rim=(255, 60, 170), walking=True)
     if T > E("x1") + 0.6:
         c.drawPaint(paint((255, 255, 255), K.ease(ramp(T, E("x1") + 0.6, E("x1") + 1.15))))
     return st.arr
