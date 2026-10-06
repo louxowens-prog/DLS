@@ -490,6 +490,7 @@ def presence(x, f0=3000, gain_db=2.0, q=0.9):
 NEED = {"NAR": 11.0}                              # the voice over the bed in the speech band (characters: 13)
 BED = -5.0                                        # the beds' ceiling between lines, against the average line (dB)
 HITS = [(T_TITLE, 4.0, 1.6), (T_SCARE1, 16.0, 1.3), (T_SCARE2 + 0.25, 16.0, 1.3)]   # (time, ceiling dB, seconds)
+SAT = 4.0                                         # how hard the scares are driven
 CEIL = -2.0
 STEMS = {}
 
@@ -518,6 +519,20 @@ def build():
     music = music * db(-13.0) / (np.sqrt((ref ** 2).mean()) + 1e-12)
     on = np.abs(fxx).max(axis=0) > 1e-4
     fxx = fxx * db(-24.0) / (np.sqrt((fxx[:, on] ** 2).mean()) + 1e-12)
+    # the scares: saturate the hit itself (same peak, far less crest) so it lands as a wall of sound, not a click;
+    # done before the ducking, so a line that follows a scare still clears it
+    for t, lvl, dur in HITS[1:]:
+        a, b = int((t - 0.02) * SR), int((t + 1.1) * SR)
+        beds = music[:, a:b] + fxx[:, a:b]
+        pk = np.abs(beds).max() + 1e-9
+        sat = np.tanh(SAT * beds / pk) / np.tanh(SAT) * pk
+        w = np.ones(b - a)
+        f = int(0.15 * SR)
+        w[-f:] = np.linspace(1, 0, f)
+        gain = (w * (sat - beds) + beds) / np.where(np.abs(beds) < 1e-9, 1e-9, beds)
+        gain = np.clip(gain, 0, 8)
+        music[:, a:b] *= gain
+        fxx[:, a:b] *= gain
     # duck the beds under every line until the voice clears them by NEED dB in the speech band
     band = lambda x: signal.sosfilt(signal.butter(2, [300 / (SR / 2), 4000 / (SR / 2)], "band", output="sos"), x.mean(axis=0))
     bv, bm, bf = band(vo), band(music), band(fxx)
