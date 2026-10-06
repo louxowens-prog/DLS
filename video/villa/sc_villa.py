@@ -46,14 +46,14 @@ def s_g_gallery(T, idx):
     figs = []
     for i in range(7):
         side = -1 if i % 2 == 0 else 1
-        z = 3.2 + i * 2.6
+        z = 2.5 + i * 2.4
         figs.append((z, side))
     for n_, (z, side) in enumerate(sorted(figs, reverse=True)):
         pos = (side * 1.45, 0.0, z)
         q = cam.proj(pos)
         if q is None:
             continue
-        sc = cam.scale_at(pos) * 1.8 / 1000
+        sc = cam.scale_at(pos) * 2.0 / 1000
         fa = 1 - P.fog_at(cam, pos, density=0.07)
         head = 0.0
         if n_ == 4:                                            # as she passes, this one turns its head to watch her
@@ -239,7 +239,9 @@ def s_g_double(T, idx):
     L = Layers(2, bg=(4, 2, 4))
     t0 = cut("g_double")
     far = L.c(0)
-    zoom(far, T, t0, end("g_double"), 1.0, 1.1, cx=600, cy=700)
+    zoom(far, T, t0, end("g_double"), 1.0, 1.07, cx=600, cy=700)
+    far.save()
+    far.translate(0, -60)
     G.pool(far, 600, 700, 800, (120, 20, 40), 0.7)
     x0, y0, x1, y1 = 260, 260, 960, 1220
     far.save()
@@ -258,7 +260,8 @@ def s_g_double(T, idx):
     far.drawRect(skia.Rect.MakeLTRB(x0, y0, x1, y1), paint(shader=K.rad((600, 700), 700, [(0, 0, 0, 0.0), (20, 10, 0, 0.55)])))
     far.restore()
     PR.frame_gilt(far, x0, y0, x1, y1, t=34)
-    PR.plaque(far, 610, 1310, ["C. A.  1874"], size=34, tag="plaque")
+    PR.plaque(far, 610, 1296, ["C. A.  1874"], size=34, tag="plaque")
+    far.restore()
     far.restore()
     near = L.c(1)
     CA.face(near, 250, 1150, 1.45, "clara", T, L=(255, 60, 170), R=(40, 220, 140), core=0.5, expr="dread",
@@ -298,7 +301,7 @@ def _scribe(c, x, y, s, T, speed=1.0):
     c.restore()
 
 
-def _writing_room(c, T, year, porc, lean, candle_h, webs, stack, gov=True, hand=None, cz=None):
+def _writing_room(c, T, year, porc, lean, candle_h, webs, stack, gov=True, hand=None, cz=None, plaque=True):
     """The same night, year after year: Clara at the desk, the scribe writing for her, the Governess at her shoulder;
     each year the candles shorter, the cobwebs thicker, the stack of finished work higher, Clara more porcelain."""
     def albedo(cc):
@@ -324,7 +327,8 @@ def _writing_room(c, T, year, porc, lean, candle_h, webs, stack, gov=True, hand=
     SE.lit2d(c, albedo, light, amb=(16, 10, 14))
     PR.clock_face(c, 540, 330, 92, 9 + year * 0.75, (year * 20) % 60)
     G.pool(c, 540, 330, 160, (255, 210, 140), 0.15)
-    PR.plaque(c, 540, 482, [YEARS[min(3, year)]], size=40, tag="plaque")
+    if plaque:
+        PR.plaque(c, 540, 482, [YEARS[min(3, year)]], size=40, tag="plaque")
     if webs > 0:                                               # cobwebs in the corners
         for (cx, cy, sx) in ((0, 0, 1), (W, 0, -1)):
             for k in range(9):
@@ -389,57 +393,59 @@ def s_w_desk3(T, idx):
 
 
 def s_w_shelves(T, idx):
-    """88% of UK students use AI to help with assessed work (mostly to explain things); nearly 1 in 5 have pasted its
-    words straight in. A cabinet of a hundred porcelain scholars, 88 lighting up; then close on one shelf - five of
-    them, and one cracks open on nothing."""
+    """94% of UK students now use AI to help with assessed work (mostly to explain things); about 1 in 8 paste its words
+    straight in. A cabinet of a hundred porcelain scholars, 94 lighting up in a wave as the lens drifts across; then
+    close on one shelf of eight - and one cracks open on nothing."""
     st = K.Stage((6, 4, 6))
     c = st.c
     t0 = cut("w_shelves")
-    t88 = Wx("w5", "Eighty-eight")
-    t18 = Wx("w5", "Nearly")
+    t88 = Wx("w5", "Ninety-four")
+    t18 = Wx("w5", "About")
     t_close = t18 - 0.2
-    if T >= t_close:                                            # close on one shelf: one in five goes hollow
+    if T >= t_close:                                            # close on one shelf: one in eight goes hollow
         zoom(c, T, t_close, end("w_shelves") + 0.3, 1.0, 1.16, cx=540, cy=900)
-        c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((40, 22, 14)))
+        c.translate(30 - 60 * ramp(T, t_close, end("w_shelves")), 0)
+        c.drawRect(skia.Rect.MakeLTRB(-100, 0, W + 100, H), paint((40, 22, 14)))
         G.pool(c, 540, 860, 760, (120, 30, 60), 0.55)
-        c.drawRect(skia.Rect.MakeLTRB(0, 1130, W, 1170), paint((96, 60, 36)))
-        c.drawRect(skia.Rect.MakeLTRB(0, 1170, W, 1200), paint((50, 30, 18)))
+        c.drawRect(skia.Rect.MakeLTRB(-100, 1130, W + 100, 1170), paint((96, 60, 36)))
+        c.drawRect(skia.Rect.MakeLTRB(-100, 1170, W + 100, 1200), paint((50, 30, 18)))
         crack_k = ramp(T, t18 + 0.5, t18 + 0.9)
-        for k in range(5):
-            x = 150 + k * 195
-            hollow = k == 3
-            G.pool(c, x, 900, 150, AMBER, 0.55 if not (hollow and crack_k > 0) else 0.15)
-            PR.figurine(c, x, 1140, 1.75, T, "scholar", face_color=(252, 230, 190), seed=k, lit=(255, 170, 70))
+        for k in range(8):
+            x = 85 + k * 130
+            hollow = k == 5
+            G.pool(c, x, 930, 120, AMBER, 0.55 if not (hollow and crack_k > 0) else 0.12)
+            PR.figurine(c, x, 1140, 1.3, T, "scholar", face_color=(252, 230, 190), seed=k, lit=(255, 170, 70))
             if hollow and crack_k > 0:                          # its face falls away: nothing inside
-                fx, fy = x, 1140 - 124 * 1.75
+                fx, fy = x, 1140 - 124 * 1.3
                 rng = K.rng_at(5, k)
-                c.drawCircle(fx, fy, 28 * crack_k + 4, paint((4, 2, 4)))
-                c.drawCircle(fx, fy, 28 * crack_k + 4, paint((220, 30, 40), 0.9, stroke=3))
+                c.drawCircle(fx, fy, 22 * crack_k + 3, paint((4, 2, 4)))
+                c.drawCircle(fx, fy, 22 * crack_k + 3, paint((220, 30, 40), 0.9, stroke=3))
                 for q in range(6):
                     ang = rng.uniform(0, 6.283)
-                    c.drawLine(fx + math.cos(ang) * 18, fy + math.sin(ang) * 18, fx + math.cos(ang) * 46, fy + math.sin(ang) * 46,
+                    c.drawLine(fx + math.cos(ang) * 14, fy + math.sin(ang) * 14, fx + math.cos(ang) * 36, fy + math.sin(ang) * 36,
                                paint((40, 20, 24), 0.9, stroke=3))
                 for q in range(5):                              # flakes of porcelain dropping to the shelf
                     fall = min(1.0, (T - t18 - 0.5) * 1.6 + q * 0.1)
-                    c.drawCircle(fx + rng.uniform(-30, 30), fy + 40 + fall * 140, 5, paint((240, 226, 200), 0.9 * (1 - fall * 0.5)))
-        k = K.ease(ramp(T, t_close, t_close + 0.3))
-        PR.plaque(c, 540, 380, ["18% PASTED AI TEXT STRAIGHT IN"], size=38, a=k, color=(120, 20, 24))
+                    c.drawCircle(fx + rng.uniform(-24, 24), fy + 30 + fall * 120, 4, paint((240, 226, 200), 0.9 * (1 - fall * 0.5)))
         c.restore()
+        k = K.ease(ramp(T, t_close, t_close + 0.3))
+        PR.plaque(c, 540, 380, ["12% PASTE AI TEXT STRAIGHT IN"], size=38, a=k, color=(120, 20, 24))
         return st.arr
     zoom(c, T, t0, t_close + 0.2, 1.0, 1.14, cx=540, cy=820)
+    c.translate(-36 + 72 * K.ease(ramp(T, t0, t_close)), 0)    # the lens drifts along the cabinet
     c.drawRect(skia.Rect.MakeLTRB(60, 360, 1020, 1250), paint((50, 28, 18)))
     G.pool(c, 540, 800, 700, (120, 30, 60), 0.5)
     rng = K.rng_at(88, 1)
     order = list(range(100))
     rng.shuffle(order)
-    lit = set(order[:88])
+    lit = set(order[:94])
     for r in range(10):
         y = 460 + r * 82
         c.drawRect(skia.Rect.MakeLTRB(80, y + 2, 1000, y + 12), paint((86, 54, 32)))
         for k in range(10):
             i = r * 10 + k
             x = 135 + k * 90
-            on = T > t88 + (i % 10) * 0.02 + r * 0.03 and i in lit
+            on = T > t88 + (i % 10) * 0.05 + r * 0.06 and i in lit
             if on:
                 G.pool(c, x, y - 52, 40, AMBER, 0.5)
             PR.figurine(c, x, y, 0.42, T, "scholar", face_color=(252, 226, 180) if on else (70, 60, 60), seed=i,
@@ -447,7 +453,7 @@ def s_w_shelves(T, idx):
     c.restore()
     if T > t88 - 0.1:
         k = K.ease(ramp(T, t88 - 0.1, t88 + 0.3))
-        PR.plaque(c, 540, 310, ["88% USE AI FOR ASSESSED WORK", "MOSTLY TO EXPLAIN THINGS"], size=40, sizes=[40, 28], a=k)
+        PR.plaque(c, 540, 310, ["94% USE AI FOR ASSESSED WORK", "MOSTLY TO EXPLAIN THINGS"], size=40, sizes=[40, 38], a=k)
     return st.arr
 
 
@@ -466,7 +472,7 @@ def s_w_ledger(T, idx):
         c.drawRect(skia.Rect.MakeLTRB(x0, 330, x0 + 460, 1250), paint(shader=K.lin((540, 0), (540 + side * 460, 0), [(80, 50, 20, 0.35), (80, 50, 20, 0.0)])))
     ink = (40, 30, 70)
     K.text(c, "PROVEN AI CHEATING", 310, 430, 36, "cinzel-800", ink, tag="ledger")
-    K.text(c, "PER 1,000 STUDENTS", 310, 478, 30, "cinzel-600", ink, tag="ledger")
+    K.text(c, "PER 1,000 STUDENTS", 310, 488, 40, "cinzel-600", ink, tag="ledger")
     w1 = K.ease(ramp(T, t0 + 0.4, t0 + 0.9))
     w2 = K.ease(ramp(T, Wx("w8", "tripled") - 0.2, Wx("w8", "tripled") + 0.4))
     for i, (yr, v, wk) in enumerate((("2022-23", "1.6", w1), ("2023-24", "5.1", w2))):
@@ -497,6 +503,9 @@ def s_w_final(T, idx):
     c = st.c
     t0 = cut("w_final")
     zoom(c, T, t0, end("w_final"), 1.0, 1.9, cx=520, cy=790)
-    _writing_room(c, T, 3, 0.95, 1.0, 0.18, 0.9, 30, hand=True)
+    _writing_room(c, T, 3, 0.95, 1.0, 0.18, 0.9, 30, hand=True, plaque=False)
     c.restore()
+    ka = 1 - ramp(T, t0 + 0.5, t0 + 0.9)
+    if ka > 0:
+        PR.plaque(c, 540, 482, [YEARS[3]], size=40, tag="plaque", a=ka)
     return st.arr

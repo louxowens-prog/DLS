@@ -16,26 +16,45 @@ from kit import AMBER, BLACK, EMERALD, GOLD, INK, MAGENTA, PAPER, WHITE, H, W, m
 
 
 def _chalk_hand(c, hx, hy, T, s=1.0):
-    """A hand holding a stick of chalk, its tip at (hx, hy) on the slate, coming in from the lower right; candlelit."""
+    """A hand holding a stick of chalk like a pen, its tip at (hx, hy) on the slate, coming in from the lower right:
+    a lace cuff, the back of the hand, index and middle fingers along the chalk, the thumb pinching from below, the
+    last two fingers curled; outlined and shaded by the candle."""
     c.save()
     c.translate(hx, hy)
     c.scale(s, s)
-    skin, shade = (172, 124, 100), (112, 74, 60)
-    c.drawPath(K.smooth([(120, 150), (420, 520), (620, 420), (250, 60)]), paint((46, 32, 56)))               # the sleeve
-    c.drawPath(K.smooth([(170, 110), (230, 210), (300, 160), (230, 70)]), paint((60, 44, 70)))
-    c.drawPath(K.capsule(0, 0, 52, -46, 8, 8), paint((214, 210, 200)))                                    # the chalk
-    c.drawPath(K.smooth([(36, -34), (128, -16), (214, 92), (190, 176), (92, 150), (24, 52)]), paint(skin))    # back of the hand
-    c.drawPath(K.capsule(34, -42, 122, -22, 17, 21), paint(skin))                                         # the index finger
-    c.drawPath(K.capsule(12, 6, 98, 46, 15, 19), paint(mix(skin, shade, 0.15)))                           # the thumb
-    for k in range(3):                                                                                         # curled fingers
-        c.drawPath(K.capsule(46 + k * 12, 26 + k * 18, 112 + k * 10, 66 + k * 20, 14, 16), paint(mix(skin, shade, 0.3 + k * 0.15)))
-    c.drawOval(skia.Rect.MakeLTRB(30, -50, 50, -36), paint((200, 160, 150)))                                  # a fingernail
-    for k in range(3):
-        c.drawLine(118 + k * 22, 40 + k * 12, 132 + k * 22, 70 + k * 12, paint(shade, 0.6, stroke=3))         # knuckles
-    sh = K.rad((60, 40), 220, [(255, 170, 70, 0.12), (255, 170, 70, 0.0)])
-    p = paint((255, 170, 70), 1.0, shader=sh)
-    p.setBlendMode(skia.BlendMode.kPlus)
-    c.drawCircle(60, 40, 220, p)
+    skin, shade, line = (196, 146, 118), (138, 94, 76), (84, 52, 42)
+    ol = lambda p: c.drawPath(p, paint(line, 0.9, stroke=3))
+    sleeve = K.smooth([(150, 150), (330, 250), (520, 560), (300, 640), (120, 300)])
+    c.drawPath(sleeve, paint((46, 32, 56)))
+    for k in range(8):                                                                         # the lace cuff
+        c.drawCircle(150 + k * 22, 150 + k * 16, 11, paint((150, 130, 160), 0.9))
+    c.drawPath(K.capsule(-4, 4, 62, -54, 12, 12), paint((226, 222, 210)))                     # the chalk
+    c.drawCircle(0, 0, 6, paint((240, 238, 230)))
+    back = K.smooth([(58, -30), (150, -26), (214, 60), (190, 160), (110, 150), (52, 70)])     # the back of the hand
+    c.drawPath(back, paint(skin))
+    ol(back)
+    for k, (x0, y0, x1, y1, x2, y2, w) in enumerate(((150, -10, 96, -42, 44, -44, 26),         # index, along the chalk
+                                                      (166, 26, 108, -6, 56, -12, 24))):       # middle, under it
+        p1 = K.capsule(x0, y0, x1, y1, w, w - 2)
+        p2 = K.capsule(x1, y1, x2, y2, w - 2, w - 5)
+        col = skin if k == 0 else mix(skin, shade, 0.25)
+        c.drawPath(p1, paint(col))
+        c.drawPath(p2, paint(col))
+        ol(p1)
+        ol(p2)
+        c.drawOval(skia.Rect.MakeLTRB(x2 - 12, y2 - 9, x2 + 6, y2 + 5), paint((220, 176, 160)))   # the nail
+    for k in range(2):                                                                         # ring and little fingers, curled
+        cx_, cy_ = 150 - k * 6, 70 + k * 34
+        p = K.smooth([(cx_ + 30, cy_ - 20), (cx_ - 40, cy_ - 16), (cx_ - 52, cy_ + 10), (cx_ - 20, cy_ + 26), (cx_ + 34, cy_ + 16)])
+        c.drawPath(p, paint(mix(skin, shade, 0.35 + 0.15 * k)))
+        ol(p)
+    thumb = K.capsule(150, 120, 58, 16, 30, 24)                                                # the thumb, pinching from below
+    c.drawPath(thumb, paint(mix(skin, shade, 0.1)))
+    ol(thumb)
+    for k in range(3):                                                                         # knuckles
+        c.drawPath(K.bez_path([(150 + k * 8, -22 + k * 26), (162 + k * 8, -14 + k * 26), (170 + k * 8, -2 + k * 26)]),
+                   paint(shade, 0.8, stroke=3))
+    c.drawPath(K.bez_path([(70, -36), (120, -40), (160, -20)]), paint((236, 196, 160), 0.7, stroke=4))   # candlelight on the edge
     c.restore()
 
 
@@ -66,7 +85,7 @@ def s_e_slate(T, idx):
         c.restore()
         if 0 < k < 1:                                          # her hand with the chalk, following the words
             _chalk_hand(c, 210 + w * k, 720 + i * 90 - 6, T)
-    G.candle(c, 860, 1300, 1.0, T, seed=4)
+    G.candle(c, 960, 1160, 0.9, T, seed=4)
     c.restore()
     return st.arr
 
@@ -79,33 +98,39 @@ def s_e_unesco(T, idx):
     c = st.c
     t0 = cut("e_unesco")
     ty = Wx("e2", "Yet") - 0.15
-    if T >= ty:
-        zoom(c, T, ty, end("e_unesco") + 0.3, 1.0, 1.22, cx=420, cy=980)
-        c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((24, 14, 12)))
+    if T >= ty:                                                 # a row of universities; fewer than one in five lit
+        zoom(c, T, ty, end("e_unesco") + 0.3, 1.0, 1.2, cx=300, cy=980)
+        c.translate(40 - 80 * ramp(T, ty, end("e_unesco")), 0)
+        c.drawRect(skia.Rect.MakeLTRB(-100, 0, W + 100, H), paint((24, 14, 12)))
         G.pool(c, 540, 900, 780, (120, 30, 60), 0.5)
-        c.drawRect(skia.Rect.MakeLTRB(0, 1100, W, 1140), paint((96, 60, 36)))
-        c.drawRect(skia.Rect.MakeLTRB(0, 1140, W, 1175), paint((44, 26, 16)))
+        c.drawRect(skia.Rect.MakeLTRB(-100, 1100, W + 100, 1140), paint((96, 60, 36)))
+        c.drawRect(skia.Rect.MakeLTRB(-100, 1140, W + 100, 1175), paint((44, 26, 16)))
         k = K.ease(ramp(T, ty, ty + 0.4))
-        for i in range(10):                                    # ten schools; one with a light in the window
+        for i in range(10):                                    # ten universities: one lit, one guttering - 19%
             x = 75 + i * 103
             y = 1100
-            lit = i == 3
-            c.drawRect(skia.Rect.MakeLTRB(x - 40, y - 110, x + 40, y), paint((70, 54, 46)))
-            c.drawPath(K.path([(x - 50, y - 110), (x, y - 160), (x + 50, y - 110)]), paint((90, 44, 38)))
-            c.drawRect(skia.Rect.MakeLTRB(x - 8, y - 200, x + 8, y - 150), paint((80, 60, 50)))
-            c.drawRect(skia.Rect.MakeLTRB(x - 14, y - 46, x + 14, y), paint((30, 20, 18)))
-            for wx in (-24, 24):
-                c.drawRect(skia.Rect.MakeLTRB(x + wx - 10, y - 90, x + wx + 10, y - 66),
-                           paint((255, 200, 90) if lit else (14, 10, 12)))
+            lit = i == 2
+            dim = i == 6
+            c.drawRect(skia.Rect.MakeLTRB(x - 42, y - 120, x + 42, y), paint((84, 70, 62)))
+            c.drawPath(K.path([(x - 50, y - 120), (x, y - 150), (x + 50, y - 120)]), paint((100, 86, 76)))
+            for cx_ in (-28, -9, 9, 28):                        # a colonnade
+                c.drawRect(skia.Rect.MakeLTRB(x + cx_ - 4, y - 112, x + cx_ + 4, y - 18), paint((150, 136, 120)))
+            c.drawRect(skia.Rect.MakeLTRB(x - 46, y - 18, x + 46, y), paint((120, 106, 94)))
+            fl = 0.6 + 0.4 * math.sin(T * 13 + i) if dim else 1.0
+            for wx in (-18, 0, 18):
+                col = (255, 200, 90) if lit else ((200, 140, 60) if dim else (14, 10, 12))
+                c.drawRect(skia.Rect.MakeLTRB(x + wx - 6, y - 96, x + wx + 6, y - 60), paint(col, fl if dim else 1.0))
             if lit:
-                G.pool(c, x, y - 78, 120, AMBER, 0.75 * k)
+                G.pool(c, x, y - 78, 130, AMBER, 0.75 * k)
+            if dim:
+                G.pool(c, x, y - 78, 70, AMBER, 0.3 * k * fl)
         rng = K.rng_at(91, 1)
         for i in range(60):                                     # dust on the shelf
             c.drawCircle(rng.uniform(0, W), rng.uniform(1100, 1112), rng.uniform(1, 2.5), paint((200, 180, 150), 0.4))
         G.motes(c, T, 100, 600, 980, 1100, n=30, a=0.45, seed=7)
-        K.text(c, "SCHOOLS & UNIVERSITIES", 540, 560, 44, "cinzel-600", (236, 220, 190), tag="label", a=k)
-        K.text(c, "WITH ANY AI GUIDANCE, 2023", 540, 620, 44, "cinzel-600", (236, 220, 190), tag="label", a=k)
         c.restore()
+        K.text(c, "UNIVERSITIES WITH A FORMAL", 540, 560, 44, "cinzel-600", (236, 220, 190), tag="label", a=k)
+        K.text(c, "AI POLICY, 2025: 19%", 540, 620, 44, "cinzel-600", (236, 220, 190), tag="label", a=k)
         return st.arr
     zoom(c, T, t0, ty + 0.3, 1.0, 1.1, cx=540, cy=620)
     G.pool(c, 540, 700, 800, (120, 30, 60), 0.5)
@@ -145,10 +170,12 @@ def s_e_clock(T, idx):
     if u >= 3.4:
         fx, fy = sx - 80 + 160 * pc, sy + 14
         t_in = t0 + 3.6
-        zoom(c, T, t_in, end("e_clock") + 0.3, 1.0, 2.6, cx=fx, cy=fy - 60)
+        fyf = fy - 124 * 0.38 - 2
+        zoom(c, T, t_in, end("e_clock") + 0.2, 1.0, 7.5, cx=fx, cy=fyf)
         PR.figurine(c, fx, fy, 0.38, T, "scholar", seed=9, hair=(110, 46, 26), face_color=(250, 246, 240))
-        CA.face(c, fx, fy - 124 * 0.38 - 2, 0.026, "clara", T, L=(255, 170, 70), R=(70, 100, 255), core=0.4, expr="blank",
-                porc=1.0, blink=0.0, neck=False, cap=True)
+        crk = ramp(T, end("e_clock") - 1.0, end("e_clock") - 0.3)
+        CA.face(c, fx, fyf, 0.026, "clara", T, L=(255, 170, 70), R=(70, 100, 255), core=0.4, expr="blank",
+                porc=1.0, blink=0.0, neck=False, cap=True, crack=crk)
         c.restore()
     c.restore()
     return st.arr

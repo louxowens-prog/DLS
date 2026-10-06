@@ -45,12 +45,56 @@ def _flat_face(c, x, y, s, who, T, expr="neutral", talk_=0.0, blink_=0.0, gaze=(
             gaze=gaze, a=a)
 
 
+def _backs(c):
+    """The two interviewers from behind: suit shoulders, shirt collars, the backs of their heads, an ear each."""
+    for x, col, hair, sh in ((250, (96, 96, 102), (176, 172, 166), (70, 70, 76)), (830, (30, 30, 36), (34, 26, 22), (14, 14, 18))):
+        c.drawPath(K.smooth([(x - 240, H), (x - 214, 1390), (x - 120, 1300), (x + 120, 1300), (x + 214, 1390), (x + 240, H)]), paint(col))
+        c.drawLine(x, 1330, x, H, paint(sh, stroke=4))                                      # the jacket's centre seam
+        c.drawPath(K.path([(x - 70, 1296), (x + 70, 1296), (x + 40, 1326), (x - 40, 1326)]), paint((236, 236, 234)))   # collar
+        c.drawRect(skia.Rect.MakeLTRB(x - 44, 1250, x + 44, 1300), paint((200, 168, 150)))                         # neck
+        for s_ in (-1, 1):
+            c.drawOval(skia.Rect.MakeLTRB(x + s_ * 96 - 14, 1150, x + s_ * 96 + 14, 1196), paint((206, 170, 152)))  # ears
+        c.drawOval(skia.Rect.MakeLTRB(x - 96, 1056, x + 96, 1276), paint(hair))
+        for k in range(9):                                                                   # strands of hair
+            xx = x - 70 + k * 17
+            c.drawLine(xx, 1070 + abs(k - 4) * 6, xx + 6, 1262 - abs(k - 4) * 8, paint(mix(hair, BLACK, 0.25), 0.7, stroke=3))
+
+
 def s_r_room(T, idx):
     """She was never in an old town. It isn't 1974. It's Monday, 9 a.m., and she has been silent in this chair for
-    forty seconds. A flat, sharp meeting room; two interviewers seen from behind; Clara across the table, frozen."""
+    forty seconds. A flat, sharp meeting room; the lens creeps in on Clara across the table; cut to the clock on the
+    wall, counting; to the tray where the phones were left; to her eyes."""
     st = K.Stage()
     c = st.c
     t0 = cut("r_room")
+    t_clock = Wx("r1", "It's") - 0.1
+    t_tray = Wx("r1", "and") - 0.1
+    t_eyes = Wx("r1", "forty") - 0.15
+    if t_clock <= T < t_tray:                                   # the clock on the wall, close
+        c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((222, 224, 222)))
+        zoom(c, T, t_clock, t_tray, 1.0, 1.06, cx=540, cy=820)
+        c.drawRoundRect(skia.Rect.MakeLTRB(90, 620, 990, 1020), 30, 30, paint((40, 42, 46)))
+        K.text(c, clock_at(T), 540, 880, 190, "inter-500", (240, 80, 60), tag="screen")
+        c.restore()
+        return st.arr
+    if t_tray <= T < t_eyes:                                    # the tray: three phones, face down
+        c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((236, 236, 234)))
+        zoom(c, T, t_tray, t_eyes, 1.0, 1.08, cx=540, cy=900)
+        c.drawRoundRect(skia.Rect.MakeLTRB(120, 760, 960, 1180), 30, 30, paint((80, 84, 92)))
+        for k in range(3):
+            c.drawRoundRect(skia.Rect.MakeLTRB(170 + k * 265, 800, 400 + k * 265, 1140), 24, 24, paint((20, 20, 24)))
+            c.drawCircle(220 + k * 265, 850, 14, paint((50, 52, 58)))
+        c.drawRect(skia.Rect.MakeLTRB(330, 560, 750, 690), paint((250, 250, 250)))
+        K.text(c, "PHONES", 540, 655, 84, "inter-700", (40, 40, 46), tag="screen")
+        c.restore()
+        return st.arr
+    if T >= t_eyes:                                             # her eyes: forty seconds of nothing
+        c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((214, 216, 214)))
+        zoom(c, T, t_eyes, end("r_room"), 1.0, 1.2, cx=540, cy=800)
+        _flat_face(c, 540, 900, 2.6, "clara_now", T, expr="lost", blink_=0.0, gaze=(0.0, 0.3))
+        c.restore()
+        return st.arr
+    zoom(c, T, t0, t_clock, 1.0, 1.22, cx=540, cy=760)
     _room(c, T)
     _flat_face(c, 540, 760, 0.82, "clara_now", T, expr="lost", blink_=blink(T, 21) * 0.3, gaze=(0.0, 0.5))
     c.drawRect(skia.Rect.MakeLTRB(80, 1040, 1000, 1110), paint((244, 244, 242)))
@@ -60,9 +104,8 @@ def s_r_room(T, idx):
     K.text(c, "PHONES", 260, 984, 26, "inter-700", (40, 40, 46), tag="screen")
     for k in range(3):
         c.drawRoundRect(skia.Rect.MakeLTRB(176 + k * 60, 1008, 226 + k * 60, 1044), 6, 6, paint((20, 20, 24)))
-    for x, col, hair in ((250, (90, 90, 96), (170, 166, 160)), (830, (24, 24, 28), (24, 18, 16))):   # interviewers from behind
-        c.drawPath(K.smooth([(x - 230, H), (x - 200, 1380), (x - 90, 1260), (x + 90, 1260), (x + 200, 1380), (x + 230, H)]), paint(col))
-        c.drawOval(skia.Rect.MakeLTRB(x - 95, 1060, x + 95, 1290), paint(hair))
+    _backs(c)
+    c.restore()
     # a subliminal flash: two frames of the villa when she remembers it
     tf = Wx("r1", "old")
     if tf <= T < tf + 0.09:

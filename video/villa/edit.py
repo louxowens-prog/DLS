@@ -21,7 +21,7 @@ EDIT = [
     (S("l2") - 0.1, "l_stairs", "cut", {}),
     (S("l3") - 0.15, "l_name", "cut", {}),
     (E("l3") + 0.45, "l_loop", "cut", {}),
-    (S("v1") - 1.45, "v_gate", "cut", {}),
+    (S("v1") - 1.1, "v_gate", "cut", {}),
     (S("v1") - 0.15, "v_door", "cut", {}),
     # ---- the gallery of graduates
     (E("v1") + 0.25, "g_gallery", "dissolve", {}),

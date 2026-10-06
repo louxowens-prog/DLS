@@ -159,7 +159,7 @@ def s_l_stairs(T, idx):
                  kind="code" if lab == "CODE" else "essay", tag="label", a=1 - gone, title_size=34 * s)
     if T > Wx("l2", "Code.") - 0.1:                            # ...and the discussion posts, drifting down above them
         k = ramp(T, Wx("l2", "Code.") - 0.1, Wx("l2", "Code.") + 0.3)
-        PR.paper(c, 560, 380 + 50 * K.ease(k), 460, 290, -4, T, title="DISCUSSION POST", lines=4, seed=60, tag="label", a=K.ease(k),
+        PR.paper(c, 560, 440 + 40 * K.ease(k), 460, 290, -4, T, title="DISCUSSION POST", lines=4, seed=60, tag="label", a=K.ease(k),
                  title_size=42)
     c.restore()
     return st.arr
@@ -235,6 +235,34 @@ def _courtyard(c, T, beat, pose, head, clara_x, glass=0.0, empty=False):
         CA.walker_back(c, clara_x, 1410, 0.42, T, coat=(196, 168, 120), key=(255, 70, 170), rim=(60, 230, 150))
 
 
+def _doll_hand(c, x, y, s, side):
+    """A porcelain doll's hand pressed flat against glass: a palm, four jointed fingers splayed, a thumb, ball joints
+    at every knuckle and at the wrist; the glaze catching the light."""
+    c.save()
+    c.translate(x, y)
+    c.scale(s * side, s)
+    pc, sh = (238, 232, 226), (150, 140, 150)
+    c.drawPath(K.capsule(40, 260, 10, 60, 90, 80), paint(pc))                                  # the wrist and forearm
+    c.drawCircle(14, 70, 34, paint(mix(pc, sh, 0.35)))                                       # the wrist joint
+    c.drawRoundRect(skia.Rect.MakeLTRB(-70, -110, 70, 50), 40, 40, paint(pc))                # the palm
+    for k, ang in enumerate((-28, -9, 9, 26)):                                               # fingers, splayed
+        a = math.radians(ang - 90)
+        bx, by = -48 + k * 32, -100
+        mx_, my_ = bx + math.cos(a) * 70, by + math.sin(a) * 70
+        tx, ty = bx + math.cos(a) * 130, by + math.sin(a) * 130
+        c.drawPath(K.capsule(bx, by, mx_, my_, 30, 26), paint(pc))
+        c.drawPath(K.capsule(mx_, my_, tx, ty, 26, 22), paint(pc))
+        for jx, jy in ((bx, by), (mx_, my_)):
+            c.drawCircle(jx, jy, 14, paint(mix(pc, sh, 0.4)))
+            c.drawCircle(jx, jy, 14, paint(sh, 0.8, stroke=2))
+        c.drawOval(skia.Rect.MakeLTRB(tx - 9, ty - 4, tx + 9, ty + 14), paint((236, 200, 200)))   # painted nails
+    c.drawPath(K.capsule(60, 0, 130, -60, 30, 24), paint(pc))                                 # the thumb
+    c.drawCircle(60, 0, 15, paint(mix(pc, sh, 0.4)))
+    c.drawPath(K.smooth([(-60, -90), (0, -104), (60, -90), (40, -40), (-40, -40)]), paint(WHITE, 0.35, blur=6))   # glaze
+    c.drawPath(K.path([(-40, 20), (-10, -20), (-20, -60)], closed=False), paint((70, 60, 70), 0.8, stroke=3))     # a crack
+    c.restore()
+
+
 def s_l_loop(T, idx):
     """Deja vu: she turns the corner into the same piazza - three times. The same fountain, the same three notes; the
     mannequin in the window is never where it was, and each time it has more of a face. The third time the fountain
@@ -243,7 +271,7 @@ def s_l_loop(T, idx):
     c = st.c
     t0 = cut("l_loop")
     u = T - t0
-    scare = end("l_loop") - 0.62
+    scare = end("l_loop") - 0.95
     P_ = 0.85
     hold = t0 + 3 * P_
     if T < hold:
@@ -261,13 +289,15 @@ def s_l_loop(T, idx):
         shake(c, T, 22 * hit(T, scare + 0.08, 0.4), seed=3)
         c.drawPaint(paint((0, 10, 6)))
         G.pool(c, 540, 860, 900, EMERALD, 0.7)
-        z = 1.6 + 1.4 * K.ease(k)
+        z = 0.55 + 0.75 * K.ease(k) + 0.04 * (T - scare)
         c.save()
         c.translate(540, 900)
         c.scale(z, z)
         c.translate(-540, -900)
-        CA.mannequin(c, 540, 1900, 0.95, T, pose=3, head=0.0, gown=False, cap=False, L=(80, 255, 170), R=(255, 60, 160),
-                     face_k=1.0, crack=1.0)
+        CA.face(c, 540, 860, 2.5, "doll", T, L=(80, 255, 170), R=(255, 60, 160), core=0.5, expr="scream", porc=1.0,
+                crack=0.45, amb=(30, 40, 34), gaze=(0.0, 0.0), blink=0.0, talk=0.6)
+        for sd in (-1, 1):                                     # porcelain hands, jointed, pressed flat to the glass
+            _doll_hand(c, 540 + sd * 430, 1260, 1.35, sd)
         c.restore()
         if k >= 1:                                             # the glass cracks where the face struck it
             rng = K.rng_at(9, 9)
@@ -380,8 +410,8 @@ def s_v_door(T, idx):
         c.drawLine(x + (x - 540) * 0.05, 1340, x + (x - 540) * 0.6, 1950, paint((60, 30, 90) if k % 2 else (90, 40, 30), 0.35, stroke=10, blur=6))
     CA.face(c, 540, 700, 0.66, "governess", T, L=(255, 170, 70), R=(70, 100, 255), core=0.45, expr="polite",
             talk=talk(T, "GOV"), blink=0.0, gaze=(0.0, 0.0), porc=0.35, glaze=0.6)
-    PR.candelabra(c, 350, 1250, 0.7, T)
-    G.pool(c, 350, 1130, 360, AMBER, 0.3)
+    PR.candelabra(c, 330, 1110, 0.7, T)
+    G.pool(c, 330, 990, 360, AMBER, 0.3)
     # heavy velvet curtains framing the doorway
     HL.drape(c, -20, -40, 230, 1960, color=(110, 10, 30), side=-1, folds=5, tie=0.6)
     HL.drape(c, 850, -40, 1100, 1960, color=(110, 10, 30), side=1, folds=5, tie=0.6)

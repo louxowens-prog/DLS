@@ -327,8 +327,8 @@ def square(c, T, clock_r=118, doors=0.0, parade=None, group=0.0, clara=None, bir
     if group < 1:                                              # the tour group, following a red umbrella out of the square
         coats = [(150, 60, 70), (60, 80, 130), (130, 112, 70), (96, 60, 110), (50, 100, 84), (140, 90, 56), (80, 70, 90)]
         for k in range(7):
-            gx = 650 + (k % 4) * 46 + (k // 4) * 22 + group * 300
-            figure_tiny(c, gx, 1630 + (k // 4) * 26, 0.85 + 0.05 * (k // 4), T, coats[k], a=1 - group, seed=k, umbrella=(k == 0),
+            gx = 660 + (k % 4) * 44 + (k // 4) * 22 + group * 300
+            figure_tiny(c, gx, 1468 + (k // 4) * 22, 0.8 + 0.05 * (k // 4), T, coats[k], a=1 - group, seed=k, umbrella=(k == 0),
                         hair=[(40, 26, 24), (120, 90, 60), (30, 24, 26), (160, 150, 140)][k % 4])
     if clara is not None:
         figure_tiny(c, *clara, T, (196, 168, 120), seed=9, scarf=True)
@@ -416,7 +416,7 @@ def gallery(c, cam, T, length=30.0, width=4.4, height=5.0, lights=None, portrait
             q.drawPaint(paint((60, 40, 30)))
     with ce.draw(c, cam) as pc:
         if pc is not None:
-            P.lit(pc, ce, lights, ceil_albedo, gain=0.6 if not fresco else 0.42, amb=(7, 5, 7) if not fresco else (16, 12, 16))
+            P.lit(pc, ce, lights, ceil_albedo, gain=0.6 if not fresco else 0.26, amb=(7, 5, 7) if not fresco else (30, 26, 26))
             P.depth_fog(pc, ce, cam, fog, density)
     for side in (-1, 1):
         wl = P.wall_x(side * hw, za, zb, 0, height, facing=-side)

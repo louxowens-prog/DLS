@@ -41,8 +41,8 @@ LINES = [
     ("w2", "CLARA", "Just this once.", None, 0.3),
     ("w3", "GOV", "=w1", None, 0.12),
     ("w4", "CLARA", "=w2", None, 0.15),
-    ("w5", "NAR", "Eighty-eight percent of UK students use AI to help with assessed work. Nearly one in five have pasted its words straight in.",
-     "88% of UK students use AI to help with assessed work. | Nearly 1 in 5 have pasted its words straight in.", 0.2),
+    ("w5", "NAR", "Ninety-four percent of UK students now use AI to help with assessed work. About one in eight paste its words straight in.",
+     "94% of UK students now use AI to help with assessed work. | About 1 in 8 paste its words straight in.", 0.2),
     ("w6", "GOV", "=w1", None, 0.12),
     ("w7", "CLARA", "=w2", None, 0.25),
     ("w8", "NAR", "Proven AI cheating at UK universities tripled in a year. And that's only the ones who got caught.",
@@ -60,24 +60,24 @@ LINES = [
     ("x1", "GOV", "Your examination is waiting.", None, 0.0),
     # ---- real life
     ("r1", "NAR", "She was never in an old town. It isn't nineteen seventy-four. It's Monday, nine a.m., and she has been silent in this chair for forty seconds.",
-     "She was never in an old town. | It isn't 1974. | It's Monday, 9 a.m., and she has been silent in this chair for forty seconds.", 0.25),
-    ("r2", "INT1", "First-class degree in computer science. So, why does this code crash?", None, 1.1),
+     "She was never in an old town. | It isn't 1974. | It's Monday, 9 a.m., and she has been silent in this chair for forty seconds.", 0.15),
+    ("r2", "INT1", "First-class degree in computer science. I'll ask again. Why does this code crash?", None, 1.1),
     ("r3", "INT2", "Then talk us through your dissertation.", None, 0.35),
     ("r4", "CLARA", "It was about... it was...", None, 0.9),
     ("r5", "INT1", "Thank you, Clara. We'll be in touch.", None, 0.35),
     ("r6", "NAR", "Six rejections. Fifty-three thousand pounds of debt. A degree on the wall, and nothing behind it.",
-     "Six rejections. | £53,000 of student debt. | A degree on the wall, and nothing behind it.", 0.4),
+     "Six rejections. | £53,000 of student debt. | A degree on the wall, and nothing behind it.", 0.3),
     # ---- the reveal turns on the viewer
     ("p1", "NAR", "One day, the machine will wait outside the door. What will be left inside you?", None, 0.0),
     # ---- the quiet lesson
     ("e1", "NAR", "AI can be the best tutor you'll ever have, if it makes you do the thinking.", None, 0.2),
-    ("e2", "NAR", "Yoonesko calls for AI that is human-centred, age-appropriate and carefully governed. Yet in twenty twenty-three, fewer than one in ten schools and universities had any formal guidance.",
-     "UNESCO calls for AI that is human-centred, age-appropriate and carefully governed. | Yet in 2023, fewer than 1 in 10 schools and universities had any formal guidance.", 0.2),
+    ("e2", "NAR", "Yoonesko calls for AI that is human-centred, age-appropriate and carefully governed. Yet in its twenty twenty-five survey, fewer than one in five universities had a formal AI policy.",
+     "UNESCO calls for AI that is human-centred, age-appropriate and carefully governed. | Yet in its 2025 survey, fewer than 1 in 5 universities had a formal AI policy.", 0.2),
     ("e3", "NAR", "Ask it to teach you, not to do it for you. If you can't explain it without the machine, you don't know it yet.",
      "Ask it to teach you, not to do it for you. | If you can't explain it without the machine, you don't know it yet.", 0.0),
 ]
 
 # the third "Just this once" is the same recording, gone mechanical: the voice of someone turning into porcelain
 FX = {"w4": "pale", "w7": "porcelain"}
-SPEED = {"e3": 0.92, "e1": 0.95, "c1": 0.98, "p1": 0.95, "g2": 1.12, "e2": 1.14, "m2": 1.12}
+SPEED = {"e3": 1.0, "e1": 1.0, "c1": 0.98, "p1": 0.95, "g2": 1.12, "e2": 1.14, "m2": 1.12}
 PITCH = {}

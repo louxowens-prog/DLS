@@ -208,7 +208,7 @@ def steps(fx, t0, t1, gap=0.5, level=1.0, seed=0, hard=True, pan=0.5):
 
 T_NOTHING = E("h2") + 0.08                     # after "nothing": silence, then the title
 T_TITLE = cut("t_title")
-T_SCARE1 = end("l_loop") - 0.62                # the mannequin at the glass
+T_SCARE1 = end("l_loop") - 0.95                # the porcelain face at the glass
 T_EMPTY = cut("l_loop") + 3 * 0.85              # ... after three passes: the window is empty, and nothing makes a sound
 T_JAM = E("c4") + 0.25                         # the gears seize ...
 T_SCARE2 = cut("c_scare")                      # ... and the falling graduate
@@ -236,6 +236,7 @@ def score(mus, fx):
     mus.add(O.strings([57, 64, 69, 72], 2.2, 0.6), T_TITLE, 1.0)
     mus.add(I.choir([69, 72, 76], 2.0, 0.4, vowel="a", attack=0.2), T_TITLE + 0.1, 0.8)
     fx.add(Y.thud(1.0, f=40), T_TITLE, 1.0)
+    tower_bell(fx, T_TITLE, 1.0, m=57, dur=4.0)
     # ---------------- the square at nine
     t0, t1 = cut("q_square"), cut("q_clara")
     piano_theme(mus, t0, cut("l_alley"), 0.9)
@@ -251,7 +252,7 @@ def score(mus, fx):
     steps(fx, t1 - 0.3, t1 + 0.4, gap=0.45, level=0.6, seed=2)
     # ---------------- the labyrinth
     t0 = cut("l_alley")
-    steps(fx, t0, cut("l_window"), gap=0.5, level=0.85, seed=4)
+    steps(fx, t0, cut("l_window"), gap=0.5, level=1.5, seed=4)
     tower_bell(fx, t0 + 0.4, 0.3, m=50, dur=5.0)                          # a church bell, distant, somewhere in the maze
     tower_bell(fx, cut("l_stairs") + 1.6, 0.22, m=47, dur=5.0)
     harpsi_ostinato(mus, t0, cut("l_window"), 0.7)
@@ -269,9 +270,12 @@ def score(mus, fx):
     for k in range(3):
         mus.add(O.music_box([(88, 1), (93, 1), (92, 2)], amp=0.8, detune=lambda u, k=k: [0.0, 45.0, 100.0][k]), t0 + k * 0.85, 0.9, 0.5)
         fx.add(Y.footsteps(3, 0.22, 1.0, seed=k, hard=True), t0 + k * 0.85 + 0.05, 0.6)
-        fx.add(O.whispers(0.6, 0.6, seed=30 + k), t0 + k * 0.85 + 0.1, 0.25)
+        fx.add(O.whispers(0.6, 0.6, seed=30 + k), t0 + k * 0.85 + 0.1, 0.35)
+        fx.add(I.joint(1.0, seed=40 + k), t0 + k * 0.85 + 0.2, 1.1)                    # the mannequin's new pose, creaking
     stinger(mus, fx, T_SCARE1, 1.0)
     fx.add(I.smash(1.0, seed=5), T_SCARE1 + 0.1, 1.5)
+    for key in ("v1", "w1", "w3", "w6", "c3", "x1"):                     # whispers under every word the Governess says
+        fx.add(O.whispers(E(key) - S(key) + 0.5, 0.8, seed=sum(map(ord, key)) % 97), S(key) - 0.15, 0.45)
     # ---------------- the villa
     fx.add(Y.creak(1.4, 1.0, seed=3, f0=420, f1=180), cut("v_gate") + 0.2, 0.7)
     organ_chord(mus, cut("v_door"), E("v1") - cut("v_door") + 1.0, [33, 45, 52, 57], 0.8)
@@ -283,7 +287,7 @@ def score(mus, fx):
     voice_line(mus, t0, cut("g_double"), 0.9, start_bar=4)
     strings_bed(mus, t0, cut("w_desk"), 0.5, start_bar=4)
     for k in range(3):
-        fx.add(I.joint(1.0, seed=k), t0 + 1.5 + k * 0.2, 0.6)
+        fx.add(I.joint(1.0, seed=k), t0 + 1.3 + k * 0.2, 1.2)
     t0 = cut("g_exam")
     fx.add(FXL.paper_flutter(3.2, 0.8, seed=9), t0, 0.45)
     harpsi_ostinato(mus, t0, Wx("g2", "On"), 0.8, step=BEAT / 3, start_bar=0)
@@ -301,22 +305,23 @@ def score(mus, fx):
     for k, (nm, cents, rate) in enumerate((("w_desk", 0.0, 1.0), ("w_desk2", 30.0, 0.95), ("w_desk3", 65.0, 0.88), ("w_final", 110.0, 0.8))):
         tc = cut(nm)
         chime(fx, tc, 0.6, m=69 - k)
-        fx.add(Y.creak(0.7, 1.0, seed=20 + k, f0=230, f1=130), tc + 1.3 + 0.2 * k, 0.45, 0.62)     # a floorboard behind her
+        fx.add(Y.creak(0.7, 1.0, seed=20 + k, f0=230, f1=130), tc + 1.3 + 0.2 * k, 0.95, 0.62)     # a floorboard behind her
         box_theme(mus, tc + 0.15, end(nm) if nm != "w_desk3" else cut("w_ledger"), 0.75, cents=cents, rate=rate)
     strings_bed(mus, cut("w_shelves"), cut("w_desk3"), 0.45)
-    t88 = Wx("w5", "Eighty-eight")
+    t88 = Wx("w5", "Ninety-four")
     rng = np.random.default_rng(88)
-    for i in range(30):                                                      # the cabinet lighting up
-        fx.add(O.celesta(int(rng.choice([81, 84, 86, 88, 91, 93, 96])), 0.35, dur=0.8), t88 + i * 0.03, 0.3, rng.uniform(0.2, 0.8))
-    t18 = Wx("w5", "Nearly")
-    for i in range(18):
-        fx.add(Y.crack(0.3, seed=i), t18 + (i % 7) * 0.05 + i * 0.012, 0.25, rng.uniform(0.2, 0.8))
+    for i in range(30):                                                      # the cabinet lighting up, in a wave
+        fx.add(O.celesta(int(rng.choice([81, 84, 86, 88, 91, 93, 96])), 0.35, dur=0.8), t88 + i * 0.05, 0.3, 0.2 + 0.6 * i / 29)
+    t18 = Wx("w5", "About")
+    fx.add(Y.crack(1.0, seed=18), t18 + 0.5, 1.4, 0.62)                       # one in eight: its face falls away
+    for i in range(5):
+        fx.add(I.clink(1.0, seed=i), t18 + 0.62 + i * 0.09, 0.5, 0.6)
     fx.add(O.page(1.0, seed=2), cut("w_ledger") + 0.1, 0.6)
     tower_bell(fx, cut("w_final") + 0.05, 1.0, m=43, dur=5.0)
     mus.add(I.choir([69, 70, 75], 1.4, 0.5, vowel="a", attack=0.4), cut("w_final"), 0.7)
     # ---------------- the clockwork
     t0, t1 = cut("c_gears"), T_JAM
-    ticks(fx, t0, t1, 1.0, rate=3.0)
+    ticks(fx, t0, t1, 1.7, rate=3.0)
     fx.add(I.ratchet(t1 - t0, rate=22, amp=1.0), t0, 0.35)
     fx.add(O.whir(t1 - t0, 1.0, f=55), t0, 0.5)
     drone(mus, t0, t1, root=33, level=0.9)
@@ -366,8 +371,8 @@ def score(mus, fx):
     box_theme(mus, t0 + 0.2, T_HOLLOW, 0.7, cents=140.0, rate=0.8)
     fx.add(O.whispers(T_HOLLOW - t0, 0.7, seed=12), t0 + 0.6, 0.3)
     mus.add(I.choir([57, 58, 64], 2.0, 0.4, vowel="o", attack=0.5), Wx("p1", "machine") - 0.2, 0.6)
-    fx.add(Y.crack(1.0, seed=9), Wx("p1", "inside") - 0.04, 1.0)
-    fx.add(I.smash(0.7, seed=10), Wx("p1", "inside") + 0.3, 0.5)
+    fx.add(Y.crack(1.0, seed=9), Wx("p1", "inside") - 0.04, 1.9)
+    fx.add(I.smash(0.7, seed=10), Wx("p1", "inside") + 0.3, 0.9)
     # ---------------- the lesson: the theme in A major
     t0 = T_LESSON
     box_theme(mus, t0, cut("e_unesco") + 0.4, 0.6, major=True, rate=0.9)
@@ -487,10 +492,10 @@ def presence(x, f0=3000, gain_db=2.0, q=0.9):
     return signal.lfilter(b / a[0], a / a[0], x, axis=1)
 
 
-NEED = {"NAR": 11.0}                              # the voice over the bed in the speech band (characters: 13)
+NEED = {"NAR": 9.5}                               # the voice over the bed in the speech band (characters: 11)
 BED = -5.0                                        # the beds' ceiling between lines, against the average line (dB)
-HITS = [(T_TITLE, 4.0, 1.6), (T_SCARE1, 16.0, 1.3), (T_SCARE2 + 0.25, 16.0, 1.3)]   # (time, ceiling dB, seconds)
-SAT = 4.0                                         # how hard the scares are driven
+HITS = [(T_TITLE, 9.0, 1.6), (T_SCARE1, 16.0, 1.3), (T_SCARE2 + 0.25, 16.0, 1.3)]   # (time, ceiling dB, seconds)
+SAT = [2.0, 4.0, 4.0]                             # how hard each hit is driven
 CEIL = -2.0
 STEMS = {}
 
@@ -518,14 +523,14 @@ def build():
     ref = music[:, int(T_TITLE * SR):int((T_TITLE + 1.5) * SR)]
     music = music * db(-13.0) / (np.sqrt((ref ** 2).mean()) + 1e-12)
     on = np.abs(fxx).max(axis=0) > 1e-4
-    fxx = fxx * db(-24.0) / (np.sqrt((fxx[:, on] ** 2).mean()) + 1e-12)
+    fxx = fxx * db(-19.0) / (np.sqrt((fxx[:, on] ** 2).mean()) + 1e-12)
     # the scares: saturate the hit itself (same peak, far less crest) so it lands as a wall of sound, not a click;
     # done before the ducking, so a line that follows a scare still clears it
-    for t, lvl, dur in HITS[1:]:
+    for (t, lvl, dur), drive in zip(HITS, SAT):
         a, b = int((t - 0.02) * SR), int((t + 1.1) * SR)
         beds = music[:, a:b] + fxx[:, a:b]
         pk = np.abs(beds).max() + 1e-9
-        sat = np.tanh(SAT * beds / pk) / np.tanh(SAT) * pk
+        sat = np.tanh(drive * beds / pk) / np.tanh(drive) * pk
         w = np.ones(b - a)
         f = int(0.15 * SR)
         w[-f:] = np.linspace(1, 0, f)
@@ -554,14 +559,19 @@ def build():
         for key in TL.order:
             a, b = spans[key]
             mg = 20 * np.log10((np.sqrt((bv[a:b] ** 2).mean()) + 1e-12) / (np.sqrt((bb[a:b] ** 2).mean()) + 1e-12))
-            need = NEED.get(TL.who(key), 13.0)
+            need = NEED.get(TL.who(key), 11.0)
             if mg < need:
                 gain[key] -= (need - mg) + 0.3
                 short = True
         if not short:
             break
     ride = rides()
-    music, fxx = music * ride[None], fxx * ride[None]
+    # duck only the speech band fully; the score's bass and air dip far less, so it still plays under the voice
+    sos = signal.butter(2, [300 / (SR / 2), 4000 / (SR / 2)], "band", output="sos")
+    ride_rest = ride ** 0.35
+    music_b, fxx_b = signal.sosfiltfilt(sos, music, axis=1), signal.sosfiltfilt(sos, fxx, axis=1)
+    music = music_b * ride[None] + (music - music_b) * ride_rest[None]
+    fxx = fxx_b * ride[None] + (fxx - fxx_b) * ride_rest[None]
     # between the lines the beds stay under the voice (quietly menacing, not loud); only the title and the two scares
     # are let through, so they are by far the loudest things in the film
     from scipy.ndimage import minimum_filter1d
@@ -600,7 +610,7 @@ def report(music, fxx, vo):
     for key in TL.order:
         a, b = int(TL.s(key) * SR), int(TL.e(key) * SR)
         mg = rms(bv[a:b]) - rms(bb[a:b])
-        if mg < NEED.get(TL.who(key), 13.0) - 1.0:
+        if mg < NEED.get(TL.who(key), 11.0) - 1.0:
             low.append(f"{key} {mg:.1f}")
     print("lines under the margin:", ", ".join(low) or "none")
 

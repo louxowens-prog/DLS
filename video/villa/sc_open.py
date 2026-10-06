@@ -75,7 +75,7 @@ def s_q_square(T, idx):
     t0 = cut("q_square")
     zoom(c, T, t0, end("q_square") + 0.5, 1.0, 1.32, cx=540, cy=700)
     doors = K.ease(ramp(T, t0 + 0.5, t0 + 1.2))
-    SE.square(c, T, doors=doors, parade=_parade(T), group=ramp(T, t0, end("q_clara")), clara=(500, 1700, 1.0),
+    SE.square(c, T, doors=doors, parade=_parade(T), group=ramp(T, t0, end("q_clara")), clara=(470, 1492, 0.9),
               birds=T - (t0 + 0.4))
     c.restore()
     ka = K.ease(ramp(T, t0 + 0.5, t0 + 1.0)) * (1 - ramp(T, end("q_square") - 0.35, end("q_square")))

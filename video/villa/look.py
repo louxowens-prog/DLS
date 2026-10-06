@@ -96,7 +96,7 @@ def look(arr, T, idx, diffusion=1.0, halation=1.0, grain=1.0, sat=1.1, fade=1.0,
         g = g[oy:oy + H // 2, ox:ox + W // 2].astype(np.float32)
         g = cv2.resize(g, (W, H), interpolation=cv2.INTER_LINEAR)
         l = np.clip(x @ np.array([0.299, 0.587, 0.114], np.float32), 0, 1)[..., None]
-        amp = (0.009 + 0.026 * l * (1 - l) * 4) * grain * (0.35 + 0.65 * film)
+        amp = (0.013 + 0.024 * l * (1 - l) * 4) * grain * (0.35 + 0.65 * film)
         x = x + g * amp
     x = np.clip(x * 255.0, 0, 255).astype(np.uint8)
     # --- gate weave

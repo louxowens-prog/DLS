@@ -61,7 +61,8 @@ def s_c_gears(T, idx):
         CA.walker_back(c, 540, 1580, 0.62, T, walking=False, key=(255, 160, 70), rim=(40, 220, 140))
         c.restore()
         return st.arr
-    v_ai = 50 * K.ease(ramp(T, Wx("c2", "fifty") - 0.4, Wx("c2", "fifty") + 0.2))
+    v_ai = 50 * K.ease(ramp(T, Wx("c2", "fifty") - 1.2, Wx("c2", "fifty") + 0.2))
+    v_ai += 3.0 * math.sin(T * 9) * ramp(T, t_ai, Wx("c2", "fifty") - 1.2) * (1 - ramp(T, Wx("c2", "fifty") - 1.2, Wx("c2", "fifty")))
     if T < t_both:                                              # one gauge, close: with AI
         zoom(c, T, t_ai, t_both + 0.2, 1.0, 1.12, cx=540, cy=800)
         _mechanism(c, T, seed=3)

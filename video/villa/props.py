@@ -275,10 +275,11 @@ def gauge(c, x, y, r, value, label, a=1.0, tag="plaque", color=(176, 132, 60), n
     t = math.radians(-225 + 270 * value / 100)
     c.drawLine(0, 0, math.cos(t) * r * 0.85, math.sin(t) * r * 0.85, paint(needle, a, stroke=r * 0.05))
     c.drawCircle(0, 0, r * 0.08, paint(mix(color, BLACK, 0.3), a))
-    fv = K.font("playfair-700", r * 0.34)
-    s = f"{int(round(value))}%"
-    w = fv.measureText(s)
-    c.drawString(s, -w / 2, r * 0.62, fv, paint(needle, a))
-    K.reg_local(c, -w / 2, r * 0.62 - r * 0.27, w / 2, r * 0.62 + 4, tag)
+    if value >= 0.5:                                          # blank until the needle starts to move
+        fv = K.font("playfair-700", r * 0.34)
+        s = f"{int(round(value))}%"
+        w = fv.measureText(s)
+        c.drawString(s, -w / 2, r * 0.62, fv, paint(needle, a))
+        K.reg_local(c, -w / 2, r * 0.62 - r * 0.27, w / 2, r * 0.62 + 4, tag)
     c.restore()
     plaque(c, x, y + r * 1.42, [label], size=r * 0.2, a=a, tag=tag)
