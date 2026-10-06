@@ -231,6 +231,8 @@ def score(mus, fx):
     # ---------------- the labyrinth
     t0 = cut("l_alley")
     steps(fx, t0, cut("l_window"), gap=0.5, level=0.85, seed=4)
+    tower_bell(fx, t0 + 0.4, 0.3, m=50, dur=5.0)                          # a church bell, distant, somewhere in the maze
+    tower_bell(fx, cut("l_stairs") + 1.6, 0.22, m=47, dur=5.0)
     harpsi_ostinato(mus, t0, cut("l_window"), 0.7)
     strings_bed(mus, cut("l_window"), cut("l_stairs"), 0.5, major=True)
     box_theme(mus, cut("l_window") + 0.2, cut("l_stairs"), 0.7, major=True)                   # the tutor's window: A major
@@ -277,6 +279,7 @@ def score(mus, fx):
     for k, (nm, cents, rate) in enumerate((("w_desk", 0.0, 1.0), ("w_desk2", 30.0, 0.95), ("w_desk3", 65.0, 0.88), ("w_final", 110.0, 0.8))):
         tc = cut(nm)
         chime(fx, tc, 0.6, m=69 - k)
+        fx.add(Y.creak(0.7, 1.0, seed=20 + k, f0=230, f1=130), tc + 1.3 + 0.2 * k, 0.45, 0.62)     # a floorboard behind her
         box_theme(mus, tc + 0.15, end(nm) if nm != "w_desk3" else cut("w_ledger"), 0.75, cents=cents, rate=rate)
     strings_bed(mus, cut("w_shelves"), cut("w_desk3"), 0.45)
     t88 = Wx("w5", "Eighty-eight")
