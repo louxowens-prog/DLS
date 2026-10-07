@@ -12,7 +12,57 @@ import jazz as J
 import synth as S
 from cues import C
 from timeline import TL
-from voice import SR as VSR
+from timeline import SPEED, VOICE
+from voice import SR as VSR, speak
+
+ORIG = os.environ.get("MG_ORIG") == "1"          # MG_ORIG=1 rebuilds the mix exactly as first delivered
+
+# Pronunciation fixes, audio only (the script, captions and picture keep the original wording and timing). The
+# voice read "A.I." as two clipped sentences ("A, I.") and "A.G.I." as "a G.I."; "And conscious" ran together into
+# "unconscious"; "Chess. Go." ran together into "Chesko". Each fixed reading is stretched to the original length.
+SAY = {
+    "a5": "That's why calling it AGI is so hard.",
+    "l4": "Superintelligence? No. And, conscious AI is a separate question. No evidence.",
+    "g1": "But wait. In February twenty twenty-six, four researchers argued in Nature that human-level AI is already here.",
+    "g6": "Chess! Go! Vision! Translation! Writing! Code! Math! Science! Using computers!",
+    "c5": "A twenty twenty-three study found current AI unlikely to be conscious. And there's no accepted test, because we "
+          "don't understand consciousness itself.",
+    "m4": "Long-term goals. Becoming a doctor takes ten years. The length of tasks AI agents can finish doubles every four "
+          "to seven months, but it's still hours, not years.",
+}
+
+
+def stretch(x, n_out, n=1024, hop=256):
+    """Time-stretch x to n_out samples without changing its pitch (a phase vocoder)."""
+    x = np.asarray(x, np.float64)
+    r = len(x) / n_out
+    if abs(r - 1) < 0.004:
+        return np.pad(x, (0, max(0, n_out - len(x))))[:n_out]
+    f, t, Z = signal.stft(x, VSR, nperseg=n, noverlap=n - hop)
+    steps = np.arange(0, Z.shape[1] - 1, r)
+    mag, ph = np.abs(Z), np.angle(Z)
+    omega = 2 * np.pi * hop * np.arange(Z.shape[0]) / n
+    acc = ph[:, 0].copy()
+    out = np.zeros((Z.shape[0], len(steps)), complex)
+    for k, st in enumerate(steps):
+        i = int(st)
+        a = st - i
+        out[:, k] = ((1 - a) * mag[:, i] + a * mag[:, i + 1]) * np.exp(1j * acc)
+        dp = ph[:, i + 1] - ph[:, i] - omega
+        dp -= 2 * np.pi * np.round(dp / (2 * np.pi))
+        acc += omega + dp
+    _, y = signal.istft(out, VSR, nperseg=n, noverlap=n - hop)
+    return np.pad(y, (0, max(0, n_out - len(y))))[:n_out]
+
+
+def line_wav(key):
+    L = TL.lines[key]
+    if ORIG or key not in SAY:
+        return L["wav"]
+    sp = next(o.get("speed", SPEED) for k, sp_, c, g, o in __import__("script").LINES if k == key)
+    w = speak(SAY[key], L["voice"], sp)
+    y = stretch(w, len(L["wav"]))
+    return (y * np.sqrt((L["wav"].astype(np.float64) ** 2).mean() / ((y ** 2).mean() + 1e-12))).astype(np.float32)
 
 SR = J.SR
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -68,8 +118,38 @@ def build():
 
     drums = J.free_drums(T, E, seed=7)
     bass = J.free_bass(T, lambda t: E(t) * 0.9, seed=11)
+    if not ORIG:
+        # the band as a phone hears it: the bass driven into fuzz whose overtones sit at 250-2500 Hz, and the
+        # cymbals and snare crack brought forward, so "free-jazz drums and distorted bass" survive a small speaker
+        pk = np.abs(bass).max() + 1e-9
+        grit = J._bp(np.tanh(7 * bass / pk) * pk, 250, 2500)
+        bass = bass + grit * 0.25 * np.sqrt((bass ** 2).mean() / ((grit ** 2).mean() + 1e-12))
+        drums = drums + 0.35 * J._hp(drums, 2500)
     band.add(np.stack([drums * 0.9, drums]), 0.0, 1.0)
     band.add(bass, 0.0, 0.55)
+    if not ORIG:
+        # free-jazz interjections in the breaths between lines: a sax squeal, a piano cluster, a stab and a crack
+        stops = dead_stops()
+        quiet = (C["silence"], C["missing"])
+        k = 0
+        for a_key, b_key in zip(TL.order, TL.order[1:]):
+            t0, t1 = TL.e(a_key) + 0.03, TL.s(b_key)
+            if t1 - t0 < 0.3 or quiet[0] - 0.5 < t0 < quiet[1] or t0 > C["finale"] - 0.5:
+                continue
+            if any(a_ - 0.4 < t0 < b_ for a_, b_ in stops):
+                continue
+            kind = k % 4
+            if kind == 0:
+                band.add(J.sax(233 * 2 ** (((k * 5) % 12) / 12), 0.55, squeal=1.4, seed=200 + k), t0, 0.28)
+            elif kind == 1:
+                band.add(J.piano([60 + (k * 7) % 12, 61 + (k * 7) % 12, 66 + (k * 7) % 12], 0.9, seed=210 + k), t0, 0.4)
+            elif kind == 2:
+                band.add(J.cluster_stab(52 + (k * 3) % 12, 6, 0.5, seed=220 + k), t0, 0.36)
+                fx.add(J.snare(seed=230 + k, tight=1.3), t0, 0.5)
+            else:
+                fx.add(J.noise_hit(0.25, 600, 9000, seed=240 + k), t0, 0.35)
+                fx.add(J.crash(seed=250 + k), t0, 0.3)
+            k += 1
 
     # ---- the hook: impact, the clock, the scratch, the title hit
     fx.add(J.noise_hit(0.5, 200, 9000, seed=1), 0.0, 0.8)
@@ -93,10 +173,13 @@ def build():
     # ---- "But wait." hard stop, then the notification and the water
     fx.add(J.scratch(0.35, seed=50), C["wait_stop"] - 0.35, 0.45)
     fx.add(J.ping(), C["notif"], 0.45)
-    fx.add(J.riser(TL.s("g6") - C["water"] + 0.2, seed=51), C["water"], 0.45)
+    fx.add(J.riser(TL.s("g6") - C["water"] + (0.2 if ORIG else -0.06), seed=51), C["water"], 0.45)   # peaks just before the list
     for i, t in enumerate(C["montage"]):
-        fx.add(J.crash(seed=60 + i) if i % 3 == 0 else J.snare(seed=60 + i), t - 0.04, 0.2)
-        fx.add(J.kick(seed=70 + i), t - 0.04, 0.45)
+        lead, lvl = (0.04, 1.0) if ORIG else (0.09, 0.75)      # the hit lands just ahead of each word, under it
+        if ORIG or i > 0:                                       # (no cymbal over "Chess": its hiss swallowed the "ch")
+            fx.add(J.crash(seed=60 + i) if i % 3 == 0 else J.snare(seed=60 + i), t - lead, 0.2 * lvl)
+        if ORIG or i > 0:
+            fx.add(J.kick(seed=70 + i), t - lead, 0.45)
     band.add(J.sax(311, 1.6, squeal=1.3, seed=8), TL.s("g6") + 0.5, 0.16)
 
     # ---- consciousness: silence, one piano note at a time, the robot, the octopus
@@ -145,7 +228,7 @@ def build():
     vo = np.zeros(N)
     for key in TL.order:
         L = TL.lines[key]
-        a = L["wav"].astype(np.float64)
+        a = line_wav(key).astype(np.float64)
         if L["voice"] != "af_heart":
             tt = np.arange(len(a)) / VSR
             a = a * (0.55 + 0.45 * np.sin(2 * np.pi * 92 * tt))           # ring-modulated machine voice
@@ -157,13 +240,19 @@ def build():
         vo[i:j] += up[: j - i]
     vo = S._hp(vo, 70)
     vo[int(C["silence"] * SR): int((C["missing"] - 0.3) * SR)] *= db(-2)
-    vo[int((TL.s("g6") - 0.05) * SR): int((TL.e("g6") + 0.05) * SR)] *= db(3)       # the spoken list rides over the montage
+    vo[int((TL.s("g6") - 0.05) * SR): int((TL.e("g6") + 0.05) * SR)] *= db(3 if ORIG else 5)   # the spoken list rides over the montage
+    if not ORIG:                                                                    # "Olympiad" stays clear of the band
+        vo[int((TL.s("a4") - 0.05) * SR): int((TL.e("a4") + 0.05) * SR)] *= db(1.5)
+    if not ORIG:                                                                    # and its first word, "Chess", a little more
+        vo[int((TL.s("g6") - 0.05) * SR): int((TL.s("g6") + 0.3) * SR)] *= db(2.5)
     vo_st = S.reverb(vo, wet=0.06, rt60=0.7)[:, :N]
 
     env = np.convolve(np.abs(vo), np.ones(SR // 8) / (SR // 8), mode="same")
     env = np.clip(env / (np.percentile(env[env > 1e-4], 90) + 1e-9), 0, 1)
     env = np.convolve(env, np.ones(SR // 5) / (SR // 5), mode="same")
     duck = 1 - 0.8 * env
+    if not ORIG:                                     # duck the speech band hard, the kick, bass and cymbal air far less
+        duck_rest = 1 - 0.5 * env
 
     # the band swells in the gaps between lines and into each dead stop
     talk = np.zeros(N)
@@ -177,7 +266,7 @@ def build():
         k = np.linspace(0, 1, i1 - i0)
         swell[i0:i1] *= 1 + (db(4) - 1) * k * (1 - tsm[i0:i1]) + (db(1.5) - 1) * k * tsm[i0:i1]
     swell[int(C["finale"] * SR): int((TL.s("f1") - 0.1) * SR)] *= db(1.5)
-    swell[int((TL.s("g6") - 0.2) * SR): int((TL.e("g6") + 0.3) * SR)] *= db(1.5)
+    swell[int((TL.s("g6") - 0.2) * SR): int((TL.e("g6") + 0.3) * SR)] *= db(1.5 if ORIG else 0.0)
 
     gate = np.ones(N)
     for a_, b_ in dead_stops():
@@ -202,11 +291,30 @@ def build():
     pianos.add(J.bubbles(1.4, seed=90), C["octopus"], 0.25)
     pianos_r = S.reverb(pianos.x, wet=0.3, rt60=2.0)[:, :N]
 
-    mix = (bandr + fxr) * duck * swell * g_mu * gate + pianos_r * keep * g_mu * 1.4 + vo_st * g_vo
+    beds_raw = bandr + fxr
+    if ORIG:
+        beds = beds_raw * duck
+    else:
+        sos_sp = signal.butter(4, [300 / (SR / 2), 4000 / (SR / 2)], "band", output="sos")
+        sp = signal.sosfiltfilt(sos_sp, beds_raw, axis=1)
+        beds = sp * (1 - 0.88 * env) + (beds_raw - sp) * duck_rest
+    beds = beds * swell * g_mu * gate + pianos_r * keep * g_mu * 1.4
+    mix = beds + vo_st * g_vo
+    report(beds, vo_st * g_vo)
     mix = loudness(mix, -14.0)
     tail = int(0.25 * SR)
     mix[:, -tail:] *= np.linspace(1, 0, tail) ** 2
     return mix, vo
+
+
+def report(beds, voc):
+    """Voice over the beds in the speech band (300-4000 Hz), per line; and the beds' level in the 300-4000 Hz band."""
+    sos = signal.butter(4, [300 / (SR / 2), 4000 / (SR / 2)], "band", output="sos")
+    bb, bv = signal.sosfilt(sos, beds.mean(axis=0)), signal.sosfilt(sos, voc.mean(axis=0))
+    rms = lambda y: 20 * np.log10(np.sqrt((y ** 2).mean()) + 1e-9)
+    m = {k: rms(bv[int(TL.s(k) * SR):int(TL.e(k) * SR)]) - rms(bb[int(TL.s(k) * SR):int(TL.e(k) * SR)]) for k in TL.order}
+    low = sorted(m.items(), key=lambda kv: kv[1])[:5]
+    print("speech-band margin: median %.1f dB, lowest %s" % (np.median(list(m.values())), ", ".join(f"{k} {v:.1f}" for k, v in low)))
 
 
 def loudness(x, target):
