@@ -1,5 +1,5 @@
-"""Shared by every shot: line timings, mouths and blinks, the Reels-safe layout, and the camera's grammar - the slow
-zoom lens (not a dolly), rack focus between depth layers, a hand-held drift, and shakes."""
+"""Shared by every shot: line timings, mouths and blinks, the Reels-safe layout, and the camera's grammar - slow
+trance-like zooms and drifts, rack focus between depth layers, shakes for the impacts."""
 import math
 
 import cv2
@@ -14,7 +14,7 @@ from voice import SR
 # Reels: words stay out of the top 220 px, the bottom 380 px and (y 1000-1750) the strip right of x 960.
 TOP, BOT = 240, H - 400
 CAP_TOP = 1330                     # the caption band starts here: keep plaques and labels above it
-SPEAKER = {"clara": "CLARA", "clara_now": "CLARA", "governess": "GOV", "int1": "INT1", "int2": "INT2"}
+SPEAKER = {"merit": "MERIT", "iris": "IRIS", "system": "SYSTEM", "nar": "NAR"}
 
 
 def S(k):

@@ -1,61 +1,94 @@
 """The edit: (start time, shot, transition in, look). Times hang off the narration (S = a line's start, E = its end,
-Wx = a word's start), so the picture follows the voice. Looks: plain=1 is the present day (no gels, no grain, no
-diffusion); everything else is the 1974 print."""
+Wx = a word's start), so the picture follows the voice. Looks are look.look() parameters: the wash deepens chapter by
+chapter - cobalt, red, magenta, blood - and the dream melts as it turns to nightmare."""
 from common import E, S, Wx
 from timeline import TL
 
-TRANS = {"cut": 0.0, "dissolve": 0.7, "slow": 1.3, "white": 0.5, "black": 0.45, "flash": 0.14}
-NOW = {"plain": 1.0, "grain": 0.35, "dust": 0.0}
+TRANS = {"cut": 0.0, "dissolve": 0.6, "slow": 1.4, "super": 2.4, "flash": 0.16, "black": 0.4, "burn": 0.7}
+
+# looks
+BLOOD = dict(wash="blood", wash_k=0.85, haze=0.6, streak=0.7)
+NIGHT = dict(wash="violet", wash_k=0.62, keep=0.75, haze=0.7, streak=0.6)
+FIRE = dict(wash="ember", wash_k=0.45, keep=0.6, haze=0.7)
+CARD = dict(wash="red", wash_k=0.3, keep=0.7, haze=0.4, streak=0.8, grain=0.8)
+COBALT = dict(wash="cobalt", wash_k=0.7, keep=0.6, haze=0.75, streak=0.6)
+VIOLET = dict(wash="violet", wash_k=0.66, keep=0.55, haze=0.8, streak=0.6, breathe=0.4)
+MAGENTA = dict(wash="magenta", wash_k=0.75, keep=0.5, haze=0.8, streak=0.6)
+RED = dict(wash="red", wash_k=0.82, keep=0.4, haze=0.7, streak=0.6)
+DEEP = dict(wash="blood", wash_k=0.86, keep=0.3, haze=0.8, streak=0.7, breathe=0.6)
+FLUORO = dict(wash="fluoro", wash_k=0.6, keep=0.5, haze=0.5, streak=0.4, grain=1.1)
+AIRBRUSH = dict(wash=None, haze=0.5, streak=0.7, grain=0.8, sat=1.15, breathe=0.5)
+
+
+def L(base, **kw):
+    d = dict(base)
+    d.update(kw)
+    return d
+
 
 EDIT = [
-    # ---- the hook: a porcelain graduate; inside, nothing
-    (0.0, "h_doll", "cut", {}),
-    (E("h2") + 0.55, "t_title", "cut", {}),
-    # ---- the square at nine o'clock
-    (S("o1") - 0.25, "q_square", "dissolve", {}),
-    (Wx("o1", "its") - 0.15, "q_clock", "cut", {}),
-    (E("o1") + 0.05, "q_clara", "cut", {}),
-    # ---- the labyrinth
-    (S("l1") - 0.3, "l_alley", "dissolve", {}),
-    (Wx("l1", "In") - 0.1, "l_window", "cut", {}),
-    (S("l2") - 0.1, "l_stairs", "cut", {}),
-    (S("l3") - 0.15, "l_name", "cut", {}),
-    (E("l3") + 0.45, "l_loop", "cut", {}),
-    (S("v1") - 1.1, "v_gate", "cut", {}),
-    (S("v1") - 0.15, "v_door", "cut", {}),
-    # ---- the gallery of graduates
-    (E("v1") + 0.25, "g_gallery", "dissolve", {}),
-    (S("g2") - 0.1, "g_exam", "cut", {}),
-    (S("g3") - 0.1, "g_double", "cut", {}),
-    # ---- the writing room: the same night, year after year
-    (S("w1") - 0.45, "w_desk", "dissolve", {}),
-    (S("w3") - 0.55, "w_desk2", "cut", {}),
-    (S("w5") - 0.05, "w_shelves", "cut", {}),
-    (S("w6") - 0.55, "w_desk3", "cut", {}),
-    (S("w8") - 0.05, "w_ledger", "cut", {}),
-    (E("w8") + 0.25, "w_final", "cut", {}),
-    # ---- the clockwork
-    (S("c1") - 0.1, "c_gears", "dissolve", {}),
-    (Wx("c2", "biggest") - 0.25, "c_bug", "cut", {}),
-    (S("c3") - 0.1, "c_fix", "cut", {}),
-    (E("c4") + 0.7, "c_scare", "cut", {}),
-    # ---- the hall of mirrors
-    (S("m1") - 0.15, "m_mirrors", "dissolve", {}),
-    (S("m2") - 0.1, "m_super", "slow", {}),
-    # ---- the locked door
-    (E("m2") + 0.2, "x_door", "dissolve", {}),
-    # ---- the present day
-    (E("x1") + 1.25, "r_room", "white", NOW),
-    (S("r2") - 0.1, "r_code", "cut", NOW),
-    (S("r3") - 0.1, "r_diss", "cut", NOW),
-    (S("r5") - 0.1, "r_thanks", "cut", NOW),
-    (S("r6") - 0.25, "r_after", "cut", NOW),
-    (E("r6") + 0.3, "p_window", "dissolve", {"diffusion": 0.7}),
-    # ---- the lesson
-    (S("e1") - 0.9, "e_slate", "black", {}),
-    (S("e2") - 0.1, "e_unesco", "dissolve", {}),
-    (S("e3") - 0.15, "e_clock", "dissolve", {}),
-    (TL.total - 1.7, "e_fine", "dissolve", {}),
+    # ---- the hook: a stamp comes down in red; the verdict
+    (0.0, "h_stamp", "cut", BLOOD),
+    # ---- cold open: the quiet night - a wrong moon, a sky of punched-card stars, a fire of records
+    (E("h1") + 0.3, "o_sky", "burn", L(NIGHT, burn_at=(0.2, 0.3))),
+    (Wx("c1", "records:") - 0.25, "o_fire", "dissolve", L(NIGHT, wash_k=0.5)),
+    (E("c1") + 0.2, "t_title", "flash", L(CARD, wash="red")),
+    (E("c1") + 1.6, "k_1", "burn", L(CARD, wash="cobalt")),
+    # ---- I. THE INHERITANCE (cobalt)
+    (S("i1") - 0.05, "i_dreamer", "slow", COBALT),
+    (Wx("i1", "our") - 0.2, "i_cards", "dissolve", L(COBALT, wash_k=0.5)),
+    (S("i2") - 0.2, "i_faces", "slow", L(VIOLET, wash="magenta", wash_k=0.18, keep=0.0, breathe=0.2)),
+    (S("i3") - 0.4, "i_eyes", "dissolve", L(VIOLET, wash_k=0.55)),
+    (Wx("i3", "I", 1) - 0.1, "i_mouth", "slow", L(VIOLET, wash_k=0.5)),
+    (Wx("i3", "I", 2) - 0.1, "i_merit", "slow", L(VIOLET, wash_k=0.5)),
+    (E("i3") + 0.2, "k_2", "burn", L(CARD, wash="red")),
+    # ---- II. THE PATTERN (red)
+    (S("p1") - 0.05, "p_portraits", "dissolve", RED),
+    (Wx("p1", "and") - 0.3, "p_template", "super", RED),
+    (S("p2") - 0.1, "p_cv", "dissolve", L(RED, wash_k=0.6)),
+    (Wx("p2", "It", 1) - 0.1, "p_scrap", "cut", L(RED, wash_k=0.7)),
+    (S("p3") - 0.1, "p_calm", "slow", L(RED, wash_k=0.7, breathe=0.5)),
+    (Wx("p3", "The", 1) - 0.15, "p_door", "dissolve", DEEP),
+    (S("p4") - 0.1, "p_proxy", "dissolve", L(RED, wash_k=0.6)),
+    (E("p4") + 0.2, "k_3", "burn", L(CARD, wash="magenta")),
+    # ---- III. THE MULTITUDE (magenta)
+    (S("m1") - 0.05, "m_manager", "dissolve", MAGENTA),
+    (Wx("m1", "An") - 0.12, "m_army", "flash", L(MAGENTA, pulse=0.6)),
+    (S("m2") - 0.1, "m_nist", "dissolve", MAGENTA),
+    (S("m4") - 0.2, "m_kaleido", "slow", L(MAGENTA, melt=0.35, breathe=0.8, pulse=1.0)),
+    (E("m4") + 0.2, "k_4", "burn", L(CARD, wash="blood")),
+    # ---- IV. THE VERDICT (blood)
+    (S("v1") - 0.05, "v_doors", "dissolve", DEEP),
+    (S("v2") - 0.4, "v_why", "cut", L(DEEP, melt=0.3)),
+    (E("v2"), "v_silence", "cut", L(DEEP, haze=1.0, breathe=1.2, melt=0.4)),
+    (S("v3") - 0.02, "v_mask", "cut", L(BLOOD, streak=1.0)),
+    (E("v3") + 0.15, "v_vars", "flash", L(VIOLET, wash_k=0.6, melt=0.15)),
+    (Wx("v4", "You") - 0.15, "v_clerk", "dissolve", L(FIRE, wash="ember", wash_k=0.5)),
+    (S("v5") - 0.1, "v_dutch", "dissolve", L(COBALT, wash_k=0.62, keep=0.7)),
+    (Wx("v5", "The", 1) - 0.15, "v_gov", "dissolve", L(COBALT, wash_k=0.66, keep=0.7)),
+    # ---- the descent: the dreamer drifts through space; she falls
+    (E("v5") + 0.2, "d_space", "burn", AIRBRUSH),
+    # ---- IRIS: a kitchen at 2 a.m.
+    (S("r1") - 0.1, "r_kitchen", "flash", FLUORO),
+    (Wx("r1", "Seventy") - 0.1, "r_inbox", "cut", FLUORO),
+    (Wx("r1", "No") - 0.12, "r_slot", "dissolve", L(COBALT, wash_k=0.65)),
+    (S("r2") - 0.15, "r_why", "dissolve", L(FLUORO, wash="cobalt", wash_k=0.5)),
+    (S("r3") - 0.2, "r_answer", "cut", L(FLUORO, wash="cobalt", wash_k=0.55)),
+    (S("r4") - 0.05, "r_phone", "cut", L(FLUORO, wash_k=0.5)),
+    (Wx("r4", "Her", 2) - 0.12, "r_reasons", "dissolve", L(FLUORO, wash="cobalt", wash_k=0.55)),
+    (S("r5") - 0.1, "r_scream", "cut", L(DEEP, melt=0.5, breathe=1.0, smear=0.3)),
+    # ---- the eruption
+    (E("r5") - 0.3, "x_erupt", "flash", L(DEEP, wash_k=0.55, keep=0.4, melt=0.3, breathe=1.0, pulse=1.0, smear=0.1, streak=1.0)),
+    # ---- dead silence; then her eye opens on you
+    (E("x1") + 0.15, "y_black", "cut", L(DEEP, haze=0.3, grain=1.3)),
+    (S("y1") - 0.08, "y_eye", "cut", L(VIOLET, wash="magenta", wash_k=0.55, breathe=0.6)),
+    (S("y2") - 0.1, "y_dossier", "dissolve", L(RED, wash_k=0.6)),
+    # ---- the quiet: the fire again, and the lesson
+    (E("y2") + 0.15, "e_fire", "black", FIRE),
+    (Wx("e1", "NIST") - 0.3, "e_tablet", "dissolve", FIRE),
+    (S("e2") - 0.1, "e_ask", "dissolve", FIRE),
+    (Wx("e2", "In") - 0.15, "e_hand", "dissolve", FIRE),
+    (E("e2") + 0.25, "e_moon", "slow", L(NIGHT, wash="red", wash_k=0.55, keep=0.5)),
 ]
 
 

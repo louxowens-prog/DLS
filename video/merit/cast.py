@@ -28,6 +28,27 @@ PEOPLE = {
                  shadow=(140, 150, 190), lash=(20, 16, 16), style="cap", blush=0.35, age=0.0, coat="gown"),
 }
 
+PEOPLE.update({
+    # the entity: moon-pale, plum lips, eyes like slowly turning reels of tape
+    "merit": dict(skin=(232, 222, 236), lips=(120, 20, 60), iris=(230, 190, 110), brow=(60, 40, 60), hair=(40, 20, 50),
+                  shadow=(110, 70, 150), lash=(14, 8, 18), style="none", blush=0.05, age=0.0, coat=None, reel=True),
+    # Iris: forty-nine, an engineer, a grey streak she stopped dyeing
+    "iris": dict(skin=(226, 186, 160), lips=(168, 104, 100), iris=(84, 100, 70), brow=(70, 50, 40), hair=(70, 48, 36),
+                 shadow=(150, 120, 110), lash=(50, 36, 30), style="iris", blush=0.04, age=0.55, coat="cardigan", soft=True),
+    # the two faces a face-reader saw: a darker-skinned woman, a lighter-skinned man
+    "w_dark": dict(skin=(124, 80, 58), lips=(110, 56, 50), iris=(44, 28, 20), brow=(26, 16, 12), hair=(18, 12, 10),
+                   shadow=(90, 60, 50), lash=(14, 10, 8), style="coils", blush=0.0, age=0.1, coat="tee", soft=True),
+    "m_light": dict(skin=(232, 196, 176), lips=(176, 120, 112), iris=(70, 100, 140), brow=(110, 80, 56), hair=(120, 86, 56),
+                    shadow=(160, 130, 120), lash=(90, 70, 56), style="short", blush=0.0, age=0.2, coat="shirt", male=True),
+    # faces of the crowd, for the whispering chorus
+    "f_a": dict(skin=(196, 150, 120), lips=(150, 80, 80), iris=(60, 40, 30), brow=(40, 26, 20), hair=(30, 20, 16),
+                shadow=(130, 100, 90), lash=(20, 14, 12), style="pony", blush=0.05, age=0.3, coat="tee", soft=True),
+    "f_b": dict(skin=(236, 206, 186), lips=(170, 90, 96), iris=(90, 120, 150), brow=(150, 110, 70), hair=(190, 150, 90),
+                shadow=(170, 140, 140), lash=(60, 44, 36), style="bob", blush=0.1, age=0.6, coat="cardigan", soft=True),
+    "f_c": dict(skin=(150, 100, 74), lips=(120, 66, 60), iris=(50, 34, 24), brow=(30, 20, 16), hair=(24, 18, 16),
+                shadow=(110, 80, 70), lash=(20, 14, 12), style="bun", blush=0.0, age=0.15, coat="tee", soft=True),
+})
+
 EXPR = {
     "neutral": dict(open=0.0, brow=0.0, wide=0.0, smile=0.0),
     "fear": dict(open=0.35, brow=0.8, wide=0.55, smile=-0.3),
@@ -79,6 +100,11 @@ def _eye(c, side, P, E, porc, blink, gaze, T):
             c.drawLine(gx + math.cos(ang) * 6, gy - 1 + math.sin(ang) * 6, gx + math.cos(ang) * ir * 0.95, gy - 1 + math.sin(ang) * ir * 0.95,
                        paint(mix(iris_col, BLACK, 0.4), 0.35, stroke=1.4))
         pr = (6.5 + 2.0 * E["wide"]) * (1 - 0.35 * porc)
+        if P.get("reel"):                                      # a reel of tape turning slowly in the iris
+            for k in range(3):
+                ang = T * 0.9 * side + k * 2.094
+                c.drawCircle(gx + math.cos(ang) * ir * 0.55, gy - 1 + math.sin(ang) * ir * 0.55, ir * 0.22, paint((20, 10, 20), 0.85))
+            c.drawCircle(gx, gy - 1, ir * 0.82, paint(mix(iris_col, WHITE, 0.5), 0.5, stroke=1.6))
         c.drawCircle(gx, gy - 1, pr, paint((8, 6, 8)))
         c.drawCircle(gx, gy - 1, ir, paint(mix(iris_col, BLACK, 0.7), 0.8, stroke=2.2))
         # the lid's shadow across the top of the eyeball
@@ -92,13 +118,15 @@ def _eye(c, side, P, E, porc, blink, gaze, T):
     liner = skia.Path()
     liner.moveTo(-w / 2 - 2, 0)
     liner.cubicTo(-w * 0.28, -h * 0.98 * op - 1, w * 0.18, -h * 1.04 * op - 1, w / 2 + 8, -6)
-    c.drawPath(liner, paint(P["lash"], 1.0, stroke=6.0 + 1.5 * (1 - porc)))
-    c.drawPath(K.path([(w / 2 + 2, -4), (w / 2 + 22, -16), (w / 2 + 4, -10)]), paint(P["lash"], 0.95))     # the 1974 wing
+    soft = P.get("male") or P.get("soft")
+    c.drawPath(liner, paint(P["lash"], 1.0, stroke=(3.5 if soft else 6.0 + 1.5 * (1 - porc))))
+    if not soft:
+        c.drawPath(K.path([(w / 2 + 2, -4), (w / 2 + 22, -16), (w / 2 + 4, -10)]), paint(P["lash"], 0.95))     # the wing
     crease = skia.Path()
     crease.moveTo(-w / 2 + 4, -h * 0.9 * op - 6)
     crease.cubicTo(-w * 0.2, -h * 1.5 - 8, w * 0.2, -h * 1.5 - 8, w / 2 - 2, -h * 0.85 - 8)
     c.drawPath(crease, paint(mix(P["shadow"], BLACK, 0.4), 0.55, stroke=3, blur=1.5))
-    nlash = 13
+    nlash = 0 if P.get("male") else (7 if P.get("soft") else 13)
     for k in range(nlash):
         u = 0.25 + 0.75 * (k + 0.5) / nlash                    # mostly toward the outer corner
         uu = u if side > 0 else u
@@ -130,7 +158,7 @@ def _brow(c, side, P, E, porc):
     p.moveTo(x0, -62 + inner)
     p.quadTo(side * 72, -84 + lift, x1, -62 + lift * 0.4)
     col = P["brow"] if porc < 0.5 else mix(P["brow"], (120, 70, 60), porc)
-    c.drawPath(p, paint(col, 0.95, stroke=8.0 - 3 * porc))
+    c.drawPath(p, paint(col, 0.95, stroke=(14.0 if P.get("male") else 8.0 - 3 * porc)))
 
 
 def _nose(c, P, porc):
@@ -193,6 +221,18 @@ def _hair_back(c, P, T):
         c.drawPath(K.smooth([(-158, -160), (0, -256), (158, -160), (184, 40), (176, 240), (120, 300), (-120, 300), (-176, 240), (-184, 40)]), paint(hc))
     elif st == "cap":
         c.drawPath(K.smooth([(-150, -160), (0, -240), (150, -160), (164, 60), (140, 160), (-140, 160), (-164, 60)]), paint(hc))
+    elif st == "iris":                                       # shoulder-length, a little untidy, a grey streak
+        c.drawPath(K.smooth([(-156, -170), (0, -256), (156, -170), (182, 20), (176, 210), (130, 250), (100, 180), (-100, 180),
+                             (-130, 250), (-176, 210), (-182, 20)]), paint(hc))
+    elif st == "coils":                                      # a halo of natural coils
+        rng = K.rng_at(5, 5)
+        for k in range(46):
+            ang = k / 46 * 6.283
+            r = rng.uniform(190, 236)
+            c.drawCircle(math.cos(ang) * r * 1.0, -60 + math.sin(ang) * r * 0.95, rng.uniform(46, 70), paint(mix(hc, WHITE, rng.uniform(0, 0.08))))
+        c.drawCircle(0, -60, 210, paint(hc))
+    elif st == "short":
+        c.drawPath(K.smooth([(-150, -150), (0, -250), (150, -150), (152, -40), (-152, -40)]), paint(hc))
 
 
 def _hair_front(c, P, T):
@@ -232,6 +272,22 @@ def _hair_front(c, P, T):
         c.drawPath(K.smooth([(-164, -150), (-40, -240), (120, -220), (168, -120), (178, 60), (150, 150), (130, 60), (120, -100), (-60, -180), (-140, -40), (-150, 150), (-176, 60)]), paint(hc))
     elif st == "pony":
         c.drawPath(K.smooth([(-150, -150), (0, -236), (150, -150), (140, -90), (0, -190), (-140, -90)]), paint(hc))
+    elif st == "iris":
+        c.drawPath(K.smooth([(-160, -140), (-60, -232), (60, -236), (150, -170), (176, -40), (170, 120), (150, 230), (136, 120),
+                             (124, -40), (40, -170), (-60, -170), (-128, -60), (-142, 120), (-156, 230), (-176, 120), (-176, -40)]), paint(hc))
+        c.drawPath(K.smooth([(-60, -230), (-20, -236), (-70, -160), (-120, -40), (-140, 100), (-150, 60), (-130, -60), (-100, -160)]),
+                   paint(mix(hc, (210, 206, 200), 0.75)))     # the grey streak
+        for k in range(6):
+            c.drawPath(K.bez_path([(-40 + k * 30, -226), (60 + k * 10, -180), (130 + k * 4, -60)]), paint(mix(hc, WHITE, 0.25), 0.3, stroke=2.5))
+    elif st == "coils":
+        rng = K.rng_at(6, 6)
+        for k in range(18):
+            ang = math.pi + k / 17 * math.pi
+            c.drawCircle(math.cos(ang) * 150, -150 + math.sin(ang) * 90, rng.uniform(30, 44), paint(mix(hc, WHITE, 0.05)))
+    elif st == "short":
+        c.drawPath(K.smooth([(-152, -110), (-120, -210), (0, -246), (120, -214), (154, -110), (140, -150), (60, -196), (-60, -190), (-140, -150)]), paint(hc))
+        for k in range(8):
+            c.drawPath(K.bez_path([(-110 + k * 30, -220), (-80 + k * 30, -200), (-60 + k * 32, -170)]), paint(mix(hc, WHITE, 0.25), 0.35, stroke=3))
     elif st == "cap":                                         # a painted doll's curls under a mortarboard
         for s in (-1, 1):
             for k in range(3):
@@ -305,6 +361,18 @@ def _body(c, P, T):
         c.drawPath(K.smooth([(-300, 640), (-290, 380), (-170, 304), (-70, 290), (70, 290), (170, 304), (290, 380), (300, 640)]), paint(col))
         if kind == "suit":
             c.drawPath(K.path([(-60, 290), (60, 290), (30, 400), (-30, 400)]), paint((230, 232, 236)))
+    elif kind == "cardigan":                                   # a grey cardigan over a plain top
+        c.drawPath(K.smooth([(-300, 640), (-290, 380), (-170, 304), (-70, 290), (70, 290), (170, 304), (290, 380), (300, 640)]), paint((96, 92, 100)))
+        c.drawPath(K.path([(-70, 290), (70, 290), (30, 470), (-30, 470)]), paint((50, 60, 80)))
+        for sd in (-1, 1):
+            c.drawPath(K.path([(sd * 70, 290), (sd * 110, 300), (sd * 40, 640), (sd * 20, 640)]), paint((80, 76, 84)))
+    elif kind == "tee":
+        c.drawPath(K.smooth([(-300, 640), (-290, 380), (-170, 304), (-70, 290), (70, 290), (170, 304), (290, 380), (300, 640)]), paint((70, 64, 80)))
+        c.drawPath(K.bez_path([(-74, 290), (0, 330), (74, 290)]), paint((50, 44, 60), stroke=8))
+    elif kind == "shirt":                                      # an open-necked shirt
+        c.drawPath(K.smooth([(-300, 640), (-290, 380), (-170, 304), (-70, 290), (70, 290), (170, 304), (290, 380), (300, 640)]), paint((180, 190, 206)))
+        for sd in (-1, 1):
+            c.drawPath(K.path([(sd * 10, 300), (sd * 90, 280), (sd * 60, 360)]), paint((200, 210, 226)))
     elif kind == "gown":                                       # a graduate's gown and hood
         c.drawPath(K.smooth([(-300, 640), (-290, 380), (-170, 300), (-70, 286), (70, 286), (170, 300), (290, 380), (300, 640)]), paint((20, 18, 26)))
         c.drawPath(K.smooth([(-150, 300), (0, 360), (150, 300), (120, 420), (0, 460), (-120, 420)]), paint((150, 20, 40)))
@@ -366,6 +434,18 @@ def face(c, x, y, s, who, T, L=(255, 60, 170), R=(40, 230, 140), core=0.55, amb=
     c.drawPath(K.smooth([(-150, -10), (-118, 70), (-96, 150), (-60, 196), (-120, 150), (-148, 60)]), paint(mix(P["skin"], BLACK, 0.25), 0.35, blur=10))
     c.drawPath(K.smooth([(150, -10), (118, 70), (96, 150), (60, 196), (120, 150), (148, 60)]), paint(mix(P["skin"], BLACK, 0.25), 0.35, blur=10))
     _form(c, P, porc)
+    if P.get("age", 0) > 0.3:                                  # the years: crow's feet, the lines from nose to mouth
+        k = P["age"]
+        dk = mix(P["skin"], BLACK, 0.4)
+        for sd in (-1, 1):
+            for j in range(3):
+                c.drawPath(K.bez_path([(sd * 112, -26 + j * 12), (sd * 126, -22 + j * 14), (sd * 138, -30 + j * 20)]), paint(dk, 0.3 * k, stroke=2))
+            c.drawPath(K.bez_path([(sd * 40, 76), (sd * 66, 108), (sd * 64, 150)]), paint(dk, 0.4 * k, stroke=3, blur=1.5))
+        for j in range(2):
+            c.drawPath(K.bez_path([(-60, -120 - j * 18), (0, -128 - j * 18), (60, -120 - j * 18)]), paint(dk, 0.18 * k, stroke=2))
+    if P.get("male"):                                          # a squarer jaw in shadow, a shaved shadow on the chin
+        c.drawPath(K.smooth([(-136, 80), (-120, 170), (-60, 214), (0, 226), (60, 214), (120, 170), (136, 80), (90, 150), (0, 196), (-90, 150)]),
+                   paint(mix(P["skin"], (60, 50, 60), 0.5), 0.35, blur=10))
     for sd in (-1, 1):
         _brow(c, sd, P, E, porc)
         _eye(c, sd, P, E, porc, blink, gaze, T)

@@ -1,14 +1,15 @@
-"""Lettering over the finished print: the narrator in plain white type, the characters in the pale yellow of a
-subtitled 1970s print. Captions sit low and left of centre, clear of the Reels buttons and caption bar."""
+"""Captions over the finished print: the narrator in warm bone-white, Merit in pale lavender, the system in pale red,
+Iris in pale ice-blue. Whole phrases, low and left of centre, clear of the Reels buttons and caption bar, with a dark
+halo so they read over any colour the wash throws at them."""
 import skia
 
 import kit as K
 from kit import paint
 from timeline import TL
 
-CAP_SIZE, MAX_W, CX, BASE = 52, 820, 525, 1505
-COLORS = {"NAR": (250, 248, 244), "CLARA": (255, 232, 150), "GOV": (255, 232, 150), "INT1": (255, 232, 150),
-          "INT2": (255, 232, 150)}
+CAP_SIZE, MAX_W, CX, BASE = 54, 830, 520, 1500
+COLORS = {"NAR": (255, 244, 230), "MERIT": (232, 208, 255), "SYSTEM": (255, 196, 190), "IRIS": (206, 236, 255),
+          "WHY": (230, 230, 236)}
 
 
 def _caps():
@@ -26,7 +27,7 @@ CAPS = _caps()
 
 
 def caption(c, s, who, a):
-    f = K.font("jost-500", CAP_SIZE)
+    f = K.font("jost-600", CAP_SIZE)
     lines = K.wrap_balanced(s, f, MAX_W)
     lh = CAP_SIZE * 1.2
     y0 = BASE - lh * (len(lines) - 1)
@@ -35,8 +36,8 @@ def caption(c, s, who, a):
         y = y0 + lh * i
         w = f.measureText(ln)
         x = CX - w / 2
-        c.drawString(ln, x + 2, y + 3, f, paint((0, 0, 0), 0.7 * a, blur=4))
-        c.drawString(ln, x, y, f, paint((0, 0, 0), 0.92 * a, stroke=7))
+        c.drawString(ln, x + 2, y + 3, f, paint((0, 0, 0), 0.75 * a, blur=6))
+        c.drawString(ln, x, y, f, paint((8, 2, 6), 0.95 * a, stroke=8))
         c.drawString(ln, x, y, f, paint(col, a))
         K.reg(x, y - CAP_SIZE * 0.78, x + w, y + CAP_SIZE * 0.24, "caption")
 
