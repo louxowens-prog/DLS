@@ -265,9 +265,10 @@ def s_v_dutch(T, idx):
                 yy = 1220 + i * 12
                 c.drawLine(-1000, yy, 2000, yy, paint((60, 70, 140), 0.15, stroke=2))
     c.restore()
+    k2 = K.ease(ramp(T, t_flag - 0.1, t_flag + 0.4))
+    c.drawRect(skia.Rect.MakeLTRB(0, 270, W, 360 + 70 * k2), paint((2, 4, 16), 0.82))
     K.text(c, "THE NETHERLANDS · CHILDCARE BENEFITS", 540, 330, 36, "special-elite-400", (220, 230, 255), tag="label", outline=(0, 0, 20), ow=6,
            a=K.ease(ramp(T, t0 + 0.3, t0 + 0.9)))
-    k2 = K.ease(ramp(T, t_flag - 0.1, t_flag + 0.4))
     K.text(c, "RISK FACTOR: NATIONALITY", 540, 400, 44, "special-elite-400", (255, 110, 100), tag="label", outline=(20, 0, 0), ow=6, a=k2)
     return st.arr
 
@@ -299,7 +300,7 @@ def s_v_gov(T, idx):
             c.drawRect(skia.Rect.MakeLTRB(x + 46, wy, x + 86, wy + 90), paint((10, 10, 20)))
             c.drawRect(skia.Rect.MakeLTRB(x + 48, wy + 2, x + 84, wy + 88), G.glow_paint((255, 200, 120), 0.8 * (1 - off)))
     c.drawRect(skia.Rect.MakeLTRB(80, 1300, 1000, 1340), paint(mix(col, WHITE, 0.1)))
-    K.text(c, "JANUARY 2021", 540, 1420, 0.1, "jost-500", (0, 0, 0), tag="deco", a=0.0)
-    K.text(c, "THE GOVERNMENT RESIGNS · JANUARY 2021", 540, 330, 36, "special-elite-400", (220, 230, 255), tag="label", outline=(0, 0, 20), ow=6,
+    c.drawRect(skia.Rect.MakeLTRB(0, 280, W, 360), paint((2, 4, 16), 0.82 * K.ease(ramp(T, t_res - 0.2, t_res + 0.3))))
+    K.text(c, "THE GOVERNMENT RESIGNS · JANUARY 2021", 540, 330, 40, "special-elite-400", (240, 244, 255), tag="label", outline=(0, 0, 20), ow=6,
            a=K.ease(ramp(T, t_res - 0.2, t_res + 0.3)))
     return st.arr

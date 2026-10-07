@@ -16,7 +16,7 @@ from kit import BLACK, WHITE, mix, paint
 
 PEOPLE = {
     "merit": dict(skin=(236, 222, 236), lips=(118, 18, 64), iris=(240, 196, 110), hair=(34, 18, 46), brow=(40, 24, 50),
-                  shadow=(120, 60, 160), lash=(12, 6, 16), hair_style="long", reel=True, liner=1.0, glow_iris=0.8),
+                  shadow=(120, 60, 160), lash=(12, 6, 16), hair_style="long", reel=True, liner=1.0, glow_iris=0.8, eye=1.0),
     "iris": dict(skin=(226, 184, 158), lips=(160, 100, 96), iris=(96, 110, 72), hair=(72, 50, 38), brow=(80, 58, 44),
                  shadow=(140, 110, 104), lash=(46, 34, 28), hair_style="bob_grey", age=0.6, liner=0.3),
     "w_dark": dict(skin=(120, 78, 56), lips=(104, 52, 48), iris=(46, 30, 22), hair=(16, 10, 8), brow=(24, 14, 10),
@@ -53,6 +53,8 @@ def _eye(c, sd, P, T, blink=0.0, gaze=(0, 0), wide=0.0, scale=1.0):
     op = max(0.0, 1 - blink)
     c.save()
     c.translate(cx, cy)
+    es = P.get("eye", 0.8)
+    c.scale(es, es)
     if sd < 0:
         c.scale(-1, 1)                                       # draw the right eye, mirror for the left
     # eyeshadow, smoked out toward the brow

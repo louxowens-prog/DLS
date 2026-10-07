@@ -78,7 +78,7 @@ EDIT = [
     (Wx("r4", "Her", 2) - 0.12, "r_reasons", "dissolve", L(FLUORO, wash="cobalt", wash_k=0.55)),
     (S("r5") - 0.1, "r_scream", "cut", L(DEEP, melt=0.5, breathe=1.0, smear=0.3)),
     # ---- the eruption
-    (E("r5") - 0.3, "x_erupt", "flash", L(DEEP, wash_k=0.55, keep=0.4, melt=0.3, breathe=1.0, pulse=1.0, smear=0.1, streak=1.0)),
+    (E("r5") - 0.3, "x_erupt", "flash", L(DEEP, wash_k=0.5, keep=0.45, melt=0.18, breathe=0.8, pulse=1.0, smear=0.0, streak=1.0)),
     # ---- dead silence; then her eye opens on you
     (E("x1") + 0.15, "y_black", "cut", L(DEEP, haze=0.3, grain=1.3)),
     (S("y1") - 0.5, "y_eye", "cut", L(VIOLET, wash="magenta", wash_k=0.55, breathe=0.6)),

@@ -41,9 +41,12 @@ def _chaos(c, T, k, seed):
         rng = K.rng_at(seed, 2)
         for i in range(9):
             P.stamp_mark(c, rng.uniform(200, 880), rng.uniform(320, 1120), rng.uniform(0.45, 0.8), ang=rng.uniform(-25, 25), tag="deco", seed=i)
-    elif m == 2:                                                     # fire
-        Wd.fire(c, 540, 1500, 1.6, T * 1.5, seed=seed)
-        Wd.embers(c, T, 540, 1400, spread=400, height=1600, n=120, size=5, seed=seed)
+    elif m == 2:                                                     # the army under the strobe
+        for r in range(4, -1, -1):
+            z = 0.6 + r * 0.7
+            for q in range(3 + r * 2):
+                x = W / 2 + (q - (2 + r)) * W * (1.1 + 0.3 * r) / (3 + r * 2)
+                S3._mini_clerk(c, x, 600 + 1100 / z, 0.95 / z, arm=0.5 + 0.5 * math.cos(T * 9 + r), strobe=1.0)
     elif m == 3:                                                     # her eye, wide
         PF.eye_macro(c, 540, 900, 1.15, "merit", T, wide=0.4, key=(255, 80, 60), fill=(200, 60, 255))
     elif m == 4:                                                     # the doors, all slamming
@@ -270,13 +273,13 @@ def s_e_moon(T, idx):
     c = st.c
     t0 = cut("e_moon")
     total = end("e_moon")
-    open_ = K.ease(ramp(T, t0 + 0.2, t0 + 1.0))
-    dark = K.ease(ramp(T, t0 + 1.0, t0 + 1.8))
+    open_ = K.ease(ramp(T, t0 + 0.2, t0 + 0.9))
+    dark = K.ease(ramp(T, t0 + 0.9, t0 + 1.4))
     Wd.forest(c, T, cam_y=0, moon_r=380, moon_xy=(540, 760), eye=open_, pupil=(0.0, 0.05 + 0.1 * open_), stars=1.0, seed=0, moon_a=1.0)
     # everything but the eye goes dark; the eye stays, burned into the screen, then it too fades
     if dark > 0:
         c.drawPaint(paint((0, 0, 0), dark))
-        fade = K.ease(ramp(T, total - 0.7, total - 0.05))
+        fade = K.ease(ramp(T, total - 0.55, total - 0.05))
         Wd.moon(c, 540, 760, 380, T, a=(1 - fade), eye=open_, pupil=(0.0, 0.15), corona=0.4 * (1 - fade))
         G.pool(c, 540, 760, 520, (255, 40, 40), 0.35 * (1 - fade))
     LK.flare(540, 760, 0.45 * (1 - 0.6 * dark), (255, 200, 200))

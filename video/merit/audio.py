@@ -478,6 +478,7 @@ BOOST = {T_HIT: (5.0, 1.3), T_TITLE: (5.0, 1.3), cut("k_2"): (3.0, 1.2), cut("k_
          T_STAMP: (6.0, 1.2), cut("e_moon") + 0.3: (2.0, 2.0)}
 CEIL = -2.0
 STEMS = {}
+STEM_GAIN = [1.0]
 
 
 def buses():
@@ -584,7 +585,9 @@ def build():
     rng = np.random.default_rng(21)
     hiss = signal.sosfilt(signal.butter(2, [400 / (SR / 2), 6000 / (SR / 2)], "band", output="sos"), rng.normal(0, 1, N_))
     mix = mix * dead[None] + np.stack([hiss, hiss]) * db(-72) * (1 - dead)[None]
+    pre = np.sqrt((mix ** 2).mean()) + 1e-12
     mix = loudness(mix, -14.0)
+    STEM_GAIN[0] = (np.sqrt((mix ** 2).mean()) + 1e-12) / pre
     a_, b_ = int((TL.total - 1.0) * SR), int(TL.total * SR)
     mix[:, a_:b_] *= np.linspace(1, 0, b_ - a_) ** 2
     mix[:, b_:] = 0.0
@@ -680,6 +683,7 @@ if __name__ == "__main__":
     os.makedirs(os.path.join(HERE, "build"), exist_ok=True)
     mix = aac_safe(build())
     write(os.path.join(HERE, "build", "audio.wav"), mix)
-    for k, v in STEMS.items():
-        write(os.path.join(HERE, "build", f"stem_{k}.wav"), v / (np.abs(v).max() + 1e-9) * 0.9)
+    from scipy.io import wavfile
+    for k, v in STEMS.items():                                      # at their true level in the mix, as float (pre-limiter peaks kept)
+        wavfile.write(os.path.join(HERE, "build", f"stem_{k}.wav"), SR, (v * STEM_GAIN[0]).T.astype(np.float32))
     print("audio", round(mix.shape[1] / SR, 2), "s in", round(time.time() - t0, 1), "s")
