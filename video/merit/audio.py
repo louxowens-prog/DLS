@@ -117,11 +117,11 @@ def score(mus, fx):
     fx.add(DM.pines(t1 - t0 + 1.0, 1.0, seed=2), t0)
     mus.add(tone(93, t1 - t0 + 0.5, 1.0), t0)
     mus.add(DM.pad([50, 57, 60, 64, 69], t1 - t0 + 0.5, 0.55, cut=(300, 1100), att=2.0), t0 + 0.2)
-    theme_at(mus, S("c1") - 0.35, DM.theme(amp=0.8, seed=1), until=t1)
+    theme_at(mus, t0 + 0.2, DM.theme(amp=0.85, seed=1), until=t1)               # alone for ~2.5 s before she speaks
     fx.add(DM.fire(t1 - cut("o_fire") + 0.4, 0.9, seed=5), cut("o_fire"))
-    for word in ("hired,", "refused,"):                                    # each record catching as it is named
-        fx.add(DM.whoosh(0.5, True, 0.5, seed=len(word)), Wx("c1", word) - 0.3)
-        fx.add(DM.spark(0.6, seed=len(word)), Wx("c1", word) + 0.25)
+    for k, dt in enumerate((-0.8, -0.2)):                                  # each record catching (sc_open.s_o_fire)
+        fx.add(DM.whoosh(0.5, True, 0.5, seed=6 + k), cut("o_fire") + dt + 0.6)
+        fx.add(DM.spark(0.6, seed=6 + k), cut("o_fire") + dt + 1.15)
     # ---------------- the title: a crushing chord
     fx.add(DM.reverse_cymbal(1.2, 1.0, seed=3), T_TITLE - 1.2)
     mus.add(DM.chord(38, 2.4, 1.2, seed=3), T_TITLE, until=cut("k_1") + 0.3)
@@ -159,7 +159,7 @@ def score(mus, fx):
     card_hit(mus, fx, cut("k_2"), 39, seed=12)                             # II: Eb, the flat second, red
     # ---------------- II. THE PATTERN: the doom riff
     t0, t1 = cut("p_portraits"), cut("k_3")
-    DM.riff(mus, t0, cut("p_scrap"), [(38, 3, False), (39, 1, False), (38, 2, False), (36, 1, False), (34, 1, False)], bpm=60, amp=0.8, seed=20)
+    DM.riff(mus, cut("k_2") + 0.4, cut("p_scrap"), [(38, 3, False), (39, 1, False), (38, 2, False), (36, 1, False), (34, 1, False)], bpm=60, amp=1.0, seed=20)
     mus.add(DM.sub(26, cut("p_scrap") - t0, 0.7), t0)
     mus.add(DM.pad([62, 65, 69, 74], cut("p_scrap") - t0, 0.45, cut=(400, 1600)), t0)
     fx.add(DM.rumble(t1 - t0, 0.4, seed=5), t0)
@@ -207,7 +207,7 @@ def score(mus, fx):
     mus.add(tone(86, cut("m_army") - t0 + 0.3, 0.8), t0)
     # the army: palm-muted chugs, unison stamps every two-thirds of a second, strobes buzzing, engines far off
     t0, t1 = cut("m_army"), cut("m_kaleido")
-    DM.riff(mus, t0, t1, [(38, 2, True), (38, 1, False), (39, 1, False)], bpm=90, amp=0.9, seed=40)
+    DM.riff(mus, t0, t1, [(38, 2, True), (38, 1, False), (39, 1, False)], bpm=90, amp=1.0, seed=40)
     mus.add(DM.sub(26, t1 - t0, 0.8), t0)
     k = 1
     while t0 + k * (2 / 3) < cut("m_nist") + 0.2:
@@ -326,21 +326,21 @@ def score(mus, fx):
     fx.add(DM.boom(1.0), t0)
     DM.riff(mus, t0, t1, [(38, 1, True), (39, 0.5, False), (38, 0.5, False), (36, 1, True), (34, 1, False)], bpm=120, amp=1.0, seed=80)
     mus.add(DM.sub(26, t1 - t0, 1.0, att=0.02, rel=0.05), t0)
-    beat = 0.5
     k = 0
-    while t0 + k * beat < t1 - 0.05:
-        tt = t0 + k * beat
+    tt = t0
+    while tt < t1 - 0.05:                                                   # every other cut of the picture
         fx.add(DM.kick(1.0, seed=k), tt)
         if k % 2 == 1:
             fx.add(DM.tom(45 - (k % 4), 0.8, seed=k), tt)
         if k % 4 == 0:
             fx.add(DM.crash(0.5, 1.5, seed=k), tt)
         k += 1
+        tt += 0.38 if tt < S("x1") else 0.54
     fx.add(DM.engine(t1 - t0 + 1.0, 1.0, seed=2, f0=56), t0 - 0.5)
     fx.add(DM.feedback(t1 - t0, 3300, 0.6, seed=6), t0)
     fx.add(DM.chant(t1 - t0, 1.0, seed=8), t0)
-    for k in range(10):
-        fx.add(DM.metal_hit(0.6, seed=k + 60, size=0.7 + 0.1 * (k % 3)), t0 + 0.11 + k * 0.44)
+    for k in range(int((S("x1") - t0) / 0.38)):                               # the stamps on the strobes
+        fx.add(DM.metal_hit(0.65, seed=k + 60, size=0.7 + 0.1 * (k % 3)), t0 + 0.19 + k * 0.38)
     # ---------------- the eye opens on you
     fx.add(DM.boom(1.0), T_EYE)
     fx.add(DM.shriek(1.2, 1.2, seed=5), T_EYE)
@@ -406,6 +406,7 @@ def reverb(x, wet=0.1, rt60=0.8, seed=8, predelay=0.0):
 
 
 LEVEL = {"NAR": -16.0, "MERIT": -15.0, "SYSTEM": -16.5, "IRIS": -16.0, "WHY": -17.5}
+LINE_LEVEL = {"r2": 1.5, "r5": 5.5}                 # her question, then her breaking point, louder than anything she has said
 
 
 def voices():
@@ -417,7 +418,7 @@ def voices():
         who = Ln["who"]
         up = signal.resample_poly(Ln["wav"].astype(np.float64), SR, VSR)
         r = np.sqrt((up ** 2).mean()) + 1e-12
-        up = up * db(LEVEL.get(who, -16.0)) / r
+        up = up * db(LEVEL.get(who, -16.0) + LINE_LEVEL.get(key, 0.0)) / r
         if who == "WHY":                                                     # spread wide: two slightly different copies
             d = int(0.011 * SR)
             sig = np.stack([up, np.concatenate([np.zeros(d), up])[: len(up)]])
@@ -470,13 +471,17 @@ NEED = {"NAR": 9.5, "MERIT": 10.0}               # the voice over the beds in th
 BED = -4.0                                       # the beds' ceiling between lines, against the average line (dB)
 # (time, ceiling dB over the average line, seconds): the moments allowed to be loud
 HITS = [(T_HIT, 16.0, 1.4), (T_TITLE, 15.0, 1.4), (cut("k_2"), 10.0, 1.2), (cut("k_3"), 10.0, 1.2), (cut("k_4"), 10.0, 1.2),
-        (cut("m_army"), 9.0, 2.3), (T_MASK, 18.0, 1.2), (T_ANSWER, 11.0, 0.6), (T_ERUPT, 16.0, 1.95), (T_EYE, 18.0, 0.5),
+        (cut("m_army"), 9.0, 2.3), (T_MASK, 18.0, 1.2), (T_ANSWER, 11.0, 0.6), (T_ERUPT, 16.0, S("x1") - T_ERUPT + 0.1), (T_EYE, 18.0, 0.5),
         (T_STAMP, 17.0, 1.3), (cut("e_moon") + 0.3, 8.0, 2.0)]
-SAT = {T_HIT: 2.5, T_TITLE: 2.0, T_MASK: 4.0, T_ERUPT: 3.0, T_EYE: 4.0, T_STAMP: 3.5}
+SAT = {T_HIT: 3.5, T_TITLE: 3.0, T_MASK: 5.0, T_ERUPT: 4.0, T_EYE: 5.0, T_STAMP: 4.5}
 BOOST = {T_HIT: (5.0, 1.3), T_TITLE: (5.0, 1.3), cut("k_2"): (3.0, 1.2), cut("k_3"): (3.0, 1.2), cut("k_4"): (3.0, 1.2),
-         cut("m_army"): (3.0, 2.3), T_MASK: (6.0, 1.1), T_ANSWER: (3.0, 0.6), T_ERUPT: (6.0, 1.9), T_EYE: (6.0, 0.5),
+         cut("m_army"): (3.0, 2.3), T_MASK: (6.0, 1.1), T_ANSWER: (3.0, 0.6), T_ERUPT: (6.0, S("x1") - T_ERUPT + 0.1), T_EYE: (6.0, 0.5),
          T_STAMP: (6.0, 1.2), cut("e_moon") + 0.3: (2.0, 2.0)}
-CEIL = -2.0
+CEIL = -1.5
+TARGET = -15.0
+# the quiet passages, pulled down (voice and all) so the night, the cosmos and the fire are hushed: (from, to, dB)
+QUIET = [(cut("o_sky") - 0.2, T_TITLE - 0.25, -4.5), (cut("d_space") + 0.1, cut("r_kitchen") - 0.3, -4.0),
+         (cut("e_fire") + 0.2, cut("e_moon") + 0.2, -3.5)]
 STEMS = {}
 STEM_GAIN = [1.0]
 
@@ -507,6 +512,16 @@ def build():
     fxx = fxx * db(-16.0) / (np.sqrt((fxx[:, on] ** 2).mean()) + 1e-12)
     # the scares: saturate the hit itself (same peak, far less crest) so it lands as a wall of sound, not a click;
     # done before the ducking, so a line that follows a scare still clears it
+    # the hits' sub-bass costs headroom and adds little loudness: thin it out under each scare, then saturate
+    lp = signal.butter(4, 90 / (SR / 2), "low", output="sos")
+    for t in SAT:
+        a, b = max(0, int((t - 0.05) * SR)), min(N_, int((t + 1.3) * SR))
+        w = np.ones(b - a)
+        f = int(0.05 * SR)
+        w[:f] = np.linspace(0, 1, f)
+        w[-int(0.25 * SR):] = np.linspace(1, 0, int(0.25 * SR))
+        for x in (music, fxx):
+            x[:, a:b] -= 0.6 * w[None] * signal.sosfiltfilt(lp, x[:, a:b], axis=1)
     for t, drive in SAT.items():
         a, b = int((t - 0.02) * SR), int((t + 1.1) * SR)
         beds = music[:, a:b] + fxx[:, a:b]
@@ -550,7 +565,7 @@ def build():
 
     for _ in range(14):
         ride = rides()
-        bb = B1 * ride + B2 * ride ** 0.35
+        bb = B1 * ride + B2 * ride ** 0.25
         short = False
         for key in TL.order:
             a, b = spans[key]
@@ -562,7 +577,7 @@ def build():
         if not short:
             break
     ride = rides()
-    ride_rest = ride ** 0.35
+    ride_rest = ride ** 0.25
     music = music_b * ride[None] + (music - music_b) * ride_rest[None]
     fxx = fxx_b * ride[None] + (fxx - fxx_b) * ride_rest[None]
     # between the lines the beds stay under the voice; the hits are let through, by far the loudest moments
@@ -585,8 +600,14 @@ def build():
     rng = np.random.default_rng(21)
     hiss = signal.sosfilt(signal.butter(2, [400 / (SR / 2), 6000 / (SR / 2)], "band", output="sos"), rng.normal(0, 1, N_))
     mix = mix * dead[None] + np.stack([hiss, hiss]) * db(-72) * (1 - dead)[None]
+    qg = np.ones(N_)
+    for a, b, g in QUIET:
+        qg[int(a * SR):int(b * SR)] = db(g)
+    qg = smooth(qg, 0.6)
+    mix = mix * qg[None]
+    music, fxx, vo = music * qg[None], fxx * qg[None], vo * qg[None]
     pre = np.sqrt((mix ** 2).mean()) + 1e-12
-    mix = loudness(mix, -14.0)
+    mix = loudness(mix, TARGET)
     STEM_GAIN[0] = (np.sqrt((mix ** 2).mean()) + 1e-12) / pre
     a_, b_ = int((TL.total - 1.0) * SR), int(TL.total * SR)
     mix[:, a_:b_] *= np.linspace(1, 0, b_ - a_) ** 2
@@ -639,7 +660,7 @@ def loudness(x, target):
     return limit(x * g, db(CEIL))
 
 
-def aac_safe(x, target=-1.6, rates=("192k", "256k"), rounds=3):
+def aac_safe(x, target=-1.2, rates=("192k", "256k"), rounds=3):
     import subprocess
     import tempfile
     from scipy.ndimage import minimum_filter1d

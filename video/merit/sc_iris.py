@@ -69,24 +69,71 @@ def _crystal_moon(c, x, y, r, T):
 
 
 def _dreamer(c, x, y, s, T, ang=0.0, a=1.0):
-    """A woman asleep in the air, in a long white nightgown, hair streaming, arms open."""
+    """A woman asleep in the air, airbrushed like a pulp paperback cover: hair streaming in copper ribbons, a long
+    gown full of soft folds, warm rim light from the planet on one side, cold cobalt on the other, arms open."""
     c.save()
     c.translate(x, y)
     c.rotate(ang)
     c.scale(s, s)
-    for k in range(9):                                              # hair streaming above her
-        sw = 30 * math.sin(T * 1.2 + k)
-        c.drawPath(K.bez_path([(0, -300), (-60 + k * 15 + sw, -420), (-120 + k * 30 + 2 * sw, -560)]), paint((70, 48, 40), a * 0.9, stroke=18))
-    gown = K.smooth([(-50, -230), (50, -230), (90, -60), (150, 260), (180 + 30 * math.sin(T), 520), (40, 470), (-40, 480), (-180 + 30 * math.sin(T + 1), 520),
-                     (-150, 260), (-90, -60)])
-    c.drawPath(gown, paint(shader=K.lin((-180, -230), (180, 520), [(214, 200, 230), (160, 140, 200), (90, 70, 150)]), a=a))
-    for k in range(6):
-        c.drawPath(K.bez_path([(-40 + k * 16, -200), (-60 + k * 30, 150), (-120 + k * 50, 480)]), paint((170, 140, 210), 0.4 * a, stroke=4, blur=2))
-    for sd in (-1, 1):                                              # arms floating open
-        c.drawPath(K.capsule(sd * 50, -210, sd * 210, -130 + 30 * math.sin(T + sd), 40, 30), paint((200, 170, 165), a))
-    c.drawCircle(0, -290, 64, paint((200, 170, 165), a))
-    c.drawPath(K.bez_path([(-26, -296), (-14, -290), (-4, -296)]), paint((80, 50, 50), a, stroke=3))      # eyes closed
-    c.drawPath(K.bez_path([(26, -296), (14, -290), (4, -296)]), paint((80, 50, 50), a, stroke=3))
+    lp = paint()
+    lp.setAlphaf(a)
+    c.saveLayer(None, lp)
+    # --- hair streaming up and away in long wavy locks, fanning out as if under water
+    for k in range(15):
+        spread = (k - 7) / 7.0
+        L = 380 + 80 * math.cos(k * 1.7)
+        w0 = 20 - abs(spread) * 6
+        left, right = [], []
+        for j in range(9):
+            t = j / 8
+            yy = -300 - L * t
+            xx = spread * (40 + 220 * t) + 36 * t * math.sin(t * 5 + T * 1.3 + k * 0.8)
+            ww = w0 * (1 - 0.75 * t)
+            left.append((xx - ww, yy))
+            right.append((xx + ww, yy))
+        lock = K.smooth(left + right[::-1])
+        c.drawPath(lock, paint(shader=K.lin((0, -300), (0, -300 - L), [(60, 20, 16), (150, 56, 30), (230, 120, 60)])))
+        c.drawPath(K.smooth(left[1:-1]), paint((255, 190, 130), 0.35, stroke=2.5, blur=1.5))
+    # --- the gown, cut on the bias, its train rippling below her
+    rip = 30 * math.sin(T * 1.3)
+    gown = K.smooth([(-58, -232), (58, -232), (96, -80), (150, 160), (210 + rip, 420), (250 + rip * 1.4, 640), (120, 600), (20, 660 + rip),
+                     (-90, 610), (-230 - rip, 650), (-190 - rip * 0.6, 420), (-140, 160), (-96, -80)])
+    c.drawPath(gown, paint(shader=K.lin((-200, -230), (220, 640), [(196, 176, 230), (150, 120, 210), (70, 44, 150), (30, 16, 80)], [0, 0.35, 0.75, 1])))
+    c.save()
+    c.clipPath(gown, doAntiAlias=True)
+    for k in range(7):                                               # folds: shadow and highlight side by side, airbrushed
+        fx = -120 + k * 42
+        c.drawPath(K.bez_path([(fx * 0.3, -200), (fx * 0.9 + 10 * math.sin(T + k), 200), (fx * 1.5 + rip, 660)]), paint((30, 14, 70), 0.45, stroke=22, blur=14))
+        c.drawPath(K.bez_path([(fx * 0.3 + 14, -200), (fx * 0.9 + 18 + 10 * math.sin(T + k), 200), (fx * 1.5 + 22 + rip, 660)]),
+                   paint((255, 240, 255), 0.35, stroke=10, blur=8))
+    warm = paint(shader=K.lin((260, -100), (60, 200), [(255, 140, 70, 0.45), (255, 140, 70, 0.0)]))
+    warm.setBlendMode(skia.BlendMode.kPlus)
+    c.drawPaint(warm)                                                # the planet's warm light
+    cold = paint(shader=K.lin((-260, 300), (-40, 200), [(60, 90, 255, 0.7), (60, 90, 255, 0.0)]))
+    cold.setBlendMode(skia.BlendMode.kPlus)
+    c.drawPaint(cold)
+    c.restore()
+    rim = paint((255, 190, 140), 0.8, stroke=8, blur=5)
+    rim.setBlendMode(skia.BlendMode.kPlus)
+    c.drawPath(gown, rim)
+    # --- arms floating open: tapered, shaded, the hands loose
+    for sd in (-1, 1):
+        wx, wy = sd * 250, -120 + 34 * math.sin(T + sd)
+        arm = K.smooth([(sd * 40, -236), (sd * 140, -210), (wx, wy - 14), (wx + sd * 16, wy), (wx, wy + 14), (sd * 140, -170), (sd * 46, -180)])
+        c.drawPath(arm, paint(shader=K.lin((0, -240), (0, -160), [(250, 210, 190), (170, 110, 110)])))
+        c.drawOval(skia.Rect.MakeXYWH(wx + sd * 10 - 22, wy - 14, 44, 28), paint((236, 196, 180)))
+        for f in range(3):
+            c.drawLine(wx + sd * 26, wy - 8 + f * 8, wx + sd * 50, wy - 12 + f * 12, paint((230, 190, 176), stroke=6))
+        c.drawPath(arm, paint((255, 190, 140), 0.5, stroke=4, blur=3))
+    # --- the neck and the sleeping face, airbrushed, lit warm from the planet
+    c.drawPath(K.smooth([(-26, -260), (26, -260), (30, -220), (-30, -220)]), paint((200, 150, 140)))
+    PF.pface(c, 0, -330, 0.4, "iris", T, key=(255, 190, 150), fill=(100, 120, 255), key_at=(0.7, 0.2), fill_at=(-0.8, 0.0),
+             amb=(40, 20, 60), blink=1.0, neck=False, hair=False, fall=0.4)
+    c.drawPath(K.smooth([(-64, -420), (0, -446), (64, -420), (70, -380), (0, -410), (-70, -380)]), paint((90, 36, 26)))   # hairline
+    glow = paint((255, 200, 220), 0.25, blur=40)
+    glow.setBlendMode(skia.BlendMode.kPlus)
+    c.drawCircle(0, -340, 120, glow)
+    c.restore()
     c.restore()
 
 
@@ -172,6 +219,9 @@ def s_r_kitchen(T, idx):
     c.drawPath(K.path([(330, 1150), (750, 1150), (780, 1360), (300, 1360)]), paint((150, 170, 200), stroke=4))
     G.pool(c, 540, 1100, 380, (170, 210, 255), 0.4)
     c.drawRoundRect(skia.Rect.MakeLTRB(830, 1260, 920, 1360), 12, 12, paint((180, 60, 50)))                 # a mug
+    # Iris is a composite: say so on screen
+    c.drawRect(skia.Rect.MakeLTRB(150, 228, 930, 280), paint((4, 8, 8), 0.85))
+    K.text(c, "DRAMATISATION · BASED ON DOCUMENTED CASES", 540, 264, 30, "jost-600", (220, 255, 240), tag="label")
     return st.arr
 
 
@@ -272,12 +322,9 @@ def s_r_why(T, idx):
     t0 = cut("r_why")
     c.drawPaint(paint((6, 10, 14)))
     z = 1.0 + 0.05 * (T - t0)
-    PF.pface(c, 540, 860, 2.15 * z, "iris", T, key=(170, 210, 255), fill=(120, 255, 200), key_at=(0.0, 1.1), fill_at=(0.3, -1.0),
-             amb=(10, 14, 16), talk=talk(T, "iris"), fear=0.35, gaze=(0.0, -0.1))
-    # tears catching the screen's light
-    for sd in (-1, 1):
-        ty = 860 + (20 + 160 * ramp(T, t0, t0 + 2.0)) * 2.15 * z
-        c.drawLine(540 + sd * 70 * 2.15 * z, 860 + 20 * 2.15 * z, 540 + sd * 74 * 2.15 * z, ty, G.glow_paint((210, 240, 255), 0.55, blur=2))
+    # the laptop's cold light from below and to one side; the rest of her face falls into black
+    PF.pface(c, 540, 860, 2.15 * z, "iris", T, key=(200, 230, 255), fill=(20, 50, 60), key_at=(-0.55, 0.8), fill_at=(0.8, -0.6),
+             amb=(4, 6, 8), talk=talk(T, "iris"), grief=0.55 + 0.35 * ramp(T, t0, t0 + 1.6), gaze=(0.1, -0.2), fall=0.9, tilt=-3)
     return st.arr
 
 
@@ -376,8 +423,10 @@ def s_r_scream(T, idx):
     shake(c, T, sh)
     G.pool(c, 540, 900, 1000, (255, 40, 30), 0.4 + 0.3 * ramp(T, t0, t0 + 1.5))
     z = 1.0 + 0.12 * u
-    PF.pface(c, 540, 860, 1.9 * z, "iris", T, key=(255, 120, 90), fill=(255, 40, 60), key_at=(0.0, 1.0), fill_at=(0.0, -1.0),
-             amb=(30, 6, 8), talk=talk(T, "iris"), fear=0.6 + 0.4 * ramp(T, Wx("r5", "I'm", 1), Wx("r5", "I'm", 1) + 0.3))
+    # lit like an ember from below; she breaks on the second "qualified"
+    brk = ramp(T, Wx("r5", "I'm", 2), Wx("r5", "I'm", 2) + 0.3)
+    PF.pface(c, 540, 860, 1.9 * z, "iris", T, key=(255, 140, 80), fill=(120, 10, 30), key_at=(-0.45, 0.9), fill_at=(0.9, -0.8),
+             amb=(16, 2, 4), talk=talk(T, "iris"), open_=0.35 + 0.6 * brk, grief=0.8 + 0.2 * brk, fall=0.85, tilt=4 * math.sin(u * 3.0))
     c.restore()
     k = ramp(T, t0 + 0.5, t0 + 1.8)
     for i in range(3):                                              # the masks crowding in behind her

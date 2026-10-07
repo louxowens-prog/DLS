@@ -54,11 +54,12 @@ def s_h_stamp(T, idx):
     t_hit = 0.55
     sh = 26 * hit(T, t_hit, 0.5)
     shake(c, T, sh)
-    z = 1.0 + 0.05 * T
+    # frame one is already a picture: close on the applicant's photo in a hard red light, pulling back to the page
+    z = 1.0 + 0.05 * T + 0.55 * (1 - K.ease(min(1.0, T / t_hit)))
     c.translate(540, 1000)
     c.scale(z, z)
     c.rotate(-4 + 1.2 * T)
-    c.translate(-540, -1000)
+    c.translate(-540, -1000 + 160 * (1 - K.ease(min(1.0, T / t_hit))))
     # the desk: dark wood, one hard pool of red light from a lamp overhead
     c.drawRect(skia.Rect.MakeLTRB(-400, -400, 1500, 2400), paint((16, 8, 8)))
     for i in range(30):
@@ -69,8 +70,8 @@ def s_h_stamp(T, idx):
     # the stamp descending in slow motion; after the hit it lifts away
     if T < t_hit:
         u = T / t_hit
-        y = 260 + (1060 - 260) * u ** 2.2                    # in frame from the very first frame, coming down
-        s = 1.9 - 0.7 * u
+        y = -420 + (1060 + 420) * u ** 2.2                   # coming down out of the dark above
+        s = 1.35 - 0.15 * u
     else:
         u = min(1.0, (T - t_hit) / 0.9)
         y = 1060 - 1400 * K.ease(u)
@@ -141,9 +142,9 @@ def s_o_fire(T, idx):
     Wd.fire(c, 540, 1500, 0.95, T, seed=1)
     Wd.embers(c, T, 540, 1420, spread=220, height=1500, n=90, a=0.95, to_stars=0.8, seed=2, size=3.4)
     Wd.smoke(c, T, 540, 1250, w=360, h=1300, color=(120, 80, 140), a=0.3, seed=3)
-    # two records drift down into the flames, each catching as the narrator names it
-    for k, (word, stamp, col, x, ang) in enumerate((("hired,", "HIRED", (30, 30, 40), 400, -12), ("refused,", "REFUSED", (180, 10, 20), 680, 10))):
-        ts = Wx("c1", word) - 0.9
+    # two records drift down into the flames and catch
+    for k, (dt, stamp, col, x, ang) in enumerate(((-0.8, "HIRED", (30, 30, 40), 400, -12), (-0.2, "REFUSED", (180, 10, 20), 680, 10))):
+        ts = t0 + dt
         if T < ts:
             continue
         v = T - ts

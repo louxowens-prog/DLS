@@ -31,50 +31,107 @@ from kit import H, W, BLACK, WHITE, mix, paint, ramp
 WASHES = [(255, 30, 40), (255, 40, 200), (140, 60, 255), (40, 80, 255)]
 
 
-def _chaos(c, T, k, seed):
-    """One beat of the eruption: motif k."""
-    m = k % 6
-    if m == 0:                                                       # masks
+SEQ = ["mask", "stamps", "army", "figure", "eye", "doors", "lunge", "figure", "army", "stamps", "mask", "eye"]
+
+
+def _figure(c, T, u, col):
+    """A woman's silhouette against the light; the stamp comes down on her and she runs like wet paint."""
+    hitu = 0.35
+    sy = 120 + 560 * min(1.0, (u / hitu) ** 2)
+    c.save()
+    if u > hitu:                                                     # sliced and slipping sideways
+        v = (u - hitu) / (1 - hitu)
+        for b in range(7):
+            c.save()
+            c.clipRect(skia.Rect.MakeLTRB(0, 600 + b * 190, W, 790 + b * 190))
+            c.translate((-1) ** b * 60 * v * (1 + b * 0.3), 0)
+            _silhouette(c)
+            c.restore()
+        rng = K.rng_at(77, 3)
+        for i in range(26):                                          # running down like paint
+            x = rng.uniform(330, 750)
+            y0 = rng.uniform(820, 1100)
+            L = 200 + 900 * v * rng.uniform(0.4, 1.2)
+            w = rng.uniform(10, 34)
+            c.drawRoundRect(skia.Rect.MakeLTRB(x - w / 2, y0, x + w / 2, y0 + L), w / 2, w / 2, paint(mix(col, BLACK, 0.55), 0.9))
+            c.drawCircle(x, y0 + L, w * 0.7, paint(mix(col, BLACK, 0.55), 0.9))
+    else:
+        _silhouette(c)
+    c.restore()
+    # the stamp's face, seen from below, coming down out of the light
+    c.drawRect(skia.Rect.MakeLTRB(-100, sy - 1400, W + 100, sy), paint((14, 6, 8)))
+    c.drawRect(skia.Rect.MakeLTRB(-100, sy - 40, W + 100, sy), paint(mix(col, WHITE, 0.2), 0.8))
+
+
+def _silhouette(c):
+    c.drawCircle(540, 760, 92, paint((4, 0, 2)))
+    c.drawPath(K.smooth([(430, 700), (540, 640), (650, 700), (660, 860), (600, 860), (540, 800), (480, 860), (420, 860)]), paint((4, 0, 2)))   # the bob
+    c.drawPath(K.smooth([(500, 830), (580, 830), (590, 920), (760, 980), (840, 1100), (880, 2000), (200, 2000), (240, 1100), (320, 980), (490, 920)]),
+               paint((4, 0, 2)))
+
+
+def _chaos(c, T, m, tb, beat, col, back):
+    """One beat of the eruption: motif m, from tb. back: a strobe flash behind, the motif in silhouette."""
+    u = (T - tb) / beat
+    if m == "mask":
         for i in range(3):
             P.clerk(c, 180 + i * 360, 1200 + 80 * (i % 2), 0.9, T + i, arm=0.5 + 0.5 * math.sin(T * 9 + i), stamp=True, slit=1.0, rim_k=1.6, seed=i)
-    elif m == 1:                                                     # stamps multiplying
-        rng = K.rng_at(seed, 2)
-        for i in range(9):
+    elif m == "stamps":
+        rng = K.rng_at(int(tb * 10), 2)
+        for i in range(9 + int(6 * u)):
             P.stamp_mark(c, rng.uniform(200, 880), rng.uniform(320, 1120), rng.uniform(0.45, 0.8), ang=rng.uniform(-25, 25), tag="deco", seed=i)
-    elif m == 2:                                                     # the army under the strobe
+    elif m == "army":
         for r in range(4, -1, -1):
             z = 0.6 + r * 0.7
             for q in range(3 + r * 2):
                 x = W / 2 + (q - (2 + r)) * W * (1.1 + 0.3 * r) / (3 + r * 2)
-                S3._mini_clerk(c, x, 600 + 1100 / z, 0.95 / z, arm=0.5 + 0.5 * math.cos(T * 9 + r), strobe=1.0)
-    elif m == 3:                                                     # her eye, wide
+                S3._mini_clerk(c, x, 600 + 1100 / z, 0.95 / z, arm=0.5 + 0.5 * math.cos(T * 9 + r), strobe=1.0, back=back, light=col)
+    elif m == "eye":
         PF.eye_macro(c, 540, 900, 1.15, "merit", T, wide=0.4, key=(255, 80, 60), fill=(200, 60, 255))
-    elif m == 4:                                                     # the doors, all slamming
+    elif m == "doors":
         for i in range(3):
             F4._door(c, 200 + i * 340, 900, 260, 520, ((T * 5 + i) % 1.0), T, "", flash=1.0)
+    elif m == "figure":
+        _figure(c, T, u, col)
     else:                                                            # the mask, lunging
-        P.clerk(c, 540, 1500, 2.4, T, arm=0.0, stamp=False, slit=1.0, rim_k=1.8, seed=7)
+        P.clerk(c, 540, 1500, 2.0 + 0.8 * u, T, arm=0.0, stamp=False, slit=1.0, rim_k=1.8, seed=7)
 
 
 def s_x_erupt(T, idx):
     st = K.Stage((0, 0, 0))
     c = st.c
     t0 = cut("x_erupt")
-    beat = 0.22 if T < S("x1") else 0.3
-    k = int((T - t0) / beat)
+    t1 = S("x1")
+    # fast cuts until she speaks, then a little slower under her voice
+    if T < t1:
+        beat = 0.19
+        k = int((T - t0) / beat)
+        tb = t0 + k * beat
+    else:
+        beat = 0.27
+        k = 100 + int((T - t1) / beat)
+        tb = t1 + (k - 100) * beat
     col = WASHES[k % len(WASHES)]
-    c.drawPaint(paint(mix(col, BLACK, 0.85)))
+    back = (T - tb) < 0.075                                           # the first frames of every beat: a strobe flash
+    if back:
+        c.drawPaint(paint(mix(col, WHITE, 0.12)))
+    else:
+        c.drawPaint(paint(mix(col, BLACK, 0.82)))
     shake(c, T, 16)
-    G.pool(c, 540, 900, 1200, col, 0.4)
-    _chaos(c, T, k, k)
+    if not back:
+        G.pool(c, 540, 900, 1200, col, 0.45)
+    _chaos(c, T, SEQ[k % len(SEQ)], tb, beat, col, back)
     c.restore()
+    # a wall of fire along the bottom of everything
+    for i in range(5):
+        Wd.fire(c, 60 + i * 240, 1990, 1.25 + 0.25 * math.sin(T * 3 + i), T, a=0.85, seed=20 + i, logs=False, glow=0.3)
     # colour flooding the frame in time with the beat
-    p = paint(col, 0.35)
+    p = paint(col, 0.3)
     p.setBlendMode(skia.BlendMode.kMultiply)
     c.drawPaint(p)
-    c.drawPaint(G.glow_paint(col, 0.25 * hit(T, t0 + k * beat, beat)))
+    c.drawPaint(G.glow_paint(col, 0.3 * hit(T, tb, beat)))
     # her face, calm in the middle of it
-    kf = K.ease(ramp(T, S("x1") - 0.4, S("x1") + 0.3))
+    kf = K.ease(ramp(T, t1 - 0.4, t1 + 0.3))
     if kf > 0:
         with K.layer(c, 0.85 * kf, skia.BlendMode.kScreen):
             P.merit(c, 540, 860, 1.5, T, eyes=1.0, talk=talk(T, "merit"), smile=0.4, rays=1.0, crown=1.0, mantle=1.0,
@@ -147,12 +204,12 @@ def s_y_dossier(T, idx):
     K.text(c, "SUBJECT:  YOU", 540, 385, 70, "special-elite-400", (255, 230, 210), tag="card")
     mm, ss = divmod(int(T), 60)
     rows = [("WATCHED", f"{mm}:{ss:02d} of this video"), ("PAUSED", "3 times"), ("REPLAYED", "0:41 - 0:47"), ("SCROLL SPEED", "slow, late at night"),
-            ("PREDICTED", "renting · 40+ · anxious"), ("SCORE", "0.31")]
+            ("PREDICTED", "renting, 40+, anxious"), ("SCORE", "0.31")]
     for i, (k_, v) in enumerate(rows):
         a = K.ease(ramp(T, t0 + 0.15 + i * 0.22, t0 + 0.35 + i * 0.22))
         y = 510 + i * 105
         K.text(c, k_, 150, y, 40, "special-elite-400", (90, 30, 30), align="left", tag="card", a=a)
-        K.text(c, v, 500, y, 40, "special-elite-400", (30, 20, 20), align="left", tag="card", a=a)
+        K.text(c, v, 450, y, 36, "special-elite-400", (30, 20, 20), align="left", tag="card", a=a)
     a = K.ease(ramp(T, t0 + 1.5, t0 + 1.8))
     K.text(c, "REASON", 150, 1170, 40, "special-elite-400", (90, 30, 30), align="left", tag="card", a=a)
     c.drawRect(skia.Rect.MakeLTRB(500, 1130, 900, 1185), paint((10, 6, 8), a))
@@ -190,24 +247,35 @@ def s_e_tablet(T, idx):
     st = K.Stage((0, 0, 0))
     c = st.c
     t0 = cut("e_tablet")
-    z = 1.0 + 0.015 * (T - t0)
-    c.save()
-    c.translate(540, 900)
-    c.scale(z, z)
-    c.translate(-540, -900)
+    # wide on the whole stone, then pushing in and travelling down it, line by line, as each one is named
+    named = [(Wx("e1", w), i) for i, (_, w) in enumerate(NIST) if w]
+    li = float(np.interp(T, [t for t, _ in named], [i for _, i in named]))
+    push = K.ease(ramp(T, named[0][0] - 0.3, named[0][0] + 0.9))
+    z = 1.0 + 0.015 * (T - t0) + 0.22 * push
+    cy = 900 + (560 + li * 108 - 40 - 900) * push
+    sy = 900 - 80 * push
     c.drawPaint(paint((10, 4, 2)))
+    c.save()
+    c.translate(540, sy)
+    c.scale(z, z)
+    c.translate(-540, -cy)
     G.pool(c, 540, 1600, 1100, (255, 110, 40), 0.4 * G.flicker(T, 2, 0.12))
     Wd.fire(c, 540, 1760, 0.6, T, seed=4)
     slab = K.smooth([(110, 1360), (100, 420), (160, 280), (540, 230), (920, 280), (980, 420), (970, 1360)])
     Wd.stone_fill(c, slab, base=(60, 52, 48), light=(255, 140, 70), light_from=(0.5, 1.1), k=0.6)
-    Wd.engraved(c, "TRUSTWORTHY AI", 540, 380, 64, "cinzel-800", glow=0.8, color=(255, 220, 180))
-    Wd.engraved(c, "NIST AI RISK MANAGEMENT FRAMEWORK 1.0", 540, 440, 28, "cinzel-800", glow=0.6, color=(255, 200, 160))
+    # lettering that the camera has carried up past the top of the frame is not drawn (it would sit under the app's UI)
+    vis = lambda y: max(0.0, min(1.0, (sy + (y - 60 - cy) * z - 230) / 60))
+    if vis(380) > 0.02:
+        Wd.engraved(c, "TRUSTWORTHY AI", 540, 380, 64, "cinzel-800", glow=0.8, color=(255, 220, 180), a=vis(380))
+    if vis(440) > 0.02:
+        Wd.engraved(c, "NIST AI RISK MANAGEMENT FRAMEWORK 1.0", 540, 440, 28, "cinzel-800", glow=0.6, color=(255, 200, 160), a=vis(440))
     t_all = Wx("e1", "managed.") - 0.2
     for i, (ln, word) in enumerate(NIST):
         y = 560 + i * 108
         tk = Wx("e1", word) if word else t_all
         k = K.ease(ramp(T, tk - 0.15, tk + 0.25))
-        Wd.engraved(c, ln, 540, y, 44 if len(ln) < 22 else 38, "cinzel-800", glow=0.25 + 0.75 * k, color=mix((200, 150, 110), (255, 220, 150), k))
+        if vis(y) > 0.02:
+            Wd.engraved(c, ln, 540, y, 44 if len(ln) < 22 else 35, "cinzel-800", glow=0.45 + 0.55 * k, color=mix((228, 180, 130), (255, 226, 160), k), a=vis(y))
         if k > 0 and k < 1:
             LK.flare(540, y - 15, 0.25 * math.sin(math.pi * k), (255, 200, 140))
     c.restore()
@@ -229,7 +297,7 @@ def s_e_ask(T, idx):
         with K.layer(c, k0):
             Wd.stone_fill(c, slab, base=(56, 48, 44), light=(255, 140, 70), light_from=(0.5, 1.3), k=0.5)
         k = K.ease(ramp(T, Wx("e2", word) - 0.15, Wx("e2", word) + 0.2))
-        Wd.engraved(c, q, 540, y + 26, 66, "cinzel-800", glow=0.2 + 0.8 * k, color=mix((200, 150, 110), (255, 230, 170), k), a=k0)
+        Wd.engraved(c, q, 540, y + 26, 66, "cinzel-800", glow=0.5 + 0.5 * k, color=mix((236, 190, 140), (255, 236, 180), k), a=k0)
     return st.arr
 
 
@@ -262,9 +330,11 @@ def s_e_hand(T, idx):
     if T > t_human:
         G.pool(c, 540, sy + 40, 300, (255, 220, 180), 0.5 * hit(T, t_human, 0.6))
     a = K.ease(ramp(T, Wx("e2", "In") - 0.1, Wx("e2", "In") + 0.4))
-    K.text(c, "EU GDPR ART. 22  ·  UK DATA (USE AND ACCESS) ACT 2025", 540, 300, 28, "jost-600", (255, 220, 190), tag="label", a=a, outline=(20, 6, 0), ow=6)
-    K.text(c, "THE RIGHT TO A HUMAN", 540, 380, 62, "newrocker-400", (255, 236, 210), tag="label", a=K.ease(ramp(T, t_human, t_human + 0.4)),
-           outline=(30, 10, 0), ow=8)
+    K.text(c, "EU GDPR ART. 22  ·  UK DATA (USE AND ACCESS) ACT 2025", 540, 290, 34, "jost-600", (255, 224, 196), tag="label", a=a, outline=(20, 6, 0), ow=7)
+    ah = K.ease(ramp(T, t_human, t_human + 0.4))
+    K.text(c, "THE RIGHT TO A HUMAN", 540, 376, 66, "newrocker-400", (255, 236, 210), tag="label", a=ah, outline=(30, 10, 0), ow=8)
+    K.text(c, "for decisions made solely by machine", 540, 440, 36, "jost-600", (255, 214, 180), tag="label", a=ah, outline=(20, 6, 0), ow=7)
+    K.text(c, "with legal or similarly significant effects", 540, 488, 36, "jost-600", (255, 214, 180), tag="label", a=ah, outline=(20, 6, 0), ow=7)
     return st.arr
 
 

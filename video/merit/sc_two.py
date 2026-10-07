@@ -110,7 +110,7 @@ CV_LINES = ["CURRICULUM VITAE", "", "Software engineer, 6 years", "B.Sc. Compute
             "Captain, Women's Chess Club", "Python, C++, Go", "", "Postcode: N17 4RT", "Hobbies: netball", "2016 - 2018:  —", ""]
 
 
-def cv_page(c, x, y, s, T, ang=0.0, hl=None, erase=0.0, a=1.0, name="J. MORGAN"):
+def cv_page(c, x, y, s, T, ang=0.0, hl=None, erase=0.0, a=1.0, name="J. MORGAN", tag="card"):
     """The CV, big enough to read. hl: {line index: (k, colour)} rings drawn round lines; erase (0..1) paints out "Women's"."""
     c.save()
     c.translate(x, y)
@@ -146,7 +146,7 @@ def cv_page(c, x, y, s, T, ang=0.0, hl=None, erase=0.0, a=1.0, name="J. MORGAN")
                 c.drawRoundRect(r, 30, 30, G.glow_paint(col, 0.35 * k * a, blur=10))
                 c.drawRoundRect(r, 30, 30, paint(col, k * a, stroke=7))
                 K.text(c, "−", x0 + ww + 60, yy + 4, 80, "jost-600", col, tag="deco", a=k * a, outline=(20, 0, 0), ow=6)
-    K.reg_local(c, -w / 2 + 60, -h / 2 + 40, w / 2 - 40, h / 2 - 40, "card")
+    K.reg_local(c, -w / 2 + 60, -h / 2 + 40, w / 2 - 40, h / 2 - 40, tag)
     c.restore()
 
 
@@ -180,13 +180,25 @@ def s_p_cv(T, idx):
     u = K.ease(ramp(T, t0, t0 + 0.6))
     k_w = K.ease(ramp(T, Wx("p2", "women's") - 0.1, Wx("p2", "women's") + 0.25))
     cv_page(c, 540, 870 + 60 * (1 - u), 0.72, T, ang=-2, hl={5: (k_w, (255, 50, 40))})
-    # the score it gives, falling
-    sc = 78 - 37 * k_w
+    # the rating it gives (the real tool rated candidates one to five stars): four stars drop to two
     a_ = K.ease(ramp(T, t0 + 0.8, t0 + 1.3))
-    c.drawRoundRect(skia.Rect.MakeLTRB(640, 330, 940, 420), 12, 12, paint((10, 4, 4), 0.85 * a_))
-    K.text(c, f"SCORE {sc:.0f}" + (" ▼" if k_w > 0.5 else ""), 790, 395, 50, "special-elite-400", (255, 90, 70) if k_w > 0.5 else (255, 220, 190),
+    c.drawRoundRect(skia.Rect.MakeLTRB(620, 318, 960, 448), 12, 12, paint((10, 4, 4), 0.85 * a_))
+    for i in range(5):
+        on = 1.0 if i < 2 else (1.0 - k_w if i < 4 else 0.0)
+        col = mix((255, 90, 70), (255, 220, 160), 1 - k_w)
+        _star(c, 662 + i * 64, 368, 26, col, a_ * (0.25 + 0.75 * on), fill=on > 0.5)
+    K.text(c, "RANKED LOWER" if k_w > 0.5 else "RATING", 790, 432, 30, "special-elite-400", (255, 90, 70) if k_w > 0.5 else (255, 220, 190),
            tag="label", a=a_)
     return st.arr
+
+
+def _star(c, x, y, r, col, a, fill=True):
+    pts = []
+    for i in range(10):
+        ang = -math.pi / 2 + i * math.pi / 5
+        rr = r if i % 2 == 0 else r * 0.42
+        pts.append((x + math.cos(ang) * rr, y + math.sin(ang) * rr))
+    c.drawPath(K.path(pts), paint(col, a) if fill else paint(col, a, stroke=3))
 
 
 def s_p_scrap(T, idx):
@@ -203,9 +215,9 @@ def s_p_scrap(T, idx):
             ang = rng.uniform(-2.8, -0.3)
             r = (u - 0.35) * 900 * rng.uniform(0.4, 1.0)
             c.drawCircle(540 + math.cos(ang) * r, 520 + math.sin(ang) * r + 300 * (u - 0.35) ** 2 * 4, 4, G.glow_paint((255, 200, 120), max(0.0, 1 - u)))
-    Wd.fire(c, 540, 1700, 0.9, T, seed=2)
+    Wd.fire(c, 540, 1240, 0.9, T, seed=2)
     c.save()                                                        # the CV, crumpling, dropping into the fire
-    c.translate(540, 1000 + 500 * u ** 2)
+    c.translate(540, 820 + 360 * u ** 2)
     c.rotate(30 * u)
     c.scale(0.55 * (1 - 0.5 * u), 0.55 * (1 - 0.8 * u))
     cv_page(c, 0, 0, 1.0, T)
@@ -257,8 +269,9 @@ def s_p_door(T, idx):
     c = st.c
     t0 = cut("p_door")
     t_shut = Wx("p3", "discrimination.") + 0.2
-    shut = K.ease(ramp(T, t0 + 0.2, t_shut))
-    c.drawPaint(paint((10, 2, 4)))
+    shut = K.ease(ramp(T, t0 + 0.6, t_shut))
+    c.drawPaint(paint((22, 6, 8)))
+    G.pool(c, 540, 900, 900, (200, 40, 40), 0.3)                    # the corridor, in red
     # a tall doorway of light, narrowing as the door swings shut
     dw = 360 * (1 - shut)
     if dw > 1:
@@ -266,14 +279,26 @@ def s_p_door(T, idx):
         G.beam(c, (540 - 180 + dw / 2, 900), (240, 1900), (840 + dw, 1900), (255, 200, 170), a=0.35 * (1 - shut))
         LK.flare(540 - 180 + dw / 2, 700, 0.5 * (1 - shut), (255, 220, 200))
     c.drawRect(skia.Rect.MakeLTRB(540 - 200, 280, 540 + 200, 1400), paint((60, 20, 16), stroke=24))
-    c.drawRect(skia.Rect.MakeLTRB(540 - 180 + dw, 300, 540 + 180, 1400), paint((30, 10, 8)))      # the door
-    # her, from behind, in the light
+    c.drawRect(skia.Rect.MakeLTRB(540 - 180 + dw, 300, 540 + 180, 1400), paint(shader=K.lin((360, 300), (720, 1400), [(70, 26, 20), (34, 10, 8)])))  # the door
+    for py in (420, 760, 1100):                                      # its panels, catching the red
+        c.drawRect(skia.Rect.MakeLTRB(400 + dw * 0.5, py, 680, py + 260), paint((90, 34, 26), 0.6 * shut, stroke=6))
+    c.drawRect(skia.Rect.MakeLTRB(360, 1384, 720, 1400), G.glow_paint((255, 210, 170), 0.9))      # light under the door
+    G.beam(c, (540, 1400), (300, 1900), (780, 1900), (255, 170, 130), a=0.25)
+    c.drawCircle(660, 860, 9, G.glow_paint((255, 220, 180), 0.8 * shut))                          # the keyhole
+    # her, from behind, rimmed by what light is left
     c.save()
     c.translate(540, 1560)
     c.scale(1.05, 1.05)
-    c.drawPath(K.smooth([(-110, 0), (-120, -380), (-90, -620), (-40, -680), (40, -680), (90, -620), (120, -380), (110, 0)]), paint((8, 2, 4)))
+    body = K.smooth([(-110, 0), (-120, -380), (-90, -620), (-40, -680), (40, -680), (90, -620), (120, -380), (110, 0)])
+    hair = K.smooth([(-80, -790), (0, -860), (80, -790), (100, -620), (60, -560), (-60, -560), (-100, -620)])
+    for pth in (body, hair):
+        c.drawPath(pth, paint((8, 2, 4)))
     c.drawCircle(0, -760, 78, paint((8, 2, 4)))
-    c.drawPath(K.smooth([(-80, -790), (0, -860), (80, -790), (100, -620), (60, -560), (-60, -560), (-100, -620)]), paint((8, 2, 4)))
+    rim = paint((255, 150, 120), 0.55 + 0.3 * (1 - shut), stroke=8, blur=5)
+    rim.setBlendMode(skia.BlendMode.kPlus)
+    c.drawPath(hair, rim)
+    c.drawPath(K.bez_path([(-120, -380), (-90, -620), (-40, -680)]), rim)
+    c.drawPath(K.bez_path([(120, -380), (90, -620), (40, -680)]), rim)
     c.restore()
     if T >= t_shut:
         c.drawPaint(G.glow_paint((255, 40, 30), 0.5 * hit(T, t_shut, 0.3)))

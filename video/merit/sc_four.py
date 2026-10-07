@@ -91,10 +91,16 @@ def s_v_why(T, idx):
     c.drawPaint(paint((10, 2, 4)))
     tw = S("v2")
     o = math.sin(math.pi * ramp(T, tw - 0.05, tw + 0.6)) * 0.6
-    for k, (who, x, y, s, sm) in enumerate((("f_a", 400, 640, 0.6, 0.0), ("m_b", 680, 980, 0.72, -0.2), ("f_c", 470, 1260, 0.58, 0.1))):
-        drift = 30 * math.sin(T * 0.8 + k)
-        with K.layer(c, 0.85, skia.BlendMode.kScreen):
-            PF.mouth_macro(c, x + drift, y, s, who, T, open_=o * (0.8 + 0.2 * k), smile=sm, key=(255, 150, 120), fill=(170, 60, 80))
+    # three mouths in the dark, each in its own pool of light, all asking the same thing
+    for k, (who, x, y, s, sm) in enumerate((("f_a", 400, 470, 0.46, 0.0), ("m_b", 660, 880, 0.56, -0.2), ("f_c", 430, 1270, 0.44, 0.1))):
+        drift = 24 * math.sin(T * 0.8 + k)
+        ok = math.sin(math.pi * ramp(T, tw - 0.05 + 0.08 * k, tw + 0.6 + 0.08 * k)) * 0.95
+        c.saveLayer(None, paint())
+        PF.mouth_macro(c, x + drift, y, s, who, T, open_=ok, smile=sm - 0.5, key=(255, 190, 160), fill=(200, 80, 100))
+        mp = paint(shader=K.rad((x + drift, y), 330 * s / 0.5, [(0, 0, 0, 1.0), (0, 0, 0, 0.8), (0, 0, 0, 0.0)], [0.0, 0.55, 1.0]))
+        mp.setBlendMode(skia.BlendMode.kDstIn)
+        c.drawPaint(mp)
+        c.restore()
     return st.arr
 
 
@@ -150,15 +156,17 @@ def s_v_vars(T, idx):
         r = rng.uniform(220, 560) * (0.4 + 0.6 * grow)
         x = 540 + math.cos(ang) * r
         y = 800 + math.sin(ang) * r * 1.05
-        if y > 1290 or y < 250:
+        if y > 1280 or y < 300:
             continue
         name = VARS[i % len(VARS)]
         wv = rng.uniform(-0.6, 0.6)
-        size = rng.uniform(18, 30) if i % 7 else 34
-        a = 0.35 + 0.6 * rng.random()
+        size = rng.uniform(26, 38) if i % 7 else 44
+        a = 0.6 + 0.4 * rng.random()
         c.drawLine(x, y, 540, 760, paint((200, 160, 255), 0.07 * a, stroke=1))
         col = (255, 120, 120) if wv < 0 else (190, 220, 255)
-        K.text(c, f"{name} {wv:+.2f}", x, y, size, "jost-500", col, tag="deco", a=a * grow)
+        K.text(c, f"{name} {wv:+.2f}", x, y, size, "jost-600", col, tag="deco", a=a * grow)
+    c.drawRect(skia.Rect.MakeLTRB(300, 232, 780, 280), paint((6, 2, 10), 0.85))
+    K.text(c, "ILLUSTRATION · NOT A REAL MODEL", 540, 266, 28, "jost-600", (220, 200, 255), tag="label")
     return st.arr
 
 
@@ -236,7 +244,7 @@ def s_v_dutch(T, idx):
     t0 = cut("v_dutch")
     t_flag = Wx("v5", "foreign")
     t_acc = Wx("v5", "Tens")
-    pull = K.ease(ramp(T, t_acc - 0.3, end("v_dutch")))
+    pull = K.ease(ramp(T, t_acc - 0.3, end("v_dutch2")))
     Wd.sky(c, (2, 4, 18), (10, 18, 50), (30, 40, 90))
     Wd.real_stars(c, T, n=80, y1=700, a=0.6)
     Wd.moon(c, 820, 420, 120, T, a=0.8, corona=0.6)
@@ -270,6 +278,48 @@ def s_v_dutch(T, idx):
     K.text(c, "THE NETHERLANDS · CHILDCARE BENEFITS", 540, 330, 36, "special-elite-400", (220, 230, 255), tag="label", outline=(0, 0, 20), ow=6,
            a=K.ease(ramp(T, t0 + 0.3, t0 + 0.9)))
     K.text(c, "RISK FACTOR: NATIONALITY", 540, 400, 44, "special-elite-400", (255, 110, 100), tag="label", outline=(20, 0, 0), ow=6, a=k2)
+    return st.arr
+
+
+s_v_dutch2 = s_v_dutch
+
+
+def s_v_file(T, idx):
+    """The model's view: a ledger of families, a column for nationality, and the flags going red."""
+    st = K.Stage((0, 0, 0))
+    c = st.c
+    t0 = cut("v_file")
+    z = 1.04 + 0.05 * (T - t0)
+    c.drawPaint(paint((4, 6, 16)))
+    c.save()
+    c.translate(540, 820)
+    c.scale(z, z)
+    c.translate(-540, -820)
+    scr = skia.Rect.MakeLTRB(90, 330, 990, 1250)
+    c.drawRoundRect(skia.Rect.MakeLTRB(70, 310, 1010, 1270), 20, 20, paint((26, 30, 44)))
+    c.drawRect(scr, paint((10, 16, 34)))
+    G.pool(c, 540, 800, 700, (80, 120, 255), 0.25)
+    K.text(c, "RISK CLASSIFICATION MODEL", 540, 400, 40, "special-elite-400", (190, 210, 255), tag="screen")
+    c.drawLine(120, 430, 960, 430, paint((90, 110, 170), stroke=2))
+    K.text(c, "FILE", 150, 485, 30, "special-elite-400", (130, 150, 200), align="left", tag="screen")
+    K.text(c, "DUTCH NATIONALITY", 380, 485, 30, "special-elite-400", (130, 150, 200), align="left", tag="screen")
+    K.text(c, "RISK", 960, 485, 30, "special-elite-400", (130, 150, 200), align="right", tag="screen")
+    rng = K.rng_at(17, 2)
+    t_n = Wx("v5", "nationality")
+    for i in range(9):
+        y = 560 + i * 66
+        dutch = rng.random() < 0.5
+        k = K.ease(ramp(T, t_n - 0.3 + i * 0.06, t_n + 0.1 + i * 0.06)) if not dutch else 0.0
+        if k > 0:
+            c.drawRect(skia.Rect.MakeLTRB(110, y - 42, 970, y + 16), paint((150, 16, 24), 0.55 * k))
+        K.text(c, f"#{40213 + i * 377}", 150, y, 32, "special-elite-400", (200, 214, 255), align="left", tag="screen")
+        K.text(c, "yes" if dutch else "NO", 380, y, 32, "special-elite-400", (200, 214, 255) if dutch else mix((200, 214, 255), (255, 120, 110), k), align="left", tag="screen")
+        lvl = 0.2 + 0.6 * k if not dutch else 0.2
+        c.drawRect(skia.Rect.MakeLTRB(760, y - 26, 760 + 200 * lvl, y), paint(mix((90, 120, 200), (255, 70, 60), k)))
+    c.restore()
+    c.drawRect(skia.Rect.MakeLTRB(0, 1180, W, 1260), paint((2, 4, 16), 0.85))
+    K.text(c, "FLAGGED FOR FRAUD CHECKS", 540, 1236, 46, "special-elite-400", (255, 110, 100), tag="label", outline=(20, 0, 0), ow=6,
+           a=K.ease(ramp(T, t_n + 0.2, t_n + 0.6)))
     return st.arr
 
 

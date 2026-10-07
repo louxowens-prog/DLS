@@ -20,8 +20,7 @@ LINES = [
     # ---- the hook: a flash of the verdict, then the quiet night
     ("h1", "SYSTEM", "The system has determined you are ineligible.", None, 0.5),
     # ---- cold open: the forest under the wrong moon, the fire, the records
-    ("c1", "NAR", "Long before the machines, there were the records: who was hired, who was refused, whose door stayed shut.",
-     "Long before the machines, there were the records: | who was hired, who was refused, whose door stayed shut.", 0.2),
+    ("c1", "NAR", "Long before the machines, there were the records.", None, 0.4),
     # ---- I. THE INHERITANCE
     ("i1", "NAR", "AI learns from those records: our prejudice, our inequality, our stereotypes, and the people we never counted.",
      "AI learns from those records: | our prejudice, our inequality, our stereotypes, | and the people we never counted.", 0.2),
@@ -35,11 +34,11 @@ LINES = [
      "A tech giant built one. | It taught itself to downgrade any CV with the word \"women's\". | It was scrapped.", 0.2),
     ("p3", "NAR", "The machine feels no sexism. It learned a pattern from our history. The outcome is still discrimination.",
      "The machine feels no sexism. It learned a pattern from our history. | The outcome is still discrimination.", 0.2),
-    ("p4", "NAR", "Delete the word, and it finds a stand-in: a postcode, a hobby, a gap in your CV.", None, 0.2),
+    ("p4", "NAR", "Delete the word, and it can still find stand-ins: a postcode, a hobby, a gap in your CV.", None, 0.2),
     # ---- III. THE MULTITUDE
     ("m1", "NAR", "A biased manager can reject a few people a day. An algorithm can reject millions.",
      "A biased manager can reject a few people a day. | An algorithm can reject millions.", 0.2),
-    ("m2", "NAR", "NIST, America's standards body, warns AI can increase the speed and scale of harmful bias.", None, 0.2),
+    ("m2", "NAR", "NIST, the US standards agency, warns AI can increase the speed and scale of harmful bias.", None, 0.2),
     ("m4", "MERIT", "Why judge one, when I can judge them all?", None, 0.2),
     # ---- IV. THE VERDICT
     ("v1", "NAR", "Denied a job. Insurance. A home. A loan. A place at university. Benefits.", None, 0.3),
@@ -67,10 +66,10 @@ LINES = [
     # ---- the quiet lesson
     ("e1", "NAR", "AI isn't born biased. It inherits us. NIST says trustworthy AI is transparent, accountable, explainable, reliable, privacy-enhanced, and fair, with harmful bias managed.",
      "AI isn't born biased. It inherits us. | NIST says trustworthy AI is transparent, accountable, explainable, reliable, privacy-enhanced, | and fair, with harmful bias managed.", 0.25),
-    ("e2", "NAR", "So when a machine decides about you, ask: what data? Who checked it? How do I appeal? In the EU and UK, you can demand a human review.",
-     "So when a machine decides about you, ask: | What data? Who checked it? How do I appeal? | In the EU and UK, you can demand a human review.", 0.0),
+    ("e2", "NAR", "So when a machine alone decides about you, ask: what data? Who checked it? How do I appeal? In the EU and UK, you can demand a human review.",
+     "So when a machine alone decides about you, ask: | What data? Who checked it? How do I appeal? | In the EU and UK, you can demand a human review.", 0.0),
 ]
 
-FX = {"d1": "merit", "i3": "merit", "m4": "merit", "x1": "merit", "y1": "merit", "y2": "merit", "h1": "system", "v2": "why"}
+FX = {"r2": "plead", "r5": "cry", "d1": "merit", "i3": "merit", "m4": "merit", "x1": "merit", "y1": "merit", "y2": "merit", "h1": "system", "v2": "why"}
 SPEED = {}
 PITCH = {}

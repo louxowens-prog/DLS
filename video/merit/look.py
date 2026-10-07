@@ -66,16 +66,22 @@ def _vignette():
 
 
 def _noise_fields():
-    """Smooth random fields at quarter resolution: haze banks, melt displacement, burn shapes, light leaks."""
+    """Smooth random fields at quarter resolution - haze banks, melt displacement, burn shapes, light leaks. They are
+    built in the frequency domain, so they tile seamlessly: scrolling one round the frame never shows a seam."""
     global _NOISE
     if _NOISE is None:
         rng = np.random.default_rng(83)
+        h, w = H // 4, W // 4
+        fy = np.fft.fftfreq(h)[:, None]
+        fx = np.fft.fftfreq(w)[None, :]
+        r = np.sqrt((fy * h / w) ** 2 + fx ** 2)                    # isotropic in pixels
         out = []
         for i in range(10):
-            f = np.zeros((H // 4, W // 4), np.float32)
-            for octave, (gh, amp) in enumerate(((5, 1.0), (10, 0.5), (22, 0.25), (46, 0.12))):
-                g = rng.normal(0, 1, (gh * 2, max(2, gh * 2 * W // H))).astype(np.float32)
-                f += amp * cv2.resize(g, (W // 4, H // 4), interpolation=cv2.INTER_CUBIC)
+            f = np.zeros((h, w), np.float32)
+            for scale, amp in ((0.012, 1.0), (0.025, 0.5), (0.05, 0.25), (0.1, 0.12)):
+                spec = np.fft.fft2(rng.normal(0, 1, (h, w))) * np.exp(-(r / scale) ** 2)
+                g = np.real(np.fft.ifft2(spec)).astype(np.float32)
+                f += amp * g / (g.std() + 1e-9)
             f = (f - f.mean()) / (f.std() + 1e-6)
             out.append(f)
         _NOISE = out
@@ -157,7 +163,8 @@ def look(arr, T, idx, wash=None, wash_k=0.82, keep=0.0, pulse=0.0, bloom=1.0, ha
         dx = fa * (26 * melt)
         dy = fb * (34 * melt) + drip
         if breathe > 0:
-            s_ = breathe * (0.022 * math.sin(T * 2 * math.pi / 3.2) + 0.008 * math.sin(T * 5.1))
+            # always a zoom in (never out), so the edge of the frame is never pulled into view
+            s_ = -breathe * (0.014 * (1 + math.sin(T * 2 * math.pi / 3.2)) + 0.004 * (1 + math.sin(T * 5.1)))
             yy, xx = np.mgrid[0:H // 4, 0:W // 4].astype(np.float32)
             dx = dx + (xx * 4 - W / 2) * s_
             dy = dy + (yy * 4 - H / 2) * s_
@@ -199,8 +206,9 @@ def look(arr, T, idx, wash=None, wash_k=0.82, keep=0.0, pulse=0.0, bloom=1.0, ha
         glow = _up4(cv2.GaussianBlur(cv2.resize(small, (W // 8, H // 8), interpolation=cv2.INTER_AREA), (0, 0), 11))
         f1 = _scroll(nf[2], T * 3.0 + seed * 40, T * -1.2)
         f2 = _scroll(nf[7], T * -2.1, T * 0.8 + seed * 25)
-        bank = np.clip(0.55 + 0.32 * f1 + 0.22 * f2, 0, 1.3)[..., None]
-        add += glow * bank * 0.55 * haze + glow.mean(axis=(0, 1)) * bank * 0.12 * haze
+        # banks of smoke with clear air between them, so the haze reads as smoke drifting through the light
+        bank = np.clip(0.45 + 0.6 * f1 + 0.35 * f2, 0, 1.6)[..., None]
+        add += glow * bank * 0.6 * haze + glow.mean(axis=(0, 1)) * bank * 0.07 * haze
     if streak > 0:
         # anamorphic streaks from small hot points (a broad bright area makes a glow, not a line): the highlight
         # minus its local average, smeared sideways, short and bright plus long and faint

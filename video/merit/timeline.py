@@ -13,7 +13,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # seconds of picture and music (no voice) before a line
 PRE = {
     "h1": 0.6,                    # one crushing chord; the mask in red, a stamp falling
-    "c1": 1.2,                    # dead quiet; wind in the pines; the forest under the wrong moon
+    "c1": 2.6,                    # dead quiet; wind in the pines; the forest under the wrong moon
     "i1": 2.8,                    # the title, INELIGIBLE; chapter I
     "i3": 0.4,                    # she opens her eyes
     "p1": 1.5,                    # chapter II
@@ -21,15 +21,15 @@ PRE = {
     "v1": 1.5,                    # chapter IV
     "v2": 0.4,
     "v3": 0.6,                    # dead silence; the mask slams into the frame
-    "d1": 1.4,                    # the dreamer drifting through space, past wrong planets
+    "d1": 2.2,                    # the dreamer drifting through space, past wrong planets
     "r1": 1.0,                    # she falls through the sky into a fluorescent kitchen
     "r3": 0.4,
-    "x1": 1.4,                    # the eruption
+    "x1": 3.4,                    # the eruption
     "y1": 1.7,                    # dead silence; her eye opens on you
-    "e1": 1.6,                    # the fire again, quiet
+    "e1": 2.0,                    # the fire again, quiet
 }
 TIGHT = {"NAR": 0.42, "IRIS": 0.45}   # longest pause left inside a line, by speaker
-TAIL = 2.8                        # the last image burns into the screen
+TAIL = 1.9                        # the last image burns into the screen
 
 
 def _comb(x, delay_s, fb):
@@ -87,6 +87,35 @@ def treat(wav, kind):
         w = 0.55 * w + 0.45 * robot
         w = signal.sosfilt(signal.butter(4, [320 / (SR / 2), 3400 / (SR / 2)], "band", output="sos"), w)
         w = np.round(w / (np.abs(w).max() + 1e-9) * 48) / 48                 # a little crushed, like an old line
+    elif kind in ("plead", "cry"):
+        n = len(w)
+        tt = np.arange(n) / SR
+        # a voice on the edge of tears: the pitch trembling (6-7 Hz), a little breath through it
+        cents = 35 * np.sin(2 * np.pi * 6.5 * tt) + 15 * np.sin(2 * np.pi * 2.3 * tt + 1)
+        r = 2 ** (cents / 1200)
+        pos = np.cumsum(r)
+        pos = pos * (n - 1) / pos[-1]
+        w = np.interp(pos, np.arange(n), w)
+        rng = np.random.default_rng(5)
+        breath = signal.sosfilt(signal.butter(2, [1500 / (SR / 2), 6000 / (SR / 2)], "band", output="sos"), rng.normal(0, 1, n))
+        env = np.abs(signal.hilbert(w))
+        env = np.convolve(env, np.ones(240) / 240, "same")
+        w = w + breath * env * 0.35
+        if kind == "cry":
+            # the second "I'm qualified!" (after the pause) rises, swells and cracks
+            from voice import pauses
+            ps = pauses(wav, 0.15)
+            cut = int(ps[0][1] * SR) if ps else n // 2
+            head, tail = w[:cut], w[cut:]
+            tail = pv_shift(tail, 4.0)
+            tl = np.arange(len(tail)) / SR
+            tail = tail * (1.0 + 1.2 * np.clip(tl / 0.25, 0, 1))                 # louder
+            tail = np.tanh(2.2 * tail / (np.abs(tail).max() + 1e-9)) * np.abs(tail).max()   # strained
+            crack = (np.sin(2 * np.pi * 9 * tl) > 0.6) * (tl > 0.35)          # the voice catching
+            tail = tail * (1 - 0.35 * crack)
+            sob = breath[: int(0.45 * SR)] * np.hanning(int(0.45 * SR)) * np.abs(tail).max() * 0.5
+            w = np.concatenate([head, tail, np.zeros(int(0.05 * SR)), sob])
+            return (w * np.sqrt((wav.astype(np.float64) ** 2).mean() / ((head ** 2).mean() + 1e-12))).astype(np.float32)
     w *= np.sqrt((wav.astype(np.float64) ** 2).mean() / ((w ** 2).mean() + 1e-12))
     return w.astype(np.float32)
 

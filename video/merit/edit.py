@@ -28,10 +28,10 @@ def L(base, **kw):
 
 EDIT = [
     # ---- the hook: a stamp comes down in red; the verdict
-    (0.0, "h_stamp", "cut", BLOOD),
+    (0.0, "h_stamp", "cut", L(BLOOD, haze=0.35, wash_k=0.75, keep=0.3)),
     # ---- cold open: the quiet night - a wrong moon, a sky of punched-card stars, a fire of records
     (E("h1") + 0.3, "o_sky", "burn", L(NIGHT, burn_at=(0.2, 0.3))),
-    (Wx("c1", "records:") - 0.25, "o_fire", "dissolve", L(NIGHT, wash_k=0.5)),
+    (Wx("c1", "there") - 0.3, "o_fire", "dissolve", L(NIGHT, wash_k=0.5)),
     (E("c1") + 0.2, "t_title", "flash", L(CARD, wash="red")),
     (E("c1") + 1.6, "k_1", "burn", L(CARD, wash="cobalt")),
     # ---- I. THE INHERITANCE (cobalt)
@@ -55,16 +55,19 @@ EDIT = [
     (S("m1") - 0.05, "m_manager", "dissolve", MAGENTA),
     (Wx("m1", "An") - 0.12, "m_army", "flash", L(MAGENTA, pulse=0.6)),
     (S("m2") - 0.1, "m_nist", "dissolve", MAGENTA),
+    (Wx("m2", "speed") - 0.35, "m_speed", "dissolve", L(MAGENTA, wash_k=0.7, pulse=0.4)),
     (S("m4") - 0.2, "m_kaleido", "slow", L(MAGENTA, melt=0.35, breathe=0.8, pulse=1.0)),
     (E("m4") + 0.2, "k_4", "burn", L(CARD, wash="blood")),
     # ---- IV. THE VERDICT (blood)
     (S("v1") - 0.05, "v_doors", "dissolve", DEEP),
-    (S("v2") - 0.4, "v_why", "cut", L(DEEP, melt=0.3)),
+    (S("v2") - 0.4, "v_why", "cut", L(DEEP, wash_k=0.75, haze=0.5, melt=0.12)),
     (E("v2"), "v_silence", "cut", L(DEEP, haze=1.0, breathe=1.2, melt=0.4)),
     (S("v3") - 0.02, "v_mask", "cut", L(BLOOD, streak=1.0)),
     (E("v3") + 0.15, "v_vars", "flash", L(VIOLET, wash_k=0.6, melt=0.15)),
     (Wx("v4", "You") - 0.15, "v_clerk", "dissolve", L(FIRE, wash="ember", wash_k=0.5)),
     (S("v5") - 0.1, "v_dutch", "dissolve", L(COBALT, wash_k=0.62, keep=0.7)),
+    (Wx("v5", "foreign") - 0.2, "v_file", "dissolve", L(COBALT, wash_k=0.55, keep=0.75)),
+    (Wx("v5", "Tens") - 0.15, "v_dutch2", "dissolve", L(COBALT, wash_k=0.62, keep=0.7)),
     (Wx("v5", "The", 1) - 0.15, "v_gov", "dissolve", L(COBALT, wash_k=0.66, keep=0.7)),
     # ---- the descent: the dreamer drifts through space; she falls
     (E("v5") + 0.2, "d_space", "burn", AIRBRUSH),
@@ -78,7 +81,7 @@ EDIT = [
     (Wx("r4", "Her", 2) - 0.12, "r_reasons", "dissolve", L(FLUORO, wash="cobalt", wash_k=0.55)),
     (S("r5") - 0.1, "r_scream", "cut", L(DEEP, melt=0.5, breathe=1.0, smear=0.3)),
     # ---- the eruption
-    (E("r5") - 0.3, "x_erupt", "flash", L(DEEP, wash_k=0.5, keep=0.45, melt=0.18, breathe=0.8, pulse=1.0, smear=0.0, streak=1.0)),
+    (E("r5") - 0.12, "x_erupt", "flash", L(DEEP, wash_k=0.4, keep=0.55, melt=0.32, breathe=0.8, pulse=1.0, smear=0.3, streak=1.0)),
     # ---- dead silence; then her eye opens on you
     (E("x1") + 0.15, "y_black", "cut", L(DEEP, haze=0.3, grain=1.3)),
     (S("y1") - 0.5, "y_eye", "cut", L(VIOLET, wash="magenta", wash_k=0.55, breathe=0.6)),

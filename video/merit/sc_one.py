@@ -204,11 +204,11 @@ def s_i_faces(T, idx):
     G.pool(c, 540, 820, 800, (200, 60, 200), 0.35)
     fy = 860
     if k < 1:
-        PF.pface(c, 540, fy, 1.45, "w_dark", T, key=(255, 236, 226), fill=(170, 150, 230), rim=(255, 140, 220), amb=(30, 22, 34),
+        PF.pface(c, 540, fy, 1.45, "w_dark", T, key=(255, 236, 226), fill=(170, 150, 230), rim=(255, 140, 220), amb=(30, 22, 34), fall=0.0,
                  blink=0.0, a=1.0 - 0.55 * k)
     if k > 0:
         with K.layer(c, k, skia.BlendMode.kScreen if k < 0.95 else None):
-            PF.pface(c, 540, fy, 1.45, "m_light", T, key=(255, 236, 226), fill=(170, 150, 230), rim=(255, 140, 220), amb=(30, 22, 34))
+            PF.pface(c, 540, fy, 1.45, "m_light", T, key=(255, 236, 226), fill=(170, 150, 230), rim=(255, 140, 220), amb=(30, 22, 34), fall=0.0)
     c.restore()
     # the machine's view: a reticle, and the error rate it made
     err = K.ease(ramp(T, Wx("i2", "wrong") - 0.2, Wx("i2", "wrong") + 0.3))

@@ -18,10 +18,10 @@ PEOPLE = {
     "merit": dict(skin=(236, 222, 236), lips=(118, 18, 64), iris=(240, 196, 110), hair=(34, 18, 46), brow=(40, 24, 50),
                   shadow=(120, 60, 160), lash=(12, 6, 16), hair_style="long", reel=True, liner=1.0, glow_iris=0.8, eye=1.0),
     "iris": dict(skin=(226, 184, 158), lips=(160, 100, 96), iris=(96, 110, 72), hair=(72, 50, 38), brow=(80, 58, 44),
-                 shadow=(140, 110, 104), lash=(46, 34, 28), hair_style="bob_grey", age=0.6, liner=0.3),
+                 shadow=(140, 110, 104), lash=(46, 34, 28), hair_style="bob_grey", age=0.6, liner=0.3, eye=0.68),
     "w_dark": dict(skin=(120, 78, 56), lips=(104, 52, 48), iris=(46, 30, 22), hair=(16, 10, 8), brow=(24, 14, 10),
                    shadow=(80, 54, 46), lash=(12, 8, 6), hair_style="coils", liner=0.4),
-    "m_light": dict(skin=(230, 194, 174), lips=(172, 118, 110), iris=(76, 110, 150), hair=(116, 82, 54), brow=(100, 72, 50),
+    "m_light": dict(skin=(230, 194, 174), lips=(160, 118, 110), iris=(76, 110, 150), hair=(116, 82, 54), brow=(100, 72, 50),
                     shadow=(150, 124, 116), lash=(80, 62, 50), hair_style="short", male=True, liner=0.0, age=0.25),
     "f_a": dict(skin=(196, 148, 118), lips=(146, 76, 76), iris=(60, 40, 30), hair=(28, 18, 14), brow=(36, 24, 18),
                 shadow=(130, 96, 88), lash=(20, 14, 12), hair_style="pony", liner=0.4, age=0.3),
@@ -119,12 +119,13 @@ def _eye(c, sd, P, T, blink=0.0, gaze=(0, 0), wide=0.0, scale=1.0):
     c.restore()
 
 
-def _brow(c, sd, P, lift=0.0, knit=0.0):
+def _brow(c, sd, P, lift=0.0, knit=0.0, grief=0.0):
     c.save()
     c.scale(sd, 1)
     p = skia.Path()
-    p.moveTo(24, -64 + 8 * knit)
-    p.cubicTo(50, -86 - 10 * lift, 92, -94 - 14 * lift, 122, -70 - 6 * lift)
+    # grief: the inner ends drawn up and together, the outer ends falling
+    p.moveTo(24 - 6 * grief, -64 + 8 * knit - 30 * grief)
+    p.cubicTo(50, -86 - 10 * lift - 16 * grief, 92, -94 - 14 * lift + 6 * grief, 122, -70 - 6 * lift + 16 * grief)
     c.drawPath(p, paint(P["brow"], 0.9, stroke=12 if P.get("male") else 7, blur=1.0))
     c.restore()
 
@@ -140,12 +141,12 @@ def _nose(c, P):
     c.drawCircle(0, 66, 10, _blur_p(mix(sk, WHITE, 0.6), 0.5, 4))
 
 
-def _mouth(c, P, talk=0.0, smile=0.0, open_=0.0):
+def _mouth(c, P, talk=0.0, smile=0.0, open_=0.0, grief=0.0):
     o = min(1.0, open_ + 0.6 * talk)
     lips = P["lips"]
-    w = 54 + 6 * smile
+    w = 54 + 6 * smile + 8 * grief
     cy = 134
-    corner = -6 * smile
+    corner = -6 * smile + 16 * grief
     gap = o * 30
     up = skia.Path()
     up.moveTo(-w, cy + corner)
@@ -276,7 +277,7 @@ def _neck(c, P, T):
 
 def pface(c, x, y, s, who, T, key=(255, 120, 50), fill=(120, 70, 255), rim=None, key_at=(-0.5, 0.9), fill_at=(0.7, -0.7),
           amb=(18, 10, 22), blink=0.0, gaze=(0.0, 0.0), talk=0.0, smile=0.0, wide=0.0, fear=0.0, open_=0.0, tilt=0.0,
-          neck=True, a=1.0, hair=True, key_k=1.0, flat=0.0):
+          neck=True, a=1.0, hair=True, key_k=1.0, flat=0.0, fall=0.6, grief=0.0):
     """A face lit like an ember: key light from key_at (fractions of the face box, (-1..1)), a coloured fill from
     fill_at, an optional rim along the edge, and almost nothing elsewhere."""
     P = PEOPLE[who]
@@ -291,13 +292,19 @@ def pface(c, x, y, s, who, T, key=(255, 120, 50), fill=(120, 70, 255), rim=None,
         _hair_back(c, P, T)
     if neck:
         _neck(c, P, T)
+    if P.get("male"):                                         # a square jaw under the oval
+        c.drawPath(K.smooth([(-150, 20), (-148, 130), (-118, 196), (-50, 232), (50, 232), (118, 196), (148, 130), (150, 20)]), paint(P["skin"]))
     c.drawPath(outline(), paint(P["skin"]))
     _shade(c, P, P.get("age", 0.0))
     _nose(c, P)
     for sd in (-1, 1):
-        _brow(c, sd, P, lift=fear * 1.0 + wide * 0.4, knit=fear)
-        _eye(c, sd, P, T, blink=blink, gaze=gaze, wide=max(wide, fear * 0.8))
-    _mouth(c, P, talk=talk, smile=smile - 0.6 * fear, open_=max(open_, fear * 0.6))
+        _brow(c, sd, P, lift=fear * 1.0 + wide * 0.4, knit=fear, grief=grief)
+        _eye(c, sd, P, T, blink=max(blink, 0.22 * grief), gaze=gaze, wide=max(wide, fear * 0.8) * (1 - grief))
+    if grief > 0:
+        _grief(c, P, T, grief)
+    _mouth(c, P, talk=talk, smile=smile - 0.6 * fear, open_=max(open_, fear * 0.6), grief=grief)
+    if P.get("male"):
+        _stubble(c, P)
     if hair:
         _hair_front(c, P, T)
     # --- the light, multiplied in
@@ -305,7 +312,9 @@ def pface(c, x, y, s, who, T, key=(255, 120, 50), fill=(120, 70, 255), rim=None,
     mp.setBlendMode(skia.BlendMode.kModulate)
     c.saveLayer(None, mp)
     c.drawPaint(paint(mix(amb, (255, 255, 255), flat)))
-    kp = paint(shader=K.rad((key_at[0] * 300, key_at[1] * 300), 620, [key + (key_k,), key + (0.55 * key_k,), key + (0.0,)], [0.0, 0.45, 1.0]))
+    # fall: how fast the key dies away - high values leave the far side of the face in crushed black
+    kp = paint(shader=K.rad((key_at[0] * 300, key_at[1] * 300), 620 - 170 * fall,
+                            [key + (key_k,), key + ((0.55 + 0.1 * fall) * key_k,), key + (0.0,)], [0.0, 0.45 - 0.1 * fall, 1.0]))
     kp.setBlendMode(skia.BlendMode.kPlus)
     c.drawRect(skia.Rect.MakeLTRB(-700, -800, 700, 900), kp)
     fp = paint(shader=K.rad((fill_at[0] * 300, fill_at[1] * 300), 520, [fill + (0.75,), fill + (0.0,)]))
@@ -320,6 +329,50 @@ def pface(c, x, y, s, who, T, key=(255, 120, 50), fill=(120, 70, 255), rim=None,
         c.restore()
     c.restore()
     c.restore()
+
+
+def _grief(c, P, T, g):
+    """Weeping: the knot between the brows, swollen lids, the folds from nose to mouth, tears running."""
+    sk = P["skin"]
+    dk = mix(sk, BLACK, 0.6)
+    c.save()
+    c.clipPath(outline(), doAntiAlias=True)
+    for sd in (-1, 1):
+        c.drawPath(K.bez_path([(sd * 14, -60), (sd * 18, -84), (sd * 12, -108)]), paint(dk, 0.55 * g, stroke=3.5, blur=1.5))     # the knot
+        c.drawPath(K.bez_path([(sd * 34, 40), (sd * 70, 50), (sd * 100, 40)]), paint(mix(sk, (200, 90, 90), 0.5), 0.45 * g, stroke=10, blur=6))  # raw lids
+        c.drawPath(K.bez_path([(sd * 34, 84), (sd * 62, 118), (sd * 70, 168)]), paint(dk, 0.6 * g, stroke=4.5, blur=2))      # folds
+    for j in range(3):                                                                                       # the brow's lines
+        c.drawPath(K.bez_path([(-40 + j * 4, -128 - j * 14), (0, -146 - j * 16), (40 - j * 4, -128 - j * 14)]), paint(dk, 0.35 * g, stroke=2.5))
+    c.restore()
+    # tears: wet streaks from the lower lids down the cheeks, each with a bead catching the light
+    for sd in (-1, 1):
+        x0 = sd * 70
+        run = 60 + 100 * (0.5 + 0.5 * math.sin(T * 0.9 + sd))
+        q = K.bez_path([(x0, 18), (x0 + sd * 8, 18 + run * 0.5), (x0 + sd * 4, 18 + run)])
+        c.drawPath(q, paint((250, 244, 255), 0.55 * g, stroke=5))
+        c.drawPath(q, paint((255, 255, 255), 0.5 * g, stroke=12, blur=6))
+        c.drawCircle(x0 + sd * 4, 18 + run + 6, 7, paint((255, 255, 255), 0.85 * g))
+        c.drawPath(K.bez_path([(x0 - 36, 18), (x0, 26), (x0 + 36, 16)]), paint((255, 255, 255), 0.6 * g, stroke=3))           # the brimming lid
+
+
+def _stubble(c, P):
+    """A man's jaw: a shadow of stubble, an Adam's apple."""
+    sk = P["skin"]
+    c.save()
+    c.clipPath(outline(), doAntiAlias=True)
+    c.restore()
+    jaw = K.smooth([(-150, 50), (-130, 150), (-60, 222), (0, 236), (60, 222), (130, 150), (150, 50), (96, 150), (40, 176), (0, 180), (-40, 176), (-96, 150)])
+    c.drawPath(jaw, _blur_p(mix(sk, (50, 40, 44), 0.62), 0.7, 10))
+    c.drawPath(K.smooth([(-60, 104), (0, 92), (60, 104), (40, 112), (-40, 112)]), _blur_p(mix(sk, (50, 40, 44), 0.62), 0.5, 5))      # moustache shadow
+    rng = K.rng_at(9, 9)
+    for _ in range(140):                                                                                        # the grain of it
+        a_ = rng.uniform(0, math.pi)
+        r_ = rng.uniform(0.0, 1.0)
+        x_, y_ = math.cos(a_) * 140 * r_ ** 0.5, 110 + math.sin(a_) * 120 * r_ ** 0.5
+        if abs(x_) < 72 and y_ < 178:
+            continue
+        c.drawCircle(x_, y_, 1.6, paint(mix(sk, (30, 24, 26), 0.7), 0.5))
+    c.drawOval(skia.Rect.MakeXYWH(-16, 270, 32, 40), _blur_p(mix(sk, WHITE, 0.3), 0.4, 6))                       # Adam's apple
 
 
 def _rim_paint(col):

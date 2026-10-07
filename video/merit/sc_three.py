@@ -70,23 +70,44 @@ def s_m_manager(T, idx):
     return st.arr
 
 
-def _mini_clerk(c, x, y, s, slit=1.0, arm=0.0, strobe=0.0):
-    """A distant Clerk: hood, mask, slit, the stamp arm - cheap enough to draw by the hundred."""
+def _mini_clerk(c, x, y, s, slit=1.0, arm=0.0, strobe=0.0, back=False, light=(200, 90, 220)):
+    """A distant Clerk: robe, hood, a pewter mask, the slit, the stamp arm - modelled with light from above and the
+    front so it has weight, cheap enough to draw by the hundred. back=True: a silhouette against a strobe flash."""
     c.save()
     c.translate(x, y)
     c.scale(s, s)
-    c.drawPath(K.smooth([(-150, 900), (-140, 120), (-100, -20), (100, -20), (140, 120), (150, 900)]), paint((20, 14, 22)))
-    c.drawPath(K.smooth([(-110, 40), (-120, -150), (-60, -260), (60, -260), (120, -150), (110, 40)]), paint((18, 12, 20)))
-    c.drawOval(skia.Rect.MakeLTRB(-70, -200, 70, 10), paint((90, 86, 100)))
-    c.drawRect(skia.Rect.MakeLTRB(-64, -134, 64, -108), G.glow_paint((255, 40, 60), slit))
-    G.pool(c, 0, -120, 160, (255, 40, 60), 0.3 * slit, squash=0.3)
-    ay = -60 - 380 * arm
-    c.drawLine(-120, 60, -170, ay + 120, paint((30, 24, 34), stroke=60))
-    c.drawRect(skia.Rect.MakeLTRB(-250, ay, -90, ay + 90), paint((60, 36, 30)))
-    if strobe > 0:                                                  # the strobe catches the hood and the shoulders
-        rim = paint((255, 170, 255), 0.75 * strobe, stroke=12, blur=5)
+    robe = K.smooth([(-150, 900), (-140, 120), (-100, -20), (100, -20), (140, 120), (150, 900)])
+    hood = K.smooth([(-110, 40), (-120, -150), (-60, -260), (60, -260), (120, -150), (110, 40)])
+    if back:
+        c.drawPath(robe, paint((6, 2, 8)))
+        c.drawPath(hood, paint((6, 2, 8)))
+        rim = paint(mix(light, WHITE, 0.5), 0.9, stroke=10, blur=4)
         rim.setBlendMode(skia.BlendMode.kPlus)
-        c.drawPath(K.smooth([(-110, 40), (-120, -150), (-60, -260), (60, -260), (120, -150), (110, 40)]), rim)
+        c.drawPath(hood, rim)
+        c.drawRect(skia.Rect.MakeLTRB(-64, -134, 64, -108), G.glow_paint((255, 60, 60), slit))
+    else:
+        lit = 0.35 + 0.65 * strobe
+        top, bot = mix((14, 10, 18), light, 0.55 * lit), (8, 4, 10)
+        c.drawPath(robe, paint(shader=K.lin((0, -20), (0, 700), [top, bot])))
+        for k in (-1, 1):                                            # the folds of the robe
+            c.drawPath(K.bez_path([(k * 60, 60), (k * 76, 400), (k * 70, 900)]), paint((0, 0, 0), 0.5, stroke=16, blur=8))
+            c.drawPath(K.bez_path([(k * 20, 80), (k * 26, 400), (k * 18, 900)]), paint(mix(top, WHITE, 0.15), 0.3, stroke=8, blur=6))
+        for k in (-1, 1):                                            # pauldrons
+            c.drawOval(skia.Rect.MakeLTRB(k * 140 - 70, -10, k * 140 + 70, 70), paint(shader=K.rad((k * 120, 0), 90, [mix((120, 110, 130), light, 0.4 * lit), (20, 16, 24)])))
+        c.drawPath(hood, paint(shader=K.rad((0, -200), 300, [mix((40, 30, 46), light, 0.5 * lit), (8, 4, 10)])))
+        c.drawOval(skia.Rect.MakeLTRB(-70, -200, 70, 10), paint(shader=K.rad((-20, -150), 150, [mix((200, 192, 210), light, 0.3), (60, 54, 70), (20, 16, 24)], [0, 0.6, 1])))
+        for k in range(4):                                           # the grille
+            c.drawLine(-36, -70 + k * 16, 36, -70 + k * 16, paint((10, 6, 12), 0.8, stroke=5))
+        c.drawRect(skia.Rect.MakeLTRB(-64, -134, 64, -108), paint((10, 4, 8)))
+        c.drawRect(skia.Rect.MakeLTRB(-60, -130, 60, -112), G.glow_paint((255, 50, 60), slit))
+        G.pool(c, 0, -120, 160, (255, 40, 60), 0.3 * slit, squash=0.3)
+    ay = -60 - 380 * arm
+    c.drawLine(-120, 60, -170, ay + 120, paint((26, 20, 30) if not back else (6, 2, 8), stroke=60))
+    c.drawRect(skia.Rect.MakeLTRB(-250, ay, -90, ay + 90), paint((70, 40, 32) if not back else (6, 2, 8)))
+    if strobe > 0 and not back:                                       # the strobe catches the hood and the shoulders
+        rim = paint((255, 190, 255), 0.6 * strobe, stroke=10, blur=5)
+        rim.setBlendMode(skia.BlendMode.kPlus)
+        c.drawPath(hood, rim)
         c.drawPath(K.bez_path([(-150, 600), (-148, 200), (-100, -10)]), rim)
         c.drawPath(K.bez_path([(150, 600), (148, 200), (100, -10)]), rim)
     c.restore()
@@ -97,8 +118,14 @@ def s_m_army(T, idx):
     c = st.c
     t0 = cut("m_army")
     c.drawPaint(paint((10, 2, 10)))
-    strobe = 1.0 if (idx // 2) % 3 == 0 else 0.1                  # the strobe catching them every few frames
-    G.pool(c, 540, 500, 1400, (255, 60, 200), 0.35 * (0.4 + 0.6 * strobe))
+    ph = (idx // 2) % 3                                            # the strobe: a flash behind them every few frames
+    flash = ph == 0 and T > Wx("m1", "An") - 0.05
+    strobe = 1.0 if ph == 1 else 0.15
+    if flash:
+        c.drawPaint(paint((255, 170, 245)))
+        G.pool(c, 540, 500, 1400, (255, 255, 255), 0.8)
+    else:
+        G.pool(c, 540, 500, 1400, (255, 60, 200), 0.35 * (0.4 + 0.6 * strobe))
     rise = 160 * K.ease(ramp(T, t0, t0 + 2.4))
     beat = (T - t0) * 3.0
     hor = 520 + rise * 0.3
@@ -111,8 +138,8 @@ def s_m_army(T, idx):
         arm = 0.5 + 0.5 * math.cos(beat * math.pi + r * 0.15)
         for q in range(n):
             x = W / 2 + (q - (n - 1) / 2) * span / n + (r % 2) * span / n / 2
-            _mini_clerk(c, x, y, s_, arm=arm, strobe=strobe)
-        G.fog(c, T, -100, y - 220 * s_, W + 100, y + 160 * s_, (200, 100, 220), a=0.16, n=4, seed=r)
+            _mini_clerk(c, x, y, s_, arm=arm, strobe=strobe, back=flash)
+        G.fog(c, T, -100, y - 220 * s_, W + 100, y + 160 * s_, (200, 100, 220), a=0.16 if not flash else 0.3, n=4, seed=r)
     # refusals falling through the strobe, like ash
     rng = K.rng_at(9, 9)
     for i in range(36):
@@ -131,13 +158,24 @@ def s_m_army(T, idx):
 
 def s_m_nist(T, idx):
     st = K.Stage((0, 0, 0))
-    c = st.c
     t0 = cut("m_nist")
-    z = 1.0 + 0.03 * (T - t0)
+    _nist(st.c, T, t0, 1.0 + 0.03 * (T - t0), 900, 900)
+    return st.arr
+
+
+def s_m_speed(T, idx):
+    """Close on the stone: THE SPEED AND SCALE, burning red, the camera still pushing in."""
+    st = K.Stage((0, 0, 0))
+    t0 = cut("m_speed")
+    _nist(st.c, T, cut("m_nist"), 1.5 + 0.06 * (T - t0), 990, 900, close=True)
+    return st.arr
+
+
+def _nist(c, T, t0, z, cy, sy, close=False):
     c.save()
-    c.translate(540, 900)
+    c.translate(540, sy)
     c.scale(z, z)
-    c.translate(-540, -900)
+    c.translate(-540, -cy)
     Wd.forest(c, T, cam_y=200, moon_r=230, moon_xy=(860, 330), stars=0.5, seed=2, moon_a=0.7)
     # the Clerks marching past behind, faint in the fog
     for q in range(9):
@@ -148,23 +186,24 @@ def s_m_nist(T, idx):
     stone = K.smooth([(160, 1360), (150, 560), (200, 330), (540, 260), (880, 330), (930, 560), (920, 1360)])
     Wd.stone_fill(c, stone, base=(62, 54, 64), light=(255, 140, 210), light_from=(0.2, 0.0), k=0.5)
     k1 = K.ease(ramp(T, t0 + 0.2, t0 + 0.8))
-    Wd.engraved(c, "NIST", 540, 450, 96, "cinzel-800", glow=0.9 * k1, a=k1, color=(255, 236, 246))
-    Wd.engraved(c, "AI RISK MANAGEMENT FRAMEWORK", 540, 530, 34, "cinzel-800", a=k1, glow=0.7 * k1, color=(255, 220, 240))
-    Wd.engraved(c, "1.0  ·  2023", 540, 580, 34, "cinzel-800", a=k1, glow=0.7 * k1, color=(255, 220, 240))
-    c.drawLine(300, 625, 780, 625, paint((20, 10, 16), 0.8 * k1, stroke=4))
+    if not close:
+        Wd.engraved(c, "NIST", 540, 450, 96, "cinzel-800", glow=0.9 * k1, a=k1, color=(255, 236, 246))
+        Wd.engraved(c, "AI RISK MANAGEMENT FRAMEWORK", 540, 530, 34, "cinzel-800", a=k1, glow=0.7 * k1, color=(255, 220, 240))
+        Wd.engraved(c, "1.0  ·  2023", 540, 580, 34, "cinzel-800", a=k1, glow=0.7 * k1, color=(255, 220, 240))
+        c.drawLine(300, 625, 780, 625, paint((20, 10, 16), 0.8 * k1, stroke=4))
     k2 = K.ease(ramp(T, Wx("m2", "warns") - 0.2, Wx("m2", "warns") + 0.4))
     ks = K.ease(ramp(T, Wx("m2", "speed") - 0.15, Wx("m2", "speed") + 0.25))
     kc = K.ease(ramp(T, Wx("m2", "scale") - 0.15, Wx("m2", "scale") + 0.25))
     for i, ln in enumerate(("“AI SYSTEMS CAN", "POTENTIALLY INCREASE")):
-        Wd.engraved(c, ln, 540, 720 + i * 70, 50, "cinzel-800", a=k2, glow=0.75 * k2, color=(255, 230, 240))
+        if not close:
+            Wd.engraved(c, ln, 540, 720 + i * 70, 50, "cinzel-800", a=k2, glow=0.75 * k2, color=(255, 230, 240))
     Wd.engraved(c, "THE SPEED", 540, 900, 76, "cinzel-800", a=k2, glow=0.5 + 0.5 * ks, color=mix((255, 220, 236), (255, 70, 70), ks))
     Wd.engraved(c, "AND SCALE", 540, 990, 76, "cinzel-800", a=k2, glow=0.5 + 0.5 * kc, color=mix((255, 220, 236), (255, 70, 70), kc))
     Wd.engraved(c, "OF BIASES”", 540, 1070, 50, "cinzel-800", a=k2, glow=0.75 * k2, color=(255, 230, 240))
     Wd.engraved(c, "§ 3.7", 540, 1150, 32, "cinzel-800", a=k2, glow=0.6 * k2, color=(255, 220, 240))
     if ks > 0:
-        LK.flare(540, 880, 0.35 * ks * (1 - kc * 0.5), (255, 120, 120))
+        LK.flare(540 if z < 1.5 else 540, 880 if z < 1.5 else sy + (880 - cy) * z, 0.35 * ks * (1 - kc * 0.5), (255, 120, 120))
     c.restore()
-    return st.arr
 
 
 _MSURF = {}
