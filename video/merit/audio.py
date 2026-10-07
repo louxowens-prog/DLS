@@ -431,7 +431,7 @@ def voices():
         j = min(N_, i + sig.shape[1])
         buses[who][:, i:j] += sig[:, : j - i]
     out = reverb(buses["NAR"], 0.06, 0.6, seed=3)
-    out += reverb(buses["MERIT"], 0.4, 5.0, seed=4, predelay=0.06)
+    out += reverb(buses["MERIT"], 0.3, 4.2, seed=4, predelay=0.06)
     out += reverb(buses["SYSTEM"], 0.07, 0.25, seed=5)
     out += reverb(buses["IRIS"], 0.13, 0.45, seed=6)
     out += reverb(buses["WHY"], 0.28, 1.6, seed=7)
@@ -467,7 +467,7 @@ def presence(x, f0=3000, gain_db=2.0, q=0.9):
     return signal.lfilter(b / a[0], a / a[0], x, axis=1)
 
 
-NEED = {"NAR": 9.5, "MERIT": 10.0}               # the voice over the beds in the speech band (others: 11)
+NEED = {"NAR": 9.5, "MERIT": 12.0}               # the voice over the beds in the speech band (others: 11)
 BED = -2.0                                       # the beds' ceiling between lines, against the average line (dB)
 # (time, ceiling dB over the average line, seconds): the moments allowed to be loud
 HITS = [(T_HIT, 16.0, 1.4), (T_TITLE, 15.0, 1.4), (cut("k_2"), 10.0, 1.2), (cut("k_3"), 10.0, 1.2), (cut("k_4"), 10.0, 1.2),
