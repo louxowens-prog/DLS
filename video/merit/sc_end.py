@@ -40,7 +40,7 @@ def _chaos(c, T, k, seed):
     elif m == 1:                                                     # stamps multiplying
         rng = K.rng_at(seed, 2)
         for i in range(9):
-            P.stamp_mark(c, rng.uniform(150, 930), rng.uniform(300, 1500), rng.uniform(0.5, 0.9), ang=rng.uniform(-25, 25), tag="deco", seed=i)
+            P.stamp_mark(c, rng.uniform(200, 880), rng.uniform(320, 1120), rng.uniform(0.45, 0.8), ang=rng.uniform(-25, 25), tag="deco", seed=i)
     elif m == 2:                                                     # fire
         Wd.fire(c, 540, 1500, 1.6, T * 1.5, seed=seed)
         Wd.embers(c, T, 540, 1400, spread=400, height=1600, n=120, size=5, seed=seed)
@@ -114,7 +114,7 @@ def s_y_eye(T, idx):
     st = K.Stage((0, 0, 0))
     c = st.c
     t0 = cut("y_eye")
-    t_open = S("y1") - 0.05
+    t_open = cut("y_eye") + 0.03
     bl = 1 - K.ease(ramp(T, t_open, t_open + 0.25))
     z = 1.0 + 0.06 * (T - t0)
     sh = 12 * hit(T, t_open, 0.5)
@@ -129,7 +129,7 @@ def s_y_dossier(T, idx):
     st = K.Stage((0, 0, 0))
     c = st.c
     t0 = cut("y_dossier")
-    t_stamp = Wx("y2", "told.") + 0.1
+    t_stamp = E("y2") + 0.02
     c.drawPaint(paint((14, 4, 6)))
     G.pool(c, 540, 820, 900, (255, 70, 50), 0.32)
     z = 1.0 + 0.03 * (T - t0)
@@ -155,7 +155,7 @@ def s_y_dossier(T, idx):
     c.drawRect(skia.Rect.MakeLTRB(500, 1130, 900, 1185), paint((10, 6, 8), a))
     K.text(c, "WITHHELD", 700, 1240, 30, "special-elite-400", (120, 40, 40), tag="card", a=a)
     if T >= t_stamp:
-        P.stamp_mark(c, 540, 860, 0.95, ang=-12, a=1.0, tag="stamp")
+        P.stamp_mark(c, 540, 860, 0.9, ang=-12, a=1.0, tag="deco")
         c.drawPaint(G.glow_paint((255, 200, 180), 0.5 * hit(T, t_stamp, 0.25)))
     c.restore()
     return st.arr

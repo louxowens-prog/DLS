@@ -81,10 +81,10 @@ EDIT = [
     (E("r5") - 0.3, "x_erupt", "flash", L(DEEP, wash_k=0.55, keep=0.4, melt=0.3, breathe=1.0, pulse=1.0, smear=0.1, streak=1.0)),
     # ---- dead silence; then her eye opens on you
     (E("x1") + 0.15, "y_black", "cut", L(DEEP, haze=0.3, grain=1.3)),
-    (S("y1") - 0.08, "y_eye", "cut", L(VIOLET, wash="magenta", wash_k=0.55, breathe=0.6)),
+    (S("y1") - 0.5, "y_eye", "cut", L(VIOLET, wash="magenta", wash_k=0.55, breathe=0.6)),
     (S("y2") - 0.1, "y_dossier", "dissolve", L(RED, wash_k=0.6)),
     # ---- the quiet: the fire again, and the lesson
-    (E("y2") + 0.15, "e_fire", "black", FIRE),
+    (E("y2") + 0.6, "e_fire", "black", FIRE),
     (Wx("e1", "NIST") - 0.3, "e_tablet", "dissolve", FIRE),
     (S("e2") - 0.1, "e_ask", "dissolve", FIRE),
     (Wx("e2", "In") - 0.15, "e_hand", "dissolve", FIRE),

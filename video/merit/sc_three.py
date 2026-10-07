@@ -78,14 +78,17 @@ def _mini_clerk(c, x, y, s, slit=1.0, arm=0.0, strobe=0.0):
     c.drawPath(K.smooth([(-150, 900), (-140, 120), (-100, -20), (100, -20), (140, 120), (150, 900)]), paint((20, 14, 22)))
     c.drawPath(K.smooth([(-110, 40), (-120, -150), (-60, -260), (60, -260), (120, -150), (110, 40)]), paint((18, 12, 20)))
     c.drawOval(skia.Rect.MakeLTRB(-70, -200, 70, 10), paint((90, 86, 100)))
-    c.drawRect(skia.Rect.MakeLTRB(-60, -130, 60, -112), G.glow_paint((255, 40, 60), slit))
+    c.drawRect(skia.Rect.MakeLTRB(-64, -134, 64, -108), G.glow_paint((255, 40, 60), slit))
+    G.pool(c, 0, -120, 160, (255, 40, 60), 0.3 * slit, squash=0.3)
     ay = -60 - 380 * arm
     c.drawLine(-120, 60, -170, ay + 120, paint((30, 24, 34), stroke=60))
     c.drawRect(skia.Rect.MakeLTRB(-250, ay, -90, ay + 90), paint((60, 36, 30)))
-    if strobe > 0:
-        rim = paint((255, 160, 255), 0.6 * strobe, stroke=10, blur=4)
+    if strobe > 0:                                                  # the strobe catches the hood and the shoulders
+        rim = paint((255, 170, 255), 0.75 * strobe, stroke=12, blur=5)
         rim.setBlendMode(skia.BlendMode.kPlus)
         c.drawPath(K.smooth([(-110, 40), (-120, -150), (-60, -260), (60, -260), (120, -150), (110, 40)]), rim)
+        c.drawPath(K.bez_path([(-150, 600), (-148, 200), (-100, -10)]), rim)
+        c.drawPath(K.bez_path([(150, 600), (148, 200), (100, -10)]), rim)
     c.restore()
 
 

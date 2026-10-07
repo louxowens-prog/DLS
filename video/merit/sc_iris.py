@@ -220,7 +220,7 @@ def s_r_inbox(T, idx):
     return st.arr
 
 
-def _iris_cv(c, x, y, s, T, hl=None, a=1.0, fade=0.0):
+def _iris_cv(c, x, y, s, T, hl=None, a=1.0, fade=0.0, tag="card"):
     """Iris's CV: her name at the top, the three lines a machine might be counting against her."""
     lines = ["IRIS HALLORAN", "Systems engineer, 20 years", "Born: 1977", "2019 - 2020: career break (carer)",
              "Organiser, Women in Code", "Chartered engineer"]
@@ -243,7 +243,7 @@ def _iris_cv(c, x, y, s, T, hl=None, a=1.0, fade=0.0):
                 c.drawRoundRect(r, 30, 30, G.glow_paint((255, 60, 50), 0.35 * k * a, blur=10))
                 c.drawRoundRect(r, 30, 30, paint((255, 60, 50), k * a, stroke=7))
                 K.text(c, "?", -w / 2 + 120 + ww, yy + 10, 90, "newrocker-400", (255, 80, 70), tag="deco", a=k * a, outline=(30, 0, 0), ow=6)
-    K.reg_local(c, -w / 2 + 40, -h / 2 + 40, w / 2 - 40, h / 2 - 40, "card")
+    K.reg_local(c, -w / 2 + 40, -h / 2 + 40, w / 2 - 40, h / 2 - 40, tag)
     c.restore()
 
 
@@ -260,7 +260,7 @@ def s_r_slot(T, idx):
         P.clerk(c, x, 820, 0.42, T + k, arm=0.5 + 0.5 * math.sin(T * 6 + k), stamp=True, slit=0.9, look=-1.0 if k % 2 else 1.0,
                 rim=(120, 150, 255), metal=(70, 70, 90), seed=k)
     c.drawRect(skia.Rect.MakeLTRB(-10, 1180, 1090, 1220), paint((40, 44, 60)))
-    _iris_cv(c, 1250 - 1400 * u, 1000, 0.42, T)
+    _iris_cv(c, 1250 - 1400 * u, 1000, 0.42, T, tag="deco")
     K.text(c, "NO HUMAN READER", 540, 360, 56, "newrocker-400", (200, 220, 255), tag="label", outline=(0, 0, 30), ow=8,
            a=K.ease(ramp(T, Wx("r1", "human") - 0.2, Wx("r1", "human") + 0.3)))
     return st.arr

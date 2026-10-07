@@ -149,16 +149,16 @@ def chapter_card(c, n, T, t0, dur=1.5):
     c.translate(W / 2, 880)
     c.scale(z, z)
     c.translate(-W / 2, -880)
-    frame(c, 80, 420, W - 80, 1340, T, k=K.ease(min(1.0, u * 2.2)), seed=n)
-    ring(c, W / 2, 610, 118, T, a=K.ease(min(1.0, u * 3)))
-    K.text(c, NUMERALS[n], W / 2, 652, 116, "metalmania-400", (255, 230, 200), tag="title", a=K.ease(min(1.0, u * 3)), outline=(20, 8, 12), ow=8)
-    K.text(c, "CHAPTER " + NUMERALS[n], W / 2, 840, 54, "cinzel-800", mix(tint, WHITE, 0.6), tag="title", a=K.ease(min(1.0, u * 3)))
+    frame(c, 80, 380, W - 80, 1240, T, k=K.ease(min(1.0, u * 2.2)), seed=n)
+    ring(c, W / 2, 570, 118, T, a=K.ease(min(1.0, u * 3)))
+    K.text(c, NUMERALS[n], W / 2, 612, 116, "metalmania-400", (255, 230, 200), tag="title", a=K.ease(min(1.0, u * 3)), outline=(20, 8, 12), ow=8)
+    K.text(c, "CHAPTER " + NUMERALS[n], W / 2, 790, 54, "cinzel-800", mix(tint, WHITE, 0.6), tag="title", a=K.ease(min(1.0, u * 3)))
     title = CHAPTERS[n]
     size = 132 if len(title) < 13 else 116
-    chrome(c, title, W / 2, 1040, size, T=T, glow=tint, sweep=(u * 1.4 - 0.2), a=K.ease(min(1.0, u * 2.5 + 0.1)))
-    c.drawLine(W / 2 - 220, 1120, W / 2 + 220, 1120, paint((214, 180, 120), K.ease(min(1.0, u * 2)), stroke=3))
+    chrome(c, title, W / 2, 955, size, T=T, glow=tint, sweep=(u * 1.4 - 0.2), a=K.ease(min(1.0, u * 2.5 + 0.1)))
+    c.drawLine(W / 2 - 220, 1060, W / 2 + 220, 1060, paint((214, 180, 120), K.ease(min(1.0, u * 2)), stroke=3))
     for sd in (-1, 1):
-        c.drawCircle(W / 2 + sd * 240, 1120, 9, paint((214, 180, 120), K.ease(min(1.0, u * 2))))
+        c.drawCircle(W / 2 + sd * 240, 1060, 9, paint((214, 180, 120), K.ease(min(1.0, u * 2))))
     c.restore()
 
 
@@ -169,9 +169,9 @@ def title_card(c, T, t0, dur=1.4, wash_col=(255, 40, 30)):
     c.drawPaint(paint((0, 0, 0), 0.35))
     s = 1.0 + 0.25 * max(0.0, 1 - u * 6) ** 2
     c.save()
-    c.translate(W / 2, 900)
+    c.translate(W / 2, 860)
     c.scale(s, s)
-    c.translate(-W / 2, -900)
-    chrome(c, "INELIGIBLE", W / 2, 960, 160, T=T, glow=wash_col, sweep=u * 1.3 - 0.15)
+    c.translate(-W / 2, -860)
+    chrome(c, "INELIGIBLE", W / 2, 920, 160, T=T, glow=wash_col, sweep=u * 1.3 - 0.15)
     c.restore()
-    K.text(c, "A NIGHTMARE IN FOUR CHAPTERS", W / 2, 1090, 40, "cinzeldeco-700", (230, 210, 255), tag="title", a=K.ease(min(1.0, u * 2.5)))
+    K.text(c, "A NIGHTMARE IN FOUR CHAPTERS", W / 2, 1040, 40, "cinzeldeco-700", (230, 210, 255), tag="title", a=K.ease(min(1.0, u * 2.5)))

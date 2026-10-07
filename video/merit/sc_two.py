@@ -74,7 +74,10 @@ def s_p_portraits(T, idx):
         _sitter(c, x, y + 30, 0.95, who, T, man=man, seed=k)
         c.restore()
         c.drawRect(skia.Rect.MakeLTRB(x - 80, y + 268, x + 80, y + 316), paint(mix(GILT, BLACK, 0.2)))
-        K.text(c, str(year), x, y + 304, 38, "cinzel-800", (40, 20, 10), tag="plaque")
+        ys = y + 304 + rise                                       # where it is on screen: no lettering near the captions
+        ka = max(0.0, min(1.0, (1260 - ys) / 80)) * max(0.0, min(1.0, (ys - 260) / 60))
+        if ka > 0:
+            K.text(c, str(year), x, y + 304, 38, "cinzel-800", (40, 20, 10), tag="plaque", a=ka)
     c.restore()
     G.pool(c, 540, 300, 900, (255, 60, 40), 0.25)
     Wd.smoke(c, T, 540, 1800, w=600, h=1800, color=(140, 50, 50), a=0.3, seed=6)
@@ -174,9 +177,9 @@ def s_p_cv(T, idx):
     _machine(c, 540, 250, 0.62, T)
     LK.flare(540 - 220 * 0.62, 250 - 90 * 0.62, 0.25, (255, 150, 90))
     # the CV slides up out of the dark into the reader's light
-    u = K.ease(ramp(T, t0, t0 + 1.2))
+    u = K.ease(ramp(T, t0, t0 + 0.6))
     k_w = K.ease(ramp(T, Wx("p2", "women's") - 0.1, Wx("p2", "women's") + 0.25))
-    cv_page(c, 540, 880 + 300 * (1 - u), 0.74, T, ang=-2, hl={5: (k_w, (255, 50, 40))})
+    cv_page(c, 540, 870 + 60 * (1 - u), 0.72, T, ang=-2, hl={5: (k_w, (255, 50, 40))})
     # the score it gives, falling
     sc = 78 - 37 * k_w
     a_ = K.ease(ramp(T, t0 + 0.8, t0 + 1.3))
@@ -287,12 +290,12 @@ def s_p_proxy(T, idx):
     kpc = K.ease(ramp(T, Wx("p4", "postcode,") - 0.1, Wx("p4", "postcode,") + 0.25))
     kh = K.ease(ramp(T, Wx("p4", "hobby,") - 0.1, Wx("p4", "hobby,") + 0.25))
     kg = K.ease(ramp(T, Wx("p4", "gap") - 0.1, Wx("p4", "gap") + 0.25))
-    z = 1.0 + 0.03 * (T - t0)
+    z = 1.0 + 0.015 * (T - t0)
     c.save()
-    c.translate(540, 900)
+    c.translate(540, 840)
     c.scale(z, z)
-    c.translate(-540, -900)
-    cv_page(c, 540, 860, 0.74, T, ang=1.5, erase=er, hl={8: (kpc, (255, 60, 40)), 9: (kh, (255, 60, 40)), 10: (kg, (255, 60, 40))})
+    c.translate(-540, -840)
+    cv_page(c, 540, 830, 0.72, T, ang=1.5, erase=er, hl={8: (kpc, (255, 60, 40)), 9: (kh, (255, 60, 40)), 10: (kg, (255, 60, 40))})
     c.restore()
     # her threads reaching down to the stand-ins
     for k, (yy, kk) in enumerate(((1040, kpc), (1100, kh), (1162, kg))):

@@ -69,8 +69,8 @@ def s_h_stamp(T, idx):
     # the stamp descending in slow motion; after the hit it lifts away
     if T < t_hit:
         u = T / t_hit
-        y = -500 + (1060 - -500) * u ** 2.2
-        s = 2.2 - 1.0 * u
+        y = 260 + (1060 - 260) * u ** 2.2                    # in frame from the very first frame, coming down
+        s = 1.9 - 0.7 * u
     else:
         u = min(1.0, (T - t_hit) / 0.9)
         y = 1060 - 1400 * K.ease(u)
