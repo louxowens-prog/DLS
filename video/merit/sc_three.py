@@ -196,10 +196,10 @@ def _nist(c, T, t0, z, cy, sy, close=False):
     kc = K.ease(ramp(T, Wx("m2", "scale") - 0.15, Wx("m2", "scale") + 0.25))
     for i, ln in enumerate(("“AI SYSTEMS CAN", "POTENTIALLY INCREASE")):
         if not close:
-            Wd.engraved(c, ln, 540, 720 + i * 70, 50, "cinzel-800", a=k2, glow=0.75 * k2, color=(255, 230, 240))
+            Wd.engraved(c, ln, 540, 720 + i * 70, 52, "cinzel-800", a=k2, glow=1.0 * k2, color=(255, 244, 250))
     Wd.engraved(c, "THE SPEED", 540, 900, 76, "cinzel-800", a=k2, glow=0.5 + 0.5 * ks, color=mix((255, 220, 236), (255, 70, 70), ks))
     Wd.engraved(c, "AND SCALE", 540, 990, 76, "cinzel-800", a=k2, glow=0.5 + 0.5 * kc, color=mix((255, 220, 236), (255, 70, 70), kc))
-    Wd.engraved(c, "OF BIASES”", 540, 1070, 50, "cinzel-800", a=k2, glow=0.75 * k2, color=(255, 230, 240))
+    Wd.engraved(c, "OF BIASES”", 540, 1070, 52, "cinzel-800", a=k2, glow=1.0 * k2, color=(255, 244, 250))
     Wd.engraved(c, "§ 3.7", 540, 1150, 32, "cinzel-800", a=k2, glow=0.6 * k2, color=(255, 220, 240))
     if ks > 0:
         LK.flare(540 if z < 1.5 else 540, 880 if z < 1.5 else sy + (880 - cy) * z, 0.35 * ks * (1 - kc * 0.5), (255, 120, 120))

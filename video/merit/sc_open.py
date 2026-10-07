@@ -31,18 +31,18 @@ def _file(c, x, y, s, ang, T, stamped=0.0, who="f_a", name="APPLICANT 4471-B", s
     Wd.page(c, 0, 0, 760, 1000, 0, T, burn=burn, lines=14, seed=seed, title=name, title_size=46, color=(232, 222, 198))
     # the photograph
     c.save()
-    c.translate(-170, -230)
+    c.translate(-170, -150)
     c.drawRect(skia.Rect.MakeLTRB(-130, -160, 130, 160), paint((30, 26, 30)))
     c.clipRect(skia.Rect.MakeLTRB(-122, -152, 122, 152))
     c.drawPaint(paint((60, 50, 56)))
     PF.pface(c, 0, -10, 0.55, who, T, key=(255, 200, 170), fill=(160, 140, 200), amb=(60, 50, 60), neck=True)
     c.restore()
-    c.drawRect(skia.Rect.MakeLTRB(-302, -392, -38, -68), paint((200, 190, 170), stroke=3))
-    c.drawPath(K.path([(-60, -410), (-30, -410), (-30, -360), (-60, -360)]), paint((150, 150, 160)))          # the clip
-    f = K.font("special-elite-400", 34)
-    for i, ln in enumerate(("DATE OF BIRTH", "POSTCODE", "EMPLOYMENT HISTORY", "REFERENCES")):
-        c.drawString(ln, 20, -330 + i * 70, f, paint((60, 40, 40)))
-        c.drawRect(skia.Rect.MakeXYWH(20, -318 + i * 70, 300, 3), paint((60, 40, 40), 0.5))
+    c.drawRect(skia.Rect.MakeLTRB(-302, -312, -38, 12), paint((200, 190, 170), stroke=3))
+    c.drawPath(K.path([(-60, -330), (-30, -330), (-30, -280), (-60, -280)]), paint((150, 150, 160)))          # the clip
+    f = K.font("special-elite-400", 32)
+    for i, ln in enumerate(("DATE OF BIRTH", "POSTCODE", "WORK HISTORY", "REFERENCES")):
+        c.drawString(ln, 20, -250 + i * 70, f, paint((60, 40, 40)))
+        c.drawRect(skia.Rect.MakeXYWH(20, -238 + i * 70, 300, 3), paint((60, 40, 40), 0.5))
     c.restore()
     if stamped > 0:
         P.stamp_mark(c, x + 10 * s, y + 200 * s, 0.86 * s, ang=ang - 9, a=min(1.0, stamped * 3), tag="deco")
@@ -105,10 +105,15 @@ def s_h_stamp(T, idx):
     if k2 > 0:
         c.save()
         c.resetMatrix()
-        with K.layer(c, 0.8 * k2):
-            P.clerk(c, 540, 520, 1.25, T, arm=0.0, stamp=False, slit=1.0, rim_k=1.2, seed=1, metal=(60, 56, 66))
+        c.drawPaint(paint((6, 0, 2), 0.3 * k2))                        # the room darkens as it leans in
+        c.save()
+        c.clipRect(skia.Rect.MakeLTRB(0, 0, W, 610))                   # behind the desk's edge: the file stays in front
+        with K.layer(c, k2):
+            P.clerk(c, 540, 640, 1.2, T, arm=0.0, stamp=False, slit=1.0, rim_k=1.4, seed=1, metal=(70, 64, 76))
+        c.drawRect(skia.Rect.MakeLTRB(0, 520, W, 610), paint(shader=K.lin((0, 520), (0, 610), [(6, 0, 2, 0.0), (6, 0, 2, 0.9 * k2)])))
         c.restore()
-        LK.flare(540 + 0, 520 - 120 * 1.25 - 164 * 1.25, 0.6 * k2, (255, 120, 100))
+        c.restore()
+        LK.flare(540 + 0, 640 - 120 * 1.2 - 164 * 1.2, 0.6 * k2, (255, 120, 100))
     Wd.smoke(c, T, 540, 1500, w=500, h=1500, color=(160, 60, 60), a=0.35, seed=2)
     c.restore()
     return st.arr

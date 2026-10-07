@@ -214,10 +214,15 @@ def s_y_dossier(T, idx):
     K.text(c, "REASON", 150, 1170, 40, "special-elite-400", (90, 30, 30), align="left", tag="card", a=a)
     c.drawRect(skia.Rect.MakeLTRB(500, 1130, 900, 1185), paint((10, 6, 8), a))
     K.text(c, "WITHHELD", 700, 1240, 30, "special-elite-400", (120, 40, 40), tag="card", a=a)
+
     if T >= t_stamp:
         P.stamp_mark(c, 540, 860, 0.9, ang=-12, a=1.0, tag="deco")
         c.drawPaint(G.glow_paint((255, 200, 180), 0.5 * hit(T, t_stamp, 0.25)))
     c.restore()
+    # where this comes from (outside the push-in, so it stays put)
+    af = K.ease(ramp(T, t0 + 0.4, t0 + 0.8))
+    c.drawRect(skia.Rect.MakeLTRB(0, 236, W, 280), paint((8, 2, 4), 0.85 * af))
+    K.text(c, "SEE: US FTC STAFF REPORT ON SOCIAL MEDIA DATA PRACTICES, 2024", 540, 266, 23, "jost-600", (236, 206, 196), tag="label", a=af)
     return st.arr
 
 
@@ -239,8 +244,8 @@ def s_e_fire(T, idx):
     return st.arr
 
 
-NIST = [("VALID & RELIABLE", "reliable,"), ("SAFE", None), ("SECURE & RESILIENT", None), ("ACCOUNTABLE & TRANSPARENT", "transparent,"),
-        ("EXPLAINABLE & INTERPRETABLE", "explainable,"), ("PRIVACY-ENHANCED", "privacy-enhanced,"), ("FAIR, HARMFUL BIAS MANAGED", "fair,")]
+NIST = [("VALID & RELIABLE", None), ("SAFE", None), ("SECURE & RESILIENT", None), ("ACCOUNTABLE & TRANSPARENT", "transparent,"),
+        ("EXPLAINABLE & INTERPRETABLE", "explainable,"), ("PRIVACY-ENHANCED", None), ("FAIR, HARMFUL BIAS MANAGED", "fair,")]
 
 
 def s_e_tablet(T, idx):
@@ -330,6 +335,7 @@ def s_e_hand(T, idx):
     if T > t_human:
         G.pool(c, 540, sy + 40, 300, (255, 220, 180), 0.5 * hit(T, t_human, 0.6))
     a = K.ease(ramp(T, Wx("e2", "In") - 0.1, Wx("e2", "In") + 0.4))
+    c.drawRect(skia.Rect.MakeLTRB(0, 246, W, 512), paint((10, 4, 2), 0.88 * a))          # a dark band: the law reads clear of the press
     K.text(c, "EU GDPR ART. 22  ·  UK DATA (USE AND ACCESS) ACT 2025", 540, 290, 34, "jost-600", (255, 224, 196), tag="label", a=a, outline=(20, 6, 0), ow=7)
     ah = K.ease(ramp(T, t_human, t_human + 0.4))
     K.text(c, "THE RIGHT TO A HUMAN", 540, 376, 66, "newrocker-400", (255, 236, 210), tag="label", a=ah, outline=(30, 10, 0), ow=8)
@@ -343,8 +349,9 @@ def s_e_moon(T, idx):
     c = st.c
     t0 = cut("e_moon")
     total = end("e_moon")
-    open_ = K.ease(ramp(T, t0 + 0.2, t0 + 0.9))
-    dark = K.ease(ramp(T, t0 + 0.9, t0 + 1.4))
+    # the pines and the moon; the moon opens - an eye; everything else goes dark and the eye stays burned in
+    open_ = K.ease(ramp(T, t0 + 0.5, t0 + 1.0))
+    dark = K.ease(ramp(T, t0 + 1.1, t0 + 1.4))
     Wd.forest(c, T, cam_y=0, moon_r=380, moon_xy=(540, 760), eye=open_, pupil=(0.0, 0.05 + 0.1 * open_), stars=1.0, seed=0, moon_a=1.0)
     # everything but the eye goes dark; the eye stays, burned into the screen, then it too fades
     if dark > 0:

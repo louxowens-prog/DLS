@@ -232,7 +232,7 @@ def score(mus, fx):
     t0 = cut("v_doors")
     mus.add(DM.sub(26, cut("v_why") - t0, 0.8), t0)
     mus.add(DM.pad([50, 53, 56, 62], cut("v_why") - t0, 0.5, cut=(300, 900)), t0)
-    for i, (label, word) in enumerate((("JOB", "job."), ("INSURANCE", "Insurance."), ("HOME", "home."), ("LOAN", "loan."),
+    for i, (label, word) in enumerate((("JOB", "job."), ("INSURANCE", "Insurance."), ("HOME", "home."), ("CREDIT", "Credit."),
                                        ("UNIVERSITY", "university."), ("BENEFITS", "Benefits."))):
         ts = Wx("v1", word) + 0.13
         fx.add(DM.door_slam(1.0, seed=i), ts)
@@ -269,8 +269,8 @@ def score(mus, fx):
         tt = Wx("v5", "Tens") + k * 0.38 + rng.uniform(0, 0.2)
         fx.add(O.page(0.35, seed=k), tt)
         fx.add(O.click(0.25), tt + 0.25)
-    fx.add(FXL.temple_bell(38, 0.8, 7.0), Wx("v5", "resigned.") - 0.1)        # a seat of government, tolling
-    fx.add(DM.rumble(2.5, 0.6, seed=6), Wx("v5", "resigned."))
+    fx.add(FXL.temple_bell(38, 0.8, 7.0), Wx("v5", "government.") - 0.1)        # a seat of government, tolling
+    fx.add(DM.rumble(2.5, 0.6, seed=6), Wx("v5", "government."))
     # ---------------- the descent: the cosmos, an arpeggiator, glass bells, her voice
     t0, t1 = cut("d_space"), cut("r_kitchen")
     DM.arp(mus, t0 + 0.3, t1 - 0.6, [62, 65, 69, 72, 74], rate=8, amp=0.7)
@@ -374,7 +374,7 @@ def score(mus, fx):
         if tt < cut("e_moon"):
             mus.add(DM.pad(notes, dt + 0.8, 0.6, cut=(350, 1400), att=1.2, seed=10 + k), tt)
     mus.add(DM.sub(26, cut("e_moon") - t0, 0.45), t0)
-    for ln, word in (("VALID", "reliable,"), ("ACC", "transparent,"), ("EXP", "explainable,"), ("PRI", "privacy-enhanced,"), ("FAIR", "fair,")):
+    for ln, word in (("ACC", "transparent,"), ("EXP", "explainable,"), ("FAIR", "fair,")):
         mus.add(DM.bell(86, 0.45, 2.0), Wx("e1", word))
     mus.add(DM.bell(81, 0.4, 2.4), Wx("e1", "managed.") - 0.2)
     for w, m in (("data?", 74), ("checked", 72), ("appeal?", 69)):
@@ -386,8 +386,8 @@ def score(mus, fx):
     mus.add(DM.pad([50, 57, 62, 66, 69], cut("e_moon") - t_human + 0.5, 0.7, cut=(400, 1800), att=0.3), t_human)
     # the moon's eye opens, and the last image burns in
     t0 = cut("e_moon")
-    fx.add(DM.boom(0.8), t0 + 0.3)
-    mus.add(DM.chord(38, 2.4, 0.8, seed=99), t0 + 0.3, until=T - 0.1)
+    fx.add(DM.boom(0.8), t0 + 0.55)                                         # the moon opens: an eye
+    mus.add(DM.chord(38, 2.4, 0.8, seed=99), t0 + 0.55, until=T - 0.1)
     fx.add(DM.feedback(T - t0 - 0.2, 2200, 0.5, seed=9), t0 + 0.2)
     fx.add(DM.chant(T - t0, 0.6, seed=10), t0)
 
@@ -431,7 +431,7 @@ def voices():
         j = min(N_, i + sig.shape[1])
         buses[who][:, i:j] += sig[:, : j - i]
     out = reverb(buses["NAR"], 0.06, 0.6, seed=3)
-    out += reverb(buses["MERIT"], 0.3, 3.2, seed=4, predelay=0.04)
+    out += reverb(buses["MERIT"], 0.4, 5.0, seed=4, predelay=0.06)
     out += reverb(buses["SYSTEM"], 0.07, 0.25, seed=5)
     out += reverb(buses["IRIS"], 0.13, 0.45, seed=6)
     out += reverb(buses["WHY"], 0.28, 1.6, seed=7)
@@ -468,15 +468,15 @@ def presence(x, f0=3000, gain_db=2.0, q=0.9):
 
 
 NEED = {"NAR": 9.5, "MERIT": 10.0}               # the voice over the beds in the speech band (others: 11)
-BED = -4.0                                       # the beds' ceiling between lines, against the average line (dB)
+BED = -2.0                                       # the beds' ceiling between lines, against the average line (dB)
 # (time, ceiling dB over the average line, seconds): the moments allowed to be loud
 HITS = [(T_HIT, 16.0, 1.4), (T_TITLE, 15.0, 1.4), (cut("k_2"), 10.0, 1.2), (cut("k_3"), 10.0, 1.2), (cut("k_4"), 10.0, 1.2),
-        (cut("m_army"), 9.0, 2.3), (T_MASK, 18.0, 1.2), (T_ANSWER, 11.0, 0.6), (T_ERUPT, 16.0, S("x1") - T_ERUPT + 0.1), (T_EYE, 18.0, 0.5),
-        (T_STAMP, 17.0, 1.3), (cut("e_moon") + 0.3, 8.0, 2.0)]
+        (cut("m_army"), 10.0, S("m2") - cut("m_army")), (T_MASK, 18.0, 1.2), (T_ANSWER, 11.0, 0.6), (T_ERUPT, 16.0, S("x1") - T_ERUPT + 0.1), (T_EYE, 18.0, 0.5),
+        (T_STAMP, 17.0, 1.3), (cut("e_moon") + 0.55, 8.0, 2.0)]
 SAT = {T_HIT: 3.5, T_TITLE: 3.0, T_MASK: 5.0, T_ERUPT: 4.0, T_EYE: 5.0, T_STAMP: 4.5}
-BOOST = {T_HIT: (5.0, 1.3), T_TITLE: (5.0, 1.3), cut("k_2"): (3.0, 1.2), cut("k_3"): (3.0, 1.2), cut("k_4"): (3.0, 1.2),
-         cut("m_army"): (3.0, 2.3), T_MASK: (6.0, 1.1), T_ANSWER: (3.0, 0.6), T_ERUPT: (6.0, S("x1") - T_ERUPT + 0.1), T_EYE: (6.0, 0.5),
-         T_STAMP: (6.0, 1.2), cut("e_moon") + 0.3: (2.0, 2.0)}
+BOOST = {T_HIT: (4.0, 1.3), T_TITLE: (2.5, 1.3), cut("k_2"): (3.0, 1.2), cut("k_3"): (3.0, 1.2), cut("k_4"): (3.0, 1.2),
+         cut("m_army"): (3.0, S("m2") - cut("m_army")), T_MASK: (6.0, 1.1), T_ANSWER: (3.0, 0.6), T_ERUPT: (6.0, S("x1") - T_ERUPT + 0.1), T_EYE: (3.0, 0.5),
+         T_STAMP: (3.0, 1.2), cut("e_moon") + 0.55: (2.0, 2.0)}
 CEIL = -1.5
 TARGET = -15.0
 # the quiet passages, pulled down (voice and all) so the night, the cosmos and the fire are hushed: (from, to, dB)
@@ -548,7 +548,7 @@ def build():
     # into a wide speech band (ducked fully) and the rest (bass and air, ducked far less); the margin is measured on
     # what the split will actually leave in the speech band, so the ride converges on the real result
     band = lambda x: signal.sosfilt(signal.butter(2, [300 / (SR / 2), 4000 / (SR / 2)], "band", output="sos"), x.mean(axis=0))
-    sos = signal.butter(2, [160 / (SR / 2), 6000 / (SR / 2)], "band", output="sos")
+    sos = signal.butter(2, [300 / (SR / 2), 4000 / (SR / 2)], "band", output="sos")
     music_b, fxx_b = signal.sosfiltfilt(sos, music, axis=1), signal.sosfiltfilt(sos, fxx, axis=1)
     bv = band(vo)
     B1, B2 = band(music_b + fxx_b), band((music - music_b) + (fxx - fxx_b))
@@ -565,7 +565,7 @@ def build():
 
     for _ in range(14):
         ride = rides()
-        bb = B1 * ride + B2 * ride ** 0.25
+        bb = B1 * ride + B2 * ride ** 0.12
         short = False
         for key in TL.order:
             a, b = spans[key]
@@ -577,7 +577,7 @@ def build():
         if not short:
             break
     ride = rides()
-    ride_rest = ride ** 0.25
+    ride_rest = ride ** 0.12
     music = music_b * ride[None] + (music - music_b) * ride_rest[None]
     fxx = fxx_b * ride[None] + (fxx - fxx_b) * ride_rest[None]
     # between the lines the beds stay under the voice; the hits are let through, by far the loudest moments

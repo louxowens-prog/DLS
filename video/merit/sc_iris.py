@@ -79,21 +79,22 @@ def _dreamer(c, x, y, s, T, ang=0.0, a=1.0):
     lp.setAlphaf(a)
     c.saveLayer(None, lp)
     # --- hair streaming up and away in long wavy locks, fanning out as if under water
-    for k in range(15):
-        spread = (k - 7) / 7.0
-        L = 380 + 80 * math.cos(k * 1.7)
-        w0 = 20 - abs(spread) * 6
+    for k in range(19):
+        spread = (k - 9) / 9.0
+        L = 360 + 90 * math.cos(k * 1.7)
+        w0 = 26 - abs(spread) * 8
         left, right = [], []
         for j in range(9):
             t = j / 8
-            yy = -300 - L * t
-            xx = spread * (40 + 220 * t) + 36 * t * math.sin(t * 5 + T * 1.3 + k * 0.8)
+            yy = -300 - L * t * (0.75 - 0.35 * abs(spread)) + 120 * abs(spread) * t * t
+            xx = spread * (60 + 320 * t) + 46 * t * math.sin(t * 4 + T * 1.1 + k * 0.8)
             ww = w0 * (1 - 0.75 * t)
             left.append((xx - ww, yy))
             right.append((xx + ww, yy))
         lock = K.smooth(left + right[::-1])
-        c.drawPath(lock, paint(shader=K.lin((0, -300), (0, -300 - L), [(60, 20, 16), (150, 56, 30), (230, 120, 60)])))
-        c.drawPath(K.smooth(left[1:-1]), paint((255, 190, 130), 0.35, stroke=2.5, blur=1.5))
+        lp_ = paint(shader=K.lin((0, -300), (0, -300 - L), [(60, 20, 16), (150, 56, 30), (230, 120, 60)]), blur=3.0)
+        c.drawPath(lock, lp_)
+        c.drawPath(K.smooth(left[1:-1]), paint((255, 200, 140), 0.4, stroke=3, blur=2.5))
     # --- the gown, cut on the bias, its train rippling below her
     rip = 30 * math.sin(T * 1.3)
     gown = K.smooth([(-58, -232), (58, -232), (96, -80), (150, 160), (210 + rip, 420), (250 + rip * 1.4, 640), (120, 600), (20, 660 + rip),
@@ -120,7 +121,8 @@ def _dreamer(c, x, y, s, T, ang=0.0, a=1.0):
     for sd in (-1, 1):
         wx, wy = sd * 250, -120 + 34 * math.sin(T + sd)
         arm = K.smooth([(sd * 40, -236), (sd * 140, -210), (wx, wy - 14), (wx + sd * 16, wy), (wx, wy + 14), (sd * 140, -170), (sd * 46, -180)])
-        c.drawPath(arm, paint(shader=K.lin((0, -240), (0, -160), [(250, 210, 190), (170, 110, 110)])))
+        c.drawPath(arm, paint(shader=K.lin((0, -236), (0, -170), [(255, 222, 200), (220, 160, 150), (120, 70, 90)])))
+        c.drawPath(arm, paint((90, 110, 255), 0.35, stroke=10, blur=8))                         # cold fill along the underside
         c.drawOval(skia.Rect.MakeXYWH(wx + sd * 10 - 22, wy - 14, 44, 28), paint((236, 196, 180)))
         for f in range(3):
             c.drawLine(wx + sd * 26, wy - 8 + f * 8, wx + sd * 50, wy - 12 + f * 12, paint((230, 190, 176), stroke=6))
@@ -220,8 +222,8 @@ def s_r_kitchen(T, idx):
     G.pool(c, 540, 1100, 380, (170, 210, 255), 0.4)
     c.drawRoundRect(skia.Rect.MakeLTRB(830, 1260, 920, 1360), 12, 12, paint((180, 60, 50)))                 # a mug
     # Iris is a composite: say so on screen
-    c.drawRect(skia.Rect.MakeLTRB(150, 228, 930, 280), paint((4, 8, 8), 0.85))
-    K.text(c, "DRAMATISATION · BASED ON DOCUMENTED CASES", 540, 264, 30, "jost-600", (220, 255, 240), tag="label")
+    c.drawRect(skia.Rect.MakeLTRB(130, 262, 950, 318), paint((4, 8, 8), 0.85))
+    K.text(c, "DRAMATISATION · BASED ON DOCUMENTED CASES", 540, 301, 32, "jost-600", (220, 255, 240), tag="label")
     return st.arr
 
 
@@ -272,14 +274,14 @@ def s_r_inbox(T, idx):
 
 def _iris_cv(c, x, y, s, T, hl=None, a=1.0, fade=0.0, tag="card"):
     """Iris's CV: her name at the top, the three lines a machine might be counting against her."""
-    lines = ["IRIS HALLORAN", "Systems engineer, 20 years", "Born: 1977", "2019 - 2020: career break (carer)",
+    lines = ["IRIS HALLORAN", "Systems engineer, 20 years", "Born: 1977", "2019-20: career break (carer)",
              "Organiser, Women in Code", "Chartered engineer"]
     c.save()
     c.translate(x, y)
     c.scale(s, s)
     w, h = 900, 1000
     c.drawRect(skia.Rect.MakeLTRB(-w / 2, -h / 2, w / 2, h / 2), paint((214, 206, 190), a * (1 - fade)))
-    f = K.font("special-elite-400", 50)
+    f = K.font("special-elite-400", 44)
     fb = K.font("special-elite-400", 72)
     c.drawString(lines[0], -w / 2 + 60, -h / 2 + 120, fb, paint((30, 24, 30), a * (1 - fade)))
     for i, ln in enumerate(lines[1:]):
@@ -372,13 +374,13 @@ def _phone(c, x, y, s, T, notes, a=1.0):
     for i, (title, body, col, k) in enumerate(notes):
         if k <= 0:
             continue
-        yy = -200 + i * 290 + 40 * (1 - k)
-        r = skia.Rect.MakeLTRB(-285, yy - 110, 285, yy + 140)
-        c.drawRoundRect(r, 30, 30, paint((44, 48, 60), 0.96 * k))
-        K.text(c, title, -255, yy - 50, 34, "jost-600", (200, 206, 220), align="left", tag="screen", a=k)
-        K.text(c, body[0], -255, yy + 18, 60, "jost-600", col, align="left", tag="screen", a=k)
+        yy = -220 + i * 330 + 40 * (1 - k)
+        r = skia.Rect.MakeLTRB(-290, yy - 120, 290, yy + 170)
+        c.drawRoundRect(r, 30, 30, paint((64, 70, 88), 0.97 * k))
+        K.text(c, title, -262, yy - 54, 40, "jost-600", (232, 236, 246), align="left", tag="screen", a=k)
+        K.text(c, body[0], -262, yy + 26, 78, "jost-600", col, align="left", tag="screen", a=k)
         if len(body) > 1:
-            K.text(c, body[1], -255, yy + 84, 32, "jost-500", (190, 196, 210), align="left", tag="screen", a=k)
+            K.text(c, body[1], -262, yy + 110, 38, "jost-500", (226, 230, 240), align="left", tag="screen", a=k)
     c.restore()
 
 
@@ -391,8 +393,8 @@ def s_r_phone(T, idx):
     k1 = K.ease(ramp(T, Wx("r4", "rental") - 0.1, Wx("r4", "rental") + 0.3))
     k2 = K.ease(ramp(T, Wx("r4", "loan:") - 0.1, Wx("r4", "loan:") + 0.3))
     z = 1.0 + 0.03 * (T - t0)
-    _phone(c, 520, 830, 0.86 * z, T, [("Rental application · flat 4B", ("HIGH RISK", "Recommendation: DECLINE"), (255, 90, 80), k1),
-                                     ("Personal loan application", ("DECLINED", "We can't share the reasons"), (255, 90, 80), k2)])
+    _phone(c, 540, 800, 0.9 * z, T, [("Rental application · flat 4B", ("HIGH RISK", "Recommendation: DECLINE"), (255, 110, 100), k1),
+                                     ("Personal loan application", ("DECLINED", "We can't share the reasons"), (255, 110, 100), k2)])
     G.pool(c, 540, 820, 600, (180, 220, 255), 0.15)
     return st.arr
 

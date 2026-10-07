@@ -315,6 +315,8 @@ def hand(c, x, y, s, ang=0.0, a=1.0, skin=(214, 170, 150), open_=1.0, light=(255
     c.scale(s, s)
     palm = K.smooth([(-90, 0), (-96, -120), (-60, -170), (60, -170), (96, -120), (90, 0), (60, 80), (-60, 80)])
     c.drawPath(K.capsule(0, 60, 0, 420, 150, 160), paint(mix(skin, BLACK, 0.3), a))              # the forearm
+    c.drawPath(K.capsule(0, 250, 0, 520, 172, 180), paint((40, 34, 44), a))                       # a sleeve: a person's arm
+    c.drawRect(skia.Rect.MakeLTRB(-88, 236, 88, 262), paint((70, 62, 76), a))                      # its cuff
     c.drawPath(palm, paint(skin, a))
     for k, (dx, L, w) in enumerate(((-66, 150, 40), (-22, 190, 42), (22, 200, 42), (64, 170, 38))):
         sp = (1 - open_) * 0.6

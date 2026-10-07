@@ -24,7 +24,7 @@ from common import E, S, Wx, hit, shake, talk
 from edit import cut, end
 from kit import H, W, BLACK, WHITE, mix, paint, ramp
 
-DOORS = [("JOB", "job."), ("INSURANCE", "Insurance."), ("HOME", "home."), ("LOAN", "loan."), ("UNIVERSITY", "university."),
+DOORS = [("JOB", "job."), ("INSURANCE", "Insurance."), ("HOME", "home."), ("CREDIT", "Credit."), ("UNIVERSITY", "university."),
          ("BENEFITS", "Benefits.")]
 
 
@@ -194,6 +194,7 @@ def s_v_clerk(T, idx):
             K.text(c, "412", 540, 870, 260, "newrocker-400", (255, 70, 50), tag="label", outline=(30, 0, 0), ow=12)
             G.pool(c, 540, 780, 420, (255, 60, 40), 0.35)
             K.text(c, "SCORE", 540, 560, 56, "cinzel-800", (255, 200, 180), tag="label")
+            K.text(c, "ILLUSTRATION", 540, 1000, 30, "jost-600", (255, 190, 170), tag="label")
     c.restore()
     for i in range(17):                                            # the speaking grille at the foot of the window
         x = 240 + i * 37.5
@@ -327,7 +328,7 @@ def s_v_gov(T, idx):
     st = K.Stage((0, 0, 0))
     c = st.c
     t0 = cut("v_gov")
-    t_res = Wx("v5", "resigned.")
+    t_res = Wx("v5", "government.")
     dark = K.ease(ramp(T, t_res - 0.3, t_res + 0.8))
     Wd.sky(c, (2, 4, 18), (10, 18, 50), (30, 40, 90))
     Wd.real_stars(c, T, n=80, y1=700, a=0.6)

@@ -144,7 +144,7 @@ def _leak_shape():
 # ------------------------------------------------------------------ the print
 
 def look(arr, T, idx, wash=None, wash_k=0.82, keep=0.0, pulse=0.0, bloom=1.0, haze=0.5, streak=0.6, streak_tint=(120, 150, 255),
-         ca=1.0, melt=0.0, breathe=0.0, smear=0.0, burn=0.0, burn_at=(0.85, 0.15), leak=0.3, grain=1.0, sat=1.1,
+         ca=1.0, melt=0.0, breathe=0.0, smear=0.0, burn=0.0, burn_at=(0.85, 0.15), leak=0.3, grain=0.82, sat=1.1,
          lift=(0.055, 0.012, 0.085), crush=1.25, wv=1.0, dust=1.0, flick=1.0, diffusion=1.0, halation=1.0, vig=1.0,
          invert=0.0, expose=1.0, seed=0):
     x = arr[..., :3].astype(np.float32)

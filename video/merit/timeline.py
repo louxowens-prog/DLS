@@ -13,23 +13,25 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # seconds of picture and music (no voice) before a line
 PRE = {
     "h1": 0.6,                    # one crushing chord; the mask in red, a stamp falling
-    "c1": 2.6,                    # dead quiet; wind in the pines; the forest under the wrong moon
+    "c1": 2.2,                    # dead quiet; wind in the pines; the forest under the wrong moon
     "i1": 2.8,                    # the title, INELIGIBLE; chapter I
-    "i3": 0.4,                    # she opens her eyes
-    "p1": 1.5,                    # chapter II
-    "m1": 1.5,                    # chapter III
+    "i3": 0.6,                    # she opens her eyes
+    "p1": 2.2,                    # chapter II
+    "m1": 1.6,                    # chapter III
+    "m2": 1.5,                    # no voice: the army marching under the strobe, the riff alone
     "v1": 1.5,                    # chapter IV
     "v2": 0.4,
     "v3": 0.6,                    # dead silence; the mask slams into the frame
     "d1": 2.2,                    # the dreamer drifting through space, past wrong planets
     "r1": 1.0,                    # she falls through the sky into a fluorescent kitchen
     "r3": 0.4,
-    "x1": 3.4,                    # the eruption
-    "y1": 1.7,                    # dead silence; her eye opens on you
-    "e1": 2.0,                    # the fire again, quiet
+    "r5": 0.2,                    # her face crumpling; a gasp
+    "x1": 3.0,                    # the eruption
+    "y1": 1.3,                    # dead silence; her eye opens on you
+    "e1": 1.3,                    # the fire again, quiet
 }
 TIGHT = {"NAR": 0.42, "IRIS": 0.45}   # longest pause left inside a line, by speaker
-TAIL = 1.9                        # the last image burns into the screen
+TAIL = 3.0                        # the last image burns into the screen
 
 
 def _comb(x, delay_s, fb):
@@ -70,15 +72,22 @@ def treat(wav, kind):
     from scipy import signal
     w = wav.astype(np.float64)
     if kind == "merit":
-        low = pv_shift(w, -12.0)
-        d1, d2 = int(0.013 * SR), int(0.021 * SR)
-        up = signal.resample(w, int(len(w) / 2 ** (0.18 / 12)))[: len(w)]
-        dn = signal.resample(w, int(len(w) / 2 ** (-0.18 / 12)))[: len(w)]
+        # not a woman any more: her voice dropped a further five semitones (formants and all, so it sounds vast),
+        # an octave below that at equal weight, two doubles a quarter-tone apart, and her own voice at its old pitch
+        # whispered on top, so something small and breathy speaks inside something huge
+        from voice import whisper
+        main = pv_shift(w, -5.0)
+        low = pv_shift(main, -12.0)
+        d1, d2 = int(0.017 * SR), int(0.029 * SR)
+        up = signal.resample(main, int(len(main) / 2 ** (0.3 / 12)))[: len(w)]
+        dn = signal.resample(main, int(len(main) / 2 ** (-0.3 / 12)))[: len(w)]
         up = np.concatenate([np.zeros(d1), up])[: len(w)]
         dn = np.concatenate([np.zeros(d2), dn])[: len(w)]
         up, dn = np.pad(up, (0, len(w) - len(up))), np.pad(dn, (0, len(w) - len(dn)))
-        mixw = w + 0.42 * up + 0.42 * dn + 0.55 * low
-        w = np.tanh(1.4 * mixw / (np.abs(mixw).max() + 1e-9))
+        wh = whisper(w.astype(np.float32), keep=0.0, seed=11).astype(np.float64)
+        wh = np.concatenate([np.zeros(int(0.009 * SR)), wh])[: len(w)]
+        mixw = main + 0.45 * up + 0.45 * dn + 1.0 * low + 0.5 * wh
+        w = np.tanh(1.6 * mixw / (np.abs(mixw).max() + 1e-9))
     elif kind == "system":
         f, t, Z = signal.stft(w, SR, nperseg=480, noverlap=320)
         _, robot = signal.istft(np.abs(Z), SR, nperseg=480, noverlap=320)
@@ -102,19 +111,39 @@ def treat(wav, kind):
         env = np.convolve(env, np.ones(240) / 240, "same")
         w = w + breath * env * 0.35
         if kind == "cry":
-            # the second "I'm qualified!" (after the pause) rises, swells and cracks
+            # she breaks: a ragged gasp, then the second "I'm qualified!" pitched up and pushed, the voice cracking
+            # up into falsetto twice and catching, then sobs - three short shuddering breaths in and a broken moan
             from voice import pauses
             ps = pauses(wav, 0.15)
             cut = int(ps[0][1] * SR) if ps else n // 2
             head, tail = w[:cut], w[cut:]
+            pk = np.abs(head).max()
             tail = pv_shift(tail, 4.0)
+            hi = pv_shift(tail, 7.0)
             tl = np.arange(len(tail)) / SR
-            tail = tail * (1.0 + 1.2 * np.clip(tl / 0.25, 0, 1))                 # louder
-            tail = np.tanh(2.2 * tail / (np.abs(tail).max() + 1e-9)) * np.abs(tail).max()   # strained
-            crack = (np.sin(2 * np.pi * 9 * tl) > 0.6) * (tl > 0.35)          # the voice catching
-            tail = tail * (1 - 0.35 * crack)
-            sob = breath[: int(0.45 * SR)] * np.hanning(int(0.45 * SR)) * np.abs(tail).max() * 0.5
-            w = np.concatenate([head, tail, np.zeros(int(0.05 * SR)), sob])
+            brk = np.zeros(len(tail))
+            for c0, wd in ((0.22, 0.11), (0.58, 0.14)):                        # two cracks up into falsetto
+                brk += np.exp(-0.5 * ((tl - c0) / (wd / 2.5)) ** 2)
+            brk = np.clip(brk, 0, 1)
+            tail = tail * (1 - brk) + hi * brk * 0.8
+            tail = tail * (1.0 + 1.4 * np.clip(tl / 0.2, 0, 1))                 # louder
+            tail = np.tanh(2.6 * tail / (np.abs(tail).max() + 1e-9)) * pk * 1.9    # strained, pushed
+            catch = (np.sin(2 * np.pi * 11 * tl + 1.0) > 0.75) * (tl > 0.4)    # the voice catching in the throat
+            tail = tail * (1 - 0.45 * catch)
+            def gasp(d, a, rise=True):
+                m = int(d * SR)
+                g = signal.sosfilt(signal.butter(2, [700 / (SR / 2), 5200 / (SR / 2)], "band", output="sos"), rng.normal(0, 1, m))
+                e = np.linspace(0, 1, m) ** 0.6 if rise else np.hanning(m)
+                e[-int(0.02 * SR):] *= np.linspace(1, 0, int(0.02 * SR))
+                return g / (np.abs(g).max() + 1e-9) * e * a
+            pre = gasp(0.32, 0.55 * pk)                                          # the gasp before she breaks
+            sobs = []
+            for k, d in enumerate((0.11, 0.1, 0.16)):                            # shuddering breaths in
+                sobs += [gasp(d, (0.45 + 0.1 * k) * pk, rise=False), np.zeros(int(0.07 * SR))]
+            moan = pv_shift(tail[-int(0.4 * SR):], -3.0)
+            ml = np.arange(len(moan)) / SR
+            moan = moan * (0.5 + 0.5 * np.sin(2 * np.pi * 7 * ml)) * np.linspace(0.8, 0, len(moan)) * 0.6
+            w = np.concatenate([head, np.zeros(int(0.06 * SR)), pre, tail, np.zeros(int(0.06 * SR))] + sobs + [moan])
             return (w * np.sqrt((wav.astype(np.float64) ** 2).mean() / ((head ** 2).mean() + 1e-12))).astype(np.float32)
     w *= np.sqrt((wav.astype(np.float64) ** 2).mean() / ((w ** 2).mean() + 1e-12))
     return w.astype(np.float32)

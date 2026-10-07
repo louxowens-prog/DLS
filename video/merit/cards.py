@@ -130,13 +130,22 @@ def nebula(c, T, tint, a=1.0, seed=0):
     """A painted nebula background in one colour, slowly turning."""
     c.drawPaint(paint((4, 2, 8)))
     rng = K.rng_at(seed, 11)
-    for i in range(14):
-        x = W / 2 + rng.normal(0, 300) + 40 * math.sin(T * 0.2 + i)
-        y = H / 2 + rng.normal(0, 500) + 30 * math.cos(T * 0.17 + i)
-        r = rng.uniform(200, 520)
+    for i in range(22):
+        x = W / 2 + rng.normal(0, 320) + 40 * math.sin(T * 0.2 + i)
+        y = H / 2 + rng.normal(0, 520) + 30 * math.cos(T * 0.17 + i)
+        r = rng.uniform(180, 520)
         col = mix(tint, (255, 255, 255) if i % 5 == 0 else (0, 0, 0), rng.uniform(0.0, 0.4))
-        c.drawCircle(x, y, r, G.glow_paint(col, a * rng.uniform(0.12, 0.3), blend=skia.BlendMode.kScreen, blur=r * 0.45))
-    Wd.real_stars(c, T, n=140, y1=H, a=0.6 * a, seed=seed)
+        c.drawCircle(x, y, r, G.glow_paint(col, a * rng.uniform(0.2, 0.42), blend=skia.BlendMode.kScreen, blur=r * 0.42))
+    Wd.real_stars(c, T, n=180, y1=H, a=0.75 * a, seed=seed)
+    # a vast planet rising over the bottom of the cover, its rim catching a sun we cannot see - paperback-cover airbrush
+    cx, cy, R = W / 2 + 120, H + 820, 1250
+    c.drawCircle(cx, cy, R, paint(shader=K.rad((cx - 300, cy - R + 200), R * 1.1, [mix(tint, (255, 255, 255), 0.25), mix(tint, (0, 0, 0), 0.55), (6, 2, 10)],
+                                             [0.0, 0.35, 1.0]), a=a))
+    for k in range(5):                                                  # its cloud bands
+        c.drawOval(skia.Rect.MakeLTRB(cx - R, cy - R + 120 + k * 70, cx + R, cy - R + 160 + k * 70), paint(mix(tint, (0, 0, 0), 0.3), 0.25 * a, blur=10))
+    rim = paint(mix(tint, (255, 255, 255), 0.6), 0.9 * a, stroke=10, blur=6)
+    rim.setBlendMode(skia.BlendMode.kPlus)
+    c.drawCircle(cx, cy, R, rim)
 
 
 def chapter_card(c, n, T, t0, dur=1.5):

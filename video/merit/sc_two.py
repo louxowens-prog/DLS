@@ -100,9 +100,12 @@ def s_p_template(T, idx):
             PF.pface(c, x, y, 1.2, who, T, key=(255, 200, 160), fill=(140, 80, 100), amb=(20, 10, 10), neck=False)
     with K.layer(c, k):
         PF.pface(c, 540, 820, 1.2, "m_light", T, key=(255, 210, 170), fill=(160, 90, 110), amb=(24, 10, 12), neck=True, rim=(255, 120, 90))
-    K.text(c, "THE PATTERN IT LEARNED:", 540, 320, 40, "special-elite-400", (255, 220, 200), tag="label", a=k, outline=(20, 0, 0), ow=6)
-    K.text(c, "LEADER  =  MAN", 540, 400, 72, "newrocker-400", (255, 236, 220), tag="label", a=K.ease(ramp(T, Wx("p1", "men", 1) - 0.1, Wx("p1", "men", 1) + 0.3)),
-           outline=(30, 0, 0), ow=10)
+    # the verdict of the pattern, once the faces have finished sliding together (never over the portraits)
+    tl = max(Wx("p1", "men", 1) - 0.1, t0 + 0.62)
+    kl = K.ease(ramp(T, tl, tl + 0.35))
+    c.drawRect(skia.Rect.MakeLTRB(0, 262, W, 442), paint((14, 2, 4), 0.85 * kl))
+    K.text(c, "THE PATTERN IT LEARNED:", 540, 318, 42, "special-elite-400", (255, 220, 200), tag="label", a=kl, outline=(20, 0, 0), ow=6)
+    K.text(c, "LEADER  =  MAN", 540, 412, 86, "newrocker-400", (255, 240, 226), tag="label", a=kl, outline=(30, 0, 0), ow=10)
     return st.arr
 
 
@@ -182,13 +185,15 @@ def s_p_cv(T, idx):
     cv_page(c, 540, 870 + 60 * (1 - u), 0.72, T, ang=-2, hl={5: (k_w, (255, 50, 40))})
     # the rating it gives (the real tool rated candidates one to five stars): four stars drop to two
     a_ = K.ease(ramp(T, t0 + 0.8, t0 + 1.3))
-    c.drawRoundRect(skia.Rect.MakeLTRB(620, 318, 960, 448), 12, 12, paint((10, 4, 4), 0.85 * a_))
+    bx = 936                                                        # beside the machine, clear of its lights
+    c.drawRoundRect(skia.Rect.MakeLTRB(bx - 122, 236, bx + 122, 382), 14, 14, paint((10, 4, 4), 0.9 * a_))
     for i in range(5):
         on = 1.0 if i < 2 else (1.0 - k_w if i < 4 else 0.0)
         col = mix((255, 90, 70), (255, 220, 160), 1 - k_w)
-        _star(c, 662 + i * 64, 368, 26, col, a_ * (0.25 + 0.75 * on), fill=on > 0.5)
-    K.text(c, "RANKED LOWER" if k_w > 0.5 else "RATING", 790, 432, 30, "special-elite-400", (255, 90, 70) if k_w > 0.5 else (255, 220, 190),
+        _star(c, bx - 92 + i * 46, 280, 20, col, a_ * (0.25 + 0.75 * on), fill=on > 0.5)
+    K.text(c, "RANKED LOWER" if k_w > 0.5 else "RATING", bx, 338, 27, "special-elite-400", (255, 90, 70) if k_w > 0.5 else (255, 220, 190),
            tag="label", a=a_)
+    K.text(c, "ILLUSTRATION", bx, 368, 18, "jost-600", (220, 180, 170), tag="label", a=a_)
     return st.arr
 
 
