@@ -548,7 +548,7 @@ def build():
     # into a wide speech band (ducked fully) and the rest (bass and air, ducked far less); the margin is measured on
     # what the split will actually leave in the speech band, so the ride converges on the real result
     band = lambda x: signal.sosfilt(signal.butter(2, [300 / (SR / 2), 4000 / (SR / 2)], "band", output="sos"), x.mean(axis=0))
-    sos = signal.butter(2, [300 / (SR / 2), 4000 / (SR / 2)], "band", output="sos")
+    sos = signal.butter(4, [300 / (SR / 2), 4000 / (SR / 2)], "band", output="sos")
     music_b, fxx_b = signal.sosfiltfilt(sos, music, axis=1), signal.sosfiltfilt(sos, fxx, axis=1)
     bv = band(vo)
     B1, B2 = band(music_b + fxx_b), band((music - music_b) + (fxx - fxx_b))
@@ -563,7 +563,7 @@ def build():
             r[lo:hi] = np.minimum(r[lo:hi], db(gain[key]))
         return smooth(r, 0.18)
 
-    for _ in range(14):
+    for _ in range(30):
         ride = rides()
         bb = B1 * ride + B2 * ride ** 0.12
         short = False
