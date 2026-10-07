@@ -1,0 +1,235 @@
+"""Global timing: every spoken line and the air between them (the hallucination that opens it, the title and the
+chapter cards, the dead silences before the scares, the cosmic interlude, the eruption). 24 fps."""
+import os
+
+import numpy as np
+
+from script import FX, LINES, PITCH, SPEED, VOICES
+from voice import SR, speak, speak_fx, whisper, word_times
+
+FPS = 24
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+# seconds of picture and music (no voice) before a line
+PRE = {
+    "h1": 0.6,                    # one crushing chord; the mask in red, a stamp falling
+    "c1": 1.2,                    # dead quiet; wind in the pines; the forest under the wrong moon
+    "i1": 2.8,                    # the title, INELIGIBLE; chapter I
+    "i3": 0.4,                    # she opens her eyes
+    "p1": 1.5,                    # chapter II
+    "m1": 1.5,                    # chapter III
+    "v1": 1.5,                    # chapter IV
+    "v2": 0.4,
+    "v3": 0.6,                    # dead silence; the mask slams into the frame
+    "d1": 1.4,                    # the dreamer drifting through space, past wrong planets
+    "r1": 1.0,                    # she falls through the sky into a fluorescent kitchen
+    "r3": 0.4,
+    "x1": 1.4,                    # the eruption
+    "y1": 1.7,                    # dead silence; her eye opens on you
+    "e1": 1.6,                    # the fire again, quiet
+}
+TIGHT = {"NAR": 0.42, "IRIS": 0.45}   # longest pause left inside a line, by speaker
+TAIL = 2.8                        # the last image burns into the screen
+
+
+def _comb(x, delay_s, fb):
+    d = max(1, int(delay_s * SR))
+    y = np.copy(x).astype(np.float64)
+    for i in range(d, len(y)):
+        y[i] += fb * y[i - d]
+    return y
+
+
+def pv_shift(x, semis, n=1024, hop=256):
+    """Pitch-shift by `semis` semitones keeping the duration: a phase vocoder stretch, then a resample."""
+    from scipy import signal
+    r = 2 ** (semis / 12)
+    f, t, Z = signal.stft(x, SR, nperseg=n, noverlap=n - hop)
+    steps = np.arange(0, Z.shape[1] - 1, 1 / r)
+    mag = np.abs(Z)
+    ph = np.angle(Z)
+    omega = 2 * np.pi * hop * np.arange(Z.shape[0]) / n
+    acc = ph[:, 0].copy()
+    out = np.zeros((Z.shape[0], len(steps)), complex)
+    for k, s in enumerate(steps):
+        i = int(s)
+        a = s - i
+        m = (1 - a) * mag[:, i] + a * mag[:, i + 1]
+        out[:, k] = m * np.exp(1j * acc)
+        dp = ph[:, i + 1] - ph[:, i] - omega
+        dp -= 2 * np.pi * np.round(dp / (2 * np.pi))
+        acc += omega + dp
+    _, y = signal.istft(out, SR, nperseg=n, noverlap=n - hop)
+    y = signal.resample(y, int(len(y) / r))[: len(x)]
+    return np.pad(y, (0, max(0, len(x) - len(y))))
+
+
+def treat(wav, kind):
+    """merit: the entity - her slowed voice doubled a hair sharp and flat, an octave below it like a shadow, a soft
+    saturation; system: the same voice flattened into a machine's, down a telephone line; why: (built elsewhere)."""
+    from scipy import signal
+    w = wav.astype(np.float64)
+    if kind == "merit":
+        low = pv_shift(w, -12.0)
+        d1, d2 = int(0.013 * SR), int(0.021 * SR)
+        up = signal.resample(w, int(len(w) / 2 ** (0.18 / 12)))[: len(w)]
+        dn = signal.resample(w, int(len(w) / 2 ** (-0.18 / 12)))[: len(w)]
+        up = np.concatenate([np.zeros(d1), up])[: len(w)]
+        dn = np.concatenate([np.zeros(d2), dn])[: len(w)]
+        up, dn = np.pad(up, (0, len(w) - len(up))), np.pad(dn, (0, len(w) - len(dn)))
+        mixw = w + 0.42 * up + 0.42 * dn + 0.55 * low
+        w = np.tanh(1.4 * mixw / (np.abs(mixw).max() + 1e-9))
+    elif kind == "system":
+        f, t, Z = signal.stft(w, SR, nperseg=480, noverlap=320)
+        _, robot = signal.istft(np.abs(Z), SR, nperseg=480, noverlap=320)
+        robot = robot[: len(w)]
+        robot *= np.sqrt((w ** 2).mean() / ((robot ** 2).mean() + 1e-12))
+        w = 0.55 * w + 0.45 * robot
+        w = signal.sosfilt(signal.butter(4, [320 / (SR / 2), 3400 / (SR / 2)], "band", output="sos"), w)
+        w = np.round(w / (np.abs(w).max() + 1e-9) * 48) / 48                 # a little crushed, like an old line
+    w *= np.sqrt((wav.astype(np.float64) ** 2).mean() / ((w ** 2).mean() + 1e-12))
+    return w.astype(np.float32)
+
+
+WHY_VOICES = ["af_bella", "af_heart", "bf_emma", "af_sarah", "bf_lily", "af_nicole", "af_sky", "af_nova", "bf_alice", "af_river"]
+
+
+def why_chorus(text):
+    """Ten women whispering one word, not quite together."""
+    rng = np.random.default_rng(7)
+    parts = []
+    for v in WHY_VOICES:
+        x = speak(text, v, 1.0)
+        x = whisper(x, keep=0.3, seed=len(parts))
+        off = int(rng.uniform(0, 0.16) * SR)
+        parts.append(np.concatenate([np.zeros(off, np.float32), x * rng.uniform(0.6, 1.0)]))
+    n = max(len(p) for p in parts)
+    out = sum(np.pad(p, (0, n - len(p))) for p in parts)
+    return (out * 0.09 / (np.sqrt((out ** 2).mean()) + 1e-9)).astype(np.float32)
+
+
+def tighten(wav, cap=0.45):
+    """Shorten the long silences the voice leaves between sentences to `cap` seconds (the middle of each cut out,
+    a short crossfade across the join), so the narration keeps its breath without dead air."""
+    from voice import pauses
+    out, last = [], 0
+    xf = int(0.01 * SR)
+    for a, b in pauses(wav, cap + 0.05):
+        i0, i1 = int((a + cap / 2) * SR), int((b - cap / 2) * SR)
+        out.append(wav[last:i0])
+        last = i1
+    out.append(wav[last:])
+    y = out[0]
+    for seg in out[1:]:
+        if len(y) > xf and len(seg) > xf:
+            fade = np.linspace(0, 1, xf, dtype=np.float32)
+            y = np.concatenate([y[:-xf], y[-xf:] * (1 - fade) + seg[:xf] * fade, seg[xf:]])
+        else:
+            y = np.concatenate([y, seg])
+    return y.astype(np.float32)
+
+
+def _norm(w):
+    return "".join(ch for ch in w.lower() if ch.isalnum() or ch == "'")
+
+
+class Timeline:
+    def __init__(self):
+        self.lines, self.order = {}, []
+        t = 0.0
+        for key, who, spoken, caption, gap in LINES:
+            t += PRE.get(key, 0.0)
+            self._line(key, who, spoken, caption, t)
+            t = self.lines[key]["end"] + gap
+        self.total = t + TAIL
+
+    def _line(self, key, who, spoken, caption, t):
+        v, sp, pt = VOICES[who]
+        if spoken.startswith("="):
+            src = self.lines[spoken[1:]]
+            spoken, caption = src["spoken"], src["breaks"]
+            wav = src["wav0"]
+            words = [(w, a - src["start"], b - src["start"]) for w, a, b in src["words"]]
+        else:
+            wav = why_chorus(spoken) if v == "chorus" else speak_fx(spoken, v, SPEED.get(key, sp), PITCH.get(key, pt))
+            if who in TIGHT:
+                wav = tighten(wav, TIGHT[who])
+            words = word_times(spoken, wav)
+        wav0 = wav
+        if key in FX and FX[key] != "why":
+            wav = treat(wav, FX[key])
+            k = len(wav) / len(wav0)
+            words = [(w, a * k, b * k) for w, a, b in words]
+        d = len(wav) / SR
+        self.lines[key] = dict(start=t, end=t + d, wav=wav, wav0=wav0, spoken=spoken, who=who, voice=v,
+                               caption=(caption or spoken).replace("|", ""), breaks=caption or spoken,
+                               words=[(w, t + a, t + b) for w, a, b in words])
+        self.order.append(key)
+
+    # ---- lookups
+    def who(self, key):
+        return self.lines[key]["who"]
+
+    def s(self, key):
+        return self.lines[key]["start"]
+
+    def e(self, key):
+        return self.lines[key]["end"]
+
+    def captions(self):
+        """Caption chunks [(t0, t1, text, key)]: whole phrases, split where the script puts a |."""
+        out = []
+        for n, key in enumerate(self.order):
+            L = self.lines[key]
+            raw = [w for w in L["breaks"].split(" ") if w]
+            cw, sp = [w.rstrip("|") for w in raw if w != "|"], L["words"]
+            ends = []
+            for w in raw:
+                if w == "|":
+                    ends[-1] = True
+                else:
+                    ends.append(w.endswith("|"))
+            nw, m = len(cw), len(sp)
+            groups, cur = [], []
+            for i in range(nw):
+                cur.append(i)
+                if ends[i] or i == nw - 1:
+                    groups.append(cur)
+                    cur = []
+            nxt_start = self.lines[self.order[n + 1]]["start"] if n + 1 < len(self.order) else self.total
+            # where each chunk starts in the recording: match the chunk's last word (or the next chunk's first word)
+            # among the spoken words, so a caption's figures ("94%" for "ninety-four percent") don't skew the timing
+            starts, pos = [0], 0
+            for j in range(len(groups) - 1):
+                g, g2 = groups[j], groups[j + 1]
+                est, at = pos + len(g), None
+                hits = [k + 1 for k in range(pos, m) if _norm(sp[k][0]) == _norm(cw[g[-1]])]
+                if hits and abs(min(hits, key=lambda k: abs(k - est)) - est) <= 3:
+                    at = min(hits, key=lambda k: abs(k - est))
+                if at is None:
+                    hits = [k for k in range(pos + 1, m) if _norm(sp[k][0]) == _norm(cw[g2[0]])]
+                    if hits and abs(min(hits, key=lambda k: abs(k - est)) - est) <= 3:
+                        at = min(hits, key=lambda k: abs(k - est))
+                if at is None:
+                    at = min(m - 1, int(g2[0] * m / nw))
+                starts.append(min(m - 1, max(pos + 1, at)))
+                pos = starts[-1]
+            for j, g in enumerate(groups):
+                t0 = sp[starts[j]][1]
+                last = sp[starts[j + 1] - 1][2] if j + 1 < len(groups) else sp[-1][2]
+                t1 = sp[starts[j + 1]][1] if j + 1 < len(groups) else min(L["end"] + 0.35, nxt_start - 0.05)
+                out.append((t0 - 0.05, max(t1 - 0.02, last), " ".join(cw[i] for i in g), key))
+        return out
+
+
+TL = Timeline()
+
+if __name__ == "__main__":
+    for k in TL.order:
+        L = TL.lines[k]
+        d = L["end"] - L["start"]
+        n = len(L["spoken"].split())
+        print(f"{k:4s} {L['who']:6s} {L['start']:7.2f} {d:5.2f}s {n / d * 60:4.0f}wpm  {L['spoken'][:70]}")
+    sp = sum(TL.e(k) - TL.s(k) for k in TL.order)
+    nw = sum(len(TL.lines[k]["spoken"].split()) for k in TL.order)
+    print("total", round(TL.total, 2), "speech", round(sp, 1), "words", nw, "avg wpm", round(nw / sp * 60))
