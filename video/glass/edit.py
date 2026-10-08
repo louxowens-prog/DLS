@@ -55,7 +55,7 @@ EDIT = [
     (S("e6") - 0.1, "e_salt", "dissolve", SALT),
     (S("e7") - 0.05, "e_hand", "dissolve", RED),
     (E("e7") + 0.2, "e_hush", "cut", L(RED, bloom=0.3)),
-    (S("e8") - 0.06, "e_eyes", "cut", L(RED, streak=0.3)),
+    (S("e8") - 0.62, "e_eyes", "cut", L(RED, streak=0.3)),
     (E("e8") + 0.2, "k_2", "dissolve", CARD),
     # ---- II. THE WORKHOUSE
     (S("w1") - 0.05, "w_corridor", "dissolve", EMER),
@@ -77,7 +77,7 @@ EDIT = [
     (S("t4") - 0.05, "t_lineup", "dissolve", BLOOD),
     (S("t5") - 0.05, "t_library", "dissolve", BLOOD),
     (E("t5") + 0.2, "t_hush", "cut", L(BLOOD, bloom=0.3)),
-    (S("t6") - 0.1, "t_scales", "cut", DREAD),
+    (S("t6") - 0.62, "t_scales", "cut", DREAD),
     # ---- the descent: her favourite exhibit
     (S("d1") - 0.2, "d_procession", "dissolve", DREAD),
     # ---- NADIA: an ordinary day

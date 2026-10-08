@@ -220,12 +220,13 @@ def s_n_exhibit(T, idx):
     return st.arr
 
 
-def _ad(c, r, i, a=1.0):
+def _ad(c, r, i, a=1.0, words=True):
     texts = ["Newborn sale", "Size of a lemon!", "Prenatal yoga", "Strollers -40%", "Baby names?", "Due in spring?"]
     cols = [(240, 214, 220), (214, 230, 246), (226, 240, 222), (246, 236, 210), (236, 220, 246), (220, 240, 240)]
     c.drawPath(K.rrect(r.left(), r.top(), r.right(), r.bottom(), 18), paint(cols[i % 6], a))
     c.drawCircle(r.centerX(), r.top() + r.height() * 0.36, r.height() * 0.18, paint(mix(cols[i % 6], (120, 100, 110), 0.4), a))
-    K.text(c, texts[i % 6], r.centerX(), r.bottom() - 20, 21, "jost-600", (60, 50, 60), tag="screen", a=a)
+    if words:
+        K.text(c, texts[i % 6], r.centerX(), r.bottom() - 20, 21, "jost-600", (60, 50, 60), tag="screen", a=a)
 
 
 def s_n_face(T, idx):
@@ -239,7 +240,7 @@ def s_n_face(T, idx):
 
     def scr(c_, r):
         c_.drawRect(r, paint((250, 250, 252)))
-        _ad(c_, skia.Rect.MakeLTRB(r.left() + 30, r.top() + 60, r.right() - 30, r.top() + 400), 1)
+        _ad(c_, skia.Rect.MakeLTRB(r.left() + 30, r.top() + 60, r.right() - 30, r.top() + 400), 1, words=False)
     CO.phone(c, 540, 1560, 0.55, T, screen=scr, tilt=-4)
     return st.arr
 
@@ -284,7 +285,7 @@ def s_n_phone(T, idx):
             K.text(c_, "Hours reduced", r.centerX(), r.top() + 840, 38, "jost-600", (180, 30, 30), tag="screen", a=k)
             K.text(c_, "Reason: productivity score", r.centerX(), r.top() + 895, 30, "jost-500", (120, 60, 60), tag="screen", a=k)
         else:
-            n = int(2 + 22 * K.ease(ramp(T, tb, tb + 1.2)))
+            n = int(2 + 8 * K.ease(ramp(T, tb, tb + 1.0)))
             for i in range(n):
                 cx_, cy_ = i % 2, i // 2
                 rr = skia.Rect.MakeXYWH(r.left() + 20 + cx_ * (r.width() / 2 - 10), r.top() + 30 + cy_ * 170, r.width() / 2 - 30, 156)

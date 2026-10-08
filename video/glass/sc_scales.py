@@ -148,7 +148,7 @@ def s_t_lineup(T, idx):
     tm = Wx("t4", "fifteen") - 0.1
     for i, who in enumerate(LINEUP):
         col, row = i % 3, i // 3
-        x, y = 210 + col * 330, 330 + row * 196
+        x, y = 200 + col * 320, 330 + row * 196
         c.drawRect(skia.Rect.MakeLTRB(x - 140, y - 88, x + 140, y + 88), paint((10, 4, 8)))
         CA.face(c, x, y - 10, 0.36, who, T, L=(255, 236, 214), R=(160, 120, 140), core=0.3, amb=(60, 40, 50), porc=0.45, neck=False, glaze=0.6)
         c.drawRect(skia.Rect.MakeLTRB(x - 140, y - 88, x + 140, y + 88), paint(shader=K.lin((x - 140, y - 88), (x + 140, y + 88), [(255, 255, 255, 0.12), (255, 255, 255, 0.0)])))
@@ -160,7 +160,7 @@ def s_t_lineup(T, idx):
             colr = (255, 60, 60) if wrong else (255, 220, 120)
             k = K.ease(ramp(T, tk, tk + 0.15))
             c.drawRect(skia.Rect.MakeLTRB(x - 120, y + 34, x + 120, y + 76), paint((10, 4, 8), 0.85 * k))
-            K.text(c, lab, x, y + 66, 28, "jost-600", colr, tag="stamp", a=k)
+            K.text(c, lab, x, y + 66, 25, "jost-600", colr, tag="stamp", a=k)
     from cards import spaced
     spaced(c, "AT LEAST 15", 540, 1290, 56, "italiana-400", 0.12, C.GOLD_HI, K.ease(ramp(T, tm, tm + 0.3)), tag="label")
     return st.arr
@@ -270,7 +270,7 @@ def s_t_scales(T, idx):
         Hl.vitrine(c, cam, 0.0, 3.0, 1.1, 1.1, 1.6, 0.8, T, content=fig, height=7.0)
         c.restore()
         return st.arr
-    ts = S("t6") - 0.02
+    ts = cut("t_scales") + 0.02
     slam = hit(T, ts, 0.35)
     tilt = 26 * K.ease(ramp(T, ts - 0.04, ts + 0.06))
     tt = Wx("t6", "Then") - 0.15

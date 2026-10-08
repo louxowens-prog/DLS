@@ -31,10 +31,10 @@ def s_o_veils(T, idx):
     t0, t1 = cut("o_veils"), end("o_veils")
     u = K.ease(ramp(T, t0 + 0.2, t1))
     c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint(shader=K.rad((540, 1000), 1200, [ROYAL_BG, ROYAL_DEEP, (0, 0, 10)])))
-    G.beam(c, (540, -100), (380, 1500), (700, 1500), (255, 230, 170), 0.3)
-    G.pool(c, 540, 1400, 300, (255, 220, 160), 0.4, squash=0.3)
-    C.doll(c, 540, 1420, 0.75, T, pose="type", tint=(240, 236, 228))
-    c.drawRect(skia.Rect.MakeLTRB(400, 1180, 680, 1220), paint(shader=C.gold_shader((400, 0), (680, 0))))
+    G.beam(c, (540, -100), (360, 1560), (720, 1560), (255, 230, 170), 0.3)
+    G.pool(c, 540, 1480, 340, (255, 220, 160), 0.4, squash=0.3)
+    # behind the veils: the guide, in her saint's armour, lamp in hand, looking at you
+    C.saint(c, 540, 1500, 0.86, T, halo=1.0, veil_k=0.8, lamp=1.0, wind=(0.3, 0.6), cape=0.7, eyes=0.9, talk=0.0)
     for i in range(10):                                            # silk veils hanging from the dark, parting
         sd = -1 if i < 5 else 1
         base = 60 + i * 107

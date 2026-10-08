@@ -16,25 +16,25 @@ PRE = {
     "h2": 0.15,
     "c1": 1.4,                    # the white room humming; the chair; she leans in
     "e1": 3.5,                    # going under: water, then a desert at dawn in silence; the title; chapter I
-    "e8": 0.7,                    # dead silence: then her eye opens
+    "e8": 1.3,                    # dead silence; her eyes snap open; a beat; she speaks
     "w1": 1.6,                    # chapter II
     "w6": 0.3,
     "o1": 1.6,                    # chapter III
     "o6": 0.3,
     "t2": 1.6,                    # chapter IV
-    "t6": 0.8,                    # dead silence: every exhibit turns its head at once
+    "t6": 1.4,                    # dead silence; the scales slam; a beat; she speaks
     "d1": 1.0,
     "n1": 0.9,                    # the cold world: a bedroom at dawn, an alarm
     "n10": 0.2,
     "n11": 1.5,                   # dead silence; three knocks
     "n12": 0.1,
-    "x1": 2.6,                    # the collapse: sandstorm, glass, drums, brass, chant
-    "y1": 1.6,                    # cut to silence; the last vitrine
+    "x1": 2.2,                    # the collapse: sandstorm, glass, drums, brass, chant
+    "y1": 1.3,                    # cut to silence; the last vitrine
     "y3": 1.0,                    # dead silence; the black glass; something behind you
-    "z1": 1.3,                    # the white room again
+    "z1": 1.0,                    # the white room again
 }
 TIGHT = {"NAR": 0.36, "NADIA": 0.45}   # longest pause left inside a line, by speaker
-TAIL = 3.0                        # the last image: the endless room of chairs
+TAIL = 2.6                        # the last image: the endless room of chairs
 
 
 def _comb(x, delay_s, fb):

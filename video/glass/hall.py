@@ -261,6 +261,6 @@ def enfilade(c, cam, T, rooms, depth=6.0, width=5.0, height=6.0, door=(1.9, 3.6)
                 pc.drawPath(wpath, paint(shader=K.lin((0, 0), (0, height * Pr.U), [mix(col, BLACK, 0.5), col, mix(col, BLACK, 0.25)])))
                 pc.drawRect(hole.getBounds(), paint(acc, 0.95, stroke=14))
                 pc.drawRect(hole.getBounds().makeOutset(18, 18), paint(GOLD, 0.8, stroke=5))
-                if label:
+                if label and z - cam.pos[2] > 2.2:                  # not when the camera is about to pass under it
                     K.text(pc, label, width / 2 * Pr.U, (height - dh - 0.45) * Pr.U, label_size, "cinzel-600", GOLD_HI, tag="label")
                 Pr.depth_fog(pc, wz, cam, fog, fog_d, 1.0)

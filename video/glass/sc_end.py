@@ -44,10 +44,11 @@ def _shatter_gallery(c, T, u):
                 C.doll(c_, sx, sy, ppm / 720 * 1.3, T, pose="arms_up" if (i + sd) % 2 else "stand", tint=(240, 234, 226), eyes=1.0)
             Hl.vitrine(c, cam, sd * 2.6, z, 1.1, 1.1, 1.6, 0.8, T, content=fig, height=7.0, shatter=1.0)
     rng = K.rng_at(41, 2)
+    uu = u if u < 0.4 else (0.8 - u if u < 0.7 else u - 0.6)       # glass bursts out, flies back together in reverse, bursts again
     for k in range(70):                                             # glass bursting outwards in slow motion
         ox, oy = rng.uniform(150, 930), rng.uniform(500, 1300)
         ang = math.atan2(oy - 900, ox - 540)
-        sp = rng.uniform(300, 900) * slow(u, 0, 0.5)
+        sp = rng.uniform(300, 900) * slow(max(0.0, uu), 0, 0.5)
         D.shard(c, ox + math.cos(ang) * sp, oy + math.sin(ang) * sp, rng.uniform(14, 46), u * rng.uniform(-3, 3), T, seed=k,
                 tint=(255, 220, 200) if k % 3 else (220, 236, 255))
 
@@ -93,12 +94,12 @@ def s_x_collapse(T, idx):
     sx = S("x1")
     tdoor = sx - 0.1
     tface = Wx("x1", "I'm") - 0.1
-    if T < t0 + 0.9:
+    if T < t0 + 0.8:
         _shatter_gallery(c, T, T - t0)
-    elif T < t0 + 1.8:
-        _sky_tear(c, T, T - (t0 + 0.9))
+    elif T < t0 + 1.55:
+        _sky_tear(c, T, T - (t0 + 0.8))
     elif T < tdoor:
-        _curator_rising(c, T, T - (t0 + 1.8))
+        _curator_rising(c, T, T - (t0 + 1.55))
     elif T < tface:
         _doors(c, T, T - tdoor, tdoor + 0.15)
     else:
@@ -112,8 +113,8 @@ def s_x_collapse(T, idx):
             oy = (rng.uniform(0, H) + (T - tface) * rng.uniform(600, 1400)) % (H + 200) - 100
             D.shard(c, ox, oy, rng.uniform(10, 34), T * rng.uniform(-4, 4), T, seed=k + 100)
         c.restore()
-    storm = 0.15 + 0.85 * ramp(T, t0 + 0.9, t0 + 1.4)
-    if T >= t0 + 1.8 and T < tdoor:
+    storm = 0.15 + 0.85 * ramp(T, t0 + 0.8, t0 + 1.2)
+    if T >= t0 + 1.55 and T < tdoor:
         storm = 0.35
     if T >= tface:
         storm = 0.25 + 0.6 * ramp(T, t1 - 1.2, t1)
@@ -134,6 +135,8 @@ def _salt_vitrine(c, T, content, label=None, cam_z=-0.6, f=1100, ref=None):
     cam = D.salt_cam(1.55, -2.0, f, z=cam_z)
     D.salt_flat(c, cam, T, sky_cols=((30, 20, 70), (120, 70, 120), (240, 180, 150)), horizon_glow=(250, 200, 170))
     G.pool(c, 540, 900, 700, (255, 190, 150), 0.18)
+    for sx_ in (-6.5, 6.5):                                         # two white staircases climbing into the dusk, to nowhere
+        D.stairs(c, cam, sx_, 18.0, n=22, rise=0.42, run=0.6, width=2.0, col=(236, 226, 220))
     Hl.vitrine(c, cam, 0.0, 3.0, 1.2, 1.2, 1.7, 0.95, T, content=content, label=label, height=40.0, beam=False, fog=(240, 200, 180), fog_d=0.0, ref=ref)
     return cam
 
@@ -194,9 +197,9 @@ def _phone_case(c, T, depth, push=0.0):
         CO.phone(c_, sx, sy - ppm * 0.62, ps, T, screen=scr)
         if depth == 0:
             lk = K.ease(ramp(T, Wx("y2", "is") - 0.1, Wx("y2", "is") + 0.5))
-            labs = [("CAMERA", (-0.62, -0.9)), ("MICROPHONE", (0.62, -0.78)), ("LOCATION", (-0.66, -0.48)), ("SEARCHES", (0.64, -0.36)), ("PAYMENTS", (-0.6, -0.12))]
+            labs = [("CAMERA", (-0.5, -0.9)), ("MICROPHONE", (0.5, -0.78)), ("LOCATION", (-0.52, -0.48)), ("SEARCHES", (0.5, -0.36)), ("PAYMENTS", (-0.5, -0.12))]
             for i, (lab, (dx, dy)) in enumerate(labs):
-                a = lk * K.ease(ramp(T, Wx("y2", "is") + i * 0.12, Wx("y2", "is") + 0.2 + i * 0.12))
+                a = lk * K.ease(ramp(T, Wx("y2", "is") + i * 0.12, Wx("y2", "is") + 0.2 + i * 0.12)) * max(0.0, 1 - push * 4)
                 if a <= 0:
                     continue
                 tx, ty = sx + dx * ppm, sy + dy * ppm

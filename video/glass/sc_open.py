@@ -169,8 +169,10 @@ def s_c_dawn(T, idx):
     D.dunes(c, T, DAWN_FIELD, pal=D.SAND_DAWN, haze_col=(255, 180, 140), pan=-12 * u, stream=1.0, wind=1.0)
     # a door standing alone on the crest, light pouring from it; a tiny white figure walking to it
     D.doorway(c, 330, 1236, 0.36, open_k=0.55, glow_k=1.0, glow=(255, 244, 220), light=1.0)
-    D.figure_far(c, 620 - 26 * u, 1300, 0.62, T=T, sh_dir=1)
-    D.veil(c, T, 620 - 26 * u, 1236, 200, 16, col=(255, 252, 246), a=0.6, wind=(1.0, -0.05), slow=0.4)
+    # the guide in her saint's armour, small against the dunes, walking to the door, veils streaming
+    sx = 640 - 30 * u
+    c.drawPath(K.path([(sx - 30, 1330), (sx + 30, 1330), (sx + 300, 1352), (sx + 280, 1366)]), paint((60, 20, 30), 0.35, blur=3))
+    C.saint(c, sx, 1330, 0.2, T, halo=1.0, veil_k=1.0, lamp=1.0, wind=(1.0, -0.1), cape=0.8)
     c.restore()
     CD.title(c, T, t0 + 0.5, a=1.0, y=560)
     return st.arr
