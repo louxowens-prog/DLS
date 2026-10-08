@@ -79,7 +79,7 @@ EDIT = [
     (E("t5") + 0.2, "t_hush", "cut", L(BLOOD, bloom=0.3)),
     (S("t6") - 0.62, "t_scales", "cut", DREAD),
     # ---- the descent: her favourite exhibit
-    (S("d1") - 0.2, "d_procession", "dissolve", DREAD),
+    (E("t6") + 0.35, "d_procession", "dissolve", DREAD),
     # ---- NADIA: an ordinary day
     (S("n1") - 0.3, "n_mirror", "flash", ROOM),
     (S("n2") - 0.05, "n_road", "cut", COLD),

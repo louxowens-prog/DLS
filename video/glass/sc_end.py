@@ -224,7 +224,7 @@ def s_y_glass(T, idx):
     t0, t1 = cut("y_glass"), end("y_glass")
     ty = S("y3")
     to = Wx("y3", "You", 1) - 0.1
-    tl = Wx("y3", "home.") - 0.05
+    tl = E("y3") + 0.02
     # black glass: a faint reflection of a dim room, your silhouette in the middle
     c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint(shader=K.lin((0, 0), (W, H), [(14, 14, 20), (4, 4, 8), (10, 10, 16)])))
     c.drawRect(skia.Rect.MakeLTRB(120, 300, 420, 760), paint((24, 24, 32), 0.6))
