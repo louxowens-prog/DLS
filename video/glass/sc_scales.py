@@ -176,19 +176,21 @@ def s_t_library(T, idx):
                fog=(6, 0, 2), fog_d=0.05, panel=3.0, lamps=False)
     # the graph on the far wall: views of terrorism-related articles, falling in June 2013 and staying down
     gq0, gq1 = cam.proj((-4.0, 7.2, 30.0)), cam.proj((4.0, 3.2, 30.0))
-    tg = Wx("t5", "reading") - 0.2
+    tg = Wx("t5", "views") - 0.2
     if gq0 and gq1:
         x0, y0, x1, y1 = gq0[0], gq0[1], gq1[0], gq1[1]
         c.drawRect(skia.Rect.MakeLTRB(x0, y0, x1, y1), paint((20, 4, 8), 0.9))
         c.drawRect(skia.Rect.MakeLTRB(x0, y0, x1, y1), paint(C.GOLD, stroke=3))
-    pts = [(0.0, 0.32), (0.1, 0.30), (0.2, 0.34), (0.3, 0.31), (0.4, 0.33), (0.45, 0.30), (0.48, 0.62), (0.55, 0.66), (0.65, 0.64), (0.75, 0.67),
-           (0.85, 0.65), (1.0, 0.68)]
+    # roughly the size of the drop the study reported (a fifth to a third), and the gently falling trend after it
+    pts = [(0.0, 0.32), (0.1, 0.30), (0.2, 0.33), (0.3, 0.31), (0.4, 0.32), (0.45, 0.30), (0.48, 0.49), (0.55, 0.51), (0.65, 0.50), (0.75, 0.53),
+           (0.85, 0.52), (1.0, 0.55)]
     gk = K.ease(ramp(T, tg, tg + 1.4))
     GX0, GY0, GX1, GY1 = 140, 300, 940, 760
     c.drawPath(K.rrect(GX0 - 30, GY0 - 70, GX1 + 30, GY1 + 70, 12), paint((16, 2, 6), 0.88 * min(1.0, gk * 3)))
     c.drawPath(K.rrect(GX0 - 30, GY0 - 70, GX1 + 30, GY1 + 70, 12), paint(C.GOLD, 0.9 * min(1.0, gk * 3), stroke=3))
     if gk > 0:
         K.text(c, "VIEWS OF TERRORISM-RELATED ARTICLES", 540, GY0 - 16, 30, "cinzel-600", C.GOLD_HI, tag="label", a=min(1.0, gk * 3))
+        K.text(c, "one study, 48 articles", GX1 - 20, GY0 + 40, 26, "cormorant-500i", (230, 210, 200), align="right", tag="label", a=min(1.0, gk * 3))
         n = max(2, int(len(pts) * gk) + 1)
         P_ = [(GX0 + (GX1 - GX0) * px, GY0 + 30 + (GY1 - GY0 - 60) * py) for px, py in pts[:n]]
         c.drawPath(K.path(P_, closed=False), paint(C.GOLD_HI, stroke=6))
@@ -222,7 +224,9 @@ def s_t_library(T, idx):
     return st.arr
 
 
-def _gallery_of_exhibits(c, T, eyes=0.0, turn=0.0, slam=0.0):
+def _gallery_of_exhibits(c, T, eyes=0.0, turn=0.0, slam=0.0, press_t=None):
+    """Two rows of porcelain exhibits in their cases. From press_t on, they come alive: one after another, in jerks,
+    each lifts its hands and presses its palms flat against the glass, and stays there."""
     cam = Pr.Cam((0.0, 1.8, -1.0), pitch=-3, f=820)
     if slam > 0:
         shake(c, T, 22 * slam, seed=11)
@@ -233,9 +237,14 @@ def _gallery_of_exhibits(c, T, eyes=0.0, turn=0.0, slam=0.0):
     for i, z in enumerate((3.0, 6.5, 10.0, 13.5, 17.0, 20.5)):
         for sd in (-1, 1):
             X = sd * 2.6
+            kp = 0.0
+            if press_t is not None:
+                d = press_t + 0.12 + 0.11 * ((i * 2 + (1 if sd > 0 else 0)) * 5 % 11)
+                kp = K.ease(ramp(stutter(T, d, 0.14, 0.05, seed=i * 2 + (sd > 0)), d, d + 0.42))
 
-            def fig(c_, sx, sy, ppm, sd=sd, i=i):
-                C.doll(c_, sx, sy, ppm / 720 * 1.3, T, pose="stand", tint=(240, 234, 226), eyes=eyes, head_turn=-sd * 0.9 * (1 - turn))
+            def fig(c_, sx, sy, ppm, sd=sd, i=i, kp=kp):
+                C.doll(c_, sx, sy, ppm / 720 * 1.3, T, pose=("stand", "press", kp), tint=(240, 234, 226), eyes=eyes,
+                       head_turn=-sd * 0.9 * (1 - turn) * (1 - 0.6 * kp))
             Hl.vitrine(c, cam, X, z, 1.1, 1.1, 1.6, 0.8, T, content=fig, height=7.0, fog=(6, 0, 2), fog_d=0.07)
     return cam
 
@@ -261,8 +270,11 @@ def s_t_scales(T, idx):
                    fog=(6, 0, 2), fog_d=0.07)
         turn = K.ease(ramp(stutter(T, tt0, 0.16, 0.05, seed=13), tt0, tt0 + 0.5))
 
+        kp = K.ease(ramp(stutter(T, tt0 + 0.35, 0.14, 0.05, seed=15), tt0 + 0.35, tt0 + 0.8))
+
         def fig(c_, sx, sy, ppm):
-            C.doll(c_, sx, sy, ppm / 720 * 1.3, T, pose="stand", tint=(240, 234, 226), eyes=1.0, head_turn=-0.95 * (1 - turn), head_tilt=-14 * (1 - turn))
+            C.doll(c_, sx, sy, ppm / 720 * 1.3, T, pose=("stand", "press", kp), tint=(240, 234, 226), eyes=1.0, head_turn=-0.95 * (1 - turn),
+                   head_tilt=-14 * (1 - turn))
         if u < 0.08:
             shake(c, T, 16, seed=14)
         else:
@@ -275,7 +287,7 @@ def s_t_scales(T, idx):
     tilt = 26 * K.ease(ramp(T, ts - 0.04, ts + 0.06))
     tt = Wx("t6", "Then") - 0.15
     turn = K.ease(ramp(stutter(T, tt, 0.18, 0.05, seed=12), tt, tt + 0.6))
-    cam = _gallery_of_exhibits(c, T, eyes=1.0 if T > ts else 0.0, turn=turn, slam=slam)
+    cam = _gallery_of_exhibits(c, T, eyes=1.0 if T > ts else 0.0, turn=turn, slam=slam, press_t=ts)
 
     def you(c_, px, py, s):
         C.doll(c_, px, py - 4 * s, 0.24 * s / 0.42, T, pose="stand", tint=(255, 250, 244))
@@ -289,11 +301,13 @@ def s_t_scales(T, idx):
 
 
 def s_d_procession(T, idx):
+    """She walks away from us down her gallery, her train pouring back along the floor to our feet; as she passes, each
+    porcelain exhibit in its case bows to her, in jerks, and stays bowed."""
     st = K.Stage((0, 0, 0))
     c = st.c
     t0, t1 = cut("d_procession"), end("d_procession")
     u = T - t0
-    cam = Pr.Cam((0.0, 3.4, -3.0), pitch=-12, f=900)
+    cam = Pr.Cam((0.0, 2.6, -3.0 + 0.55 * u), pitch=-8, f=900)
     Hl.gallery(c, cam, T, length=60, width=7, height=7, wall=CRIMSON_WALL, lights=[Pr.Light((0, 6.5, z), (255, 210, 160), 1.0, 3.0) for z in (4, 10, 16, 22, 28)],
                fog=(6, 0, 2), fog_d=0.05)
     # at the far end, a covered case, glowing
@@ -305,10 +319,26 @@ def s_d_procession(T, idx):
                              (end_q[0] + sc * 0.55, end_q[1] - sc * 1.9), (end_q[0] + sc * 0.6, end_q[1])]), paint(C.BLOOD))
         c.drawPath(K.smooth([(end_q[0] - sc * 0.6, end_q[1]), (end_q[0] - sc * 0.55, end_q[1] - sc * 1.9), (end_q[0], end_q[1] - sc * 2.3),
                              (end_q[0] + sc * 0.55, end_q[1] - sc * 1.9), (end_q[0] + sc * 0.6, end_q[1])]), paint(C.GOLD, stroke=3))
-    zc = 4.2 + 0.9 * u
-    C.train_floor(c, cam, T, 0.0, zc, -2.5, w0=1.2, w1=5.5)
+    speed = 0.95
+    zc = 1.9 + speed * u
+
+    def case(z, sd):
+        tp = t0 + (z - 1.6 - 1.9) / speed                              # she draws level with it
+        kb = K.ease(ramp(stutter(T, tp, 0.16, 0.05, seed=int(z * 3) + (sd > 0)), tp, tp + 0.5))
+
+        def fig(c_, sx, sy, ppm):
+            C.doll(c_, sx, sy, ppm / 720 * 1.3, T, pose=("stand", "bow", kb), tint=(240, 234, 226), eyes=0.0, head_turn=sd * 0.5 * (1 - kb))
+        Hl.vitrine(c, cam, sd * 2.75, z, 1.0, 1.0, 1.55, 0.8, T, content=fig, height=7.0, fog=(6, 0, 2), fog_d=0.05)
+    cases = sorted([(z, sd) for z in (3.0, 6.0, 9.0, 12.0, 15.0, 18.0, 21.0) for sd in (-1, 1)], key=lambda p: -p[0])
+    for z, sd in cases:                                                 # the cases beyond her
+        if z > zc:
+            case(z, sd)
+    C.train_floor(c, cam, T, 0.0, zc, cam.pos[2] + 0.4, w0=1.2, w1=5.0)
     q = cam.proj((0.0, 0.0, zc))
     if q:
         sc = cam.scale_at((0.0, 0.0, zc))
-        C.curator_back(c, q[0], q[1], sc / 1500 * 3.6, T, sway=math.sin(T))
+        C.curator_back(c, q[0], q[1], sc / 1500 * 4.4, T, sway=math.sin(T))
+    for z, sd in cases:                                                 # and those she has passed
+        if z <= zc:
+            case(z, sd)
     return st.arr

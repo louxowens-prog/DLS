@@ -94,12 +94,12 @@ def s_x_collapse(T, idx):
     sx = S("x1")
     tdoor = sx - 0.1
     tface = Wx("x1", "I'm") - 0.1
-    if T < t0 + 0.8:
+    if T < t0 + 0.65:
         _shatter_gallery(c, T, T - t0)
-    elif T < t0 + 1.55:
-        _sky_tear(c, T, T - (t0 + 0.8))
+    elif T < t0 + 1.25:
+        _sky_tear(c, T, T - (t0 + 0.65))
     elif T < tdoor:
-        _curator_rising(c, T, T - (t0 + 1.55))
+        _curator_rising(c, T, T - (t0 + 1.25))
     elif T < tface:
         _doors(c, T, T - tdoor, tdoor + 0.15)
     else:
@@ -113,8 +113,8 @@ def s_x_collapse(T, idx):
             oy = (rng.uniform(0, H) + (T - tface) * rng.uniform(600, 1400)) % (H + 200) - 100
             D.shard(c, ox, oy, rng.uniform(10, 34), T * rng.uniform(-4, 4), T, seed=k + 100)
         c.restore()
-    storm = 0.15 + 0.85 * ramp(T, t0 + 0.8, t0 + 1.2)
-    if T >= t0 + 1.55 and T < tdoor:
+    storm = 0.15 + 0.85 * ramp(T, t0 + 0.65, t0 + 1.05)
+    if T >= t0 + 1.25 and T < tdoor:
         storm = 0.35
     if T >= tface:
         storm = 0.25 + 0.6 * ramp(T, t1 - 1.2, t1)
@@ -149,17 +149,22 @@ def s_y_vitrine(T, idx):
     tl = Wx("y1", "Every") - 0.1
 
     def content(c_, sx, sy, ppm):
-        k = K.ease(ramp(T, tg - 0.3, tg + 0.9))
-        if k < 1:                                                   # her likeness pouring away as sand
+        # "isn't real": her likeness pours away as sand; "every part of her day is": the film runs backwards, the
+        # sand flies up and she stands there again, made of her day
+        back = K.ease(ramp(stutter(T, tl - 0.05, 0.12, 0.05, seed=44), tl - 0.05, tl + 0.8))
+        k = K.ease(ramp(T, tg - 0.35, tg + 0.35)) * (1 - back)
+        tt = min(T, tl) - max(0.0, T - tl) * 1.25                  # time running in reverse once she reforms
+        if k < 1:
             lp = paint()
             lp.setAlphaf(1 - k)
             c_.saveLayer(None, lp)
             C.doll(c_, sx, sy, ppm / 720 * 1.4, T, pose="stand", tint=(240, 234, 226), hair=(40, 28, 22), dress=(70, 80, 96))
             c_.restore()
+        if 0.0 < k:
             rng = K.rng_at(9, 9)
-            for i in range(int(160 * k)):
+            for i in range(int(160 * k) + (60 if back > 0 else 0)):
                 px = sx + rng.uniform(-0.25, 0.25) * ppm
-                py = sy - rng.uniform(0.2, 1.4) * ppm * (1 - k) - 0 + (T - tg) * rng.uniform(0.2, 0.8) * ppm
+                py = sy - rng.uniform(0.2, 1.4) * ppm * (1 - k) - 0 + max(0.0, tt - tg) * rng.uniform(0.2, 0.8) * ppm
                 c_.drawCircle(px, min(py, sy), max(1.0, ppm * 0.006), paint((236, 200, 150), 0.8))
         kk = K.ease(ramp(T, tl, tl + 0.5))
         for i, lab in enumerate(DAY_LABELS):                        # what is left: the labels of her day
@@ -169,7 +174,7 @@ def s_y_vitrine(T, idx):
                 continue
             w = ppm * 0.95
             Hl.brass(c_, sx - w / 2, y - ppm * 0.07, w, ppm * 0.13, a=a)
-            K.text(c_, lab, sx, y + ppm * 0.03, ppm * 0.06, "jost-600", (44, 28, 10), tag="plaque", a=a)
+            K.text(c_, lab, sx, y + ppm * 0.035, ppm * 0.07, "jost-600", (44, 28, 10), tag="plaque", a=a)
     _salt_vitrine(c, T, content, cam_z=-0.6 + 0.15 * (T - t0))
     return st.arr
 
@@ -195,57 +200,90 @@ def _phone_case(c, T, depth, push=0.0):
             else:
                 c2.drawRect(r, paint((250, 240, 230)))
         CO.phone(c_, sx, sy - ppm * 0.62, ps, T, screen=scr)
-        if depth == 0:
-            lk = K.ease(ramp(T, Wx("y2", "is") - 0.1, Wx("y2", "is") + 0.5))
-            labs = [("CAMERA", (-0.5, -0.9)), ("MICROPHONE", (0.5, -0.78)), ("LOCATION", (-0.52, -0.48)), ("SEARCHES", (0.5, -0.36)), ("PAYMENTS", (-0.5, -0.12))]
-            for i, (lab, (dx, dy)) in enumerate(labs):
-                a = lk * K.ease(ramp(T, Wx("y2", "is") + i * 0.12, Wx("y2", "is") + 0.2 + i * 0.12)) * max(0.0, 1 - push * 4)
-                if a <= 0:
-                    continue
-                tx, ty = sx + dx * ppm, sy + dy * ppm
-                c_.drawLine(tx, ty, sx + dx * ppm * 0.3, sy - ppm * 0.62 + dy * ppm * 0.4, paint(C.GOLD_HI, 0.8 * a, stroke=2))
-                Hl.brass(c_, tx - ppm * 0.22, ty - ppm * 0.05, ppm * 0.44, ppm * 0.1, a=a)
-                K.text(c_, lab, tx, ty + ppm * 0.025, ppm * 0.05, "jost-600", (44, 28, 10), tag="plaque", a=a)
+        PH[:] = [sx, sy - ppm * 0.62, ps]
     _salt_vitrine(c, T, content, label=["EXHIBIT", "YOURS"] if depth == 0 and push < 0.25 else None, cam_z=-0.6 + 2.2 * push, f=1100 + 900 * push)
 
 
+PH = [540.0, 900.0, 0.5]                                           # where the phone in the case was drawn: x, y, scale
+
+SENSORS = [("CAMERA", -1, 0.12, -0.40), ("MICROPHONE", 1, 0.18, 0.44), ("LOCATION", -1, 0.36, -0.05), ("SEARCHES", 1, 0.44, 0.0),
+           ("PAYMENTS", -1, 0.60, 0.20), ("CONTACTS", 1, 0.68, 0.22)]
+
+
 def s_y_phone(T, idx):
+    """The last exhibit: a phone on a velvet cushion - yours. Its sensors are named on brass plaques, one by one, and
+    stay while the line is spoken; then we push into its screen."""
     st = K.Stage((0, 0, 0))
     c = st.c
     t0, t1 = cut("y_phone"), end("y_phone")
     push = K.ease(ramp(T, Wx("y2", "hand") - 0.2, t1)) * 0.8
     _phone_case(c, T, 0, push=push)
+    px, py, ps = PH
+    gone = 1 - K.ease(ramp(push, 0.12, 0.3))
+    ta = Wx("y2", "same") - 0.15
+    for i, (lab, sd, dt, fy) in enumerate(SENSORS):
+        a = K.ease(ramp(T, ta + dt, ta + dt + 0.18)) * gone
+        if a <= 0.02:
+            continue
+        lx, ly = (262 if sd < 0 else 818), 560 + i * 92
+        tx, ty = px + sd * ps * 200, py + fy * ps * 1060                  # the part of the phone it names
+        c.drawLine(lx + sd * -140, ly - 12, tx, ty, paint(C.GOLD_HI, 0.85 * a, stroke=2.5))
+        c.drawCircle(tx, ty, 7, paint(C.GOLD_HI, a))
+        Hl.brass(c, lx - 140, ly - 46, 280, 64, a=a)
+        K.text(c, lab, lx, ly - 2, 36, "jost-600", (44, 28, 10), tag="plaque", a=a)
     return st.arr
 
 
 def s_y_glass(T, idx):
+    """Your own phone, screen dark: the bezel at the edges of the frame, the camera at the top, and in the black glass a
+    dim reflection of you looking down into it. Something rises behind your shoulder, eyes opening red; it lunges."""
     st = K.Stage((2, 2, 4))
     c = st.c
     t0, t1 = cut("y_glass"), end("y_glass")
     ty = S("y3")
-    to = Wx("y3", "You", 1) - 0.1
+    to = Wx("y3", "Now") - 0.1
     tl = E("y3") + 0.02
-    # black glass: a faint reflection of a dim room, your silhouette in the middle
-    c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint(shader=K.lin((0, 0), (W, H), [(14, 14, 20), (4, 4, 8), (10, 10, 16)])))
-    c.drawRect(skia.Rect.MakeLTRB(120, 300, 420, 760), paint((24, 24, 32), 0.6))
-    c.drawPath(K.smooth([(160, 1920), (190, 1460), (330, 1300), (430, 1240), (430, 1100), (380, 960), (400, 800), (540, 720), (680, 800),
-                         (700, 960), (650, 1100), (650, 1240), (750, 1300), (890, 1460), (920, 1920)]), paint((26, 26, 34)))
+    c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint(shader=K.lin((0, 0), (W, H), [(16, 16, 22), (4, 4, 8), (12, 12, 18)])))
+    # the reflection: a dim room behind you (a window, a lamp), and you, head bowed over the phone, lit from below
+    c.drawRect(skia.Rect.MakeLTRB(130, 340, 400, 760), paint((30, 32, 42), 0.55))
+    G.pool(c, 860, 420, 140, (120, 110, 90), 0.18)
+    lp = paint()
+    lp.setAlphaf(0.55)
+    lp.setImageFilter(skia.ImageFilters.Blur(3.0, 3.0))
+    g = [0.2126, 0.7152, 0.0722]                                     # a reflection in black glass has no colour of its own
+    lp.setColorFilter(skia.ColorFilters.Matrix([g[0] * 0.9, g[1] * 0.9, g[2] * 0.9, 0, 0, g[0] * 0.95, g[1] * 0.95, g[2] * 0.95, 0, 0,
+                                                g[0] * 1.15, g[1] * 1.15, g[2] * 1.15, 0, 0, 0, 0, 0, 1, 0]))
+    c.saveLayer(None, lp)
+    c.drawPath(K.smooth([(120, 1920), (160, 1500), (330, 1330), (440, 1270), (720, 1270), (830, 1330), (980, 1500), (1020, 1920)]), paint((30, 30, 40)))
+    CA.face(c, 580, 1000, 1.05, "m_b", T, L=(150, 160, 190), R=(50, 56, 76), core=0.2, amb=(26, 28, 36), gaze=(0.0, 0.9), blink=0.55, tilt=4)
+    c.restore()
+    # behind your shoulder: her
     rise = K.ease(ramp(T, ty - 0.4, to))
     lunge = K.ease(ramp(T, tl, tl + 0.12))
     if rise > 0:
-        x, y = 760 - 220 * lunge, 1000 - 380 * rise - 100 * lunge
-        s = 0.9 + 2.4 * lunge
+        x, y = 810 - 270 * lunge, 980 - 360 * rise - 80 * lunge
+        s = 0.8 + 2.5 * lunge
         lp = paint()
-        lp.setAlphaf(min(1.0, 0.25 + 0.75 * rise))
+        lp.setAlphaf(min(1.0, 0.2 + 0.8 * rise))
         c.saveLayer(None, lp)
         C.lens_fan(c, x, y - 60 * s, 0.55 * s, T, open_=0.5, a=0.5 + 0.5 * lunge)
-        C.mask(c, x, y, 0.75 * s, T, eyes=1.0 if T > to else 0.0, iris="lens", open_=0.7, talk=talk(T, "CURATOR"), tint=(170, 166, 170),
+        C.mask(c, x, y, 0.75 * s, T, eyes=1.0 if T > to else 0.0, iris="lens", open_=0.7, talk=talk(T, "CURATOR"), tint=(176, 170, 174),
                shadow=(60, 56, 70))
         c.restore()
         if T > to:
             for sd in (-1, 1):
                 G.pool(c, x + sd * 62 * 0.75 * s, y - 76 * 0.75 * s, 30 * s, (255, 40, 40), 0.6)
-    c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint(shader=K.lin((0, 0), (W * 0.7, H), [(255, 255, 255, 0.07), (255, 255, 255, 0.0), (255, 255, 255, 0.03)])))
+    # the glass itself: a sheen, and the phone around it - bezel, camera, home bar
+    c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint(shader=K.lin((0, 0), (W * 0.7, H), [(255, 255, 255, 0.08), (255, 255, 255, 0.0), (255, 255, 255, 0.03)])))
+    bez = skia.Path()
+    bez.addRect(skia.Rect.MakeLTRB(-10, -10, W + 10, H + 10))
+    bez.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(26, 26, W - 26, H - 26), 120, 120))
+    bez.setFillType(skia.PathFillType.kEvenOdd)
+    c.drawPath(bez, paint((8, 8, 10)))
+    c.drawRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(26, 26, W - 26, H - 26), 120, 120), paint((70, 74, 86), 0.7, stroke=3))
+    c.drawPath(K.rrect(420, 52, 660, 108, 28), paint((0, 0, 0)))                    # the camera island
+    C.lens(c, 618, 80, 14, T, open_=0.6, ring=(30, 30, 40), coat=(40, 60, 120), hot=0.4 + 0.6 * lunge)
+    c.drawPath(K.rrect(400, 1860, 680, 1872, 6), paint((90, 94, 104), 0.6))
     if lunge > 0:
         c.drawPaint(paint(WHITE, 0.6 * (1 - ramp(T, tl + 0.05, tl + 0.3))))
     return st.arr
@@ -295,7 +333,7 @@ def s_z_ask(T, idx):
     st = K.Stage((0, 0, 0))
     c = st.c
     CO.white_room(c, T, floor_y=1500)
-    qs = [("collected?", "WHAT'S", "COLLECTED?"), ("combine", "WHO CAN", "COMBINE IT?"), ("decides?", "WHO", "DECIDES?")]
+    qs = [("collected?", "WHAT'S", "COLLECTED?"), ("join", "WHO CAN", "JOIN IT UP?"), ("decides?", "AND WHO", "DECIDES?")]
     for i, (w, a1, a2) in enumerate(qs):
         k = K.ease(ramp(T, Wx("z3", w) - 0.35, Wx("z3", w) - 0.05))
         y = 300 + i * 330
@@ -338,15 +376,21 @@ def s_z_final(T, idx):
                 c.drawCircle(x, y - 86, 24, paint((44, 32, 28)))
                 c.drawCircle(x, y - 80, 17, paint((214, 180, 160)))
                 c.drawPath(K.rrect(x - 40, y - 60, x + 40, y + 108, 26), paint(shader=K.lin((x - 40, 0), (x + 40, 0), [(214, 220, 230), (250, 252, 254), (206, 212, 224)])))
-                c.drawPath(K.rrect(x - 13, y - 22, x + 13, y + 22, 5), paint((12, 14, 18)))
-                c.drawPath(K.rrect(x - 11, y - 20, x + 11, y + 20, 4), G.glow_paint((150, 210, 255), 0.95))
-                c.drawPath(K.capsule(x - 34, y - 40, x - 8, y + 12, 18, 14), paint((236, 240, 246)))
-                c.drawPath(K.capsule(x + 34, y - 40, x + 8, y + 12, 18, 14), paint((236, 240, 246)))
-                G.pool(c, x, y - 30, 70, (150, 210, 255), 0.4)
+                c.drawPath(K.capsule(x - 40, y - 46, x - 40, y + 30, 18, 16), paint((236, 240, 246)))           # arms down the sides,
+                c.drawPath(K.capsule(x + 40, y - 46, x + 40, y + 30, 18, 16), paint((236, 240, 246)))
+                c.drawPath(K.capsule(x - 40, y + 30, x - 17, y + 6, 15, 13), paint((236, 240, 246)))            # forearms across,
+                c.drawPath(K.capsule(x + 40, y + 30, x + 17, y + 6, 15, 13), paint((236, 240, 246)))
+                c.drawPath(K.rrect(x - 16, y - 30, x + 16, y + 30, 6), paint((12, 14, 18)))                     # holding a phone up to the face
+                c.drawPath(K.rrect(x - 13, y - 27, x + 13, y + 26, 4), G.glow_paint((150, 210, 255), 0.95))
+                c.drawPath(K.rrect(x - 5, y - 25, x + 5, y - 22, 1.5), paint((12, 14, 18)))
+                for sd in (-1, 1):
+                    c.drawCircle(x + sd * 17, y + 4, 8, paint((214, 180, 160)))
+                G.pool(c, x, y - 40, 70, (150, 210, 255), 0.45)
+                c.drawCircle(x, y - 80, 17, G.glow_paint((150, 210, 255), 0.35))                                 # its light on the face
             else:
                 w = 96
                 Hl.brass(c, x - w / 2, y - 18, w, 36)
-                K.text(c, "RESERVED", x, y + 7, 15, "cinzel-600", (44, 28, 10), tag="plaque")
+                K.text(c, "RESERVED", x, y + 7, 17, "cinzel-600", (44, 28, 10), tag="plaque")
     c.restore()
     c.drawPaint(paint(shader=K.rad((540, 900), 1100, [(0, 0, 0, 0.0), (0, 0, 0, 0.0), (0, 0, 0, 0.7)], [0, 0.55, 1])))
     return st.arr

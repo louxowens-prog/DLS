@@ -304,23 +304,40 @@ def car(c, x, y, ang, s=1.0, col=(150, 160, 176), a=1.0):
     c.restore()
 
 
-def door_inside(c, T, knock=0.0, light=1.0, a=1.0, shake=0.0):
+def door_inside(c, T, knock=0.0, light=1.0, a=1.0, shake=0.0, feet=0.0, dust_t=()):
     """An apartment door from inside at night: dark, a cold line of corridor light underneath and round the edges,
-    a peephole glowing; on each knock the light in the gap jumps and the door shivers."""
+    a peephole glowing. On each knock the door jolts in its frame, the light in the gap jumps, dust shakes down from
+    the lintel; feet > 0: two shadows standing in the strip of light under the door - someone is out there."""
     c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((14, 16, 20), a))
-    dx = shake * math.sin(T * 90) * 6
-    x0, x1, y0, y1 = 300 + dx, 780 + dx, 360, 1640
+    x0, x1, y0, y1 = 300, 780, 360, 1640
     c.drawRect(skia.Rect.MakeLTRB(x0 - 40, y0 - 40, x1 + 40, y1), paint((30, 32, 38), a))
+    k = light * (1 + 1.5 * knock)
+    # the light under the door, and the two shadows standing in it
+    c.drawRect(skia.Rect.MakeLTRB(x0, y1 - 6, x1, y1 + 8), G.glow_paint((210, 230, 255), min(1.0, 0.8 * k) * a, blur=3))
+    G.pool(c, (x0 + x1) / 2, y1 + 40, 380, (180, 210, 255), 0.25 * k * a, squash=0.25)
+    if feet > 0:
+        for fx in (x0 + 150, x0 + 290):
+            c.drawRect(skia.Rect.MakeLTRB(fx, y1 - 8, fx + 70, y1 + 10), paint((6, 6, 10), 0.95 * feet * a))
+            c.drawPath(K.path([(fx, y1 + 10), (fx + 70, y1 + 10), (fx + 90, y1 + 60), (fx - 20, y1 + 60)]), paint((6, 6, 10), 0.5 * feet * a, blur=8))
+    c.save()                                                         # the slab jolts in its frame
+    c.translate(shake * 9 * math.sin(T * 110), shake * 3 * math.sin(T * 71))
+    c.rotate(shake * 0.5 * math.sin(T * 83))
     c.drawRect(skia.Rect.MakeLTRB(x0, y0, x1, y1), paint(shader=K.lin((x0, 0), (x1, 0), [(40, 42, 50), (54, 56, 64), (34, 36, 42)]), a=a))
     for (py0, py1) in ((440, 900), (980, 1560)):
         c.drawRect(skia.Rect.MakeLTRB(x0 + 60, py0, x1 - 60, py1), paint((26, 28, 34), 0.8 * a, stroke=6))
-    k = light * (1 + 1.5 * knock)
-    c.drawRect(skia.Rect.MakeLTRB(x0, y1 - 6, x1, y1 + 8), G.glow_paint((210, 230, 255), min(1.0, 0.8 * k) * a, blur=3))
-    G.pool(c, (x0 + x1) / 2, y1 + 40, 380, (180, 210, 255), 0.25 * k * a, squash=0.25)
-    c.drawLine(x1 + 2, y0, x1 + 2, y1, G.glow_paint((210, 230, 255), min(1.0, 0.3 * k) * a, blur=2))
     c.drawCircle((x0 + x1) / 2, 760, 12, G.glow_paint((230, 240, 255), min(1.0, 0.6 * k) * a))
     c.drawCircle(x1 - 70, 1000, 18, paint((140, 146, 156), a))
     c.drawRect(skia.Rect.MakeLTRB(x1 - 90, 960, x1 - 50, 980), paint((120, 126, 136), a))
+    c.restore()
+    c.drawLine(x1 + 2, y0, x1 + 2, y1, G.glow_paint((210, 230, 255), min(1.0, 0.3 * k) * a, blur=2))
+    rng = K.rng_at(5, 61)
+    for tk in dust_t:                                                # dust shaken loose from the lintel, falling
+        u = T - tk
+        if 0 <= u < 1.2:
+            for i in range(26):
+                px = rng.uniform(x0 - 20, x1 + 20)
+                py = y0 - 30 + 0.5 * 900 * u ** 2 * rng.uniform(0.6, 1.0)
+                c.drawCircle(px, py, rng.uniform(1.0, 2.6), paint((190, 200, 214), 0.7 * (1 - u / 1.2) * a))
 
 
 def candle_crowd(c, T, a=1.0, seed=0, nadia_x=540, n=40):

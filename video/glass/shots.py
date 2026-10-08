@@ -48,6 +48,32 @@ def printed(i, T, idx, **extra):
     return a
 
 
+_BOTH = {}
+
+
+def _both_lettered(i):
+    """Do shot i and the shot before it both carry lettering across their dissolve? (Probed once, at its middle.)"""
+    if i not in _BOTH:
+        t0, name, tr, lk = EDIT[i]
+        d = TRANS.get(tr, 0.0)
+        saved = list(K.TEXT)
+        n = [0, 0]
+        for f in (0.15, 0.5, 0.95):                                # (lettering can arrive part-way through)
+            tm = t0 + d * f
+            for jj, j in enumerate((i - 1, i)):
+                K.TEXT.clear()
+                shot(EDIT[j][1], tm, int(round(tm * FPS)))
+                n[jj] += len(K.TEXT)
+        K.TEXT[:] = saved
+        _BOTH[i] = n[0] > 0 and n[1] > 0
+    return _BOTH[i]
+
+
+def _sstep(a, b, x):
+    u = min(1.0, max(0.0, (x - a) / (b - a)))
+    return u * u * (3 - 2 * u)
+
+
 def render_frame(T, idx=None, overlays=True):
     K.TEXT.clear()
     idx = int(round(T * FPS)) if idx is None else idx
@@ -56,22 +82,32 @@ def render_frame(T, idx=None, overlays=True):
     d = TRANS.get(tr, 0.0)
     in_tr = i > 0 and d > 0 and T < t0 + d
     k = K.ease((T - t0) / d) if in_tr else 1.0
+    # in a dissolve between two lettered shots, the old lettering leaves in the first half and the new arrives in the
+    # second, so the words never lie on top of each other
+    fade = in_tr and tr in ("dissolve", "slow", "super") and _both_lettered(i)
+    kk = (T - t0) / d if in_tr else 1.0
     if in_tr and tr == "burn" and (T - t0) / d < 0.5:
         # the outgoing frame catches fire on the lamp and burns through to white
         u = (T - t0) / d / 0.5
         arr = printed(i - 1, T, idx, burn=0.15 + 0.85 * u, burn_at=lk.get("burn_at", (0.8, 0.2)))
     else:
+        K.TEXT_A[0] = _sstep(0.5, 0.95, kk) if fade else 1.0
         arr = printed(i, T, idx)
+        K.TEXT_A[0] = 1.0
         if in_tr:
             if tr in ("dissolve",):
                 saved = list(K.TEXT)
+                K.TEXT_A[0] = 1 - _sstep(0.0, 0.45, kk) if fade else 1.0
                 prev = printed(i - 1, T, idx)
+                K.TEXT_A[0] = 1.0
                 K.TEXT[:] = saved
                 arr[..., :3] = (prev[..., :3] * (1 - k) + arr[..., :3] * k).astype(np.uint8)
             elif tr in ("slow", "super"):
                 # a double exposure: both images add their light (a screen blend of the two, cross-weighted)
                 saved = list(K.TEXT)
+                K.TEXT_A[0] = 1 - _sstep(0.0, 0.45, kk) if fade else 1.0
                 prev = printed(i - 1, T, idx)
+                K.TEXT_A[0] = 1.0
                 K.TEXT[:] = saved
                 kk = (T - t0) / d
                 wa = min(1.0, 2 * (1 - kk))

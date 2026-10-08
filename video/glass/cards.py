@@ -19,6 +19,9 @@ def spaced(c, s, x, y, size, font="italiana-400", track=0.3, color=C.GOLD_HI, a=
     f = K.font(font, size)
     ws = [f.measureText(ch) for ch in s]
     total = sum(ws) + track * size * (len(s) - 1)
+    a = a * K.TEXT_A[0]
+    if a < 0.03:
+        return total
     xx = x - total / 2
     p = paint(color, a) if shader is None else paint(shader=shader, a=a)
     for ch, w in zip(s, ws):

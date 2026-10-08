@@ -68,7 +68,7 @@ EXPR = {
     "dread": dict(open=0.08, brow=0.45, wide=0.3, smile=-0.2),
     "polite": dict(open=0.0, brow=0.1, wide=0.0, smile=0.45),
     "blank": dict(open=0.0, brow=0.0, wide=0.15, smile=0.0),
-    "scream": dict(open=0.9, brow=1.0, wide=0.8, smile=-0.5),
+    "scream": dict(open=1.0, brow=1.7, wide=1.0, smile=-0.5, yell=1.0),
     "lost": dict(open=0.12, brow=0.3, wide=0.1, smile=-0.1),
 }
 
@@ -193,7 +193,8 @@ def _mouth(c, P, E, talk, porc):
     sm = E["smile"]
     o = min(1.0, E["open"] + 0.55 * talk)
     lips = P["lips"]
-    w = 52 + 4 * sm
+    yell = E.get("yell", 0.0)                                  # a scream: the mouth pulled into a tall dark oval
+    w = (52 + 4 * sm) * (1 - 0.3 * yell)
     cy = 134
     up = skia.Path()
     up.moveTo(-w, cy - 2 * sm)
@@ -201,7 +202,7 @@ def _mouth(c, P, E, talk, porc):
     up.cubicTo(w * 0.25, cy - 22, w * 0.6, cy - 18, w, cy - 2 * sm)
     up.cubicTo(w * 0.5, cy + 2 + o * 6, -w * 0.5, cy + 2 + o * 6, -w, cy - 2 * sm)
     up.close()
-    gap = o * 26
+    gap = o * 26 + yell * 88 * o
     lo = skia.Path()
     lo.moveTo(-w + 2, cy - 2 * sm + gap * 0.2)
     lo.cubicTo(-w * 0.5, cy + 6 + gap, w * 0.5, cy + 6 + gap, w - 2, cy - 2 * sm + gap * 0.2)

@@ -22,6 +22,7 @@ PORCELAIN, PORC_SH, SKIN, SKIN_D = (240, 236, 232), (170, 176, 196), (232, 190, 
 PAPER, PAPER_D, INKBLUE = (236, 226, 200), (196, 180, 150), (30, 34, 80)
 
 TEXT = []                          # lettering drawn this frame, for the collision lint: (x0, y0, x1, y1, tag)
+TEXT_A = [1.0]                     # a multiplier on all lettering (set by the compositor during dissolves)
 
 
 # ------------------------------------------------------------------ basics
@@ -181,9 +182,13 @@ def wrap(s, f, maxw):
 
 def text(c, s, x, y, size, fname="jost-500", color=WHITE, align="center", tag="label", a=1.0, outline=None, ow=10,
          outline2=None, ow2=0, shadow=None):
-    """One line of lettering at baseline y (outlined like a TV telop), registered for the lint."""
+    """One line of lettering at baseline y (outlined like a TV telop), registered for the lint. TEXT_A[0] scales every
+    piece of lettering (the compositor fades a shot's lettering out of, or into, a dissolve so text never lies on text)."""
+    a = a * TEXT_A[0]
     f = font(fname, size)
     w = f.measureText(s)
+    if a < 0.03:
+        return w
     x0 = x - w / 2 if align == "center" else (x - w if align == "right" else x)
     if shadow is not None:
         c.drawString(s, x0 + size * 0.06, y + size * 0.08, f, paint(shadow, a * 0.8, stroke=ow2 or ow))

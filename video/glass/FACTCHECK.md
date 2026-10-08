@@ -1,15 +1,15 @@
 # GLASS: fact check
 
 Every factual claim in the narration, where it comes from, and how the wording was kept inside what the source says.
-The story of Nadia is a dramatisation: she is invented, but each thing that happens to her has a documented real-world
+The story of Nadia is a dramatization: she is invented, but each thing that happens to her has a documented real-world
 counterpart (listed at the end). No real people, companies or brands are named or shown.
 
 ## I. The Eye
 
 | Line | Source | Notes |
 |---|---|---|
-| "Cameras. Faces. Microphones. License plates. Location. Clicks. Receipts." / "Each one, a keyhole. Joined together, a house made of glass." | The streams named in the brief; the joining-up point is the core of the "mosaic" argument in surveillance research (see ACLU, *The Dawn of Robot Surveillance*, 2019). | Framing, not a statistic. |
-| "Watching a million cameras once took an army. Now software can do it alone." | ACLU, Jay Stanley, [*The Dawn of Robot Surveillance: AI, Video Analytics, and Privacy*](https://www.aclu.org/publications/dawn-robot-surveillance) (June 2019): video analytics remove the human-attention bottleneck that used to limit what camera networks could be used for. | "Can do it" describes capability, not that every network is fully automated today. |
+| "Cameras. Faces. Microphones. License plates. Location. Clicks. Receipts." / "Joined together, they make a house of glass." | The streams named in the brief; the joining-up point is the core of the "mosaic" argument in surveillance research (see ACLU, *The Dawn of Robot Surveillance*, 2019). | Framing, not a statistic. |
+| "Watching a million cameras once took an army. Now software can do most of it." | ACLU, Jay Stanley, [*The Dawn of Robot Surveillance: AI, Video Analytics, and Privacy*](https://www.aclu.org/publications/dawn-robot-surveillance) (June 2019): video analytics remove the human-attention bottleneck that used to limit what camera networks could be used for. | "Most of it": the watching and flagging can be automated; people still review alerts and act on them. |
 | "Camera. Face. Behavior. Movement. Alert." | Same ACLU report: identification, behaviour/anomaly detection, tracking across cameras and automated alerts are all marketed video-analytics functions. | The brief's own pipeline, voiced by the machine. |
 | "It can know where you go, who you meet, what you buy, read and say, and which protests you join." | The brief's list; protest attendance is documented below (Moscow). | "Can know": capability once the streams are joined. |
 
@@ -27,16 +27,16 @@ counterpart (listed at the end). No real people, companies or brands are named o
 | Line | Source | Notes |
 |---|---|---|
 | "In one study, four location points singled out ninety-five percent of people." | Y.-A. de Montjoye, C. Hidalgo, M. Verleysen & V. Blondel, ["Unique in the Crowd: The privacy bounds of human mobility"](https://www.nature.com/articles/srep01376), *Scientific Reports* 3:1376 (2013): in 15 months of mobility data for 1.5 million people, four spatio-temporal points were enough to uniquely identify 95% of them. | "In one study" keeps it to that dataset. |
-| "Join enough data, and AI can guess your income, your relationships, your health, your beliefs." | Beliefs and relationship status: M. Kosinski, D. Stillwell & T. Graepel, ["Private traits and attributes are predictable from digital records of human behavior"](https://www.pnas.org/doi/10.1073/pnas.1218772110), *PNAS* 110(15) (2013), predicting religious and political views, relationship status and more from Facebook likes. Income: J. Blumenstock, G. Cadamuro & R. On, ["Predicting poverty and wealth from mobile phone metadata"](https://www.science.org/doi/10.1126/science.aac4420), *Science* 350 (2015). Health: the retail pregnancy score (Duhigg, below). | "Guess": these are statistical predictions, not certainties. |
+| "Join enough data, and AI can guess your income, relationships, health and beliefs." | Beliefs and relationship status: M. Kosinski, D. Stillwell & T. Graepel, ["Private traits and attributes are predictable from digital records of human behavior"](https://www.pnas.org/doi/10.1073/pnas.1218772110), *PNAS* 110(15) (2013), predicting religious and political views, relationship status and more from Facebook likes. Income: J. Blumenstock, G. Cadamuro & R. On, ["Predicting poverty and wealth from mobile phone metadata"](https://www.science.org/doi/10.1126/science.aac4420), *Science* 350 (2015). Health: the retail pregnancy score (Duhigg, below). | "Guess": these are statistical predictions, not certainties. |
 
 ## IV. The Scales
 
 | Line | Source | Notes |
 |---|---|---|
 | "In Moscow, metro cameras helped detain protesters on their way to rallies." | Reuters investigation, "Facial recognition helping Putin curb dissent with the aid of U.S. tech" (28 Mar 2023; [archive record](https://reuters.screenocean.com/record/1717661)): from 2,000+ court files, facial recognition helped produce hundreds of protest detentions, and after 2022 was used to stop people pre-emptively, including in the metro on the way to protests. | |
-| "In Iran, cameras at a university gate scanned for women without a hijab." | UN Independent International Fact-Finding Mission on the Islamic Republic of Iran, [report A/HRC/58/63](https://digitallibrary.un.org/record/4084543) (March 2025): facial-recognition software was reportedly installed at the entrance gate of Amirkabir University in Tehran to monitor women students' compliance with hijab rules; coverage e.g. [Iran International, 14 Mar 2025](https://www.iranintl.com/en/202503147406). | The report says "reportedly"; the film does not name the university. |
+| "In Iran, cameras at a university gate reportedly scanned for women without a hijab." | UN Independent International Fact-Finding Mission on the Islamic Republic of Iran, [report A/HRC/58/63](https://digitallibrary.un.org/record/4084543) (March 2025): facial-recognition software was reportedly installed at the entrance gate of Amirkabir University in Tehran to monitor women students' compliance with hijab rules; coverage e.g. [Iran International, 14 Mar 2025](https://www.iranintl.com/en/202503147406). | The narration keeps the report's "reportedly"; the film does not name the university. |
 | "In the US, at least fifteen people have been wrongly arrested after face matches." | ACLU of Florida, [press release, 10 June 2026](https://aclu.org/press-releases/florida-man-sues-police-over-wrongful-arrest-due-to-false-facial-recognition-match): 15 known wrongful arrests nationally after false facial-recognition matches (14 as of April 2026). | "At least": the ACLU counts only publicly documented cases. |
-| "And watched people go quiet: after the 2013 spying leaks, reading about terrorism online fell, and stayed down." | J. Penney, ["Chilling Effects: Online Surveillance and Wikipedia Use"](https://doi.org/10.15779/Z38SS13), *Berkeley Technology Law Journal* 31(1) (2016): after the June 2013 surveillance revelations, views of terrorism-related articles on a major online encyclopedia dropped immediately and the long-term trend stayed lower. | No percentage stated (estimates vary by method). |
+| "And people go quiet: after the 2013 spying leaks, views of terrorism articles dropped sharply." | J. Penney, ["Chilling Effects: Online Surveillance and Wikipedia Use"](https://doi.org/10.15779/Z38SS13), *Berkeley Technology Law Journal* 31(1) (2016): after the June 2013 surveillance revelations, views of 48 terrorism-related articles on a major online encyclopedia dropped immediately (roughly 20-30% depending on the model). | The film claims only the drop, not a lasting effect (the long-term trend is less settled and was disputed). The on-screen chart shows a drop of that size, labelled "one study, 48 articles". |
 
 ## The lesson
 
@@ -50,11 +50,18 @@ Nadia's day is invented. Each step has a documented real-world counterpart:
 
 | Step | Counterpart |
 |---|---|
-| License-plate readers log her car | Automated license-plate reader networks that store every passing plate with time and place (ACLU, [*You Are Being Tracked*](https://www.aclu-md.org/app/uploads/2018/06/071613-aclu-alprreport-opt-v05.pdf), July 2013). |
+| License-plate readers log her car at junction after junction | Automated license-plate reader networks that store every passing plate with time and place (ACLU, [*You Are Being Tracked*](https://www.aclu-md.org/app/uploads/2018/06/071613-aclu-alprreport-opt-v05.pdf), July 2013). |
 | AI scores her calls, tone and face | Call-centre software that scores agents' tone and emotion in real time (the kind of workplace emotion recognition the EU now bans). |
 | Seven minutes in the bathroom: flagged idle | Warehouse "time off task" tracking (The Verge, 2019). |
 | Her work laptop logs her reading about unions | Employee-monitoring software logs websites visited; employers have tracked unionisation risk (e.g. a supermarket chain's union "heat map", reported in 2020). |
-| A model decides she's pregnant from vitamins and unscented lotion | Charles Duhigg, ["How Companies Learn Your Secrets"](https://www.nytimes.com/2012/02/19/magazine/shopping-habits.html), *The New York Times Magazine*, 16 Feb 2012: a retailer's pregnancy-prediction score built from about 25 products, including unscented lotion and supplements. |
+| A model decides she's pregnant from unscented lotion, supplements and cotton balls (on screen: unscented lotion, calcium + magnesium, zinc, cotton balls - nothing that says "pregnant") | Charles Duhigg, ["How Companies Learn Your Secrets"](https://www.nytimes.com/2012/02/19/magazine/shopping-habits.html), *The New York Times Magazine*, 16 Feb 2012: a retailer's pregnancy-prediction score built from about 25 products, including unscented lotion, supplements such as calcium, magnesium and zinc, and cotton balls. |
 | A camera matches her face at a vigil | Facial recognition used on protesters (Moscow, Reuters 2023). |
 | Her shifts are cut | Individual productivity scores used in management decisions (NYT, 2022). |
-| A face match puts her at a robbery she never saw | The ACLU's 15 known wrongful arrests after false face matches (2026). |
+| A face match puts her at a robbery she never saw | The ACLU's 15 known wrongful arrests after false face matches (2026). The closest single case: in Detroit in February 2023 a woman eight months pregnant was arrested for robbery and carjacking after a false face match on an eight-year-old photo; the case was dropped ([NBC News, Aug 2023](https://www.nbcnews.com/news/us-news/detroit-woman-sues-city-falsely-arrested-8-months-pregnant-due-facial-rcna98447)). |
+
+## The twist
+
+| Line | Note |
+|---|---|
+| "Nadia isn't real. Every part of her day is." | Each step of her day has the documented counterpart listed above. |
+| "And the same sensors are in your hand right now." | A phone carries a camera, microphones, location, search history, payments and contacts - the same kinds of streams that exposed her (the plate readers, street cameras and workplace systems are not in your phone, and the line does not claim they are). |

@@ -14,27 +14,28 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 PRE = {
     "h1": 0.35,                    # a porcelain face; a targeting box closes on it
     "h2": 0.15,
-    "c1": 1.4,                    # the white room humming; the chair; she leans in
-    "e1": 3.5,                    # going under: water, then a desert at dawn in silence; the title; chapter I
-    "e8": 1.3,                    # dead silence; her eyes snap open; a beat; she speaks
-    "w1": 1.6,                    # chapter II
+    "c1": 0.9,                    # the white room humming; the chair; she leans in
+    "e1": 2.9,                    # going under: water, then a desert at dawn in silence; the title; chapter I
+    "e8": 1.1,                    # dead silence; her eyes snap open; a beat; she speaks
+    "w1": 1.25,                    # chapter II
     "w6": 0.3,
-    "o1": 1.6,                    # chapter III
+    "o1": 1.25,                    # chapter III
     "o6": 0.3,
-    "t2": 1.6,                    # chapter IV
-    "t6": 1.4,                    # dead silence; the scales slam; a beat; she speaks
-    "d1": 1.0,
-    "n1": 0.9,                    # the cold world: a bedroom at dawn, an alarm
+    "t2": 1.25,                    # chapter IV
+    "t6": 1.2,                    # dead silence; the scales slam; a beat; she speaks
+    "d1": 0.8,
+    "n1": 0.7,                    # the cold world: a bedroom at dawn, an alarm
     "n10": 0.2,
-    "n11": 1.5,                   # dead silence; three knocks
+    "n11": 1.4,                   # dead silence; three knocks
     "n12": 0.1,
-    "x1": 2.2,                    # the collapse: sandstorm, glass, drums, brass, chant
-    "y1": 1.3,                    # cut to silence; the last vitrine
+    "x1": 3.0,                    # the collapse: sandstorm, glass, drums, brass, chant
+    "y1": 1.85,                    # cut to silence; the last vitrine; the melody, broken, alone
     "y3": 1.0,                    # dead silence; the black glass; something behind you
-    "z1": 1.0,                    # the white room again
+    "z1": 0.7,                    # the white room again
 }
-TIGHT = {"NAR": 0.36, "NADIA": 0.45}   # longest pause left inside a line, by speaker
-TAIL = 2.6                        # the last image: the endless room of chairs
+TIGHT = {"NAR": 0.33, "NADIA": 0.45}   # longest pause left inside a line, by speaker
+TIGHT_LINE = {"h2": 0.6, "c1": 0.6, "y1": 0.55, "z1": 0.5, "z3": 0.45}   # where the guide lets a beat breathe
+TAIL = 4.2                        # the last image: the endless room of chairs, the melody alone and slow
 
 
 def _comb(x, delay_s, fb):
@@ -89,7 +90,9 @@ def treat(wav, kind):
         up, dn = np.pad(up, (0, len(w) - len(up))), np.pad(dn, (0, len(w) - len(dn)))
         wh = whisper(w.astype(np.float32), keep=0.0, seed=11).astype(np.float64)
         wh = np.concatenate([np.zeros(int(0.009 * SR)), wh])[: len(w)]
-        mixw = main + 0.45 * up + 0.45 * dn + 1.0 * low + 0.5 * wh
+        mixw = main + 0.45 * up + 0.45 * dn + 0.6 * low + 0.5 * wh
+        # a lift at 2-4.5 kHz so the words stay crisp through the layers (the octave shadow is thinner too)
+        mixw = mixw + 0.45 * signal.sosfilt(signal.butter(2, [2000 / (SR / 2), 4500 / (SR / 2)], "band", output="sos"), mixw)
         w = np.tanh(1.6 * mixw / (np.abs(mixw).max() + 1e-9))
     elif kind == "system":
         f, t, Z = signal.stft(w, SR, nperseg=480, noverlap=320)
@@ -214,7 +217,7 @@ class Timeline:
         else:
             wav = why_chorus(spoken) if v == "chorus" else speak_fx(spoken, v, SPEED.get(key, sp), PITCH.get(key, pt))
             if who in TIGHT:
-                wav = tighten(wav, TIGHT[who])
+                wav = tighten(wav, TIGHT_LINE.get(key, TIGHT[who]))
             words = word_times(spoken, wav)
         wav0 = wav
         if key in FX and FX[key] != "why":

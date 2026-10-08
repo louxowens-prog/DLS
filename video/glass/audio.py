@@ -92,7 +92,7 @@ T_COLLAPSE = cut("x_collapse")
 T_CUT = cut("y_vitrine")
 T_LUNGE = E("y3") + 0.02
 SILENCES = [(E("e7") + 0.22, T_EYES - 0.005), (E("t5") + 0.22, T_SLAM - 0.005), (E("n10") + 0.05, KNOCKS[0] - 0.005),
-            (T_CUT, T_CUT + 0.75), (E("y2") + 0.15, S("y3") - 0.55)]
+            (T_CUT, T_CUT + 0.6), (E("y2") + 0.15, S("y3") - 0.55)]
 BEAT = 0.2                                       # the trance's eighth note (12/8, a dotted quarter = 0.6 s)
 
 _ONE = {}
@@ -146,13 +146,14 @@ def drone(bus, t0, t1, notes=(38, 45), gain=1.0, seed=0, att=1.0):
     bus.add(Tr.low_strings(list(notes), t1 - t0, 1.0, seed=seed, att=att), t0, gain, until=t1 + 0.6)
 
 
-def card_hit(mus, fx, t, seed=0, big=1.0):
+def card_hit(mus, fx, t, seed=0, big=1.0, reed=True):
     """A chapter card: a frame drum and a goblet drum together, a reed cry, a tam-tam blooming, a low chord."""
     fx.add(DM.reverse_cymbal(0.6, 0.5, seed=seed), t - 0.6)
     mus.add(Tr.bendir("dum", 1.0, seed), t, 1.2 * big)
     mus.add(Tr.darbuka("doum", 1.0, seed), t, 0.9 * big)
     mus.add(Tr.tamtam(0.8 * big, 4.0, seed=seed), t, 1.0)
-    mus.add(Tr.ghaita(74, 0.9, 1.0, seed=seed), t + 0.05, 0.8 * big, pan=0.4)
+    if reed:                                                         # (left out where the melody itself enters on the card)
+        mus.add(Tr.ghaita(74, 0.9, 1.0, seed=seed), t + 0.05, 0.8 * big, pan=0.4)
     mus.add(Tr.low_strings([38, 45, 50], 1.4, 1.0, seed=seed, att=0.05), t, 1.0 * big)
 
 
@@ -203,12 +204,12 @@ def score(mus, fx):
     drone(mus, a, b, (38, 45), 0.8, seed=3)
     # the seven vitrines: a spotlight thunking on for each word
     for i, w in enumerate(("Cameras.", "Faces.", "Microphones.", "License", "Location.", "Clicks.", "Receipts.")):
-        tw = Wx("e1", w) - 0.16 if i else cut("e_list")
-        fx.add(DM.door_slam(0.22, seed=i), tw)
+        tw = Wx("e1", w) - 0.16 if i else cut("e_list") - 0.18
+        fx.add(DM.door_slam(0.22 if i else 0.14, seed=i), tw)
         fx.add(Tr.shutter(0.25, seed=i), tw + 0.02)
     # reed phrases in the air between lines
     mus.add(Tr.ghaita_phrase([(69, 1), (70, 0.5), (69, 0.5), (67, 1.5)], 0.22, 0.7, seed=4), E("e1") - 0.1, 0.5, pan=0.35)
-    fx.add(O.whoosh(0.9, True, seed=3, amp=0.8), cut("e_keyhole") + 0.2)                     # rushing into the keyhole
+    fx.add(O.whoosh(0.9, True, seed=3, amp=0.8), cut("e_house") - 0.3)                       # rushing out into the dunes
     tk = Wx("e2", "house") - 0.2
     for k in range(9):                                                                         # eyes opening in the dark
         fx.add(Tr.aperture(0.35, 0.3, seed=k + 10), tk + k * 0.13 + rng.uniform(0, 0.05), pan=rng.uniform(0.2, 0.8))
@@ -233,19 +234,21 @@ def score(mus, fx):
     mus.add(Tr.choir([74, 75, 80], 1.2, 1.0, vowel="a", attack=0.02), T_EYES, 1.0)
     mus.add(DM.boom(1.0, 40.0, 2.2), T_EYES, 0.8)
     mus.add(Tr.choir([38, 45], E("e8") - T_EYES + 0.8, 0.8, vowel="o", attack=0.4), T_EYES + 0.3, 0.8)
+    fx.add(Y.creak(0.6, 0.5, seed=33, f0=130, f1=80), T_EYES + 0.3, pan=0.4)                    # her collar of lenses turning: leather, metal
+    fx.add(__import__("instr").clink(0.3, seed=7), T_EYES + 0.42, pan=0.6)
     # =========== II. THE WORKHOUSE (emerald): the trance goes mechanical
-    card_hit(mus, fx, cut("k_2"), seed=2)
+    card_hit(mus, fx, cut("k_2"), seed=2, reed=False)
     a, b = cut("w_corridor"), E("w6") + 0.2
-    theme_at(mus, cut("k_2") + 0.2, Tr.ghaita_phrase([(m, bb) for m, bb in Tr.THEME], 0.24, 0.8, seed=8, vib=1.6), 0.55, pan=0.6, until=a + 2.0)
+    theme_at(mus, cut("k_2") + 0.2, Tr.ghaita_phrase([(m, bb) for m, bb in Tr.THEME], 0.24, 0.8, seed=8, vib=1.6), 0.95, pan=0.6, until=a + 2.0)
     groove(mus, a, b, dict(darbuka=0.55, krakeb=0.18), k_fn=lambda t: 0.6 + 0.4 * min(1.0, (t - a) / 10.0), seed=2, until=b)
     fx.add(Tr.ticks(S("w6") - 0.2 - a, 6.0, 0.55, seed=3), a, until=S("w6") - 0.2)                # clockwork under everything, until she speaks
     drone(mus, a, b, (38, 39), 0.75, seed=6)                                                      # D against Eb: unease
     for i, w in enumerate(("Keystrokes.", "Emails.", "Calls.", "face.", "bathroom")):            # instruments clicking on
         fx.add(DM.typewriter(3, 0.05, 0.28, seed=i), Wx("w2", w) - 0.24)
-    tk = Wx("w3", "track") - 0.6
-    for j in range(8):                                                                            # eight towers open their eyes
-        mus.add(Tr.brass_stab([38 + (j % 2) * 7, 50], 0.5, seed=j, dur=0.3), tk + j * 0.12, 0.7)
-        fx.add(Tr.aperture(0.3, 0.15, seed=40 + j), tk + j * 0.12)
+    tk = Wx("w3", "Eight") + 0.05
+    for j in range(8):                                                                            # eight towers open their eyes, on "Eight"
+        mus.add(Tr.brass_stab([38 + (j % 2) * 7, 50], 0.5, seed=j, dur=0.3), tk + j * 0.11, 0.6)
+        fx.add(Tr.aperture(0.3, 0.15, seed=40 + j), tk + j * 0.11)
     tf = Wx("w4", "firings") - 0.1
     fx.add(Tr.ticks(tf - cut("w_idle"), 4.0, 0.6, seed=8), cut("w_idle"), until=tf)
     fx.add(O.trapdoor(1.0), tf - 0.1)
@@ -259,17 +262,19 @@ def score(mus, fx):
     for k, tc in enumerate((S("w6") - 0.4, S("w6") - 0.18, E("w6") + 0.05, E("w6") + 0.25)):   # the smile forced wider in jerks
         fx.add(O._hp(Tr.porcelain_creak(0.6, seed=k), 4000), tc)
     # =========== III. THE ORACLE (royal): no drums - silk, choir, the theme warped
-    card_hit(mus, fx, cut("k_3"), seed=3)
+    card_hit(mus, fx, cut("k_3"), seed=3, reed=False)
     a, b = cut("o_veils"), E("o6") + 0.2
     fx.add(Tr.silk(cut("o_points") - a + 0.6, 0.9, seed=4, rate=0.5), a)
     mus.add(Tr.choir([62, 66, 69], b - a, 0.6, vowel="a", attack=1.5), a, 0.8)
     drone(mus, a, b, (38, 45), 0.6, seed=7)
-    theme_at(mus, a + 0.1, DM.wow(Tr.theme(0.4, 0.8, seed=3), depth=40.0, rate=0.5, flutter=6.0), 0.75, pan=0.4, until=cut("o_points") + 1.6)
-    tp = Wx("o2", "four") - 0.1
-    for j in range(4):                                                                            # four pins
-        fx.add(O.whoosh(0.25, False, seed=j, amp=0.4), tp + j * 0.42 - 0.25)
-        fx.add(DM.metal_hit(0.4, seed=j + 5, size=0.5), tp + j * 0.42)
-        mus.add(DM.bell(86 - j * 2, 0.6, 2.0), tp + j * 0.42, 0.8)
+    # the melody's second return, warped, enters on the chapter card where nothing else is speaking
+    theme_at(mus, cut("k_3") + 0.15, DM.wow(Tr.theme(0.4, 0.8, seed=3), depth=40.0, rate=0.5, flutter=6.0), 0.85, pan=0.4, until=cut("o_points") + 1.6)
+    pdt = __import__("sc_oracle").PIN_DT
+    tp = Wx("o2", "four") - 0.1 - 3 * pdt
+    for j in range(4):                                                                            # four pins, landing in a burst on "four"
+        fx.add(O.whoosh(0.2, False, seed=j, amp=0.4), tp + j * pdt - 0.2)
+        fx.add(DM.metal_hit(0.4, seed=j + 5, size=0.5), tp + j * pdt)
+        mus.add(DM.bell(86 - j * 2, 0.6, 2.0), tp + j * pdt, 0.8)
     for i, (w, _t, _v) in enumerate(__import__("sc_oracle").INFER):                               # each guess engraved
         tw = Wx("o4", w) - 0.08
         mus.add(DM.bell(74 + [0, 3, 7, 10][i], 0.8, 2.5), tw, 0.8, pan=0.3 + 0.13 * i)
@@ -277,9 +282,9 @@ def score(mus, fx):
     t0 = cut("o_mirror")
     fx.add(DM.whispers(b - t0, 0.8, seed=5), t0, 0.25)
     # =========== IV. THE SCALES (blood): the trance at full force, then everyone goes quiet
-    card_hit(mus, fx, cut("k_4"), seed=4, big=1.3)
+    card_hit(mus, fx, cut("k_4"), seed=4, big=1.3, reed=False)
     a, b = cut("t_metro"), cut("t_library") + 1.6
-    theme_at(mus, cut("k_4") + 0.15, DM.crush(DM.detune(Tr.theme(0.32, 0.8, seed=4), -0.4), bits=6, hold=4), 0.45, pan=0.55, until=a + 1.6)
+    theme_at(mus, cut("k_4") + 0.15, DM.crush(DM.detune(Tr.theme(0.32, 0.8, seed=4), -0.4), bits=6, hold=4), 0.9, pan=0.55, until=a + 1.6)
     groove(mus, a, b, dict(bendir=0.75, darbuka=0.6, krakeb=0.35, clap=0.5), seed=4, until=b + 0.4)
     drone(mus, a, b + 0.8, (38, 45), 0.9, seed=8)
     pat = [("u", 1, 1.4), (None, 0.5, 0), ("a", 0.5, 1.0), ("u", 1, 1.1), (None, 1, 0)] * 2
@@ -323,7 +328,10 @@ def score(mus, fx):
         mus.add(Tr.bendir("dum", 1.0, k), a + 0.1 + k * 1.2, 0.7)
     mus.add(Tr.choir([38, 45, 50], b - a + 0.4, 0.7, vowel="o", attack=1.0), a, 0.5)
     mb = O.music_box([(m + 12, bb) for m, bb in Tr.THEME], rate=lambda u: 1.0 - 0.35 * u, amp=0.9, seed=2, detune=lambda u: 70 * math.sin(u * 11))
-    mus.add(mb, a + 0.15, 0.55, pan=0.6, until=b + 0.2)
+    mus.add(mb, a + 0.15, 0.9, pan=0.6, until=b + 0.2)
+    for k in range(int((b - a) / 1.2) + 1):                                                       # each step: leather and metal
+        fx.add(Y.creak(0.5, 0.5, seed=40 + k, f0=150, f1=95), a + 0.55 + k * 1.2, pan=0.45)
+        fx.add(__import__("instr").clink(0.35, seed=k), a + 0.62 + k * 1.2, pan=0.55)
     # =========== NADIA: the cold world - room tones, a sparse pulse, and every system's little sound
     a, b = cut("n_mirror"), cut("x_collapse")
     for k in range(int((cut("n_door") - a) / 0.6)):                                             # a low pulse, like a slow heart
@@ -347,9 +355,9 @@ def score(mus, fx):
     fx.add(Y.error_tone(0.8), Wx("n4", "Flagged:") - 0.05)
     fx.add(DM.typewriter(8, 0.08, 0.5, seed=3), cut("n_union") + 0.2)
     fx.add(Y.error_tone(0.6), Wx("n5", "logs") - 0.3)
-    for w in ("vitamins,", "unscented", "lotion."):                                              # the checkout
-        fx.add(Tr.beep(2000, 0.07, 0.5), Wx("n6", w) - 0.1)
-    fx.add(DM.sub(29, 1.2, 0.6, att=0.05, rel=0.6), Wx("n6", "lotion.") + 0.25)
+    for w, dl in (("unscented", 0.0), ("supplements,", 0.0), ("supplements,", 0.2), ("cotton", 0.0)):     # the checkout, item by item
+        fx.add(Tr.beep(2000, 0.07, 0.5), Wx("n6", w) - 0.1 + dl)
+    fx.add(DM.sub(29, 1.2, 0.6, att=0.05, rel=0.6), Wx("n6", "balls.") + 0.2)
     tx_ = cut("n_exhibit")                                                                         # the gallery breaks in
     mus.add(Tr.choir([62, 63, 69], 1.6, 0.8, vowel="a", attack=0.05), tx_, 0.7)
     mus.add(DM.bell(86, 0.8, 2.0), Wx("n6", "pregnant.") - 0.1, 0.7)
@@ -376,38 +384,51 @@ def score(mus, fx):
     mus.add(DM.reverse_cymbal(1.4, 0.8, seed=6), T_COLLAPSE - 1.4)
     fx.add(Tr.glass_crack(0.9, seed=3), Wx("n12", "That's", 1) - 0.05)
     # =========== the collapse: drums, brass, chant, the theme as a war cry; glass and sand everywhere
+    # three seconds of crescendo; then, under her line, the score itself makes room - the drums and brass choke off, and
+    # only what sits below and above a voice goes on (taiko, sub, sand hiss, a high shimmer); then the last blow
     a, b = T_COLLAPSE, T_CUT
-    groove(mus, a, b, dict(bendir=1.0, darbuka=0.8, krakeb=0.5, clap=0.7), seed=9, until=b)
-    for k in range(int((b - a) / 0.6) + 1):
-        mus.add(Tr.taiko(0.9 + 0.1 * (k % 2), seed=k), a + k * 0.6, 0.8 + 0.4 * (k / ((b - a) / 0.6)))
-    mus.add(Tr.brass_swell([38, 45, 50, 57, 62], b - a, 1.0, seed=8, att=b - a - 0.6), a, 1.1)
-    mus.add(Tr.choir([62, 66, 69, 74], b - a, 1.0, vowel="a", attack=1.5), a, 1.0)
+    sx, ex = S("x1"), E("x1")
+    groove(mus, a, sx, dict(bendir=1.0, darbuka=0.8, krakeb=0.5, clap=0.7), seed=9, until=sx)
+    n = int((b - a) / 0.6) + 1
+    for k in range(n):                                                                            # the taiko never stops
+        tk_ = a + k * 0.6
+        mus.add(Tr.taiko(0.9 + 0.1 * (k % 2), seed=k), tk_, (0.7 + 0.6 * min(1.0, (tk_ - a) / (sx - a))) if tk_ < sx else 1.0)
+    mus.add(Tr.brass_swell([38, 45, 50, 57, 62], sx - a + 0.3, 1.0, seed=8, att=sx - a - 0.2), a, 1.15, until=sx + 0.05)
+    mus.add(Tr.choir([62, 66, 69, 74], sx - a + 0.3, 1.0, vowel="a", attack=1.5), a, 1.05, until=sx + 0.05)
     t = a
-    while t < b - 0.6:
-        mus.add(Tr.chant([("u", 1, 1.5), ("a", 0.5, 1.2), ("u", 0.5, 1.2), ("a", 1, 1.4)], BEAT * 1.5, root=50, seed=int(t * 10)), t, 0.7)
+    while t < sx - 0.6:
+        mus.add(Tr.chant([("u", 1, 1.5), ("a", 0.5, 1.2), ("u", 0.5, 1.2), ("a", 1, 1.4)], BEAT * 1.5, root=50, seed=int(t * 10)), t, 0.75, until=sx)
         t += 3 * BEAT * 1.5
-    mus.add(Tr.ghaita_phrase([(m + 12, bb) for m, bb in Tr.THEME], 0.3, 1.0, seed=20, vib=2.0), a + 1.0, 0.75, pan=0.4)
+    mus.add(Tr.ghaita_phrase([(m + 12, bb) for m, bb in Tr.THEME], 0.3, 1.0, seed=20, vib=2.0), a + 0.5, 0.9, pan=0.4, until=sx)
     for i, (m, bb) in enumerate(Tr.THEME):                                                        # the theme hammered out by the brass
-        tt = a + 1.6 + sum(x for _, x in Tr.THEME[:i]) * 0.3
-        mus.add(Tr.brass_stab([m - 12, m], 0.9, seed=i, dur=bb * 0.3 * 0.95), tt, 0.7)
+        tt = a + 1.0 + sum(x for _, x in Tr.THEME[:i]) * 0.28
+        if tt < sx - 0.1:
+            mus.add(Tr.brass_stab([m - 12, m], 0.9, seed=i, dur=bb * 0.28 * 0.95), tt, 0.75)
+    for k in range(int((ex - sx) / 0.6) + 1):                                                     # under her voice: sub pulses
+        mus.add(DM.sub(30, 0.5, 0.6, att=0.01, rel=0.4), sx + k * 0.6)
+    fx.add(O._hp(Tr.sand(ex - sx + 0.6, 1.0, seed=14, gust=1.0), 5000), sx, 0.9)
     fx.add(Tr.shatter(1.0, seed=8, dur=2.4), a + 0.02)
     fx.add(Tr.shatter(0.8, seed=9, dur=2.0), a + 0.6)
     fx.add(O.rumble(b - a, 1.0), a)
-    fx.add(Tr.sand(b - a, 1.0, seed=10, gust=1.4), a + 0.9)
-    fx.add(Y.wind(b - a, 0.9, seed=11), a + 0.9)
-    for k in range(7):                                                                            # every door opening
-        fx.add(DM.door_slam(0.5, seed=k + 20), S("x1") - 0.1 + 0.15 + k * 0.03, pan=0.2 + 0.1 * k)
-    fx.add(Tr.aperture(0.8, 0.5, seed=70), S("x1") + 0.05)
+    fx.add(Tr.sand(sx - a, 1.0, seed=10, gust=1.4), a + 0.9, until=sx)
+    fx.add(Y.wind(sx - a, 0.9, seed=11), a + 0.9, until=sx)
+    for k in range(7):                                                                            # every door opening, just before she speaks
+        fx.add(DM.door_slam(0.5, seed=k + 20), sx - 0.38 + k * 0.03, pan=0.2 + 0.1 * k)
+    fx.add(Tr.aperture(0.8, 0.5, seed=70), sx - 0.1)
     for k, key in enumerate(("o6", "e8", "t6")):                                                 # her own words, backwards, in the storm
-        fx.add(wide(Tr.reversed_voice(TL.lines[key]["wav0"], VSR, pitch=-5.0 - k)), a + 0.25 + 0.55 * k, 0.45, until=S("x1") - 0.15)
+        fx.add(wide(Tr.reversed_voice(TL.lines[key]["wav0"], VSR, pitch=-5.0 - k)), a + 0.25 + 0.7 * k, 0.45, until=sx - 0.4)
+    mus.add(Tr.brass_stab([37, 44, 50, 55, 61], 1.0, seed=19, dur=0.6), ex + 0.02, 1.0)           # and the last blow
+    mus.add(Tr.choir([73, 74, 79, 80], 0.8, 1.0, vowel="a", attack=0.02), ex + 0.02, 0.9)
     mus.add(DM.boom(1.0, 32.0, 1.0), b - 0.35, 1.0)
+    fx.add(Y.creak(0.8, 0.6, seed=35, f0=110, f1=60), T_COLLAPSE + 1.3, pan=0.5)                # she rises, full height: leather and metal
+    fx.add(__import__("instr").clink(0.4, seed=9), T_COLLAPSE + 1.45, pan=0.4)
     # =========== the twist: the cut to silence; wind over salt; the theme snapping off; eight bells
-    a, b = T_CUT + 0.75, cut("y_glass")
+    a, b = T_CUT + 0.6, cut("y_glass")
     fx.add(Y.wind(b - a + 0.5, 0.45, seed=12), a, until=E("y2") + 0.15)
     mus.add(tone(91, b - a, 0.9), a, until=E("y2") + 0.15)
     tg = Wx("y1", "real.") + 0.05
     fx.add(Tr.sand(1.6, 0.8, seed=13, gust=0.2), tg - 0.2)
-    mus.add(DM.broken(Tr.theme(0.42, 0.8, seed=6), 0.55), a + 0.1, 0.7, until=tg + 0.4)
+    mus.add(DM.broken(Tr.theme(0.42, 0.8, seed=6), 0.55), a + 0.05, 0.85, until=tg + 0.4)
     tl = Wx("y1", "Every") - 0.1
     for i in range(8):
         mus.add(DM.bell(74 + Tr.HIJAZ[i] - 62, 0.5, 2.2), tl + i * 0.06 + 0.1, 0.7, pan=0.3 + 0.05 * i)
@@ -420,6 +441,7 @@ def score(mus, fx):
     fx.add(Tr.mask_breath(1.2, 1.1, 0.9, seed=4), t0, until=S("y3") + 0.12)                    # a breath behind you, then she speaks
     fx.add(wide(Tr.reversed_voice(TL.lines["y3"]["wav0"], VSR, pitch=-6.0)), t0, 0.12, until=S("y3"))
     fx.add(Tr.porcelain_creak(0.5, seed=30, dur=0.4), S("y3") - 0.5)
+    fx.add(Y.creak(0.7, 0.55, seed=31, f0=120, f1=70), S("y3") - 0.42, pan=0.7)                  # leather, as she rises behind you
     mus.add(DM.sub(25, T_LUNGE - t0, 0.35, att=1.0, rel=0.1), t0, until=T_LUNGE)
     zr = cut("z_room") + 0.08                                                                     # cut off dead by the white room
     mus.add(Tr.brass_stab([37, 44, 50, 55, 61], 1.0, seed=9, dur=1.0), T_LUNGE, 1.0, until=zr)
@@ -432,12 +454,13 @@ def score(mus, fx):
     fx.add(Tr.hum(b - a, 0.6), a)
     fx.add(Tr.monitor(b - a - 0.3, 58, 0.55), a + 0.3)
     mus.add(Tr.low_strings([38, 45, 53, 57], cut("z_final") - a + 1.0, 0.8, seed=14, att=1.6), a, 0.6)
-    theme_at(mus, a + 0.6, Tr.theme(0.62, 0.7, seed=9, transpose=-2, breath=0.24), 0.6, pan=0.5, until=cut("z_final") + 0.2)
+    # the melody's last return: alone and slow over the last image, after the last word
+    theme_at(mus, cut("z_final") - 0.15, Tr.theme(0.62, 0.7, seed=9, transpose=-2, breath=0.24), 1.0, pan=0.5, until=b)
     # the last image: one long tone; a monitor flatlining
     t0 = cut("z_final")
     mus.add(tone(86, b - t0 + 0.3, 1.0), t0)
     mus.add(Tr.choir([50, 57], b - t0, 0.5, vowel="o", attack=1.0), t0, 0.6)
-    fx.add(Tr.beep(1040, b - t0 - 0.4, 0.4), t0 + 0.6)
+    fx.add(Tr.beep(1040, b - t0 - 0.4, 0.16), t0 + 0.6)
 
 
 def FX_MURMUR(dur, quiet=False):
@@ -517,19 +540,21 @@ def presence(x, f0=3000, gain_db=2.0, q=0.9):
 
 
 NEED = {"NAR": 9.5, "CURATOR": 13.0}             # the voice over the beds in the speech band (others: 11)
+NEED_LINE = {"w6": 16.0, "t3": 12.0, "x1": 9.0, "e1": 12.0}  # her short threat over the clockwork; "hijab" over the drums; her line in the storm
 BED = -2.0                                       # the beds' ceiling between lines, against the average line (dB)
 # (time, ceiling dB over the average line, seconds): the moments allowed to be loud
 HITS = [(0.0, 15.0, 1.2), (T_TITLE - 0.05, 12.0, 1.6), (cut("k_1"), 10.0, 1.0), (cut("k_2"), 10.0, 1.2), (cut("k_3"), 10.0, 1.2),
         (cut("k_4"), 12.0, 1.2), (T_EYES, 18.0, 0.9), (T_SLAM, 18.0, 1.2)] + [(k, 17.0, 0.3) for k in KNOCKS] + [
-        (T_COLLAPSE, 15.0, S("x1") - T_COLLAPSE), (E("x1") - 0.1, 15.0, T_CUT - E("x1") + 0.1), (T_LUNGE, 19.0, 0.4)]
+        (T_COLLAPSE, 15.0, S("x1") - T_COLLAPSE), (S("x1"), 9.0, E("x1") - S("x1")), (E("x1") - 0.1, 15.0, T_CUT - E("x1") + 0.1),
+        (T_LUNGE, 19.0, 0.4)]                    # (under her line in the storm the beds stay up; only the speech band gives way)
 SAT = {T_EYES: 4.0, T_SLAM: 5.0, T_LUNGE: 5.0, T_COLLAPSE: 3.0}
-BOOST = {0.0: (3.0, 1.0), T_EYES: (5.0, 0.8), T_SLAM: (6.0, 1.1), T_COLLAPSE: (4.0, S("x1") - T_COLLAPSE), E("x1") - 0.1: (5.0, T_CUT - E("x1") + 0.1),
+BOOST = {0.0: (2.0, 1.0), T_EYES: (5.0, 0.8), T_SLAM: (6.0, 1.1), T_COLLAPSE: (2.5, S("x1") - T_COLLAPSE), E("x1") - 0.1: (4.0, T_CUT - E("x1") + 0.1),
          T_LUNGE: (7.0, 0.4)}
 BOOST.update({k: (5.0, 0.3) for k in KNOCKS})
 CEIL = -1.5
 TARGET = -15.0
 # the hushed passages, pulled down (voice and all): the desert at dawn, the oracle, the salt flat after the collapse
-QUIET = [(cut("c_dawn") + 0.1, cut("k_1") - 0.15, -4.5), (T_CUT + 0.75, cut("y_glass"), -4.5), (cut("z_room") + 0.2, TL.total, -3.5)]
+QUIET = [(cut("c_dawn") + 0.1, cut("k_1") - 0.15, -4.5), (T_CUT + 0.6, cut("y_glass"), -4.5), (cut("z_room") + 0.2, TL.total, -3.5)]
 STEMS = {}
 STEM_GAIN = [1.0]
 
@@ -613,7 +638,7 @@ def build():
         for key in TL.order:
             a, b = spans[key]
             mg = 20 * np.log10((np.sqrt((bv[a:b] ** 2).mean()) + 1e-12) / (np.sqrt((bb[a:b] ** 2).mean()) + 1e-12))
-            need = NEED.get(TL.who(key), 11.0)
+            need = NEED_LINE.get(key, NEED.get(TL.who(key), 11.0))
             if mg < need:
                 gain[key] -= (need - mg) + 0.3
                 short = True
@@ -668,7 +693,7 @@ def report(music, fxx, vo):
     for key in TL.order:
         a, b = int(TL.s(key) * SR), int(TL.e(key) * SR)
         mg = rms(bv[a:b]) - rms(bb[a:b])
-        if mg < NEED.get(TL.who(key), 11.0) - 1.0:
+        if mg < NEED_LINE.get(key, NEED.get(TL.who(key), 11.0)) - 1.0:
             low.append(f"{key} {mg:.1f}")
     print("lines under the margin:", ", ".join(low) or "none")
 

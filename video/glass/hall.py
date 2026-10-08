@@ -237,17 +237,17 @@ def enfilade(c, cam, T, rooms, depth=6.0, width=5.0, height=6.0, door=(1.9, 3.6)
     for i in reversed(range(len(rooms))):
         label, col, acc = rooms[i]
         z = depth * (i + 1)
-        zp = depth * i
+        zp = depth * i if i > 0 else -depth                        # the first room runs back behind the camera
         for facing, x in ((1, -width / 2), (-1, width / 2)):
             wl = Pr.wall_x(x, zp, z, 0.0, height, facing)
             with wl.draw(c, cam) as pc:
                 if pc is not None:
-                    pc.drawRect(skia.Rect.MakeLTRB(0, 0, depth * Pr.U, height * Pr.U), paint(shader=K.lin((0, 0), (0, height * Pr.U), [mix(col, BLACK, 0.6), col, mix(col, BLACK, 0.4)])))
+                    pc.drawRect(skia.Rect.MakeLTRB(0, 0, (z - zp) * Pr.U, height * Pr.U), paint(shader=K.lin((0, 0), (0, height * Pr.U), [mix(col, BLACK, 0.6), col, mix(col, BLACK, 0.4)])))
                     Pr.depth_fog(pc, wl, cam, fog, fog_d, 1.0)
         fl = Pr.floor(-width / 2, width / 2, zp, z)
         with fl.draw(c, cam) as pc:
             if pc is not None:
-                _checker(pc, width, depth, 1.0, (220, 214, 204), (18, 14, 16))
+                _checker(pc, width, z - zp, 1.0, (220, 214, 204), (18, 14, 16))
                 Pr.depth_fog(pc, fl, cam, fog, fog_d, 1.0)
         wz = Pr.wall_z(z, -width / 2, width / 2, 0.0, height)
         with wz.draw(c, cam) as pc:
@@ -262,5 +262,8 @@ def enfilade(c, cam, T, rooms, depth=6.0, width=5.0, height=6.0, door=(1.9, 3.6)
                 pc.drawRect(hole.getBounds(), paint(acc, 0.95, stroke=14))
                 pc.drawRect(hole.getBounds().makeOutset(18, 18), paint(GOLD, 0.8, stroke=5))
                 if label and z - cam.pos[2] > 2.2:                  # not when the camera is about to pass under it
-                    K.text(pc, label, width / 2 * Pr.U, (height - dh - 0.45) * Pr.U, label_size, "cinzel-600", GOLD_HI, tag="label")
+                    # and fading out as it rises into the top of the frame, where the app's own lettering sits
+                    qt = cam.proj((0.0, dh + 0.45 + label_size / Pr.U * 0.85, z))
+                    la = 1.0 if qt is None else K.ease(K.ramp(qt[1], 236, 330))
+                    K.text(pc, label, width / 2 * Pr.U, (height - dh - 0.45) * Pr.U, label_size, "cinzel-600", GOLD_HI, tag="label", a=la)
                 Pr.depth_fog(pc, wz, cam, fog, fog_d, 1.0)

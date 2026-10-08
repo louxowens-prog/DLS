@@ -2,8 +2,7 @@
 
 e_list   - seven vitrines in seven jewel-toned rooms, one for each word: a lens, a face, a microphone, a plate, a pin,
            a cursor, a receipt.
-e_keyhole- a golden door; we rush into its keyhole...
-e_house  - ...and find a house made of glass alone in the dunes at dusk, lit from inside; around it, in the dark, eyes.
+e_house  - a house made of glass alone in the dunes at dusk, lit from inside; around it, in the dark, eyes.
 e_army   - an endless hall of porcelain watchers at their screens; at "Now" they stutter, freeze, and crumble to sand,
            leaving one lens.
 e_doors  - five rooms, one inside the next: CAMERA, FACE, BEHAVIOR, MOVEMENT, ALERT - the camera rushes through.
@@ -90,41 +89,6 @@ def _house_scene(c, T, k_eyes=1.0, cam_z=-14.0):
 HOUSE_FIELD = D.dune_field(23, 4, horizon=1060, spread=0.5, tall=0.9)
 
 
-def s_e_keyhole(T, idx):
-    st = K.Stage((0, 0, 0))
-    c = st.c
-    t0, t1 = cut("e_keyhole"), end("e_keyhole")
-    u = ramp(T, t0, t1 + 0.15)
-    z = 9.0 ** (u ** 2.2)
-    kx, ky = 540, 900
-    c.save()
-    c.translate(kx, ky)
-    c.scale(z, z)
-    c.translate(-kx, -ky)
-    c.drawRect(skia.Rect.MakeLTRB(-200, -200, W + 200, H + 200), paint(shader=C.gold_shader((0, 0), (W, H))))
-    for (x0, y0, x1, y1) in ((140, 160, 940, 760), (140, 1080, 940, 1760)):
-        c.drawRect(skia.Rect.MakeLTRB(x0, y0, x1, y1), paint(C.GOLD_LO, 0.5, stroke=14))
-        c.drawRect(skia.Rect.MakeLTRB(x0 + 30, y0 + 30, x1 - 30, y1 - 30), paint(C.GOLD_HI, 0.5, stroke=4))
-    c.drawPath(K.smooth([(kx - 110, ky - 150), (kx + 110, ky - 150), (kx + 130, ky + 200), (kx - 130, ky + 200)]), paint(shader=C.gold_shader((kx - 130, 0), (kx + 130, 0))))
-    hole = skia.Path()
-    hole.addCircle(kx, ky - 20, 36)
-    hole.addPath(K.path([(kx - 22, ky), (kx + 22, ky), (kx + 34, ky + 110), (kx - 34, ky + 110)]))
-    c.save()
-    c.clipPath(hole, doAntiAlias=True)
-    c.drawRect(skia.Rect.MakeLTRB(kx - 60, ky - 70, kx + 60, ky + 120), paint((255, 200, 140)))
-    c.restore()
-    G.pool(c, kx, ky + 20, 120, (255, 210, 150), 0.4)
-    c.restore()
-    if u > 0.55:                                                    # through: the glass house beyond
-        a = min(1.0, (u - 0.55) / 0.3)
-        lp = paint()
-        lp.setAlphaf(a)
-        c.saveLayer(None, lp)
-        _house_scene(c, T, k_eyes=0.0, cam_z=-18.0)
-        c.restore()
-    return st.arr
-
-
 def s_e_house(T, idx):
     st = K.Stage((0, 0, 0))
     c = st.c
@@ -134,7 +98,7 @@ def s_e_house(T, idx):
     return st.arr
 
 
-ARMY = [(x, z) for z in np.arange(3.0, 46.0, 1.6) for x in np.arange(-11.0, 11.5, 1.5)]
+ARMY = [(x, z) for z in np.arange(-3.4, 46.0, 1.6) for x in np.arange(-11.0, 11.5, 1.5)]
 
 
 def s_e_army(T, idx):
@@ -143,12 +107,12 @@ def s_e_army(T, idx):
     t0, t1 = cut("e_army"), end("e_army")
     tn = Wx("e3", "Now") - 0.05
     cam = Pr.Cam((0.0, 13.0, -6.0 + 0.6 * (T - t0)), pitch=-48, f=900)
-    fl = Pr.floor(-14, 14, 0.0, 60.0)
+    fl = Pr.floor(-14, 14, -20.0, 60.0)                             # the floor runs on under the camera: no edge
     with fl.draw(c, cam) as pc:
         if pc is not None:
-            pc.drawRect(skia.Rect.MakeLTRB(0, 0, 28 * Pr.U, 60 * Pr.U), paint((16, 22, 60)))
+            pc.drawRect(skia.Rect.MakeLTRB(0, 0, 28 * Pr.U, 80 * Pr.U), paint((16, 22, 60)))
             for i in range(29):
-                pc.drawLine(i * Pr.U, 0, i * Pr.U, 60 * Pr.U, paint((60, 80, 160), 0.25, stroke=3))
+                pc.drawLine(i * Pr.U, 0, i * Pr.U, 80 * Pr.U, paint((60, 80, 160), 0.25, stroke=3))
             Pr.depth_fog(pc, fl, cam, (6, 8, 20), 0.05, 2.0)
     rng = K.rng_at(5, 9)
     ts = stutter(T, t0, period=0.5, move=0.12, seed=2)
@@ -199,69 +163,134 @@ def s_e_doors(T, idx):
     return st.arr
 
 
-def _top_person(c, x, y, s, col=(250, 248, 244), a=1.0, ang=0.0):
+def _top_person(c, x, y, s, col=(250, 248, 244), a=1.0, ang=0.0, shadow=0.0):
+    """A person seen from straight above (shoulders and head), and, low sun from the left, a long shadow to the right."""
     c.save()
     c.translate(x, y)
     c.rotate(ang)
+    if shadow > 0:
+        c.drawPath(K.smooth([(0, -8 * s), (shadow * 10 * s, -5 * s), (shadow * 12 * s, 0), (shadow * 10 * s, 5 * s), (0, 8 * s)]),
+                   paint((80, 84, 104), 0.45 * a, blur=1.5 * s))
     c.drawOval(skia.Rect.MakeLTRB(-16 * s, -9 * s, 16 * s, 9 * s), paint(col, a))
     c.drawCircle(0, 0, 7 * s, paint(mix(col, (60, 50, 50), 0.6), a))
     c.restore()
 
 
-NODES = [("go", "WHERE YOU GO", (0.24, 0.24)), ("meet", "WHO YOU MEET", (0.76, 0.22)), ("buy", "WHAT YOU BUY", (0.80, 0.47)),
-         ("read", "WHAT YOU READ", (0.20, 0.50)), ("say", "WHAT YOU SAY", (0.26, 0.70)), ("protests", "WHICH PROTESTS", (0.72, 0.74))]
+NODES = [("go", "WHERE YOU GO", (0.22, 0.25)), ("meet", "WHO YOU MEET", (0.79, 0.24)), ("buy", "WHAT YOU BUY", (0.83, 0.50)),
+         ("read", "WHAT YOU READ", (0.17, 0.53)), ("say", "WHAT YOU SAY", (0.29, 0.72)), ("protests", "WHICH PROTESTS", (0.73, 0.73))]
+
+
+def _thing(c, i, x, y, s, T, a=1.0):
+    """What waits at each place, seen from above with a long shadow to the right: a door frame, two people, a receipt,
+    an open book, a microphone, a candle."""
+    sh = paint((80, 84, 104), 0.4 * a, blur=2 * s)
+    if i == 0:                                                       # a door frame standing alone on the salt
+        c.drawRect(skia.Rect.MakeLTRB(x - 30 * s, y - 4 * s, x + 30 * s, y + 4 * s), paint(shader=C.gold_shader((x - 30 * s, 0), (x + 30 * s, 0)), a=a))
+        c.drawPath(K.path([(x - 30 * s, y), (x + 30 * s, y), (x + 150 * s, y + 18 * s), (x + 90 * s, y + 18 * s)]), sh)
+    elif i == 1:                                                     # two people, facing
+        for d in (-1, 1):
+            _top_person(c, x + d * 18 * s, y, 1.05 * s, a=a, ang=d * 90, shadow=4.0)
+    elif i == 2:                                                     # a receipt, curling
+        c.drawPath(K.smooth([(x - 10 * s, y - 34 * s), (x + 10 * s, y - 34 * s), (x + 14 * s, y + 10 * s), (x + 30 * s, y + 30 * s), (x - 6 * s, y + 26 * s),
+                             (x - 12 * s, y)]), paint((252, 250, 244), a))
+        for k in range(5):
+            c.drawLine(x - 6 * s, y - 26 * s + k * 9 * s, x + 6 * s, y - 26 * s + k * 9 * s, paint((140, 140, 150), 0.7 * a, stroke=1.5 * s))
+    elif i == 3:                                                     # an open book
+        c.drawPath(K.path([(x - 34 * s, y - 22 * s), (x, y - 18 * s), (x + 34 * s, y - 22 * s), (x + 34 * s, y + 22 * s), (x, y + 26 * s), (x - 34 * s, y + 22 * s)]),
+                   paint((120, 10, 24), a))
+        c.drawPath(K.path([(x - 30 * s, y - 18 * s), (x, y - 14 * s), (x + 30 * s, y - 18 * s), (x + 30 * s, y + 18 * s), (x, y + 22 * s), (x - 30 * s, y + 18 * s)]),
+                   paint((246, 240, 226), a))
+        c.drawLine(x, y - 14 * s, x, y + 22 * s, paint((150, 130, 110), a, stroke=1.5 * s))
+    elif i == 4:                                                     # a microphone on its stand
+        c.drawCircle(x, y, 16 * s, paint(shader=C.gold_shader((x - 16 * s, 0), (x + 16 * s, 0)), a=a))
+        c.drawCircle(x, y, 9 * s, paint(C.GOLD_LO, a))
+        c.drawPath(K.path([(x, y - 6 * s), (x + 110 * s, y + 6 * s), (x + 110 * s, y + 12 * s), (x, y + 6 * s)]), sh)
+    else:                                                            # a candle, lit
+        G.pool(c, x, y, 70 * s, (255, 190, 100), 0.55 * a)
+        c.drawCircle(x, y, 9 * s, paint((250, 244, 230), a))
+        c.drawCircle(x, y, 4 * s, G.glow_paint((255, 210, 120), a))
 
 
 def _web(c, T, k_all=None, scale=1.0, cx=540, cy=900, a=1.0, strings_to=None):
-    """The figure's day as a web of gold thread on white salt, seen from above."""
-    me = (cx + (0.5 - 0.5) * W * scale, cy + (0.48 - 0.5) * 1300 * scale)
+    """The figure's day as gold thread on white salt, seen from above: from the tiny figure to each place it goes, each
+    with a small black-lacquer plaque laid on the salt beside it (drawn over the threads, never crossed by them)."""
+    me = (cx, cy + (0.48 - 0.5) * 1300 * scale)
     pts = []
     for i, (w, label, (fx, fy)) in enumerate(NODES):
         t = Wx("e6", w) if k_all is None else -1
         k = 1.0 if k_all is not None else K.ease(ramp(T, t - 0.1, t + 0.3))
         px, py = cx + (fx - 0.5) * W * scale, cy + (fy - 0.5) * 1300 * scale
         pts.append((px, py, k, label))
-    for px, py, k, label in pts:
+    for px, py, k, label in pts:                                     # the threads, with their faint shadows on the salt
         if k <= 0:
             continue
         ex, ey = me[0] + (px - me[0]) * k, me[1] + (py - me[1]) * k
-        c.drawLine(me[0], me[1], ex, ey, paint(C.GOLD_LO, 0.9 * a, stroke=9 * scale))
-        c.drawLine(me[0], me[1], ex, ey, paint(C.GOLD, a, stroke=5 * scale))
-        c.drawLine(me[0], me[1], ex, ey, G.glow_paint(C.GOLD_HI, 0.4 * a, blur=4))
-    for j in range(len(pts) - 1):                                  # threads between the places themselves
-        (x0, y0, k0, _), (x1, y1, k1, _) = pts[j], pts[j + 1]
-        if k0 > 0.9 and k1 > 0.9:
-            c.drawLine(x0, y0, x1, y1, paint(C.GOLD, 0.35 * a, stroke=1.5 * scale))
-    for px, py, k, label in pts:
+        c.drawLine(me[0] + 5, me[1] + 4, ex + 5, ey + 4, paint((90, 90, 110), 0.25 * a, stroke=4 * scale, blur=2))
+        c.drawLine(me[0], me[1], ex, ey, paint(C.GOLD_LO, 0.9 * a, stroke=6 * scale))
+        c.drawLine(me[0], me[1], ex, ey, paint(C.GOLD_HI, a, stroke=2.5 * scale))
+        c.drawLine(me[0], me[1], ex, ey, G.glow_paint(C.GOLD_HI, 0.35 * a, blur=4))
+    for i, (px, py, k, label) in enumerate(pts):
         if k <= 0.05:
             continue
-        c.drawCircle(px, py, 30 * scale * k, paint(shader=C.gold_shader((px - 30, py), (px + 30, py)), a=a))
-        c.drawCircle(px, py, 52 * scale * k, paint(C.GOLD, 0.7 * a, stroke=3))
-        C.lens(c, px, py, 20 * scale * k, T, open_=0.6, ring=C.GOLD_LO, coat=(150, 40, 60), a=a)
-        if label and scale > 0.8:
-            f = K.font("cinzel-600", 40)
-            hw = f.measureText(label) / 2
-            K.text(c, label, min(max(px, 70 + hw), 950 - hw), py + 100, 40, "cinzel-600", (70, 40, 6), tag="label", a=a * k)
-    _top_person(c, me[0], me[1], 3.2 * scale, a=a)
+        c.drawCircle(px, py, 44 * scale * k, paint(C.GOLD, 0.55 * a, stroke=2.5))
+        _thing(c, i, px, py, 1.6 * scale * k, T, a=a)
+    _top_person(c, me[0], me[1], 2.0 * scale, a=a, shadow=6.0)
+    if scale > 0.8:
+        f = K.font("cinzel-600", 34)
+        for px, py, k, label in pts:
+            if k <= 0.05 or not label:
+                continue
+            dx, dy = px - me[0], py - me[1]
+            d = math.hypot(dx, dy) or 1.0
+            lx, ly = px + dx / d * 40, py + (78 if dy > -60 else -62)
+            hw = f.measureText(label) / 2 + 18
+            lx = min(max(lx, 70 + hw), 1010 - hw)
+            c.drawPath(K.rrect(lx - hw, ly - 38, lx + hw, ly + 13, 6), paint((12, 8, 10), 0.9 * a * k))
+            c.drawPath(K.rrect(lx - hw, ly - 38, lx + hw, ly + 13, 6), paint(C.GOLD, 0.8 * a * k, stroke=2))
+            K.text(c, label, lx, ly, 34, "cinzel-600", C.GOLD_HI, tag="label", a=a * k)
     return pts, me
 
 
+_SALT = {}
+
+
+def _salt_net(size):
+    """The salt crust's crack network: a hex lattice with every corner nudged (shared corners move together)."""
+    if size not in _SALT:
+        def vert(i, j, k):
+            ang = math.pi / 3 * k
+            cx = (i - 11) * size * 1.5
+            cy = (j - 13) * size * 1.732 + (size * 0.866 if i % 2 else 0)
+            x, y = cx + size * math.cos(ang), cy + size * math.sin(ang)
+            h = (int(round(x * 7.0)) * 73856093 ^ int(round(y * 7.0)) * 19349663) & 0xFFFF
+            return x + size * 0.42 * ((h & 0xFF) / 255 - 0.5), y + size * 0.42 * ((h >> 8 & 0xFF) / 255 - 0.5)
+        p = skia.Path()
+        for i in range(0, 23):
+            for j in range(0, 27):
+                vs = [vert(i, j, k) for k in range(6)]
+                p.moveTo(*vs[0])
+                for v in vs[1:]:
+                    p.lineTo(*v)
+                p.close()
+        _SALT[size] = p
+    return _SALT[size]
+
+
 def _salt_top(c, T, z=1.0):
-    c.drawRect(skia.Rect.MakeLTRB(-W, -H, 2 * W, 2 * H), paint(shader=K.rad((540, 900), 1300, [(196, 198, 204), (160, 166, 182), (100, 108, 130)])))
-    size = 120 * z
-    p = skia.Path()
-    for i in range(-2, int(W / (size * 1.5)) + 3):
-        for j in range(-2, int(H / (size * 1.732)) + 3):
-            cx = 540 + (i - W / (size * 3)) * size * 1.5
-            cy = 900 + (j - H / (size * 3.46)) * size * 1.732 + (size * 0.866 if i % 2 else 0)
-            for k in range(6):
-                ang = math.pi / 3 * k
-                (p.moveTo if k == 0 else p.lineTo)(cx + size * math.cos(ang), cy + size * math.sin(ang))
-            p.close()
-    c.drawPath(p, paint((150, 160, 180), 0.55, stroke=3))
+    """The salt flat from straight above in a low morning sun: a warm white crust of raised polygon ridges, each with a
+    shadow and a lit edge, paling to blue-grey at the edges of the world."""
+    c.drawRect(skia.Rect.MakeLTRB(-W, -H, 2 * W, 2 * H), paint(shader=K.rad((520, 860), 1250, [(250, 246, 238), (226, 226, 230), (172, 178, 198)], [0.0, 0.55, 1.0])))
+    rng = K.rng_at(77, 3)
+    for k in range(9):                                               # faint drifts of tone in the crust
+        x, y, r = rng.uniform(0, W), rng.uniform(200, H), rng.uniform(160, 420)
+        c.drawCircle(x, y, r, paint((210, 206, 196) if k % 2 else (255, 252, 246), 0.18, blur=r * 0.4))
+    net = _salt_net(round(112 * z, 1))
     c.save()
-    c.translate(0, -2)
-    c.drawPath(p, paint(WHITE, 0.6, stroke=1.5))
+    c.translate(540, 900)
+    c.translate(3, 3)
+    c.drawPath(net, paint((150, 150, 170), 0.5, stroke=5 * z + 1, blur=1.5))
+    c.translate(-4, -4)
+    c.drawPath(net, paint(WHITE, 0.85, stroke=2.2 * z + 0.6))
     c.restore()
 
 
@@ -280,22 +309,48 @@ def s_e_salt(T, idx):
     return st.arr
 
 
+def _curator_whole(c, T, t0, t1):
+    """'That's power.': the hand belongs to her - the whole figure, symmetrical in her red hall, eyes shut, every
+    thread hanging from her gold claws down into the dark below."""
+    c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint(shader=K.rad((540, 700), 1200, [(130, 8, 24), (54, 0, 10), (8, 0, 2)])))
+    c.drawRect(skia.Rect.MakeLTRB(0, 1420, W, H), paint(shader=K.lin((0, 1420), (0, H), [(40, 0, 8), (12, 0, 2)])))
+    G.pool(c, 540, 1500, 700, (255, 60, 70), 0.18, squash=0.3)
+    zoom(c, T, t0, t1 + 0.6, 1.0, 1.07, 540, 900)
+    rec = skia.PictureRecorder()
+    pc = rec.beginRecording(skia.Rect.MakeWH(W, H))
+    tips = C.curator(pc, 540, 1560, 0.8, T, eyes=0.0, open_=0.25, arms="open")
+    pic = rec.finishRecordingAsPicture()
+    for i, (tx, ty) in enumerate(tips):                                  # the threads, swaying, down out of frame
+        sw = 14 * math.sin(T * 1.3 + i)
+        c.drawPath(K.bez_path([(tx, ty), (tx + sw, (ty + H) / 2), (tx + sw * 0.5 + (i - 4) * 6, H + 40)]), paint(C.GOLD_HI, 0.85, stroke=2.2))
+    c.drawPicture(pic)
+    c.restore()
+
+
 def s_e_hand(T, idx):
     st = K.Stage((0, 0, 0))
     c = st.c
     t0, t1 = cut("e_hand"), end("e_hand")
+    tw = Wx("e7", "That's") - 0.12
+    if T >= tw:
+        _curator_whole(c, T, tw, t1)
+        return st.arr
     u = ramp(T, t0, t1)
     _salt_top(c, T, z=0.7)
     pts, me = _web(c, T, k_all=1, scale=0.62, cy=1150, a=1.0)
     c.drawPaint(paint((70, 0, 8), 0.3 + 0.4 * u))
-    hx, hy = 540, 160 + 120 * K.ease(u)
-    tips = [(hx - 70, hy + 470), (hx - 25, hy + 520), (hx + 25, hy + 530), (hx + 75, hy + 480)]
+    hx, hy = 540, -40 + 100 * K.ease(u)
     tight = K.ease(ramp(T, Wx("e7", "power") - 0.1, Wx("e7", "power") + 0.3))
+    # the hand first (to learn where its gold tips are), then the threads drawn from those tips down to the web
+    rec = skia.PictureRecorder()
+    pc = rec.beginRecording(skia.Rect.MakeWH(W, H))
+    tips = C.hand(pc, hx, hy, 3.2, 0, T, open_=1.0 - 0.6 * tight)
+    pic = rec.finishRecordingAsPicture()
     for i, (px, py, k, _) in enumerate(pts + [(me[0], me[1], 1, "")]):
         tx, ty = tips[i % 4]
         mx, my = (tx + px) / 2, (ty + py) / 2 + 80 * (1 - tight)
         c.drawPath(K.bez_path([(tx, ty), (mx, my), (px, py)]), paint(C.GOLD_HI, 0.9, stroke=2.5))
-    C.hand(c, hx, hy, 3.6, 0, T, open_=1.0 - 0.6 * tight)
+    c.drawPicture(pic)
     return st.arr
 
 
@@ -307,6 +362,9 @@ def _curator_face(c, T, eyes, open_, swivel=0.0, stut=None, talk_k=0.0, hot=0.0,
     c.translate(-540, -900)
     C.lens_fan(c, 540, 820, 1.7, T, open_=open_, swivel=swivel, stutter=stut, hot=hot)
     c.drawPath(K.smooth([(280, 1400), (300, 560), (380, 380), (540, 330), (700, 380), (780, 560), (800, 1400)]), paint(C.LACQUER))
+    for sd in (-1, 1):                                              # ribbed tubes from behind her jaw into the black shells below
+        C.ribbed(c, [(540 + sd * 150, 1080), (540 + sd * 250, 1230), (540 + sd * 360, 1420), (540 + sd * 420, 1700)], 30, 22, T=T, pulse=0.6)
+        C.shell(c, 540 + sd * 360, 1560, 150, 90, ang=sd * 20, rim_k=1.0)
     for i in range(5):
         yy = 1330 + i * 40
         c.drawPath(K.rrect(400 - i * 10, yy, 680 + i * 10, yy + 30, 12), paint(shader=C.gold_shader((400, yy), (680, yy + 30))))

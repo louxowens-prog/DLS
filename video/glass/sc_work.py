@@ -7,7 +7,8 @@ w_towers   - ten towers on the salt flat; eight open a red eye: 8 of the 10 bigg
 w_idle     - a gilded warehouse; a worker stands still; IDLE counts up; the floor opens and she falls away; the next
              one slides into her place.
 w_press    - rows of workers under glass bells; a coffered gold ceiling sinks over them; the OECD figures.
-w_smile    - a worker's face under glass; a score ticks down; her painted smile widens by itself."""
+w_smile    - a worker's face under glass, headset on; a score ticks down; her eyes slide to the lens while her painted
+             smile is forced wider."""
 import math
 
 import numpy as np
@@ -91,21 +92,26 @@ def s_w_altar(T, idx):
     frieze = "PRODUCTIVITY · LOCATION · DRIVING · CUSTOMER CONVERSATIONS"
     K.text(c, frieze, 540, 270, 27, "cinzel-600", C.GOLD_HI, tag="label")
     # the worker at her desk, enthroned
-    C.doll(c, 540, 1300, 1.25, T, pose="type", tint=(240, 236, 228), head_turn=0.25 * math.sin(stutter(T, t0, 0.6, 0.1, seed=4)))
-    c.drawPath(K.path([(330, 1140), (750, 1140), (790, 1220), (290, 1220)]), paint(shader=C.gold_shader((290, 0), (790, 0))))
-    c.drawRect(skia.Rect.MakeLTRB(290, 1220, 790, 1300), paint((24, 20, 18)))
+    DS, DY = 1.1, 1345
+    # she moves the way the dream moves things: a jerk of the head towards each instrument as it wakes, then dead still
+    st_ = stutter(T, t0, 0.45, 0.08, seed=4)
+    C.doll(c, 540, DY, DS, T, pose=("type", "candle", 0.5 + 0.5 * math.sin(st_ * 2.3)), tint=(240, 236, 228), head_turn=0.75 * math.sin(st_ * 1.7))
+    c.drawPath(K.path([(330, 1180), (750, 1180), (790, 1260), (290, 1260)]), paint(shader=C.gold_shader((290, 0), (790, 0))))
+    c.drawRect(skia.Rect.MakeLTRB(290, 1260, 790, 1340), paint((24, 20, 18)))
+    head_y = DY - 680 * DS
     # the instruments, appearing word by word
     for i, (w, label) in enumerate(ALTAR):
         t = Wx("w2", w) - 0.05
         k = K.ease(ramp(T, t, t + 0.18))
         if k <= 0:
             continue
-        pos = [(260, 980), (820, 980), (260, 640), (540, 520), (820, 640)][i]
+        pos = [(260, 960), (820, 960), (260, 640), (540, 520), (820, 640)][i]
         x, y = pos
         if i == 3:                                                  # a scanning halo round her head
-            c.drawCircle(540, 600, 150 * k, paint((120, 255, 200), 0.8 * k, stroke=4))
-            CO.target_box(c, 460, 520, 620, 690, T, lock=k, col=(120, 255, 200))
-            K.text(c, "ENGAGED 61%", 540, 430, 34, "jost-600", (160, 255, 220), tag="label", a=k)
+            c.drawCircle(540, head_y, 135 * k, paint((120, 255, 200), 0.8 * k, stroke=4))
+            CO.target_box(c, 455, head_y - 105, 625, head_y + 110, T, lock=k, col=(120, 255, 200))
+            c.drawPath(K.rrect(410, head_y - 205, 670, head_y - 150, 8), paint((2, 26, 18), 0.85 * k))
+            K.text(c, "ENGAGED 61%", 540, head_y - 164, 34, "jost-600", (160, 255, 220), tag="label", a=k)
             continue
         c.drawCircle(x, y, 92 * k, paint(shader=C.gold_shader((x - 92, y), (x + 92, y)), a=k))
         c.drawCircle(x, y, 74 * k, paint((14, 30, 24), k))
@@ -124,7 +130,8 @@ def s_w_altar(T, idx):
             c.drawPath(K.rrect(x - 28, y - 44, x + 28, y + 30, 6), paint((236, 230, 214), k))
             secs = int(7 * 60 + 12 * ramp(T, t, t + 1.0))
             K.text(c, "%d:%02d" % (secs // 60, secs % 60), x, y + 64, 30, "jost-600", (255, 120, 110), tag="label", a=k)
-        K.text(c, label, x, y + 140, 26 if len(label) > 10 else 30, "cinzel-600", C.GOLD_HI, tag="label", a=k)
+        for j, ln in enumerate(label.split(" ") if len(label) > 10 else [label]):    # long names stack, clear of the arch
+            K.text(c, ln, x, y + 136 + j * 34, 30, "cinzel-600", C.GOLD_HI, tag="label", a=k)
     c.restore()
     return st.arr
 
@@ -142,9 +149,11 @@ def _tower(c, cam, X, Z, T, lit, hgt=9.0, w=1.2):
     q = P(X, hgt - 1.0, Z - w * 0.36)
     if q:
         sc = cam.scale_at((X, hgt - 1.0, Z))
-        C.lens(c, q[0], q[1], sc * 0.38, T, open_=0.15 + 0.6 * lit, ring=C.GOLD, coat=(150, 30, 40), hot=lit, a=1.0)
-        if lit > 0:
-            G.beam(c, (q[0], q[1]), (q[0] - sc * 3 * lit, H), (q[0] + sc * 3 * lit, H), (255, 60, 60), 0.12 * lit)
+        if lit > 0:                                                 # an eye opening: a red bloom, a beam down to the salt
+            G.pool(c, q[0], q[1], sc * 2.2, (255, 40, 40), 0.75 * lit)
+            G.beam(c, (q[0], q[1]), (q[0] - sc * 3 * lit, H), (q[0] + sc * 3 * lit, H), (255, 60, 60), 0.22 * lit)
+        C.lens(c, q[0], q[1], sc * (0.34 + 0.16 * lit), T, open_=0.08 + 0.7 * lit, ring=C.GOLD, coat=(150, 30, 40) if lit > 0 else (30, 20, 24),
+               hot=lit, a=1.0)
 
 
 def s_w_towers(T, idx):
@@ -153,18 +162,19 @@ def s_w_towers(T, idx):
     t0, t1 = cut("w_towers"), end("w_towers")
     cam = D.salt_cam(1.5, 6.0, 900, z=-4.0 + 1.0 * ramp(T, t0, t1))
     D.salt_flat(c, cam, T, sky_cols=((10, 40, 30), (40, 110, 90), (170, 210, 196)))
-    tk = Wx("w3", "track") - 0.6
+    # the figure is on screen as the word "Eight" is spoken; the eight eyes open in a stutter while the sentence runs
+    tk = Wx("w3", "Eight") + 0.05
     order = [0, 9, 4, 5, 2, 7, 3, 6, 1, 8]
     lit_set = order[:8]
     for i in range(10):
         X = -9.0 + i * 2.0
         j = lit_set.index(i) if i in lit_set else None
-        lit = 0.0 if j is None else K.ease(ramp(T, tk + j * 0.12, tk + j * 0.12 + 0.2))
+        lit = 0.0 if j is None else K.ease(ramp(T, tk + j * 0.11, tk + j * 0.11 + 0.12))
         _tower(c, cam, X, 18.0, T, lit)
-    n = sum(1 for j in range(8) if T > tk + j * 0.12)
     from cards import spaced
-    spaced(c, "%d / 10" % max(0, n) if n > 0 else "", 540, 470, 150, "italiana-400", 0.12, C.GOLD_HI, 1.0, tag="label")
-    K.text(c, "of America's 10 biggest private employers", 540, 560, 36, "cormorant-600", (220, 236, 228), tag="label", a=K.ease(ramp(T, tk, tk + 0.4)))
+    ka = K.ease(ramp(T, tk - 0.1, tk + 0.15))
+    spaced(c, "8 / 10", 540, 470, 150, "italiana-400", 0.12, C.GOLD_HI, ka, tag="label")
+    K.text(c, "of America's 10 biggest private employers", 540, 560, 36, "cormorant-600", (220, 236, 228), tag="label", a=ka)
     return st.arr
 
 
@@ -247,19 +257,22 @@ def s_w_press(T, idx):
                 bell = K.smooth([(q0[0], q0[1]), (q0[0], q1[1] + (q0[1] - q1[1]) * 0.3), ((q0[0] + q1[0]) / 2, q1[1]), (q1[0], q1[1] + (q0[1] - q1[1]) * 0.3), (q1[0], q0[1])], closed=False)
                 c.drawPath(bell, paint((210, 255, 236), 0.5 * fk, stroke=2))
                 c.drawPath(bell, paint((210, 255, 236), 0.06 * fk))
-    # the figures, on a dark panel so they read over the gold
+    # the figures, on a dark panel so they read over the gold: a small table, there from the start of the line
     k = K.ease(ramp(T, t0 + 0.2, t0 + 0.6))
-    c.drawPath(K.rrect(80, 240, 1000, 700, 16), paint((2, 26, 18), 0.88 * k))
-    c.drawPath(K.rrect(80, 240, 1000, 700, 16), paint(C.GOLD, 0.9 * k, stroke=3))
-    K.text(c, "OECD SURVEYS · 2022", 540, 310, 44, "cinzel-600", C.GOLD_HI, tag="label", a=k)
+    c.drawPath(K.rrect(80, 240, 1000, 720, 16), paint((2, 26, 18), 0.9 * k))
+    c.drawPath(K.rrect(80, 240, 1000, 720, 16), paint(C.GOLD, 0.9 * k, stroke=3))
+    K.text(c, "OECD SURVEYS · 2022", 540, 312, 44, "cinzel-600", C.GOLD_HI, tag="label", a=k)
     K.text(c, "workers whose employer's AI collected data on them", 540, 366, 32, "cormorant-600", (226, 240, 232), tag="label", a=k)
-    for i, (num, txt) in enumerate((("62% · 56%", "felt more pressure to perform"), ("62% · 51%", "worried about their privacy"))):
-        w_ = Wx("w5", "pressure" if i == 0 else "privacy.")
-        kk = K.ease(ramp(T, w_ - 0.3, w_ + 0.1)) * k
-        y = 470 + i * 100
-        K.text(c, num, 330, y, 60, "jost-600", (255, 232, 160), tag="label", a=kk)
-        K.text(c, txt, 520, y - 8, 38, "cormorant-600", (240, 250, 244), align="left", tag="label", a=kk)
-    K.text(c, "finance · manufacturing", 330, 660, 28, "cormorant-500i", (200, 220, 210), tag="label", a=k)
+    K.text(c, "FINANCE", 680, 440, 24, "cinzel-600", (200, 226, 214), tag="label", a=k)
+    K.text(c, "MANUFACTURING", 872, 440, 24, "cinzel-600", (200, 226, 214), tag="label", a=k)
+    c.drawLine(120, 462, 960, 462, paint(C.GOLD, 0.5 * k, stroke=1.5))
+    rows = (("more pressure to perform", "62%", "56%", Wx("w5", "workers") - 0.1), ("worried about privacy", "62%", "51%", Wx("w5", "told") + 0.15))
+    for i, (txt, a_, b_, w_) in enumerate(rows):
+        kk = K.ease(ramp(T, w_, w_ + 0.25)) * k
+        y = 548 + i * 104
+        K.text(c, txt, 125, y - 6, 38, "cormorant-600", (240, 250, 244), align="left", tag="label", a=kk)
+        K.text(c, a_, 680, y, 64, "jost-600", (255, 232, 160), tag="label", a=kk)
+        K.text(c, b_, 872, y, 64, "jost-600", (255, 232, 160), tag="label", a=kk)
     return st.arr
 
 
@@ -271,8 +284,12 @@ def s_w_smile(T, idx):
     zoom(c, T, t0, t1, 1.0, 1.12, 540, 900)
     c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint(shader=K.rad((540, 900), 1100, [EMER_WALL, EMER_DEEP, (0, 6, 4)])))
     k = K.ease(ramp(stutter(T, Wx("w6", "Smile.") - 0.05, period=0.22, move=0.06, fps=12, seed=7), Wx("w6", "Smile.") - 0.05, Wx("w6", "Smile.") + 0.7))
-    # the smile forced wider in jerks, too wide, held
-    C.mask(c, 540, 900, 2.0, T, eyes=0.0, tint=(232, 228, 220), lips=(150, 10, 30), smile=0.9 * k)
+    # a worker's face, not hers: no gold seam, a headset band, open glass eyes that slide to the lens while the mouth
+    # is forced wider in jerks, too wide, held
+    c.drawPath(K.smooth([(250, 980), (290, 330), (540, 250), (790, 330), (830, 980)], closed=False), paint((26, 30, 30), stroke=22))
+    c.drawPath(K.rrect(214, 900, 286, 1060, 26), paint((26, 30, 30)))
+    C.mask(c, 540, 900, 2.0, T, eyes=0.9, iris="glass", iris_col=(70, 110, 120), look=(0.7 * k, -0.1), tint=(232, 228, 220),
+           lips=(150, 10, 30), smile=0.9 * k, seam=False, brows=0.9)
     # the glass bell, and her eye reflected in it
     c.drawPath(K.smooth([(120, 1700), (120, 600), (300, 260), (540, 200), (780, 260), (960, 600), (960, 1700)], closed=False), paint((210, 255, 236), 0.5, stroke=4))
     c.drawPath(K.smooth([(200, 1600), (200, 650), (330, 360)], closed=False), paint(WHITE, 0.3, stroke=10, blur=4))

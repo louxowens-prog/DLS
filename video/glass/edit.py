@@ -21,6 +21,8 @@ GLOSS = dict(wash=None, grain=0.12, dust=0.0, wv=0.0, flick=0.05, leak=0.0, lift
 COLD = dict(wash="steel", wash_k=0.55, keep=0.6, grain=0.16, dust=0.0, wv=0.0, flick=0.06, leak=0.0, lift=(0.02, 0.025, 0.035), crush=1.05,
             halation=0.15, streak=0.06, streak_tint=(180, 220, 255), ca=0.3, haze=0.05, bloom=0.3, diffusion=0.4, sat=0.55, vig=0.6)
 ROOM = L(COLD, bloom=0.22, expose=0.92)
+# her day: the same steel, darker at the edges, harder, grainier - footage of a life
+DAY = L(COLD, expose=0.86, vig=0.88, crush=1.14, grain=0.2, sat=0.5)
 NIGHT = L(COLD, wash_k=0.35, keep=0.75, sat=0.7, bloom=0.4)
 WATER = L(GLOSS, wash="royal", wash_k=0.45, keep=0.4, haze=0.25, bloom=0.5, breathe=0.3)
 DAWN = L(GLOSS, haze=0.12, bloom=0.45, streak=0.25)
@@ -48,8 +50,7 @@ EDIT = [
     (S("e1") - 1.05, "k_1", "dissolve", CARD),
     # ---- I. THE EYE
     (S("e1") - 0.05, "e_list", "cut", GOLDHALL),
-    (S("e2") - 0.05, "e_keyhole", "dissolve", GOLDHALL),
-    (Wx("e2", "Joined") - 0.15, "e_house", "super", L(GLOSS, haze=0.15, bloom=0.5)),
+    (S("e2") - 0.1, "e_house", "super", L(GLOSS, haze=0.15, bloom=0.5)),
     (S("e3") - 0.1, "e_army", "dissolve", L(GOLDHALL, wash="royal", wash_k=0.15, keep=0.8)),
     (S("e4") - 0.05, "e_doors", "cut", GOLDHALL),
     (S("e6") - 0.1, "e_salt", "dissolve", SALT),
@@ -81,16 +82,16 @@ EDIT = [
     # ---- the descent: her favourite exhibit
     (E("t6") + 0.35, "d_procession", "dissolve", DREAD),
     # ---- NADIA: an ordinary day
-    (S("n1") - 0.3, "n_mirror", "flash", ROOM),
-    (S("n2") - 0.05, "n_road", "cut", COLD),
-    (S("n3") - 0.05, "n_call", "cut", COLD),
-    (S("n4") - 0.05, "n_idle", "cut", COLD),
-    (S("n5") - 0.05, "n_union", "cut", COLD),
-    (S("n6") - 0.05, "n_checkout", "cut", COLD),
+    (S("n1") - 0.3, "n_mirror", "flash", L(DAY, expose=0.92)),
+    (S("n2") - 0.05, "n_road", "cut", DAY),
+    (S("n3") - 0.05, "n_call", "cut", DAY),
+    (S("n4") - 0.05, "n_idle", "cut", DAY),
+    (S("n5") - 0.05, "n_union", "cut", DAY),
+    (S("n6") - 0.05, "n_checkout", "cut", DAY),
     (Wx("n6", "The") - 0.1, "n_exhibit", "cut", RED),
-    (S("n7") - 0.1, "n_face", "cut", COLD),
+    (S("n7") - 0.1, "n_face", "cut", DAY),
     (S("n8") - 0.05, "n_vigil", "cut", NIGHT),
-    (S("n9") - 0.05, "n_phone", "cut", COLD),
+    (S("n9") - 0.05, "n_phone", "cut", DAY),
     (S("n10") - 0.1, "n_door", "cut", L(NIGHT, bloom=0.5)),
     (S("n11") - 0.1, "n_match", "cut", L(COLD, wash_k=0.4)),
     (S("n12") - 0.05, "n_scream", "cut", L(COLD, wash_k=0.25, keep=0.85, sat=0.9)),

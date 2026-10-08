@@ -21,8 +21,12 @@ SAND = dict(lit=(250, 204, 118), mid=(214, 146, 60), shade=(120, 52, 20), deep=(
 SAND_DAWN = dict(lit=(255, 184, 120), mid=(196, 110, 70), shade=(80, 34, 50), deep=(36, 12, 30), rim=(255, 220, 170))
 
 
+C_GOLD = (214, 166, 72)
+
+
 def sky(c, cols, y0=0, y1=1000, mid_at=0.55, x0=0, x1=W):
-    c.drawRect(skia.Rect.MakeLTRB(x0, y0, x1, y1), paint(shader=K.lin((0, y0), (0, y1), list(cols), [0.0, mid_at, 1.0])))
+    """The gradient runs y0 -> y1; the horizon colour carries on below y1, so no seam opens under the farthest dunes."""
+    c.drawRect(skia.Rect.MakeLTRB(x0, y0, x1, y1 + 320), paint(shader=K.lin((0, y0), (0, y1), list(cols), [0.0, mid_at, 1.0])))
 
 
 def sun(c, x, y, r, color=(255, 246, 220), a=1.0, glow=1.0):
@@ -294,38 +298,75 @@ def stairs(c, cam, x, z0, n=14, rise=0.32, run=0.55, width=2.4, col=(222, 216, 2
 
 def glass_house(c, cam, x, z, w=4.0, d=4.0, h=2.6, roof=1.4, T=0.0, a=1.0, warm=(255, 200, 120), edge=(255, 244, 220),
                 inside=None, glow=1.0):
-    """A house made entirely of glass, lit from inside: every wall transparent, every room on show. inside(c, cam) paints
-    its occupant (drawn between the back and front panes)."""
+    """A house made entirely of glass, lit from inside: tinted panes in gilded mullions, a gabled glass roof, sheen
+    sliding across the glass, every room on show. inside(c, cam) paints its occupant (between the back and front panes)."""
     X0, X1, Z0, Z1 = x - w / 2, x + w / 2, z - d / 2, z + d / 2
-    P = lambda X, Y, Z: cam.proj((X, Y, Z))
-    V = {}
-    for nm, (X, Y, Z) in dict(a=(X0, 0, Z0), b=(X1, 0, Z0), c_=(X1, 0, Z1), d_=(X0, 0, Z1), e=(X0, h, Z0), f=(X1, h, Z0), g=(X1, h, Z1),
-                              h_=(X0, h, Z1), r0=(x, h + roof, Z0), r1=(x, h + roof, Z1)).items():
-        V[nm] = P(X, Y, Z)
+    W3 = dict(a=(X0, 0, Z0), b=(X1, 0, Z0), c_=(X1, 0, Z1), d_=(X0, 0, Z1), e=(X0, h, Z0), f=(X1, h, Z0), g=(X1, h, Z1),
+              h_=(X0, h, Z1), r0=(x, h + roof, Z0), r1=(x, h + roof, Z1))
+    V = {k: cam.proj(v) for k, v in W3.items()}
     if any(v is None for v in V.values()):
         return
     pt = lambda k: V[k][:2]
+
+    def grid(keys, nu, nv, p_):
+        """Mullions across a face given by four corner keys (bilinear in 3-D, then projected)."""
+        q = [np.array(W3[k], float) for k in keys]
+        for i in range(1, nu):
+            u = i / nu
+            A, B = q[0] + (q[1] - q[0]) * u, q[3] + (q[2] - q[3]) * u
+            pa, pb = cam.proj(tuple(A)), cam.proj(tuple(B))
+            if pa and pb:
+                c.drawLine(pa[0], pa[1], pb[0], pb[1], p_)
+        for j in range(1, nv):
+            v = j / nv
+            A, B = q[0] + (q[3] - q[0]) * v, q[1] + (q[2] - q[1]) * v
+            pa, pb = cam.proj(tuple(A)), cam.proj(tuple(B))
+            if pa and pb:
+                c.drawLine(pa[0], pa[1], pb[0], pb[1], p_)
+
+    def sheen(path, k=1.0):
+        """Two bright bands of reflection sliding slowly across a pane."""
+        b = path.getBounds()
+        c.save()
+        c.clipPath(path, doAntiAlias=True)
+        for j, (off, wd) in enumerate(((0.0, 0.18), (0.42, 0.07))):
+            xx = b.left() + ((T * 0.06 + off) % 1.4 - 0.2) * b.width() * 1.6
+            band = K.path([(xx, b.top()), (xx + wd * b.width(), b.top()), (xx + wd * b.width() - b.height() * 0.5, b.bottom()), (xx - b.height() * 0.5, b.bottom())])
+            c.drawPath(band, paint(WHITE, 0.16 * k * (1 - 0.4 * j)))
+        c.restore()
+
     lp = paint()
     lp.setAlphaf(a)
     c.saveLayer(None, lp)
-    # light falling out onto the ground around it
     fx, fy = pt("a")[0] * 0.5 + pt("c_")[0] * 0.5, pt("a")[1] * 0.5 + pt("c_")[1] * 0.5
-    G.pool(c, fx, fy, abs(pt("b")[0] - pt("a")[0]) * 1.6, warm, 0.35 * glow, squash=0.35)
-    back = [("d_", "c_", "g", "h_"), ("a", "d_", "h_", "e"), ("b", "c_", "g", "f")]
-    for f in back:
-        c.drawPath(K.path([pt(k) for k in f]), paint(mix(warm, BLACK, 0.55), 0.25))
-    c.drawPath(K.path([pt("a"), pt("b"), pt("c_"), pt("d_")]), paint(mix(warm, BLACK, 0.3), 0.55))      # a lit floor
-    G.pool(c, fx, fy - 40, abs(pt("b")[0] - pt("a")[0]) * 0.7, warm, 0.5 * glow)
+    span = abs(pt("b")[0] - pt("a")[0])
+    G.pool(c, fx, fy, span * 1.9, warm, 0.4 * glow, squash=0.35)               # light falling out onto the sand
+    for f in (("d_", "c_", "g", "h_"), ("a", "d_", "h_", "e"), ("b", "c_", "g", "f")):       # the far panes, lit from within
+        c.drawPath(K.path([pt(k) for k in f]), paint(shader=K.lin(pt(f[3]), pt(f[0]), [mix(warm, WHITE, 0.3), mix(warm, BLACK, 0.45)]), a=0.42))
+    for f in (("h_", "g", "r1"), ("e", "f", "r0")):
+        c.drawPath(K.path([pt(k) for k in f]), paint(mix(warm, BLACK, 0.3), 0.3))
+    c.drawPath(K.path([pt("a"), pt("b"), pt("c_"), pt("d_")]), paint(mix(warm, BLACK, 0.25), 0.7))      # a lit floor
+    G.pool(c, fx, fy - span * 0.12, span * 0.75, warm, 0.55 * glow)
     if inside is not None:
         inside(c, cam)
-    front = ("a", "b", "f", "e")
-    c.drawPath(K.path([pt(k) for k in front]), paint(shader=K.lin(pt("e"), pt("b"), [(255, 255, 255, 0.18), (255, 255, 255, 0.02), (255, 255, 255, 0.12)])))
-    for f in (("e", "f", "r1", "r0"), ("e", "h_", "r1", "r0")):
-        pass
+    gold_thin = paint((255, 214, 140), 0.6, stroke=1.4)
+    for keys, nu, nv in ((("d_", "c_", "g", "h_"), 4, 2), (("a", "d_", "h_", "e"), 3, 2), (("b", "c_", "g", "f"), 3, 2)):
+        grid(keys, nu, nv, gold_thin)
+    # the near glass: front wall and roof, tinted, catching the sky
+    front = K.path([pt("a"), pt("b"), pt("f"), pt("e")])
+    c.drawPath(front, paint(shader=K.lin(pt("e"), pt("b"), [(200, 240, 255, 0.22), (255, 255, 255, 0.04), (255, 220, 180, 0.16)])))
+    sheen(front, 1.0)
+    for f in (("e", "f", "r0"), ("f", "g", "r1", "r0"), ("e", "h_", "r1", "r0")):
+        rp = K.path([pt(k) for k in f])
+        c.drawPath(rp, paint(shader=K.lin(pt("r0"), pt(f[1]), [(255, 236, 200, 0.26), (200, 220, 240, 0.08)])))
+        sheen(rp, 0.7)
+    grid(("a", "b", "f", "e"), 4, 2, paint((255, 222, 160), 0.85, stroke=2.2))
+    grid(("f", "g", "r1", "r0"), 3, 2, gold_thin)
     for k0, k1 in (("a", "b"), ("b", "c_"), ("c_", "d_"), ("d_", "a"), ("e", "f"), ("f", "g"), ("g", "h_"), ("h_", "e"), ("a", "e"), ("b", "f"),
                    ("c_", "g"), ("d_", "h_"), ("e", "r0"), ("f", "r0"), ("h_", "r1"), ("g", "r1"), ("r0", "r1")):
-        c.drawLine(*pt(k0), *pt(k1), paint(edge, 0.85, stroke=2.2))
-        c.drawLine(*pt(k0), *pt(k1), G.glow_paint(edge, 0.25, blur=4))
+        c.drawLine(*pt(k0), *pt(k1), paint(C_GOLD, 0.95, stroke=4.0))
+        c.drawLine(*pt(k0), *pt(k1), paint(edge, 0.7, stroke=1.4))
+        c.drawLine(*pt(k0), *pt(k1), G.glow_paint(edge, 0.22, blur=5))
     c.restore()
 
 

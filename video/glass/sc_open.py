@@ -1,9 +1,10 @@
 """The hook, the cold open, and the chapter cards.
 
-h_match    - a face in a monitor feed; landmarks light up; brackets close on it in jerks: MATCH FOUND.
+h_match    - inside an eye, a red aperture in the iris; out to her face in a feed; landmarks; the box slams: MATCH FOUND;
+             two frames of the Curator looking back.
 h_lamp     - lying in the chair, looking up into a ring of lenses; the guide leans in: "Lie still."
 h_machine  - the white room, front on: a monolith with one great lens, the empty chair, the guide at her console.
-c_monitors - the room humming: a heart trace, a wall of feeds, the headrest and its cables.
+c_monitors - the room humming: a heart trace, a wall of feeds, the reclined sleeper wired to the lamp of lenses.
 c_sink     - going under: the light above shrinks and wobbles, bubbles rise, the blue deepens to gold.
 c_dawn     - a silent desert at dawn: a door standing in the sand, a tiny white figure walking to it; GLASS.
 k_1..k_4   - the chapter cards."""
@@ -31,33 +32,59 @@ def _scan(c, a=0.08, step=4):
 
 
 def s_h_match(T, idx):
+    """It opens inside an eye: a red aperture caught in the iris, the machine reflected in her. The view snaps back to
+    the whole face; the landmarks draw themselves in jerks; the box slams shut: MATCH FOUND. For the last two frames,
+    the thing behind the machine looks back."""
     st = K.Stage((14, 20, 26))
     c = st.c
-    t0 = cut("h_match")
+    t0, t1 = cut("h_match"), end("h_match")
     u = T - t0
-    z = zoom(c, T, t0, end("h_match"), 1.0, 1.08, 540, 820)
-    CA.face(c, 540, 820, 1.75, "nadia", T, L=(214, 230, 246), R=(130, 150, 180), core=0.15, amb=(70, 78, 92), blink=blink(T, 3))
+    if T >= t1 - 2.0 / 24:                                         # a subliminal flash: her face, eyes open, red
+        import sc_eye as SE
+        c.drawPaint(paint((40, 0, 6)))
+        c.save()
+        SE._curator_face(c, T, eyes=1.0, open_=0.9, swivel=0.0, stut=None, talk_k=0.0, hot=1.0, z=1.18)
+        c.restore()
+        c.drawPaint(paint((255, 0, 20), 0.18))
+        return st.arr
+    EX, EY, FS = 112.0, 29.8, 1.75                                 # her eyes, relative to the bridge of the nose (px)
+    k = K.ease(ramp(stutter(T, t0 + 0.16, period=0.12, move=0.05, fps=12, seed=8), t0 + 0.16, t0 + 0.5))
+    z = 4.3 ** (1 - k)                                             # out of the eye to the whole face, in jerks
+    fx, fy = 540 + EX * (1 - k), 820 - EY * (1 - k)
+    ax, ay = 540, 900 - 80 * k
+    c.save()
+    c.translate(ax, ay)
+    c.scale(z, z)
+    c.translate(-fx, -fy)
+    zoom(c, T, t0 + 0.5, t1, 1.0, 1.06, 540, 820)
+    CA.face(c, 540, 820, FS, "nadia", T, L=(206, 222, 242), R=(80, 96, 124), core=0.12, amb=(34, 40, 52), blink=0.0)
+    # the camera that is watching her, caught in both irises: a red aperture, blades twitching
+    for sd in (-1, 1):
+        ex, ey = 540 + sd * EX, 820 - EY
+        op = 0.5 + 0.22 * math.sin(stutter(T, t0, 0.2, 0.05, seed=9 + sd) * 9.0)
+        G.pool(c, ex, ey, 60, (255, 30, 40), 0.35 * (1 - k))
+        C.lens(c, ex, ey, 19.5 * FS * 0.86, T, open_=op, ring=(30, 8, 12), coat=(190, 20, 36), hot=1.0, a=0.95 - 0.4 * k)
+        c.drawCircle(ex - 10, ey - 13, 6, paint(WHITE, 0.85))
     # landmarks: a constellation the machine draws over the face
     pts = [(-110, -70), (-60, -86), (-14, -70), (14, -70), (60, -86), (110, -70), (-70, -40), (70, -40), (0, 0), (-26, 60), (26, 60), (0, 74),
            (-60, 140), (0, 160), (60, 140), (-150, 20), (150, 20), (-120, 180), (120, 180), (0, 236)]
-    k = ramp(u, 0.05, 0.45)
-    n = int(len(pts) * k)
-    sc = 1.75
-    P = [(540 + x * sc, 820 + y * sc) for x, y in pts[:n]]
+    kl = ramp(stutter(T, t0 + 0.3, period=0.1, move=0.04, fps=12, seed=3), t0 + 0.3, t0 + 0.75)
+    n = int(len(pts) * kl)
+    P = [(540 + x * FS, 820 + y * FS) for x, y in pts[:n]]
     for i in range(1, len(P)):
-        c.drawLine(*P[i - 1], *P[i], paint((120, 240, 255), 0.35, stroke=1.5))
+        c.drawLine(*P[i - 1], *P[i], paint((120, 240, 255), 0.35, stroke=1.5 / z))
     for p in P:
         c.drawCircle(p[0], p[1], 5, G.glow_paint((140, 245, 255), 0.9))
     c.restore()
-    lock = ramp(stutter(T, t0 + 0.1, period=0.16, move=0.05, fps=12, seed=3), t0 + 0.1, t0 + 0.6)
-    CO.target_box(c, 250, 380, 830, 1290, T, label="MATCH FOUND" if T > Wx("h1", "found") - 0.05 else None, conf="98.1%", col=(120, 240, 255),
-                  lock=lock, size=40)
+    c.restore()
+    lock = ramp(stutter(T, t0 + 0.42, period=0.14, move=0.05, fps=12, seed=3), t0 + 0.42, t0 + 0.8)
+    if lock > 0:
+        CO.target_box(c, 250, 380, 830, 1290, T, label="MATCH FOUND" if T > Wx("h1", "found") - 0.05 else None, conf="98.1%",
+                      col=(120, 240, 255), lock=lock, size=40)
     CO.ui_text(c, "FEED 112  ·  SUBJECT 0034", 80, 290, 30, (160, 220, 236))
     CO.ui_text(c, "REC", 840, 290, 30, CO.ALERT, font="jost-600")
     c.drawCircle(820, 280, 9, paint(CO.ALERT, 0.6 + 0.4 * (int(T * 3) % 2)))
     _scan(c)
-    if u < 0.12:                                                  # it opens on a flash
-        c.drawPaint(paint(WHITE, 1 - u / 0.12))
     return st.arr
 
 
@@ -112,12 +139,19 @@ def s_c_monitors(T, idx):
     elif k == 1:
         CO.monitor(c, 60, 420, 960, 900, T, content=lambda c_, r: CO.feeds(c_, r.left(), r.top(), r.right(), r.bottom(), 4, 5, T, seed=4, hl=7))
     else:
-        c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint(shader=K.lin((0, 0), (0, H), [(210, 216, 224), (150, 160, 172)])))
-        c.drawPath(K.smooth([(220, 1300), (860, 1300), (800, 900), (280, 900)]), paint((240, 244, 248)))
-        for i in range(6):
-            C.ribbed(c, [(300 + i * 96, 900), (280 + i * 100, 600), (330 + i * 80, 200), (400 + i * 60, -40)], 16, 12, col=(206, 212, 220), T=T,
+        # side on: someone reclined in the chair, eyes shut; ribbed cables run from the headrest up into the lamp of lenses
+        zoom(c, T, t0 + 2 * d, end("c_monitors"), 1.0, 1.08, 300, 900)
+        CO.white_room(c, T, floor_y=1560)
+        CO.chair_side(c, 640, 1560, 1.0, T)
+        c.drawPath(K.smooth([(150, 920), (230, 960), (520, 1150), (840, 1180), (1010, 1290), (980, 1330), (800, 1250), (500, 1240), (200, 1010)]),
+                   paint(shader=K.lin((0, 900), (0, 1300), [(250, 252, 254), (214, 220, 228)])))
+        CO.monitor(c, 760, 560, 260, 180, T, content=lambda c_, r: CO.trace(c_, r.left() + 10, r.top() + 40, r.width() - 20, 90, T), arm=(1040, 300))
+        CA.face(c, 150, 905, 0.42, "guide", T, L=(236, 244, 250), R=(150, 166, 190), core=0.15, amb=(90, 98, 112), tilt=-62, blink=1.0, neck=False)
+        for i in range(5):
+            C.ribbed(c, [(140 + i * 14, 820), (150 + i * 30, 620), (220 + i * 40, 420), (300 + i * 30, 230)], 10, 8, col=(206, 212, 220), T=T,
                      hi=(255, 255, 255), pulse=0.5)
-        CO.ring_light(c, 540, 300, 300, T, n=12, tilt=0.4)
+        CO.ring_light(c, 360, 200, 200, T, n=12, tilt=0.4)
+        c.restore()
     return st.arr
 
 
@@ -141,6 +175,16 @@ def s_c_sink(T, idx):
     for i in range(7):                                             # shafts of light from the surface
         x = 140 + i * 130 + 40 * math.sin(T * 0.7 + i)
         G.beam(c, (540 + (x - 540) * 0.3, cy), (x - 80, H), (x + 80, H), (200, 240, 255), 0.12 * (1 - u))
+    # weightless: the sleeper sinking with us, gown and veil billowing, arms drifting up; two more far below, turning
+    for j, (fx_, fy_, fs, rot0, ph) in enumerate(((250, 1520, 0.2, 35, 1.7), (840, 1300, 0.26, -40, 3.1), (520, 900, 0.6, -38, 0.0))):
+        yy = fy_ + 50 * math.sin(T * 0.7 + ph) + (300 * u if j == 2 else -120 * u)
+        c.save()
+        c.translate(fx_ + 30 * math.sin(T * 0.5 + ph), yy)
+        c.rotate(rot0 + 12 * math.sin(T * 0.4 + ph) + (40 * u if j == 2 else 8 * u))
+        D.veil(c, T, 0, -330 * fs, 1000 * fs, 150 * fs, col=(236, 244, 255), a=0.4, wind=(0.15, -1.0), slow=0.25, seed=j + 3)
+        C.doll(c, 0, 380 * fs, fs, T, pose=("stand", "arms_up", 0.55 + 0.25 * math.sin(T * 0.6 + ph)), tint=(232, 238, 246), eyes=0.0,
+               a=0.95 - 0.3 * (j < 2))
+        c.restore()
     rng = K.rng_at(9, 2)
     for i in range(60):                                            # bubbles rising past us
         x = rng.uniform(40, W - 40) + 20 * math.sin(T * 2 + i)

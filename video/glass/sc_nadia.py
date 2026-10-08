@@ -1,11 +1,11 @@
 """NADIA - one ordinary day, every system switched on, everything that can go wrong going wrong.
 
-n_mirror   - dawn; Nadia in her bathroom mirror; a box flickers over her reflection. DRAMATISATION, every step documented.
+n_mirror   - dawn; Nadia in her bathroom mirror; a box flickers over her reflection. DRAMATIZATION, every step documented.
 n_road     - the city from above; her car; a camera at every junction flashes, and the log fills.
 n_call     - her desk; the dashboard scores her words, her tone, her face.
 n_idle     - the restroom door, a timer, FLAGGED: IDLE.
-n_union    - her work laptop; an article on organising; the monitoring console logs it.
-n_checkout - a self-checkout: vitamins, unscented lotion, cotton balls - and a score nobody shows her.
+n_union    - her work laptop; an article on organizing; the monitoring console logs it.
+n_checkout - a self-checkout: unscented lotion, supplements, cotton balls - and a score nobody shows her.
 n_exhibit  - in the gallery, her porcelain likeness in its case; a new line on its brass label.
 n_face     - her face over her phone, a baby ad glowing: "I haven't told anyone."
 n_vigil    - a candlelight vigil; a camera on a pole; MATCH.
@@ -33,9 +33,9 @@ COLD_L, COLD_R, COLD_A = (214, 230, 246), (130, 150, 180), (70, 78, 92)
 
 
 def _tag(c, T, a=1.0):
-    """The dramatisation tag, quiet, at the top of the frame."""
+    """The dramatization tag, quiet, at the top of the frame."""
     c.drawPath(K.rrect(150, 246, 930, 300, 8), paint((8, 12, 16), 0.7 * a))
-    K.text(c, "DRAMATISATION · EVERY STEP IS DOCUMENTED", 540, 284, 28, "jost-600", (220, 236, 244), tag="label", a=a)
+    K.text(c, "DRAMATIZATION · EVERY STEP IS DOCUMENTED", 540, 284, 28, "jost-600", (220, 236, 244), tag="label", a=a)
 
 
 def s_n_mirror(T, idx):
@@ -93,8 +93,11 @@ def s_n_call(T, idx):
     c = st.c
     t0 = cut("n_call")
     c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint(shader=K.lin((0, 0), (0, H), [(40, 48, 58), (70, 80, 92), (30, 36, 44)])))
+    zoom(c, T, t0, end("n_call"), 1.0, 1.06, 540, 1100)
     for i in range(5):                                             # cubicle partitions behind her
         c.drawRect(skia.Rect.MakeXYWH(-40 + i * 240, 820, 220, 420), paint((90, 98, 110), 0.6))
+    c.drawLine(860, 760, 860, 900, paint((40, 44, 50), stroke=8))   # the camera on its stalk, watching her
+    C.lens(c, 860, 760, 26, T, open_=0.55, ring=CO.STEEL, coat=(170, 20, 30), hot=1.0)
     CA.face(c, 540, 1130, 1.05, "nadia", T, L=COLD_L, R=COLD_R, core=0.2, amb=COLD_A, blink=blink(T, 4), talk=0.5 * abs(math.sin(T * 7)), gaze=(0.3, 0.1))
     c.drawPath(K.bez_path([(380, 1000), (540, 760), (700, 1000)]), paint((30, 32, 36), stroke=16))     # the headset
     c.drawCircle(386, 1030, 34, paint((30, 32, 36)))
@@ -125,6 +128,7 @@ def s_n_call(T, idx):
         CO.target_box(c, 380, 900, 700, 1330, T, lock=kf, col=(120, 240, 255))
     score = 81 - 14 * ramp(T, tw, end("n_call"))
     CO.ui_text(c, "%d" % score, 960, 330, 56, CO.ALERT if score < 72 else CO.OK_GREEN, align="right", font="jost-600")
+    c.restore()
     return st.arr
 
 
@@ -165,11 +169,13 @@ def s_n_union(T, idx):
         c_.drawRect(r, paint((236, 238, 240)))
         x0, y0 = r.left(), r.top()
         c_.drawRect(skia.Rect.MakeLTRB(x0, y0, r.right(), y0 + 60), paint((60, 70, 90)))
-        K.text(c_, "How workers organise", x0 + 40, y0 + 150, 50, "playfair-700", (30, 30, 36), align="left", tag="screen")
+        K.text(c_, "How workers organize", x0 + 40, y0 + 150, 50, "playfair-700", (30, 30, 36), align="left", tag="screen")
         K.text(c_, "a union at work", x0 + 40, y0 + 210, 50, "playfair-700", (30, 30, 36), align="left", tag="screen")
         for i in range(8):
             c_.drawLine(x0 + 40, y0 + 280 + i * 36, r.right() - 40 - (i % 3) * 60, y0 + 280 + i * 36, paint((150, 150, 160), stroke=8))
+    zoom(c, T, t0, end("n_union"), 1.0, 1.05, 540, 800)
     CO.monitor(c, 90, 360, 900, 640, T, content=page, glow=(200, 220, 240), frame=(30, 32, 38))
+    C.lens(c, 540, 342, 9, T, open_=0.6, ring=(30, 30, 36), coat=(170, 20, 30), hot=1.0)                    # its webcam, lit
     c.drawPath(K.path([(40, 1020), (1040, 1020), (1080, 1100), (0, 1100)]), paint((50, 54, 62)))
     tl = Wx("n5", "logs") - 0.3
     if T > tl:
@@ -177,6 +183,7 @@ def s_n_union(T, idx):
         CO.panel(c, 120, 1120 - 0 * k, 840, 190, "MONITORING  ·  WORK DEVICE 7731", size=26, a=k)
         CO.ui_text(c, "12:41  BROWSING  \"union\"", 150, 1230, 34, (230, 240, 246), a=k)
         CO.ui_text(c, "FLAGGED  ·  HR NOTIFIED", 150, 1284, 34, CO.ALERT, a=k, font="jost-600")
+    c.restore()
     return st.arr
 
 
@@ -185,24 +192,30 @@ def s_n_checkout(T, idx):
     c = st.c
     t0 = cut("n_checkout")
     c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((30, 34, 40)))
-    items = [("vitamins,", "PRENATAL VITAMINS", "14.99"), ("unscented", "UNSCENTED LOTION", "8.49"), ("lotion.", "COTTON BALLS", "3.29")]
+    # nothing on the receipt says "pregnant": the score is built from ordinary things (the retailer's signals in Duhigg 2012)
+    items = [("unscented", 0.0, "UNSCENTED LOTION", "8.49"), ("supplements,", 0.0, "CALCIUM + MAGNESIUM", "11.99"),
+             ("supplements,", 0.2, "ZINC 50 MG", "6.79"), ("cotton", 0.0, "COTTON BALLS", "3.29")]
 
     def screen(c_, r):
         c_.drawRect(r, paint((236, 240, 244)))
         K.text(c_, "SELF CHECKOUT", r.left() + 40, r.top() + 70, 40, "jost-600", (40, 60, 80), align="left", tag="screen")
-        for i, (w, name, price) in enumerate(items):
-            k = K.ease(ramp(T, Wx("n6", w) - 0.1, Wx("n6", w) + 0.05))
-            y = r.top() + 170 + i * 80
+        for i, (w, dl, name, price) in enumerate(items):
+            k = K.ease(ramp(T, Wx("n6", w) - 0.1 + dl, Wx("n6", w) + 0.05 + dl))
+            y = r.top() + 160 + i * 78
             K.text(c_, name, r.left() + 40, y, 38, "jost-500", (30, 34, 40), align="left", tag="screen", a=k)
             K.text(c_, price, r.right() - 40, y, 38, "jost-500", (30, 34, 40), align="right", tag="screen", a=k)
+    zoom(c, T, t0, end("n_checkout"), 1.0, 1.05, 540, 700)
     CO.monitor(c, 140, 300, 800, 520, T, content=screen, glow=(220, 230, 240), frame=(60, 64, 72))
-    tm = Wx("n6", "lotion.") + 0.25
+    c.drawArc(skia.Rect.MakeLTRB(880, 230, 1000, 330), 180, 180, True, paint((20, 22, 28)))                # the dome camera above it
+    C.lens(c, 940, 300, 16, T, open_=0.6, ring=(40, 40, 46), coat=(170, 20, 30), hot=1.0)
+    tm = Wx("n6", "balls.") + 0.2
     if T > tm:
         k = K.ease(ramp(T, tm, tm + 0.25))
         CO.panel(c, 140, 880, 800, 300, "CUSTOMER MODEL  ·  NOT SHOWN", size=26, a=k, line=CO.ALERT)
         CO.ui_text(c, "PREGNANCY SCORE", 180, 1040, 40, (230, 240, 246), a=k)
         CO.ui_text(c, "0.87", 900, 1040, 64, CO.ALERT, a=k, align="right", font="jost-600")
         CO.ui_text(c, "send baby offers  ·  due date est.", 180, 1120, 32, CO.UI_DIM, a=k)
+    c.restore()
     return st.arr
 
 
@@ -239,9 +252,20 @@ def s_n_face(T, idx):
             blink=blink(T, 6), gaze=(0.0, 0.5))
 
     def scr(c_, r):
-        c_.drawRect(r, paint((250, 250, 252)))
-        _ad(c_, skia.Rect.MakeLTRB(r.left() + 30, r.top() + 60, r.right() - 30, r.top() + 400), 1, words=False)
-    CO.phone(c, 540, 1560, 0.55, T, screen=scr, tilt=-4)
+        # the ad that knows before anyone else does
+        c_.drawRect(r, paint((250, 246, 248)))
+        c_.drawPath(K.rrect(r.left() + 30, r.top() + 70, r.right() - 30, r.top() + 560, 26), paint((246, 222, 230)))
+        x0, y0 = r.centerX(), r.top() + 250                         # a pram
+        c_.drawPath(K.smooth([(x0 - 120, y0), (x0 + 60, y0), (x0 + 110, y0 - 60), (x0 + 60, y0 - 140), (x0 - 40, y0 - 150), (x0 - 120, y0 - 60)]),
+                    paint((200, 120, 150)))
+        for wx in (x0 - 80, x0 + 50):
+            c_.drawCircle(wx, y0 + 40, 30, paint((120, 70, 90), stroke=10))
+        c_.drawLine(x0 + 60, y0 - 60, x0 + 150, y0 - 150, paint((120, 70, 90), stroke=10))
+        K.text(c_, "Expecting?", r.centerX(), r.top() + 420, 72, "playfair-700", (110, 40, 70), tag="screen")
+        K.text(c_, "Picked for you, Nadia", r.centerX(), r.top() + 500, 40, "jost-500", (120, 70, 90), tag="screen")
+    G.pool(c, 640, 1250, 500, (220, 200, 255), 0.25)
+    CO.phone(c, 660, 1330, 0.5, T, screen=scr, tilt=6)
+    C.lens(c, 660 + 15 * 0.5, 1330 - 482 * 0.5, 6, T, open_=0.6, ring=(30, 30, 36), coat=(170, 20, 30), hot=1.0)
     return st.arr
 
 
@@ -306,11 +330,19 @@ def knocks():
 def s_n_door(T, idx):
     st = K.Stage((0, 0, 0))
     c = st.c
-    kn = max([hit(T, t, 0.22) for t in knocks()] + [0.0])
-    CO.door_inside(c, T, knock=kn, light=1.0, shake=kn)
+    t0, t1 = cut("n_door"), end("n_door")
+    ks = knocks()
+    kn = max([hit(T, t, 0.25) for t in ks] + [0.0])
+    zoom(c, T, t0, t1, 1.0, 1.14, 540, 1200)                        # creeping towards the door
     if kn > 0:
-        shake(c, T, 10 * kn, seed=31)
-        c.restore()
+        shake(c, T, 14 * kn, seed=31)
+    else:
+        c.save()
+    # before the first knock, two shadows step into the light under the door
+    feet = K.ease(ramp(T, ks[0] - 0.45, ks[0] - 0.25))
+    CO.door_inside(c, T, knock=kn, light=1.0, shake=kn, feet=feet, dust_t=ks)
+    c.restore()
+    c.restore()
     return st.arr
 
 
@@ -336,8 +368,9 @@ def s_n_match(T, idx):
     c.clipRect(skia.Rect.MakeLTRB(560, 360, 980, 900))
     c.drawRect(skia.Rect.MakeLTRB(560, 360, 980, 900), paint((190, 200, 214)))
     CA.face(c, 770, 600, 0.82, "nadia", T, L=COLD_L, R=COLD_R, core=0.15, amb=COLD_A)
+    c.drawRect(skia.Rect.MakeLTRB(560, 846, 980, 900), paint((14, 18, 24), 0.85))
     c.restore()
-    CO.ui_text(c, "DMV · NADIA K.", 580, 400, 26, (30, 40, 50))
+    CO.ui_text(c, "DMV · NADIA K.", 580, 884, 26, (220, 230, 236))
     k = K.ease(ramp(T, Wx("n11", "match") - 0.2, Wx("n11", "match") + 0.1))
     c.drawLine(520, 630, 560, 630, paint(CO.ALERT, k, stroke=6))
     c.drawPath(K.rrect(240, 960, 840, 1100, 14), paint(CO.ALERT, 0.92 * k))
@@ -366,7 +399,12 @@ def s_n_scream(T, idx):
     c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint((10, 10, 16)))
     L = (255, 60, 60) if ph < 0.5 else (60, 90, 255)
     R = (60, 90, 255) if ph < 0.5 else (255, 60, 60)
-    shake(c, T, 6, seed=33)
-    CA.face(c, 540, 860, 1.6, "nadia", T, L=L, R=R, core=0.5, amb=(30, 26, 34), talk=0.4 + 0.6 * talk(T, "NADIA"), expr="scream")
+    first = Wx("n12", "That's") - 0.05
+    hitk = max(hit(T, first, 0.3), hit(T, second + 0.55, 0.3))
+    zoom(c, T, t0, end("n_scream"), 1.0, 1.22, 540, 900)          # pushing in on her
+    shake(c, T, 6 + 18 * hitk, seed=33)
+    CA.face(c, 540, 860, 1.6, "nadia", T, L=L, R=R, core=0.5, amb=(30, 26, 34), talk=0.4 + 0.6 * talk(T, "NADIA"), expr="scream",
+            gaze=(0.0, -0.2))
+    c.restore()
     c.restore()
     return st.arr

@@ -128,7 +128,7 @@ def mask(c, x, y, s, T, eyes=0.0, iris="glass", iris_col=(90, 120, 150), lips=(1
     if smile > 0:
         for sd in (-1, 1):                                                  # cheeks pushed up into hard round apples
             c.drawCircle(sd * 80, 52 - 10 * smile, 34, paint(PORC_HI, 0.35 * smile, blur=10))
-            c.drawPath(K.bez_path([(sd * cw, cu), (sd * (cw + 10), cu - 8), (sd * (cw + 6), cu - 22)]), paint(sh, 0.5 * smile, stroke=3))
+            c.drawCircle(sd * (cw + 4), cu + 4, 16, paint(sh, 0.22 * smile, blur=8))
     if m > 1:
         c.drawPath(K.smooth([(-34, 113), (0, 110), (34, 113), (0, 116 + m)]), paint((20, 4, 8)))
     c.drawPath(up, paint(lips))
@@ -357,11 +357,12 @@ def curator(c, x, y, s, T, eyes=0.0, open_=1.0, talk=0.0, fan=1.0, swivel=0.0, g
              "raised": [((-210, -1060), (-360, -1180), (-420, -1360)), ((210, -1060), (360, -1180), (420, -1360))],
              "down": [((-200, -1060), (-240, -880), (-230, -700)), ((200, -1060), (240, -880), (230, -700))],
              "offer": [((-200, -1060), (-260, -900), (-120, -820)), ((200, -1060), (260, -900), (120, -820))]}
+    tips = []
     for sh_, el, wr in poses.get(arms, poses["open"]):
         c.drawPath(K.capsule(sh_[0], sh_[1], el[0], el[1], 64, 48), paint(LACQUER))
         c.drawPath(K.capsule(el[0], el[1], wr[0], wr[1], 48, 36), paint(LACQUER))
         c.drawPath(K.capsule(sh_[0], sh_[1], el[0], el[1], 64, 48), paint((90, 90, 110), 0.25, stroke=3))
-        hand(c, wr[0], wr[1], 1.0, math.degrees(math.atan2(wr[1] - el[1], wr[0] - el[0])) - 90, T)
+        tips += hand(c, wr[0], wr[1], 1.0, math.degrees(math.atan2(wr[1] - el[1], wr[0] - el[0])) - 90, T)
     # --- the collar: stacked gold rings up the neck
     for i in range(7):
         yy = -1135 - i * 22
@@ -375,24 +376,75 @@ def curator(c, x, y, s, T, eyes=0.0, open_=1.0, talk=0.0, fan=1.0, swivel=0.0, g
     c.drawPath(K.bez_path([(-140, -1440), (0, -1500), (140, -1440)]), paint(shader=gold_shader((-140, 0), (140, 0))), )
     c.restore()
     c.restore()
+    return tips
 
 
 def hand(c, x, y, s, ang, T, col=PORC, claws=GOLD, open_=1.0, a=1.0):
-    """A long porcelain hand, fingers together and slightly spread, each finger capped in a gold claw."""
+    """Her hand, hanging from a black lacquer sleeve and a cuff of gold lace: long porcelain fingers in two jointed
+    sections, each sheathed at the tip in a long curved gold nail guard, a ruby ring; open_ < 1 curls them to grip.
+    Returns the four guard tips in canvas coordinates (for threads)."""
+    tips = []
     c.save()
     c.translate(x, y)
     c.rotate(ang)
     c.scale(s, s)
-    c.drawPath(K.smooth([(-26, -10), (26, -10), (30, 60), (-30, 60)]), paint(col, a))
-    for i, (dx, L) in enumerate(((-24, 90), (-8, 112), (8, 118), (24, 100))):
-        sp = (i - 1.5) * 6 * open_
-        x0, y0, x1, y1 = dx, 50, dx + sp, 50 + L
-        c.drawPath(K.capsule(x0, y0, x1, y1, 15, 11), paint(col, a))
-        c.drawPath(K.path([(x1 - 6, y1 - 18), (x1 + 6, y1 - 18), (x1 + sp * 0.2, y1 + 34)]), paint(shader=gold_shader((x1 - 6, 0), (x1 + 6, 0)), a=a))
-    c.drawPath(K.capsule(-30, 20, -60, 80, 18, 13), paint(col, a))                                     # thumb
-    c.drawPath(K.path([(-66, 72), (-54, 72), (-64, 110)]), paint(GOLD, a))
-    c.drawPath(K.smooth([(-26, -10), (26, -10), (30, 60), (-30, 60)]), paint(PORC_SH, 0.3 * a, blur=6))
+    lp = paint()
+    lp.setAlphaf(a)
+    c.saveLayer(None, lp)
+    skin = lambda x0, x1: K.lin((x0, 0), (x1, 0), [mix(col, PORC_HI, 0.6), col, mix(col, PORC_SH, 0.75)])
+    c.drawPath(K.smooth([(-40, -170), (40, -170), (34, -40), (-34, -40)]), paint(LACQUER))                  # the sleeve
+    cuff = [(-36, -60)]
+    for i in range(9):                                                                                     # gold lace, scalloped
+        u = i / 8
+        cuff.append((-52 + 104 * u, -6 + (8 if i % 2 else 0)))
+    cuff.append((36, -60))
+    c.drawPath(K.path(cuff), paint(shader=gold_shader((-52, 0), (52, 0))))
+    for i in range(4):
+        c.drawLine(-40 + i * 26, -54, -44 + i * 29, -10, paint(GOLD_LO, 0.6, stroke=2))
+    palm = K.smooth([(-28, -6), (28, -6), (34, 30), (30, 62), (-30, 62), (-34, 30)])
+    c.drawPath(palm, paint(shader=skin(-34, 34)))
+    curl = (1 - open_) * 28
+    for i, (dx, L) in enumerate(((-22, 92), (-7, 112), (8, 118), (23, 98))):
+        sp = (i - 1.5) * 5 * open_
+        p0 = (dx, 56)
+        a1 = math.radians(90 + sp - curl * 0.4)
+        l1 = L * 0.52
+        p1 = (p0[0] + l1 * math.cos(a1), p0[1] + l1 * math.sin(a1))
+        a2 = a1 - math.radians(curl)
+        l2 = L * 0.48
+        p2 = (p1[0] + l2 * math.cos(a2), p1[1] + l2 * math.sin(a2))
+        c.drawPath(K.capsule(*p0, *p1, 15, 13), paint(shader=skin(p0[0] - 8, p0[0] + 8)))
+        c.drawPath(K.capsule(*p1, *p2, 13, 10), paint(shader=skin(p1[0] - 7, p1[0] + 7)))
+        c.drawPath(K.bez_path([(p1[0] - 6, p1[1] - 2), (p1[0], p1[1] + 2), (p1[0] + 6, p1[1] - 2)]), paint(PORC_SH, 0.5, stroke=1.4))
+        # the nail guard: a long tapering gold sheath, curving, chased with fine lines
+        a3 = a2 - math.radians(curl * 0.6 + 6)
+        l3 = 62
+        tip = (p2[0] + l3 * math.cos(a3), p2[1] + l3 * math.sin(a3))
+        nx, ny = -math.sin(a2), math.cos(a2)
+        base0, base1 = (p2[0] - 8 * nx - 10 * math.cos(a2), p2[1] - 8 * ny - 10 * math.sin(a2)), (p2[0] + 8 * nx - 10 * math.cos(a2), p2[1] + 8 * ny - 10 * math.sin(a2))
+        mid = ((p2[0] + tip[0]) / 2 + 6 * nx, (p2[1] + tip[1]) / 2 + 6 * ny)
+        mp = c.getTotalMatrix().mapXY(*tip)
+        tips.append((mp.x(), mp.y()))
+        guard = K.smooth([base0, base1, mid, tip], closed=True)
+        c.drawPath(guard, paint(shader=gold_shader(base0, base1)))
+        c.drawPath(guard, paint(GOLD_LO, 0.8, stroke=1.2))
+        for k in range(1, 4):
+            q = (p2[0] + (tip[0] - p2[0]) * k / 4.5, p2[1] + (tip[1] - p2[1]) * k / 4.5)
+            c.drawLine(q[0] - 5 * nx, q[1] - 5 * ny, q[0] + 5 * nx, q[1] + 5 * ny, paint(GOLD_HI, 0.7, stroke=1.2))
+        if i == 2:                                                                                         # a ruby ring
+            rq = (p0[0] + (p1[0] - p0[0]) * 0.55, p0[1] + (p1[1] - p0[1]) * 0.55)
+            c.drawCircle(rq[0], rq[1], 9, paint(GOLD, stroke=4))
+            c.drawCircle(rq[0] - 1, rq[1], 6, paint(shader=K.rad((rq[0] - 3, rq[1] - 3), 7, [(255, 120, 120), BLOOD, BLOOD_LO])))
+    t0, t1 = (-30, 22), (-58, 64)                                                                          # thumb, two sections, a guard
+    c.drawPath(K.capsule(*t0, *t1, 17, 14), paint(shader=skin(-60, -28)))
+    t2 = (-66 + curl * 0.6, 100)
+    c.drawPath(K.capsule(*t1, *t2, 14, 11), paint(shader=skin(-68, -50)))
+    c.drawPath(K.smooth([(t2[0] - 7, t2[1] - 8), (t2[0] + 7, t2[1] - 8), (t2[0] + 3, t2[1] + 30), (t2[0] - 2, t2[1] + 52)]), paint(shader=gold_shader((t2[0] - 7, 0), (t2[0] + 7, 0))))
+    c.drawPath(palm, paint(PORC_SH, 0.25, blur=6))
+    _spec(c, -12, 20, 10, 24, 0.45, blur=4)
     c.restore()
+    c.restore()
+    return tips
 
 
 # ------------------------------------------------------------------ the saint (the narrator, inside)
@@ -481,14 +533,41 @@ DOLL_POSES = {
     "arms_up": ([(-70, -560), (-150, -660), (-170, -800)], [(70, -560), (150, -660), (170, -800)], [(-36, -330), (-40, -170), (-42, 0)], [(36, -330), (40, -170), (42, 0)]),
     "kneel": ([(-70, -400), (-80, -270), (-60, -160)], [(70, -400), (80, -270), (60, -160)], [(-36, -170), (-60, 0), (-150, 10)], [(36, -170), (60, 0), (150, 10)]),
     "candle": ([(-70, -560), (-90, -440), (-20, -420)], [(70, -560), (90, -440), (20, -420)], [(-36, -330), (-40, -170), (-42, 0)], [(36, -330), (40, -170), (42, 0)]),
+    # palms flat against the glass of the case, at face height
+    "press": ([(-70, -560), (-150, -560), (-150, -720)], [(70, -560), (150, -560), (150, -720)], [(-36, -330), (-40, -170), (-42, 0)], [(36, -330), (40, -170), (42, 0)]),
 }
 
 
+def _pose(pose):
+    """A pose by name, or (a, b, k): pose a turning into pose b (k 0..1), joint by joint."""
+    if isinstance(pose, tuple):
+        a, b, k = pose
+        A, B = DOLL_POSES.get(a, DOLL_POSES["stand"]), DOLL_POSES.get(b, DOLL_POSES["stand"])
+        return tuple([tuple((pa[0] + (pb[0] - pa[0]) * k, pa[1] + (pb[1] - pa[1]) * k) for pa, pb in zip(la, lb)) for la, lb in zip(A, B)]), (a if k < 0.5 else b)
+    return DOLL_POSES.get(pose, DOLL_POSES["stand"]), pose
+
+
+def _skirt(pose, hip, top):
+    """The outline of a floor-length gown for a pose (local units, feet at 0)."""
+    w0 = 58                                                                  # half-width at the waist
+    wy = hip - 60
+    if pose == "kneel":
+        return [(-w0, wy), (w0, wy), (120, -60), (210, 8), (0, 18), (-210, 8), (-120, -60)]
+    if pose == "type":                                                       # seated: over the knees, then down
+        return [(-w0, wy), (w0, wy), (112, -300), (124, -250), (132, 0), (0, 10), (-132, 0), (-124, -250), (-112, -300)]
+    if pose == "walk":                                                       # the hem swinging with the stride
+        return [(-w0, wy), (w0, wy), (100, -200), (150, -10), (40, 8), (-90, 4), (-170, -6), (-110, -200)]
+    return [(-w0, wy), (w0, wy), (96, -200), (148, -4), (0, 8), (-148, -4), (-96, -200)]
+
+
 def doll(c, x, y, s, T, pose="stand", tint=PORC, shade=PORC_SH, a=1.0, head_turn=0.0, eyes=0.0, face=True, hair=None, dress=None,
-         crack=0.0, light=(-0.5, -0.6), joints=GOLD, mouth=True, head_tilt=0.0, scarf=None, lens_face=False, sign=None):
-    """A porcelain figure (about 720 px tall at s = 1, feet at x, y): a smooth egg of a head with a serene painted face,
-    a sculpted body, gold ball joints. hair: a colour for a sculpted ponytail; dress: a colour for a simple shift."""
-    arms_l, arms_r, leg_l, leg_r = DOLL_POSES.get(pose, DOLL_POSES["stand"])
+         crack=0.0, light=(-0.5, -0.6), joints=GOLD, mouth=True, head_tilt=0.0, scarf=None, lens_face=False, sign=None, collar=None):
+    """A porcelain figure dressed as a walking sculpture (about 720 px tall at s = 1, feet at x, y): a smooth egg of a
+    head with a serene painted face, a fan collar standing behind it, an armoured bodice traced in gold, puffed sleeves,
+    gloved forearms, a floor-length pleated gown with a gilded hem, and fine gold seams where the porcelain joins.
+    dress: the gown's colour (else glazed porcelain); hair: a sculpted ponytail; scarf: a headscarf (no collar)."""
+    blend = pose
+    (arms_l, arms_r, leg_l, leg_r), pose = _pose(pose)
     c.save()
     c.translate(x, y)
     c.scale(s, s)
@@ -496,30 +575,71 @@ def doll(c, x, y, s, T, pose="stand", tint=PORC, shade=PORC_SH, a=1.0, head_turn
     lp.setAlphaf(a)
     c.saveLayer(None, lp)
     sh = lambda p0, p1: K.lin(p0, p1, [mix(tint, PORC_HI, 0.5), tint, mix(tint, shade, 0.7)])
-    top = -560 if pose not in ("bow", "kneel") else (-500 if pose == "bow" else -400)
-    hip = -330 if pose != "kneel" else -170
-    for (h, k, f) in (leg_l, leg_r):
-        c.drawPath(K.capsule(h[0], h[1] if pose != "kneel" else hip, k[0], k[1], 58, 46), paint(shader=sh((h[0] - 30, 0), (h[0] + 30, 0))))
-        c.drawPath(K.capsule(k[0], k[1], f[0], f[1], 46, 34), paint(shader=sh((k[0] - 25, 0), (k[0] + 25, 0))))
-        c.drawCircle(k[0], k[1], 18, paint(joints))
-    # torso
-    lean = 40 if pose == "bow" else 0
-    torso = K.smooth([(-78, top + 10), (-60 + lean * 0.3, top - 30), (60 + lean * 0.3, top - 30), (78, top + 10), (64, hip - 60), (70, hip + 10),
-                      (-70, hip + 10), (-64, hip - 60)])
-    if dress is not None:
-        c.drawPath(K.smooth([(-82, top - 20), (82, top - 20), (130, hip + 160), (-130, hip + 160)]), paint(shader=K.lin((-130, 0), (130, 0), [mix(dress, WHITE, 0.25), dress, mix(dress, BLACK, 0.45)])))
+    gown = dress if dress is not None else mix(tint, PORC_HI, 0.15)
+    gdeep = mix(gown, BLACK, 0.55) if dress is not None else mix(tint, shade, 0.8)
+    gsh = lambda x0, x1: K.lin((x0, 0), (x1, 0), [mix(gown, PORC_HI, 0.45), gown, gdeep], [0.0, 0.45, 1.0])
+    trim = GOLD if not lens_face else GOLD_LO
+    def frame(nm):
+        return (-560 if nm not in ("bow", "kneel") else (-500 if nm == "bow" else -400), -330 if nm != "kneel" else -170, 40 if nm == "bow" else 0)
+    if isinstance(blend, tuple):                                             # the body's frame eases between the poses too
+        fa, fb, kb = frame(blend[0]), frame(blend[1]), blend[2]
+        top, hip, lean = (fa[i] + (fb[i] - fa[i]) * kb for i in range(3))
     else:
-        c.drawPath(torso, paint(shader=sh((-78, 0), (78, 0))))
-    for (sh_, el, wr) in (arms_l, arms_r):
-        c.drawPath(K.capsule(sh_[0], sh_[1], el[0], el[1], 40, 32), paint(shader=sh((sh_[0] - 20, 0), (sh_[0] + 20, 0))))
-        c.drawPath(K.capsule(el[0], el[1], wr[0], wr[1], 32, 24), paint(shader=sh((el[0] - 16, 0), (el[0] + 16, 0))))
-        c.drawCircle(el[0], el[1], 14, paint(joints))
-        c.drawCircle(sh_[0], sh_[1], 17, paint(joints))
-        c.drawCircle(wr[0], wr[1], 16, paint(tint))
-    # neck and head
+        top, hip, lean = frame(pose)
     hx = lean + head_turn * 10
     hy = top - 120
+    if collar is None:
+        collar = scarf is None
+    # the fan collar standing up behind the head, pleated like a shell, edged in gold
+    if collar:
+        cx, cy, R = hx * 0.6, top - 40, 170
+        n = 13
+        for i in range(n):
+            a0 = math.radians(196 + 148 * i / n)
+            a1 = math.radians(196 + 148 * (i + 1) / n)
+            wedge = K.path([(cx, cy), (cx + R * math.cos(a0), cy + R * math.sin(a0)), (cx + R * 1.04 * math.cos((a0 + a1) / 2), cy + R * 1.04 * math.sin((a0 + a1) / 2)),
+                            (cx + R * math.cos(a1), cy + R * math.sin(a1))])
+            c.drawPath(wedge, paint(mix(gown, PORC_HI, 0.35) if i % 2 else mix(gown, gdeep, 0.35)))
+        c.drawArc(skia.Rect.MakeLTRB(cx - R, cy - R, cx + R, cy + R), 196, 148, False, paint(trim, 0.95, stroke=7))
+        c.drawArc(skia.Rect.MakeLTRB(cx - R * 0.55, cy - R * 0.55, cx + R * 0.55, cy + R * 0.55), 200, 140, False, paint(trim, 0.6, stroke=3))
+    # the gown, its pleats, its gilded hem; feet just showing under it
+    sk = _skirt(pose, hip, top)
+    skp = K.smooth(sk)
+    for (h, k, f) in (leg_l, leg_r):
+        if pose not in ("kneel",) and f[1] > -40:
+            c.drawOval(skia.Rect.MakeLTRB(f[0] - 30, -14, f[0] + 30, 6), paint(mix(tint, shade, 0.3)))
+    c.drawPath(skp, paint(shader=gsh(-150, 150)))
+    b = skp.getBounds()
+    c.save()
+    c.clipPath(skp, doAntiAlias=True)
+    for j in range(-6, 7):                                                   # pleats fanning out from the waist
+        x0 = j * 9
+        x1 = j * 26
+        c.drawLine(x0, hip - 60, x1, b.bottom(), paint(gdeep, 0.28, stroke=5))
+        c.drawLine(x0 + 4, hip - 60, x1 + 9, b.bottom(), paint(PORC_HI if dress is None else mix(gown, WHITE, 0.4), 0.22, stroke=3))
+    c.drawRect(skia.Rect.MakeLTRB(b.left(), b.bottom() - 34, b.right(), b.bottom() + 4), paint(trim, 0.9))
+    c.drawRect(skia.Rect.MakeLTRB(b.left(), b.bottom() - 44, b.right(), b.bottom() - 38), paint(trim, 0.7))
+    c.restore()
+    # the armoured bodice
+    torso = K.smooth([(-80, top + 10), (-60 + lean * 0.3, top - 28), (60 + lean * 0.3, top - 28), (80, top + 10), (62, hip - 74), (40, hip - 52),
+                      (-40, hip - 52), (-62, hip - 74)])
+    c.drawPath(torso, paint(shader=gsh(-80, 80)))
+    c.drawLine(lean * 0.2, top - 24, 0, hip - 56, paint(trim, 0.9, stroke=3))
+    for sd in (-1, 1):
+        c.drawPath(K.bez_path([(sd * 8, top + 40), (sd * 52, top + 30), (sd * 60, top + 110)]), paint(trim, 0.8, stroke=2.5))
+        c.drawPath(K.bez_path([(sd * 8, top + 110), (sd * 40, top + 120), (sd * 44, hip - 90)]), paint(trim, 0.6, stroke=2))
+    c.drawPath(K.smooth([(-64, hip - 82), (64, hip - 82), (60, hip - 56), (-60, hip - 56)]), paint(trim))           # the gilded waist
+    # sleeves puffed at the shoulder, gloved forearms, a seam of gold at each joint
+    for (sh_, el, wr) in (arms_l, arms_r):
+        mxy = ((sh_[0] + el[0]) / 2, (sh_[1] + el[1]) / 2)
+        c.drawPath(K.capsule(sh_[0], sh_[1], el[0], el[1], 66, 40), paint(shader=gsh(mxy[0] - 34, mxy[0] + 34)))
+        c.drawPath(K.capsule(el[0], el[1], wr[0], wr[1], 30, 22), paint(shader=sh((el[0] - 16, 0), (el[0] + 16, 0))))
+        c.drawCircle(el[0], el[1], 15, paint(trim, 0.85, stroke=2.2))
+        c.drawCircle(wr[0], wr[1], 14, paint(mix(tint, PORC_HI, 0.3)))
+        c.drawCircle(wr[0], wr[1], 14, paint(trim, 0.8, stroke=2))
+    # neck
     c.drawPath(K.capsule(lean * 0.6, top - 20, hx, hy + 40, 40, 34), paint(shader=sh((-20, 0), (20, 0))))
+    c.drawPath(K.bez_path([(lean * 0.6 - 22, top - 30), (lean * 0.6, top - 22), (lean * 0.6 + 22, top - 30)]), paint(trim, 0.8, stroke=2))
     if hair is not None:
         c.drawPath(K.smooth([(hx + 40, hy - 50), (hx + 100, hy + 10), (hx + 96, hy + 120), (hx + 70, hy + 170), (hx + 60, hy + 60), (hx + 30, hy - 20)]), paint(hair))
     if scarf is not None:                                                  # a headscarf draped round the head and shoulders
@@ -538,7 +658,9 @@ def doll(c, x, y, s, T, pose="stand", tint=PORC, shade=PORC_SH, a=1.0, head_turn
         c.drawPath(K.smooth([(-70, -6), (-60, -66), (0, -96), (60, -66), (70, -6), (40, -50), (0, -60), (-40, -50)]), paint(hair))
     if scarf is not None:
         c.drawPath(K.smooth([(-74, -10), (-64, -72), (0, -100), (64, -72), (74, -10), (52, -54), (0, -70), (-52, -54)]), paint(mix(scarf, BLACK, 0.15)))
-    if lens_face:
+    if lens_face:                                                          # (and ribbed tubes from the skull down into the collar)
+        for sd in (-1, 1):
+            ribbed(c, [(sd * 50, 30), (sd * 90, 80), (sd * 95, 150)], 16, 12, T=T, pulse=0.6)
         c.drawPath(head, paint(LACQUER))
         lens(c, head_turn * 12, -6, 44, T, open_=0.5, ring=GOLD, coat=(150, 30, 40), hot=0.8)
     elif face:
@@ -562,12 +684,18 @@ def doll(c, x, y, s, T, pose="stand", tint=PORC, shade=PORC_SH, a=1.0, head_turn
 
 
 def doll_tiny(c, x, y, s, col=PORC, a=1.0, sway=0.0, shadow=None):
-    """A porcelain figure seen from far off (about 60 px tall at s = 1): head, body, legs - for crowds and armies."""
+    """A porcelain figure seen from far off (about 64 px tall at s = 1) in the same dress: a bell of a gown with a gold
+    hem, a bodice, a fan collar behind the head - for crowds and armies."""
     if shadow is not None:
         c.drawOval(skia.Rect.MakeLTRB(x - 16 * s, y - 4 * s, x + 16 * s, y + 4 * s), paint(shadow, 0.35 * a))
-    c.drawPath(K.smooth([(x - 9 * s, y), (x - 11 * s, y - 34 * s), (x - 7 * s, y - 44 * s), (x + 7 * s, y - 44 * s), (x + 11 * s, y - 34 * s), (x + 9 * s, y)]),
-               paint(shader=K.lin((x - 11 * s, 0), (x + 11 * s, 0), [mix(col, WHITE, 0.4), col, mix(col, PORC_SH, 0.8)]), a=a))
-    c.drawCircle(x + sway * s, y - 52 * s, 8 * s, paint(col, a))
+    hx, hy = x + sway * s, y - 58 * s
+    c.drawArc(skia.Rect.MakeLTRB(hx - 13 * s, hy - 7 * s, hx + 13 * s, hy + 19 * s), 196, 148, True, paint(mix(col, WHITE, 0.3), a))
+    c.drawArc(skia.Rect.MakeLTRB(hx - 13 * s, hy - 7 * s, hx + 13 * s, hy + 19 * s), 196, 148, False, paint(GOLD, 0.9 * a, stroke=max(0.8, 1.4 * s)))
+    c.drawPath(K.smooth([(x - 5 * s, y - 40 * s), (x + 5 * s, y - 40 * s), (x + 8 * s, y - 24 * s), (x + 14 * s, y), (x - 14 * s, y), (x - 8 * s, y - 24 * s)]),
+               paint(shader=K.lin((x - 14 * s, 0), (x + 14 * s, 0), [mix(col, WHITE, 0.4), col, mix(col, PORC_SH, 0.8)]), a=a))
+    c.drawRect(skia.Rect.MakeLTRB(x - 14 * s, y - 3 * s, x + 14 * s, y), paint(GOLD, 0.9 * a))
+    c.drawPath(K.smooth([(x - 7 * s, y - 52 * s), (x + 7 * s, y - 52 * s), (x + 5 * s, y - 39 * s), (x - 5 * s, y - 39 * s)]), paint(mix(col, PORC_SH, 0.2), a))
+    c.drawCircle(hx, hy, 7 * s, paint(col, a))
 
 
 def curator_back(c, x, y, s, T, a=1.0, sway=0.0):
