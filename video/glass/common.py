@@ -1,5 +1,6 @@
-"""Shared by every shot: line timings, mouths and blinks, the Reels-safe layout, and the camera's grammar - slow
-trance-like zooms and drifts, rack focus between depth layers, shakes for the impacts."""
+"""Shared by every shot: line timings, mouths and blinks, the Reels-safe layout, the camera's grammar (slow hypnotic
+zooms and drifts, rack focus between depth layers, shakes for the impacts) and the dream's grammar of time: stutter
+(jerky frame-skipping bursts that freeze dead), slow motion, reverse motion."""
 import math
 
 import cv2
@@ -14,7 +15,7 @@ from voice import SR
 # Reels: words stay out of the top 220 px, the bottom 380 px and (y 1000-1750) the strip right of x 960.
 TOP, BOT = 240, H - 400
 CAP_TOP = 1330                     # the caption band starts here: keep plaques and labels above it
-SPEAKER = {"merit": "MERIT", "iris": "IRIS", "system": "SYSTEM", "nar": "NAR"}
+SPEAKER = {"curator": "CURATOR", "nadia": "NADIA", "system": "SYSTEM", "nar": "NAR"}
 
 
 def S(k):
@@ -151,3 +152,39 @@ class Layers:
 
 def rack(T, t0, t1, f0, f1):
     return f0 + (f1 - f0) * K.ease(ramp(T, t0, t1))
+
+
+# ------------------------------------------------------------------ the dream's time
+
+def stutter(T, t0, period=0.55, move=0.16, fps=12, seed=0):
+    """Dream time for a figure that moves in jerky bursts: in each `period` it covers a whole period's worth of motion in
+    `move` seconds, stepping at `fps` (frames skipped), then freezes dead until the next burst. Returns a local time
+    that starts at t0."""
+    if T <= t0:
+        return t0
+    rng = K.rng_at(seed, 41)
+    u = T - t0
+    n = int(u / period)
+    jit = rng.uniform(-0.25, 0.25, n + 2) * period * 0.4
+    base = n * period
+    f = u - base - max(0.0, jit[n + 1])
+    k = 0.0 if f < 0 else min(1.0, math.floor(f * fps) / (move * fps))
+    return t0 + base + period * k
+
+
+def freeze(T, at):
+    return min(T, at)
+
+
+def slow(T, t0, k=0.25):
+    """Slow motion from t0 on: time runs at k."""
+    return T if T < t0 else t0 + (T - t0) * k
+
+
+def reverse(T, t0, t1):
+    """Reverse motion inside [t0, t1]: the moment plays backwards."""
+    if T < t0:
+        return T
+    if T > t1:
+        return t0
+    return t1 - (T - t0)

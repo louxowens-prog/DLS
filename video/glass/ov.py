@@ -1,6 +1,6 @@
-"""Captions over the finished print: the narrator in warm bone-white, Merit in pale lavender, the system in pale red,
-Iris in pale ice-blue. Whole phrases, low and left of centre, clear of the Reels buttons and caption bar, with a dark
-halo so they read over any colour the wash throws at them."""
+"""Captions over the finished print: the narrator in warm ivory, the Curator in pale gold, the machine in ice blue,
+Nadia in pale rose. Whole phrases, low and left of centre, clear of the Reels buttons and caption bar, with a dark halo
+so they read over the white room and the jewel-toned dream alike."""
 import skia
 
 import kit as K
@@ -8,8 +8,7 @@ from kit import paint
 from timeline import TL
 
 CAP_SIZE, MAX_W, CX, BASE = 54, 830, 520, 1500
-COLORS = {"NAR": (255, 244, 230), "MERIT": (232, 208, 255), "SYSTEM": (255, 196, 190), "IRIS": (206, 236, 255),
-          "WHY": (230, 230, 236)}
+COLORS = {"NAR": (255, 246, 232), "CURATOR": (255, 214, 130), "SYSTEM": (190, 232, 255), "NADIA": (255, 210, 216)}
 
 
 def _caps():

@@ -22,7 +22,8 @@ LINES = [
     # ---- cold open: the white room, the chair; going under; a desert at dawn
     ("c1", "NAR", "Breathe. Everything it has ever seen is kept down here.", None, 0.3),
     # ---- I. THE EYE
-    ("e1", "NAR", "Cameras. Faces. Microphones. License plates. Location. Clicks. Receipts.", None, 0.15),
+    ("e1", "NAR", "Cameras. Faces. Microphones. License plates. Location. Clicks. Receipts.",
+     "Cameras. Faces. Microphones. | License plates. Location. Clicks. Receipts.", 0.15),
     ("e2", "NAR", "Each one, a keyhole. Joined together, a house made of glass.",
      "Each one, a keyhole. | Joined together, a house made of glass.", 0.15),
     ("e3", "NAR", "Watching a million cameras once took an army. Now software can do it alone.",

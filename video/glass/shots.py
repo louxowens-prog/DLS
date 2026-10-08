@@ -1,5 +1,6 @@
-"""The compositor: the shot for time T, printed with its own look (the wash, the haze, the melt), its transition in
-(a cut, a dissolve, a luminous superimposition, a white flash, a film burn), then the captions on top."""
+"""The compositor: the shot for time T, printed with its own look (the gloss of the dream or the steel of the white
+room), its transition in (a cut, a dissolve, a luminous superimposition, a white flash, a film burn), then the
+captions on top."""
 import numpy as np
 
 import kit as K
@@ -9,7 +10,7 @@ from edit import EDIT, TRANS, shot_at
 from timeline import FPS, TL
 
 SHOTS = {}
-for _m in ("sc_open", "sc_one", "sc_two", "sc_three", "sc_four", "sc_iris", "sc_end"):
+for _m in ("sc_open", "sc_eye", "sc_work", "sc_oracle", "sc_scales", "sc_nadia", "sc_end"):
     try:
         mod = __import__(_m)
     except ModuleNotFoundError:

@@ -46,6 +46,7 @@ def paint(c=INK, a=1.0, stroke=None, blur=0.0, shader=None, cap="round", aa=True
     if shader is not None:
         p.setShader(shader)
         p.setAlphaf(a)
+        p.setDither(True)                                             # no banding in long gradients
     else:
         p.setColor4f(col(c, a))
     if stroke is not None:

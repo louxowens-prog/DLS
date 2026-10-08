@@ -1,8 +1,7 @@
-"""The 1983 print, drugged: every shot drowned in one saturated colour (blood red, magenta, violet, deep cobalt), heavy
-haze glowing wherever there is light, bloom and red halation round every highlight, long anamorphic streaks and
-prismatic ghost flares, chromatic fringing on bright edges, faded blacks lifted into purple, coarse 35 mm grain, soft
-diffusion, gate weave, light leaks, the odd film burn - and, when the dream turns, the picture itself breathing,
-melting and smearing like film left on a projector lamp.
+"""The print: a polished late-1990s music-video gloss for the dream (saturated jewel tones, crisp contrast, soft bloom
+on the highlights, almost no grain) and a cold, clinical grade for the real world (steel blue-grey, monitor glow).
+The same engine also carries washes, haze, streaks, prismatic flares, fringing, the picture breathing and melting,
+and film burns, used sparingly here.
 
 look(arr, T, idx, **params) works in place on an RGBA frame. Flare sources are registered by the shot with flare(),
 like lettering with kit.reg(), and drawn here after the bloom."""
@@ -32,6 +31,15 @@ WASH = {
     "fluoro": ((2, 10, 12), (70, 170, 150), (230, 255, 245)),
     "gold": ((10, 4, 0), (200, 130, 30), (255, 236, 190)),
     "bone": ((6, 4, 10), (150, 130, 140), (250, 240, 236)),
+    # GLASS: the cold room and the jewel-toned dream
+    "steel": ((4, 8, 14), (96, 116, 134), (232, 242, 248)),
+    "monitor": ((2, 8, 12), (60, 120, 140), (210, 246, 250)),
+    "royal": ((2, 4, 24), (30, 60, 190), (210, 228, 255)),
+    "emerald": ((0, 10, 8), (14, 130, 96), (200, 255, 226)),
+    "teal": ((0, 10, 14), (16, 120, 130), (200, 250, 246)),
+    "crimson": ((10, 0, 2), (170, 10, 22), (255, 196, 170)),
+    "ivory": ((10, 8, 6), (176, 160, 140), (255, 250, 240)),
+    "amber": ((12, 4, 0), (210, 120, 30), (255, 238, 196)),
 }
 
 
