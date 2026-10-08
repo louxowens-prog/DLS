@@ -389,17 +389,18 @@ def sandstorm(arr, T, k=1.0, col=(232, 168, 80), dark=0.35, seed=0, speed=1.0):
     nf = LK._noise_fields()
     f1 = LK._scroll(nf[(seed + 1) % len(nf)], -T * 160 * speed, T * 20)
     f2 = LK._scroll(nf[(seed + 6) % len(nf)], -T * 260 * speed, -T * 12)
-    dens = np.clip(0.35 + 0.55 * f1 + 0.35 * f2, 0, 1.6) * k
-    dens = cv2.resize(dens.astype(np.float32), (W, H), interpolation=cv2.INTER_LINEAR)[..., None]
+    dens = np.clip(0.3 + 0.5 * f1 + 0.3 * f2, 0, 1.4) * k
+    dens = cv2.blur(dens.astype(np.float32), (41, 3))                         # smeared along the wind into streaks
+    dens = cv2.resize(dens, (W, H), interpolation=cv2.INTER_LINEAR)[..., None]
     x = arr[..., :3].astype(np.float32)
     x *= (1 - dark * k)
     dust = np.array(col, np.float32)
-    x = x * (1 - np.clip(dens * 0.7, 0, 0.92)) + dust * np.clip(dens * 0.7, 0, 0.92)
+    x = x * (1 - np.clip(dens * 0.6, 0, 0.8)) + dust * np.clip(dens * 0.6, 0, 0.8)
     arr[..., :3] = np.clip(x, 0, 255).astype(np.uint8)
     st = skia.Surface(arr)
     c = st.getCanvas()
     rng = K.rng_at(seed, 37)
-    for i in range(int(240 * k)):
+    for i in range(int(420 * k)):
         y = rng.uniform(0, H)
         v = rng.uniform(900, 2400) * speed
         x0 = (rng.uniform(0, W * 1.5) - T * v) % (W * 1.5) - W * 0.25

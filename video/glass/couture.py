@@ -485,7 +485,7 @@ DOLL_POSES = {
 
 
 def doll(c, x, y, s, T, pose="stand", tint=PORC, shade=PORC_SH, a=1.0, head_turn=0.0, eyes=0.0, face=True, hair=None, dress=None,
-         crack=0.0, light=(-0.5, -0.6), joints=GOLD, mouth=True, head_tilt=0.0):
+         crack=0.0, light=(-0.5, -0.6), joints=GOLD, mouth=True, head_tilt=0.0, scarf=None, lens_face=False, sign=None):
     """A porcelain figure (about 720 px tall at s = 1, feet at x, y): a smooth egg of a head with a serene painted face,
     a sculpted body, gold ball joints. hair: a colour for a sculpted ponytail; dress: a colour for a simple shift."""
     arms_l, arms_r, leg_l, leg_r = DOLL_POSES.get(pose, DOLL_POSES["stand"])
@@ -522,6 +522,13 @@ def doll(c, x, y, s, T, pose="stand", tint=PORC, shade=PORC_SH, a=1.0, head_turn
     c.drawPath(K.capsule(lean * 0.6, top - 20, hx, hy + 40, 40, 34), paint(shader=sh((-20, 0), (20, 0))))
     if hair is not None:
         c.drawPath(K.smooth([(hx + 40, hy - 50), (hx + 100, hy + 10), (hx + 96, hy + 120), (hx + 70, hy + 170), (hx + 60, hy + 60), (hx + 30, hy - 20)]), paint(hair))
+    if scarf is not None:                                                  # a headscarf draped round the head and shoulders
+        c.drawPath(K.smooth([(hx - 96, hy + 30), (hx - 92, hy - 70), (hx - 40, hy - 112), (hx + 40, hy - 112), (hx + 92, hy - 70), (hx + 96, hy + 30),
+                             (hx + 110, hy + 150), (hx + 60, hy + 190), (hx - 60, hy + 190), (hx - 110, hy + 150)]),
+                   paint(shader=K.lin((hx - 110, 0), (hx + 110, 0), [mix(scarf, WHITE, 0.2), scarf, mix(scarf, BLACK, 0.5)])))
+    if sign is not None:                                                   # a small folded placard held at the chest
+        c.drawPath(K.rrect(-70, top + 40, 70, top + 150, 6), paint((246, 244, 236)))
+        c.drawPath(K.rrect(-70, top + 40, 70, top + 150, 6), paint(sign, stroke=6))
     c.save()
     c.translate(hx, hy)
     c.rotate(head_tilt)
@@ -529,7 +536,12 @@ def doll(c, x, y, s, T, pose="stand", tint=PORC, shade=PORC_SH, a=1.0, head_turn
     c.drawPath(head, paint(shader=K.rad((light[0] * 40, light[1] * 50), 120, [mix(tint, PORC_HI, 0.6), tint, mix(tint, shade, 0.7)])))
     if hair is not None:
         c.drawPath(K.smooth([(-70, -6), (-60, -66), (0, -96), (60, -66), (70, -6), (40, -50), (0, -60), (-40, -50)]), paint(hair))
-    if face:
+    if scarf is not None:
+        c.drawPath(K.smooth([(-74, -10), (-64, -72), (0, -100), (64, -72), (74, -10), (52, -54), (0, -70), (-52, -54)]), paint(mix(scarf, BLACK, 0.15)))
+    if lens_face:
+        c.drawPath(head, paint(LACQUER))
+        lens(c, head_turn * 12, -6, 44, T, open_=0.5, ring=GOLD, coat=(150, 30, 40), hot=0.8)
+    elif face:
         ft = head_turn * 14
         for sd in (-1, 1):
             ex = sd * 24 + ft
@@ -556,3 +568,63 @@ def doll_tiny(c, x, y, s, col=PORC, a=1.0, sway=0.0, shadow=None):
     c.drawPath(K.smooth([(x - 9 * s, y), (x - 11 * s, y - 34 * s), (x - 7 * s, y - 44 * s), (x + 7 * s, y - 44 * s), (x + 11 * s, y - 34 * s), (x + 9 * s, y)]),
                paint(shader=K.lin((x - 11 * s, 0), (x + 11 * s, 0), [mix(col, WHITE, 0.4), col, mix(col, PORC_SH, 0.8)]), a=a))
     c.drawCircle(x + sway * s, y - 52 * s, 8 * s, paint(col, a))
+
+
+def curator_back(c, x, y, s, T, a=1.0, sway=0.0):
+    """The Curator seen from behind, walking away: the aureole's gold rods and the backs of its lenses, a black veil, the
+    shell bodice, the gown. Feet at (x, y); the train is drawn separately (train_floor)."""
+    c.save()
+    c.translate(x, y)
+    c.scale(s, s)
+    lp = paint()
+    lp.setAlphaf(a)
+    c.saveLayer(None, lp)
+    hy = -1350
+    c.drawPath(K.smooth([(-150, -760), (150, -760), (300, -300), (440, 0), (-440, 0), (-300, -300)]),
+               paint(shader=K.lin((-440, 0), (440, 0), [BLOOD_LO, BLOOD, BLOOD_HI, BLOOD, BLOOD_LO], [0.0, 0.3, 0.5, 0.72, 1.0])))
+    c.drawPath(K.smooth([(-150, -760), (-170, -930), (-200, -1080), (-120, -1130), (120, -1130), (200, -1080), (170, -930), (150, -760)]), paint(LACQUER))
+    for row in range(5):
+        for i in range(3 + row % 2):
+            shell(c, (i - (2 + row % 2) / 2) * 92, -800 - row * 64, 56, 44, rim_k=0.6)
+    for sd in (-1, 1):
+        shell(c, sd * 210, -1090, 110, 64, ang=sd * 18)
+    c.drawPath(K.smooth([(-150, -1330), (-140, -1470), (-90, -1560), (0, -1590), (90, -1560), (140, -1470), (150, -1330), (120, -1240), (-120, -1240)]), paint(LACQUER))
+    a0, a1 = math.radians(188), math.radians(352)
+    for R, n, r in ((250, 13, 26), (360, 19, 30), (480, 25, 34)):
+        c.drawArc(skia.Rect.MakeLTRB(-R, hy - 30 - R, R, hy - 30 + R), math.degrees(a0), math.degrees(a1 - a0), False, paint(GOLD, 0.8, stroke=5))
+        for i in range(n):
+            ang = a0 + (a1 - a0) * (i + 0.5) / n
+            px, py = R * math.cos(ang), hy - 30 + R * math.sin(ang)
+            c.drawLine(0, hy - 30, px, py, paint(GOLD, 0.6, stroke=4))
+            c.drawCircle(px, py, r, paint(shader=gold_shader((px - r, py), (px + r, py))))
+            c.drawCircle(px, py, r * 0.55, paint(GOLD_LO))
+    D.veil(c, T, 0, hy - 60, 700, 200, col=(10, 8, 14), a=0.5, wind=(sway * 0.2, 1.0), seed=4, slow=0.3)
+    c.restore()
+    c.restore()
+
+
+def train_floor(c, cam, T, x0, z0, z1, w0=0.9, w1=4.5, col=BLOOD, a=1.0):
+    """The train lying on the floor from her heels (x0, z0) back towards the camera (z1 < z0), widening, its folds
+    running away to her, slow ripples travelling down it."""
+    n = 30
+    L, R = [], []
+    for i in range(n + 1):
+        u = i / n
+        z = z0 + (z1 - z0) * u
+        w = w0 + (w1 - w0) * u ** 1.4
+        wob = 0.12 * math.sin(T * 1.2 - u * 7) * u
+        pl, pr = cam.proj((x0 - w / 2 + wob, 0.01, z)), cam.proj((x0 + w / 2 + wob, 0.01, z))
+        if pl is None or pr is None:
+            break
+        L.append(pl[:2])
+        R.append(pr[:2])
+    if len(L) < 2:
+        return
+    p = K.path(L + R[::-1])
+    c.drawPath(p, paint(shader=K.lin(L[0], L[-1], [mix(col, BLACK, 0.4), col, mix(col, BLOOD_HI, 0.4)]), a=a))
+    for k in range(1, 8):
+        f = k / 8
+        pts = [(l[0] + (r[0] - l[0]) * f, l[1] + (r[1] - l[1]) * f) for l, r in zip(L, R)]
+        c.drawPath(K.path(pts, closed=False), paint(mix(col, BLACK, 0.5) if k % 2 else mix(col, BLOOD_HI, 0.5), 0.35 * a, stroke=3 + 3 * f, blur=2))
+    c.drawPath(K.path(L, closed=False), paint(GOLD, 0.9 * a, stroke=4))
+    c.drawPath(K.path(R, closed=False), paint(GOLD, 0.9 * a, stroke=4))

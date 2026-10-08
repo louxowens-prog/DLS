@@ -272,7 +272,7 @@ def s_w_smile(T, idx):
     c.drawRect(skia.Rect.MakeLTRB(0, 0, W, H), paint(shader=K.rad((540, 900), 1100, [EMER_WALL, EMER_DEEP, (0, 6, 4)])))
     k = K.ease(ramp(stutter(T, Wx("w6", "Smile.") - 0.05, period=0.22, move=0.06, fps=12, seed=7), Wx("w6", "Smile.") - 0.05, Wx("w6", "Smile.") + 0.7))
     # the smile forced wider in jerks, too wide, held
-    C.mask(c, 540, 900, 2.0, T, eyes=0.0, tint=(232, 228, 220), lips=(150, 10, 30), smile=1.25 * k)
+    C.mask(c, 540, 900, 2.0, T, eyes=0.0, tint=(232, 228, 220), lips=(150, 10, 30), smile=0.9 * k)
     # the glass bell, and her eye reflected in it
     c.drawPath(K.smooth([(120, 1700), (120, 600), (300, 260), (540, 200), (780, 260), (960, 600), (960, 1700)], closed=False), paint((210, 255, 236), 0.5, stroke=4))
     c.drawPath(K.smooth([(200, 1600), (200, 650), (330, 360)], closed=False), paint(WHITE, 0.3, stroke=10, blur=4))

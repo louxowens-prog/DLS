@@ -55,6 +55,11 @@ PEOPLE.update({
     # the guide: the narrator in the real world - a clinician, hair pinned back, a white coat
     "guide": dict(skin=(232, 204, 186), lips=(176, 110, 110), iris=(90, 110, 120), brow=(70, 50, 40), hair=(70, 50, 40),
                   shadow=(150, 130, 130), lash=(40, 30, 28), style="bun", blush=0.04, age=0.35, coat="labcoat", soft=True),
+    # more faces for the line-up of the wrongly matched
+    "m_b": dict(skin=(124, 82, 60), lips=(110, 64, 56), iris=(44, 28, 20), brow=(26, 16, 12), hair=(20, 14, 12),
+                shadow=(90, 62, 52), lash=(14, 10, 8), style="short", blush=0.0, age=0.3, coat="shirt", male=True, soft=True),
+    "m_d": dict(skin=(96, 62, 46), lips=(90, 54, 48), iris=(36, 22, 16), brow=(20, 12, 10), hair=(16, 12, 10),
+                shadow=(70, 50, 42), lash=(12, 8, 6), style="short", blush=0.0, age=0.5, coat="suit2", male=True, soft=True),
 })
 
 EXPR = {

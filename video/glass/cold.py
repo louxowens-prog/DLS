@@ -70,6 +70,26 @@ def chair(c, x, y, s, T, a=1.0, occupant=None, recline=1.0):
     c.restore()
 
 
+def chair_side(c, x, y, s, T, a=1.0):
+    """The clinical chair side on, reclined: a steel column, a long padded seat, the back tipped away, a headrest, a
+    footrest; (x, y) the floor under the column."""
+    c.save()
+    c.translate(x, y)
+    c.scale(s, s)
+    c.drawOval(skia.Rect.MakeLTRB(-330, -24, 330, 24), paint((0, 0, 0), 0.22 * a, blur=14))
+    c.drawPath(K.rrect(-150, -36, 150, 0, 14), paint(shader=K.lin((0, -36), (0, 0), [(214, 220, 228), STEEL_D]), a=a))
+    c.drawPath(K.rrect(-34, -330, 34, -30, 10), paint(shader=K.lin((-34, 0), (34, 0), [STEEL, (240, 244, 248), STEEL_D]), a=a))
+    pad = lambda pts: (c.drawPath(K.smooth(pts), paint(shader=K.lin((0, -600), (0, -300), [(250, 252, 254), (208, 214, 222)]), a=a)),
+                       c.drawPath(K.smooth(pts), paint(STEEL_D, 0.5 * a, stroke=3)))
+    pad([(-150, -390), (190, -390), (200, -340), (-150, -330)])                      # seat
+    pad([(-160, -390), (-110, -350), (-420, -560), (-450, -600)])                    # back, tipped away
+    pad([(-470, -640), (-430, -560), (-520, -600), (-540, -650)])                    # headrest
+    pad([(180, -390), (220, -340), (380, -250), (390, -290)])                        # leg rest
+    for k in (-1, 1):
+        c.drawRect(skia.Rect.MakeLTRB(-60, -430, 80, -410), paint((70, 76, 88), a))  # a strap
+    c.restore()
+
+
 def white_room(c, T, hum=1.0, floor_y=1500, door=False, panel=(214, 220, 226), a=1.0):
     """The room itself, front on and symmetrical: back wall of square panels, a pale floor, cold light from above."""
     c.drawRect(skia.Rect.MakeLTRB(0, 0, W, floor_y), paint(shader=K.lin((0, 0), (0, floor_y), [mix(panel, (120, 130, 144), 0.4), panel, mix(panel, WHITE, 0.3)])))
