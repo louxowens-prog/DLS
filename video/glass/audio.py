@@ -146,12 +146,12 @@ def drone(bus, t0, t1, notes=(38, 45), gain=1.0, seed=0, att=1.0):
     bus.add(Tr.low_strings(list(notes), t1 - t0, 1.0, seed=seed, att=att), t0, gain, until=t1 + 0.6)
 
 
-def card_hit(mus, fx, t, seed=0, big=1.0, reed=True):
+def card_hit(mus, fx, t, seed=0, big=1.0, reed=True, until=None):
     """A chapter card: a frame drum and a goblet drum together, a reed cry, a tam-tam blooming, a low chord."""
     fx.add(DM.reverse_cymbal(0.6, 0.5, seed=seed), t - 0.6)
     mus.add(Tr.bendir("dum", 1.0, seed), t, 1.2 * big)
     mus.add(Tr.darbuka("doum", 1.0, seed), t, 0.9 * big)
-    mus.add(Tr.tamtam(0.8 * big, 4.0, seed=seed), t, 1.0)
+    mus.add(Tr.tamtam(0.8 * big, 4.0, seed=seed), t, 1.0, until=until)
     if reed:                                                         # (left out where the melody itself enters on the card)
         mus.add(Tr.ghaita(74, 0.9, 1.0, seed=seed), t + 0.05, 0.8 * big, pan=0.4)
     mus.add(Tr.low_strings([38, 45, 50], 1.4, 1.0, seed=seed, att=0.05), t, 1.0 * big)
@@ -198,8 +198,8 @@ def score(mus, fx):
     mus.add(Tr.low_strings([38, 50, 57], 2.2, 1.0, seed=2, att=0.3), T_TITLE - 0.05, 0.9)
     mus.add(Tr.tamtam(0.6, 4.0, seed=2), T_TITLE - 0.05)
     # =========== I. THE EYE (gold): the trance wakes, soft
-    card_hit(mus, fx, cut("k_1"), seed=1)
-    a, b = cut("e_list"), E("e7") + 0.22
+    card_hit(mus, fx, cut("k_1"), seed=1, until=S("e1") + 0.05)                            # (its tail cleared off "Cameras")
+    a, b = Wx("e1", "Faces.") - 0.1, E("e7") + 0.22
     groove(mus, a, b, dict(bendir=0.55, krakeb=0.22), k_fn=lambda t: 0.6 + 0.4 * min(1.0, (t - a) / 12.0), seed=1, until=b)
     drone(mus, a, b, (38, 45), 0.8, seed=3)
     # the seven vitrines: a spotlight thunking on for each word
@@ -323,15 +323,24 @@ def score(mus, fx):
     mus.add(Tr.choir([38, 45], E("t6") - T_SLAM + 0.6, 0.8, vowel="o", attack=0.3), T_SLAM + 0.4, 0.7)
     # =========== the procession: her train whispering across the floor; a slow drum; the music box, out of tune
     a, b = cut("d_procession"), cut("n_mirror")
-    fx.add(Tr.silk(b - a + 0.6, 1.0, seed=8, rate=0.35), a, 0.55)
-    for k in range(int((b - a) / 1.2) + 1):
-        mus.add(Tr.bendir("dum", 1.0, k), a + 0.1 + k * 1.2, 0.7)
-    mus.add(Tr.choir([38, 45, 50], b - a + 0.4, 0.7, vowel="o", attack=1.0), a, 0.5)
+    fx.add(Tr.silk(b - a + 0.6, 1.0, seed=8, rate=0.35), a, 0.55, until=S("d1") - 0.1)            # her train whispering - but not
+    fx.add(Tr.silk(b - E("d1") + 0.6, 1.0, seed=9, rate=0.35), E("d1") + 0.05, 0.55, until=b + 0.4)   # over her words
+    for k in range(int((b - a) / 1.2) + 1):                                                       # a slow drum, silent while she speaks
+        td_ = a + 0.1 + k * 1.2
+        if not (S("d1") - 0.25 < td_ < E("d1") + 0.05):
+            mus.add(Tr.bendir("dum", 1.0, k), td_, 0.7)
+    mus.add(Tr.choir([38, 45, 50], b - a + 0.4, 0.7, vowel="o", attack=1.0), a, 0.5, until=S("d1") - 0.1)   # (it sits on her voice,
+    mus.add(Tr.choir([38, 45, 50], b - E("d1") + 0.4, 0.7, vowel="o", attack=0.6), E("d1"), 0.5, until=b + 0.4)  # so not under it)
     mb = O.music_box([(m + 12, bb) for m, bb in Tr.THEME], rate=lambda u: 1.0 - 0.35 * u, amp=0.9, seed=2, detune=lambda u: 70 * math.sin(u * 11))
-    mus.add(mb, a + 0.15, 0.9, pan=0.6, until=b + 0.2)
+    mus.add(mb, a + 0.15, 0.9, pan=0.6, until=S("d1") - 0.05)                                     # the box plays before her words
+    mb2 = O.music_box([(m + 12, bb) for m, bb in Tr.THEME[2:]], rate=lambda u: 0.75 - 0.25 * u, amp=0.9, seed=3, detune=lambda u: 90 * math.sin(u * 9))
+    mus.add(mb2, E("d1") + 0.05, 0.9, pan=0.6, until=b + 0.2)                                    # and winds down after them
     for k in range(int((b - a) / 1.2) + 1):                                                       # each step: leather and metal
-        fx.add(Y.creak(0.5, 0.5, seed=40 + k, f0=150, f1=95), a + 0.55 + k * 1.2, pan=0.45)
-        fx.add(__import__("instr").clink(0.35, seed=k), a + 0.62 + k * 1.2, pan=0.55)
+        ts_ = a + 0.55 + k * 1.2
+        if S("d1") - 0.6 < ts_ < E("d1") + 0.1:                                                    # (never over her words)
+            continue
+        fx.add(Y.creak(0.5, 0.5, seed=40 + k, f0=150, f1=95), ts_, pan=0.45)
+        fx.add(__import__("instr").clink(0.35, seed=k), ts_ + 0.07, pan=0.55)
     # =========== NADIA: the cold world - room tones, a sparse pulse, and every system's little sound
     a, b = cut("n_mirror"), cut("x_collapse")
     for k in range(int((cut("n_door") - a) / 0.6)):                                             # a low pulse, like a slow heart
@@ -438,17 +447,17 @@ def score(mus, fx):
     fx.add(Y.wake_chime(0.4), Wx("y2", "hand") - 0.05)
     # silence; breath behind you; her whisper; the lunge
     t0 = S("y3") - 0.55
-    fx.add(Tr.mask_breath(1.2, 1.1, 0.9, seed=4), t0, until=S("y3") + 0.12)                    # a breath behind you, then she speaks
+    fx.add(Tr.mask_breath(1.2, 1.1, 0.9, seed=4), t0, until=S("y3") - 0.03)                    # a breath behind you, then she speaks
     fx.add(wide(Tr.reversed_voice(TL.lines["y3"]["wav0"], VSR, pitch=-6.0)), t0, 0.12, until=S("y3"))
     fx.add(Tr.porcelain_creak(0.5, seed=30, dur=0.4), S("y3") - 0.5)
-    fx.add(Y.creak(0.7, 0.55, seed=31, f0=120, f1=70), S("y3") - 0.42, pan=0.7)                  # leather, as she rises behind you
+    fx.add(Y.creak(0.6, 0.55, seed=31, f0=120, f1=70), S("y3") - 0.85, pan=0.7)                  # leather, as she rises behind you
     mus.add(DM.sub(25, T_LUNGE - t0, 0.35, att=1.0, rel=0.1), t0, until=T_LUNGE)
     zr = cut("z_room") + 0.08                                                                     # cut off dead by the white room
     mus.add(Tr.brass_stab([37, 44, 50, 55, 61], 1.0, seed=9, dur=1.0), T_LUNGE, 1.0, until=zr)
     mus.add(Tr.choir([73, 74, 79, 80], 1.2, 1.0, vowel="a", attack=0.01), T_LUNGE, 1.0, until=zr)
     mus.add(DM.boom(1.0, 38.0, 2.4), T_LUNGE, 1.0, until=zr)
     fx.add(Tr.shatter(0.9, seed=12, dur=1.6), T_LUNGE, until=zr)
-    fx.add(Tr.aperture(1.0, 0.3, seed=80), T_LUNGE - 0.02, until=zr)
+    fx.add(Tr.aperture(1.0, 0.3, seed=80), T_LUNGE + 0.01, until=zr)
     # =========== the white room again: hum, a slow monitor, one chord, the theme alone and slow
     a, b = cut("z_room"), TL.total
     fx.add(Tr.hum(b - a, 0.6), a)
@@ -540,7 +549,7 @@ def presence(x, f0=3000, gain_db=2.0, q=0.9):
 
 
 NEED = {"NAR": 9.5, "CURATOR": 13.0}             # the voice over the beds in the speech band (others: 11)
-NEED_LINE = {"w6": 16.0, "t3": 12.0, "x1": 9.0, "e1": 12.0}  # her short threat over the clockwork; "hijab" over the drums; her line in the storm
+NEED_LINE = {"w6": 16.0, "t3": 12.0, "x1": 9.0, "e1": 12.0, "d1": 15.0, "y3": 15.0}  # her short threat over the clockwork; "hijab" over the drums; her line in the storm
 BED = -2.0                                       # the beds' ceiling between lines, against the average line (dB)
 # (time, ceiling dB over the average line, seconds): the moments allowed to be loud
 HITS = [(0.0, 15.0, 1.2), (T_TITLE - 0.05, 12.0, 1.6), (cut("k_1"), 10.0, 1.0), (cut("k_2"), 10.0, 1.2), (cut("k_3"), 10.0, 1.2),
