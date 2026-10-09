@@ -40,9 +40,10 @@ KINDS = {                       # (harmonics, brightness, detune cents, odd-only
 }
 
 
-def horn(f0, dur, kind="tpt", amp=1.0, accent=1.0, fall=0.0, doit=0.0, seed=0):
+def horn(f0, dur, kind="tpt", amp=1.0, accent=1.0, fall=0.0, doit=0.0, seed=0, rip=0.0):
     """One brass note: a sawtooth whose brightness blooms on the attack (the 'blat'), a small pitch scoop,
-    late vibrato, breath noise, and optional fall-off or doit at the end."""
+    late vibrato, breath noise, and optional fall-off or doit at the end; rip > 0 slides up into the note from
+    that many semitones below (a trombone rip)."""
     nh, bright, cents, odd, br = KINDS[kind]
     rng = np.random.default_rng(seed)
     rel = 0.09
@@ -53,6 +54,8 @@ def horn(f0, dur, kind="tpt", amp=1.0, accent=1.0, fall=0.0, doit=0.0, seed=0):
     blat = accent * np.exp(-t / 0.07)
     bright_t = bright * (0.35 + 0.65 * np.minimum(1, t / 0.03)) * (0.75 + 0.6 * blat)
     pitch = 1 - 0.03 * np.exp(-t / 0.035)
+    if rip:
+        pitch = pitch * 2 ** (-rip * np.clip(1 - t / 0.09, 0, 1) ** 1.5 / 12)
     vib = 1 + 0.006 * np.sin(2 * np.pi * 5.6 * t) * np.clip((t - 0.22) / 0.2, 0, 1)
     bend = np.ones(n)
     if fall:
@@ -90,6 +93,16 @@ def chord_hit(notes, dur=0.28, kinds=("tpt", "tbn", "sax"), amp=1.0, fall=0.0, d
     return amp * out
 
 
+def shake(f0, dur, amp=1.0, seed=0):
+    """A trumpet shake: the lip trill between a note and the one a third above, speeding up as it goes."""
+    t = tx(dur + 0.09)
+    rate = 7 + 4 * t / (dur + 0.09)
+    sq = 0.5 + 0.5 * np.tanh(4 * np.sin(2 * np.pi * np.cumsum(rate) / SR))
+    lo, hi = horn(f0, dur, "tpt", 1.0, seed=seed), horn(f0 * 2 ** (4 / 12), dur, "tpt", 1.0, accent=0.3, seed=seed + 1)
+    n = min(len(lo), len(hi), len(sq))
+    return amp * (lo[:n] * (1 - sq[:n]) + hi[:n] * sq[:n])
+
+
 def pad(notes, dur, amp=1.0, seed=0):
     """Soft sustained sax-section chord for under the narration."""
     L = int((dur + 0.1) * SR)
@@ -108,6 +121,14 @@ def upright(f0, dur, amp=1.0, seed=0):
     x = np.sin(2 * np.pi * f0 * t) + 0.45 * np.sin(4 * np.pi * f0 * t) + 0.15 * np.sin(6 * np.pi * f0 * t)
     thump = J._lp(np.random.default_rng(seed).normal(0, 1, len(t)), 400) * np.exp(-t / 0.015) * 0.5
     return amp * (x * env + thump)
+
+
+def pluck(f0, dur, amp=1.0):
+    """The finger on an upright string: the bright attack (3rd to 9th harmonics, gone in ~60 ms) that lets a
+    walking line read on a phone speaker, which cannot play the fundamental."""
+    t = tx(min(dur, 0.4))
+    x = sum(np.sin(2 * np.pi * f0 * h * t) / h ** 0.8 for h in range(3, 10) if f0 * h < 2500)
+    return amp * _bp(x * np.exp(-t / 0.06) * np.minimum(1, t / 0.003), 180, 1600)
 
 
 def swing_pos(beat_i, eighth=0):
@@ -158,6 +179,15 @@ def engine(dur, rpm, amp=1.0, seed=0):
     noise = _bp(np.random.default_rng(seed).normal(0, 1, len(t)), 200, 3000) * 0.25
     x = _lp(x + noise * (0.5 + 0.5 * np.sin(ph / 3)), 3800)
     return amp * x
+
+
+def rev(dur=0.55, idle=1500, peak=7400, amp=1.0, seed=0):
+    """A throttle blip on the grid: the engine snaps up to the red line and falls back toward idle."""
+    tp = 0.11
+    rpm = lambda x: idle + (peak - idle) * ((x / tp) ** 0.6 if x < tp else np.exp(-(x - tp) / 0.2))
+    t = tx(dur)
+    env = np.minimum(1, t / 0.015) * np.clip((dur - t) / 0.12, 0, 1) * (0.55 + 0.45 * np.exp(-np.clip(t - tp, 0, None) / 0.2))
+    return amp * engine(dur, rpm, seed=seed) * env
 
 
 def passby(dur=1.6, f_lo=160, f_hi=320, amp=1.0, seed=0):

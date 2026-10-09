@@ -2,13 +2,15 @@
 import os
 import re
 
-from script import LINES
+import revoice
+from script import LINES, SAY
 from voice import SR, speak, word_times
 
 FPS = 30
 VOICE = "af_heart"
 SPEED = 1.2
 HERE = os.path.dirname(os.path.abspath(__file__))
+ORIG = os.environ.get("SR_ORIG") == "1"          # SR_ORIG=1: the first delivery's readings
 
 PRE = {"h1": 0.2, "a0": 0.2, "h2": 1.4, "d1": 0.7, "d4": 0.3, "t5": 0.3, "t3": 0.2, "e1": 0.9, "a1": 0.9, "u1": 0.9, "u3": 0.6, "a2": 0.9, "w1": 0.9, "f1": 1.3}
 TAIL = 3.4
@@ -21,7 +23,10 @@ class Timeline:
         for key, spoken, caption, gap, opts in LINES:
             t += PRE.get(key, 0.0)
             v, sp = opts.get("voice", VOICE), opts.get("speed", SPEED)
-            wav = speak(spoken, v, sp)
+            wav = wav0 = speak(spoken, v, sp)
+            if key in SAY and not ORIG:                  # the fixed reading, on the original's timeline
+                text, sp2 = SAY[key]
+                wav = revoice.onto(speak(text, v, sp2 or sp), wav0)
             d = len(wav) / SR
             words = word_times(spoken, wav)
             self.lines[key] = dict(start=t, end=t + d, wav=wav, spoken=spoken, caption=caption or spoken, voice=v,

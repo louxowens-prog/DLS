@@ -65,3 +65,23 @@ LINES = [
     ("f1", "So the first step? Paint the finish line. Then build a learner that can race any track.",
      "So the first step? Paint the finish line. Then build a learner that can race any track.", 0.0, {}),
 ]
+
+# What the voice reads where the spoken text above trips it up (second pass; the captions keep the text above, timed
+# to the new reading). The dots in "A.I." and "A.G.I." reach the model as sentence ends, so it read clipped single
+# letters ("One scores A, I,", "build a G.I."); "It has to" ran together into "Test to"; "beats stuffing" lost its s.
+# timeline.py places each new reading on the original's timeline phrase by phrase (revoice.py).
+# Entries: key -> (text, speed, or None for the line's own).
+SAY = {
+    "h1": ("Everyone's racing to build AGI. But nobody agrees where the finish line is.", 1.15),
+    "a0": ("The race to AGI is on!", None),
+    "d7": ("Researchers are now building frameworks like this. One scores AI against a well-educated adult: GPT-4 got "
+           "twenty-seven percent. GPT-5, fifty-seven.", 1.17),
+    "d8": ("And the new ARC test drops AI into games with no instructions and no stated goals. Human testers solved "
+           "every game. At its March launch, top AI scored under one percent.", None),
+    "t3": ("It has to: perceive, reason, ask, plan, fix things, improvise, remember, and learn.", None),
+    "e3": ("That beats... stuffing in more facts.", None),
+    "w1": ("One last twist: the AI effect. Every time machines win a lap, calculation, chess, language, vision, we "
+           "move the finish line. That's just computation.", None),
+    "a3": ("It's an old joke in AI!", None),
+    "w2": ("AI is whatever hasn't been done yet.", None),
+}
