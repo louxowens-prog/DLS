@@ -85,3 +85,30 @@ LINES = [
 
 # voices (Kokoro v1.0): the narrator is af_heart; each character from another "dimension" gets its own voice and treatment
 VOICES = {NAR: ("af_heart", 1.18), BOT: ("am_puck", 1.05), NOIR: ("am_fenrir", 0.92), ANIME: ("af_bella", 1.18)}
+
+# What the voices read where the spoken text above trips them up (second pass; the captions keep the text above, timed
+# to the new reading). The dots in "A.I." and "A.G.I." reach the model as sentence ends, so it read clipped single
+# letters ("the tasks A, I. agents", "That's a G.I. territory"); bare "AGI" after "Then" is read as a word ("AH-gee"),
+# so that one is hyphenated; the robot's "thirteen" was stressed on its first syllable and heard as "thirty", and its
+# "We never sleep!" as "You never sleep"; years are read the way people say them. timeline.py places each new reading
+# on the original's timeline phrase by phrase (revoice.py). Entries: key -> (text, speed, or None for the line's own).
+SAY = {
+    "h1": ("AI can score gold at the International Math Olympiad...", None),
+    "h3": ("Is it... thir-teen o'clock?", None),
+    "r2": ("Calculators. Narrow AI. Deep learning. Foundation models. Multimodal. Reasoning models. Agents.", None),
+    "r3": ("Then A-G-I. And superintelligence.", None),
+    "r5": ("general-purpose multimodal reasoning systems, plus early agents. Way past the narrow AI era.", None),
+    "s2": ("Every seven months or so, the tasks AI agents can finish, half the time, get twice as long. And lately, even "
+           "faster.", None),
+    "j3": ("Stanford's twenty twenty-six AI Index calls this the jagged frontier: genius here, baffled there.", None),
+    "a1": ("Now suppose it gets there: as capable as a top human researcher. That's AGI territory.", None),
+    "a3": ("We. Never. Sleep!", None),
+    "a5": ("It can even help improve AI itself: Google's Alpha Evolve already sped up a key piece of Gemini's training "
+           "code.", None),
+    "x1": ("That's the road from AGI to superintelligence.", None),
+    "x2": ("In June twenty twenty-six, Google Deep Mind mapped four routes: bigger scale, new algorithms, AI improving AI, "
+           "and huge teams of cooperating agents.", None),
+    "x4": ("Arguably, that threshold matters even more than AGI.", None),
+    "f3": ("We may be entering the era of AGI, depending on how you define it.", None),
+    "f4": ("But no one has shown an AI that's competent everywhere, keeps learning, and works reliably on its own.", None),
+}

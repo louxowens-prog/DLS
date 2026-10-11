@@ -4,12 +4,14 @@ The film look runs at 24 fps; characters are drawn "on twos" (12 drawings a seco
 import os
 import re
 
-from script import LINES, NAR, VOICES
+import revoice
+from script import LINES, NAR, SAY, VOICES
 from voice import SR, speak, word_times
 
 FPS = 24
 TWOS = 12
 HERE = os.path.dirname(os.path.abspath(__file__))
+ORIG = os.environ.get("SV_ORIG") == "1"          # SV_ORIG=1: the first delivery's readings
 
 PRE = {"h1": 0.35, "r1": 0.5, "s1": 0.3, "j1": 0.7, "d1": 1.1, "d2": 0.7, "d3": 0.6, "a1": 0.8, "a6": 0.2, "x1": 0.6, "f1": 0.9, "f7": 0.5}
 TAIL = 4.6
@@ -23,6 +25,9 @@ class Timeline:
             t += PRE.get(key, 0.0)
             v, sp = VOICES[who]
             wav = speak(spoken, v, sp)
+            if key in SAY and not ORIG:                  # the fixed reading, on the original's timeline
+                text, sp2 = SAY[key]
+                wav = revoice.onto(speak(text, v, sp2 or sp), wav)
             d = len(wav) / SR
             words = word_times(spoken, wav)
             self.lines[key] = dict(start=t, end=t + d, wav=wav, spoken=spoken, caption=(caption or spoken).replace("|", ""),

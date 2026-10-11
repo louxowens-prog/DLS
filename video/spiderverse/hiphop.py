@@ -3,7 +3,8 @@
 drums     kick (pitch-dropped sine + click), snare (tone + noise + clap), swung hats, open hat
 bass      808 (sine with a pitch dive, long decay, saturated so it survives phone speakers)
 keys      electric piano (two-operator FM with a bell tine and tremolo), detuned-saw synth stabs
-texture   vinyl crackle and hiss, a synthesized vocal 'ahh' to scratch, record backspins
+orchestra strings (detuned saws, bowed attack) and brass (blooming saws), for the hero motif and the swells
+texture   vinyl crackle and hiss, a synthesized vocal 'ahh' to scratch (baby, chirp, transformer), backspins
 comic fx  hits, whooshes, glitch zaps, a buzzer, spray-can rattle and hiss, stamps, a 'spider-sense' tingle
 """
 import numpy as np
@@ -156,6 +157,35 @@ def chime(notes, amp=1.0, step=0.07):
     return amp * out * 0.4
 
 
+def strings(notes, dur, amp=1.0, seed=0, attack=0.6):
+    """A string section: three detuned saws per note, a slow bow attack, vibrato, a warm low-pass."""
+    t = tx(dur + 0.5)
+    rng = np.random.default_rng(seed)
+    out = np.zeros(len(t))
+    for m in notes:
+        for d in (-7, 0, 6):
+            vib = 1 + 0.004 * np.sin(2 * np.pi * rng.uniform(4.8, 5.6) * t + rng.uniform(0, 6)) * np.clip(t / 0.4, 0, 1)
+            ph = np.cumsum(midi(m) * 2 ** (d / 1200) * vib) / SR + rng.uniform(0, 1)
+            out += 2 * (ph % 1.0) - 1
+    env = np.clip(t / attack, 0, 1) ** 1.5 * np.clip((dur + 0.5 - t) / 0.5, 0, 1)
+    return amp * _lp(out * env, 3200) / (3 * len(notes)) ** 0.7
+
+
+def brass(notes, dur, amp=1.0, seed=0):
+    """A brass section (the orchestral hero colour): voices whose brightness blooms on the attack, a small scoop."""
+    t = tx(dur + 0.15)
+    rng = np.random.default_rng(seed)
+    out = np.zeros(len(t))
+    bright = 0.35 + 0.65 * np.exp(-t / 0.15) * np.clip(t / 0.02, 0, 1) + 0.25
+    for m in notes:
+        f0 = midi(m)
+        for d in (-6, 5):
+            ph = 2 * np.pi * np.cumsum(f0 * 2 ** (d / 1200) * (1 - 0.025 * np.exp(-t / 0.04))) / SR + rng.uniform(0, 6)
+            out += sum(np.sin(h * ph) / h * np.exp(-(h - 1) / (2 + 10 * bright)) for h in range(1, 16) if f0 * h < SR * 0.45)
+    env = np.clip(t / 0.02, 0, 1) * np.clip((dur + 0.15 - t) / 0.15, 0, 1) * (0.8 + 0.2 * np.exp(-t / 0.2))
+    return amp * out * env / (2 * len(notes)) ** 0.7
+
+
 # ------------------------------------------------------------------ texture
 
 def crackle(dur, seed=0, rate=24.0, hiss=0.012):
@@ -212,6 +242,18 @@ def baby_scratch(src, strokes=4, stroke=0.11, depth=0.22, start=0.1):
         pat.append((stroke, start, start + depth, 1.0))
         pat.append((stroke * 0.8, start + depth, start, 0.85 if k % 2 else 0.0))
     return scratch(src, pat, strokes * stroke * 1.8)
+
+
+def chirp(src, stroke=0.07, depth=0.2, start=0.1):
+    """A chirp: a quick push, the fader snapping shut on the way back."""
+    return scratch(src, [(stroke, start, start + depth, 1.0), (stroke * 0.8, start + depth, start, 0.0)], stroke * 1.8)
+
+
+def transformer(src, dur=0.3, chops=6, depth=0.3, start=0.1):
+    """A transformer: one slow stroke, chopped on and off by the fader."""
+    d = dur / chops
+    pat = [(d, start + depth * k / chops, start + depth * (k + 1) / chops, 1.0 if k % 2 == 0 else 0.0) for k in range(chops)]
+    return scratch(src, pat, dur)
 
 
 def backspin(x, dur=0.45):

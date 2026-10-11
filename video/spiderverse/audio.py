@@ -5,6 +5,14 @@ Voices: the narrator clean; the AI ring-modulated like a cartoon robot; the noir
 radio band with crackle. The music is carved out of the speech band whenever anyone talks, and the whole
 thing is set to -14 LUFS with a static gain (no compressor pumping), true peak kept under -1.5 dBTP.
 Writes build/audio.wav (48 kHz stereo).
+
+Second pass (the default; SV_ORIG=1 rebuilds the first delivery bit for bit): pronunciation fixes (the fixed
+readings, script.SAY, come in through the timeline), and a score that still reads on a phone under the voices. The
+first mix carved the beat ~18 dB out of the speech band whenever anyone talked, so on a phone it sat ~18 dB under
+the narrator and was mostly hats and crackle. Now a spectral sidechain holds the music under the voices only in the
+bands they share; the 808 gets its saturated overtones; DJ cuts (chirps, baby scratches, transformers) answer the
+narrator in the breaths; an original three-note hero motif (C, F, G) leads into the big section changes and closes
+the film; and strings and brass swell into the two climaxes, the way the film's score turns orchestral as it builds.
 """
 import os
 import wave
@@ -17,7 +25,9 @@ from cues import C
 from edit import EDIT, first
 from script import ANIME, BOT, NAR, NOIR
 from timeline import TL
-from voice import SR as VSR
+from voice import SR as VSR, pauses
+
+ORIG = os.environ.get("SV_ORIG") == "1"          # SV_ORIG=1 rebuilds the mix exactly as first delivered
 
 SR = H.SR
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -194,7 +204,10 @@ def sfx_track(fx, music_bus):
     fx.add(H.stamp(1.0), C["agi"] - 0.25, 0.7)
     for k in range(5):                                                   # days and nights flying by
         fx.add(H.whoosh(0.3, up=k % 2 == 0, seed=30 + k), S("a2") + k * 0.42, 0.25, pan=0.3 + 0.1 * k)
-    fx.add(H.chime([79, 84, 88], 1.0), S("a3") - 0.1, 0.4)
+    if ORIG:
+        fx.add(H.chime([79, 84, 88], 1.0), S("a3") - 0.1, 0.4)
+    else:                                                                # after the robot's line: on it, "We" read as "You"
+        fx.add(H.chime([79, 84, 88], 1.0), E("a3") - 0.04, 0.3)
     for k, tt in enumerate([W("a4", "Thousands") + 0.25, C["copies"], W("a4", "work"), W("a4", "once")]):
         fx.add(H.stab((72 + 3 * k, 79 + 3 * k), 0.1, 1.0, seed=40 + k), tt, 0.5, pan=0.4 + 0.07 * k)
     fx.add(H.chime([76, 79, 83, 88, 91], 1.0, step=0.05), C["share"], 0.45)
@@ -222,7 +235,10 @@ def sfx_track(fx, music_bus):
     fx.add(H.scratch(ahh, [(0.1, 0.35, 0.05, 1.0), (0.08, 0.05, 0.3, 1.0), (0.12, 0.3, 0.0, 1.0)], 0.32), C["scratch2"] + 0.02, 0.7)
     fx.add(H.hit((68, 72, 75, 80), 1.0, seed=36, big=True), S("f1"), 0.6)
     for k, key in enumerate(("f2", "f3")):                               # the two webtoon panels slam in
-        fx.add(H.hit((65 + k, 68 + k, 72 + k), 0.8, seed=74 + k), S(key) - 0.02, 0.35)
+        if ORIG:
+            fx.add(H.hit((65 + k, 68 + k, 72 + k), 0.8, seed=74 + k), S(key) - 0.02, 0.35)
+        else:                                       # a touch early and lighter: on the word it turned "We" into "You"
+            fx.add(H.hit((65 + k, 68 + k, 72 + k), 0.8, seed=74 + k), S(key) - 0.08, 0.25)
     fx.add(H.chime([77, 81, 84, 89], 1.0), W("f2", "already"), 0.4)
     fx.add(H.stamp(1.0), W("f5", "established") - 0.05, 0.5, pan=0.55)
     fx.add(H.stamp(1.0), W("f6", "knowledge") + 0.05, 0.6, pan=0.6)
@@ -236,6 +252,87 @@ def sfx_track(fx, music_bus):
     fx.add(H.hit((65, 68, 72, 77), 1.0, seed=39, big=True), C["end_card"] + 0.45, 0.7)
     fx.add(H.chime([77, 81, 84, 89, 93], 1.0), C["end_card"] + 0.45, 0.4)
     fx.add(H.hit((65, 72, 77), 1.0, seed=41), C["end"] - 0.55, 0.6)
+
+
+CUTS = 0.5             # the DJ cuts in the breaths
+GRIT = 0.3             # the 808's saturated overtones, against the 808
+BODY = 0.0             # how deep the music's 300 Hz - 1.1 kHz body is ducked under the voices (first pass: 0.88)
+MID = 0.4              # and its 1.1 - 4.2 kHz consonant band (first pass: 0.88); the sidechain does the rest
+UNMASK = 9.0           # dB the music is held under the voices in each band they share (+6 dB in 1-5 kHz)
+MOTIF = [(72, 1), (77, 1), (79, 4)]          # the hero motif: C, F, G - short, short, long (in sixteenths)
+
+
+def breaths():
+    """Silences inside the lines, and the short gaps between them: where a DJ cuts in around an MC."""
+    out = []
+    for k in TL.order:
+        L = TL.lines[k]
+        out += [(L["start"] + a, L["start"] + b) for a, b in pauses(L["wav"], 0.2)]
+    for a_key, b_key in zip(TL.order, TL.order[1:]):
+        if 0.2 <= TL.s(b_key) - TL.e(a_key) < 0.6:
+            out.append((TL.e(a_key), TL.s(b_key)))
+    return sorted(out)
+
+
+def cuts(bus, fx):
+    """DJ cuts in the breaths: chirps, baby scratches and transformers on the sixteenth grid, only where the beat
+    plays and no comic hit is already sounding, with air between them. Returns their times."""
+    ahh = H.vox_ahh()
+    e = np.sqrt(np.convolve(fx.x.mean(axis=0) ** 2, np.ones(SR // 50) / (SR // 50), mode="same"))
+    busy = e > np.percentile(e[e > 1e-6], 99.5) * db(-24)
+    grid = np.arange(0, TL.total, STEP)
+    placed, k = [], 0
+    for a, b in breaths():
+        if section(a) not in ("full", "half", "lift") or (placed and a - placed[-1] < 1.5) or busy[int(a * SR):int(b * SR)].any():
+            continue
+        cand = grid[(grid >= a + 0.03) & (grid <= b - 0.16)]
+        if not len(cand):
+            continue
+        t = float(cand[0])
+        room = b - 0.05 - t
+        kind = ("chirp", "baby", "transformer")[k % 3] if room >= 0.3 else "chirp"
+        if kind == "chirp":
+            x = H.chirp(ahh, stroke=0.06, depth=0.18, start=0.1 + 0.05 * (k % 4))
+        elif kind == "baby":
+            x = H.baby_scratch(ahh, strokes=2, stroke=0.07, depth=0.2)
+        else:
+            x = H.transformer(ahh, dur=min(0.3, room - 0.02), chops=6)
+        bus.add(x, t, CUTS, pan=0.35 + 0.3 * (k % 2))
+        placed.append(t)
+        k += 1
+    return placed
+
+
+def hero(bus, t0, until, gain=0.5, seed=0, full=False):
+    """The hero motif in synth brass, doubled an octave down, its long note held until `until`; full=True adds the
+    answer (A-flat, G, F) and resolves."""
+    notes = MOTIF + ([(80, 1), (79, 1), (77, 8)] if full else [])
+    t = t0
+    for k, (m, n16) in enumerate(notes):
+        last = k == len(notes) - 1 or (not full and k == 2)
+        dur = max(0.2, until - t) if last else n16 * STEP * 0.9
+        bus.add(H.brass((m, m - 12), dur, 1.0, seed=seed + k), t, gain)
+        bus.add(H.stab((m,), min(dur, 0.18), 0.8, seed=seed + 20 + k), t, gain * 0.45)
+        t += n16 * STEP
+
+
+def orchestra(bus):
+    """The motif into the big section changes and on the end card; strings and brass swelling into the climaxes."""
+    for shot, nxt in (("road", "r1"), ("agi", "a1"), ("routes", "x1")):     # lands on each slide's hit (t + 0.14)
+        t_hit = first(shot) + 0.14
+        hero(bus, t_hit - 2 * STEP, S(nxt) + 0.45, gain=0.3, seed=1700 + int(t_hit))     # rings under the first words
+    # the question: strings rise through the breakdown into the brain hit, brass on the hit
+    a = W("a7", "happens") - 1.2
+    bus.add(H.strings((53, 56, 60, 65), C["brain"] - a + 0.9, 1.0, seed=1800, attack=C["brain"] - a), a, 0.32)
+    bus.add(H.brass((65, 68, 72, 77), 0.9, 1.0, seed=1801), C["brain"], 0.42)
+    # the bar: strings climb from "organizations" into the boom
+    a = C["orgs"] - 1.6
+    bus.add(H.strings((49, 53, 56, 61), C["boom"] - a + 0.8, 1.0, seed=1810, attack=C["boom"] - a), a, 0.3)
+    bus.add(H.brass((65, 68, 72, 77), 0.8, 1.0, seed=1811), C["boom"], 0.42)
+    # the end card: the whole motif with its answer, over a held string chord
+    t = C["end_card"] + 0.45
+    hero(bus, t, C["end"] - 0.6, gain=0.38, seed=1820, full=True)
+    bus.add(H.strings((53, 56, 60, 67), C["end"] - 0.6 - t, 1.0, seed=1830, attack=0.3), t, 0.3)
 
 
 def voices():
@@ -289,6 +386,14 @@ def build():
     drums, bass, keys, fx = Bus(), Bus(), Bus(), Bus()
     beat_grid(drums, bass, keys)
     sfx_track(fx, drums)
+    comp, orch = Bus(), Bus()                  # the DJ cuts (ducked only under an actual word), the orchestra
+    if not ORIG:
+        cuts(comp, fx)
+        orchestra(orch)
+        # the 808 as a phone hears it: its saturated overtones (180-900 Hz) under the fundamental
+        pk = np.abs(bass.x).max() + 1e-9
+        grit = H._bp(np.tanh(4 * bass.x / pk) * pk, 180, 900)
+        bass.x = bass.x + grit * GRIT * np.sqrt((bass.x ** 2).mean() / ((grit ** 2).mean() + 1e-12))
     # vinyl crackle all the way through (louder when the beat stops)
     cr = np.stack([H.crackle(TL.total + 0.6, seed=1), H.crackle(TL.total + 0.6, seed=2)])[:, :N]
     crack_gain = np.full(N, db(-6))
@@ -312,6 +417,8 @@ def build():
     band[:, a:b] = H._lp(band[:, a:b], 700) * 1.3
     fxr = widen(reverb(fx.x, 0.12, 0.9), 0.5)
     music = band + fxr * db(1.0) + cr * crack_gain * 0.9 + np.stack([rain, np.roll(rain, 300)]) * rain_g
+    if not ORIG:
+        music = music + widen(reverb(orch.x, 0.18, 1.6), 0.6)              # the orchestra, in a bigger room
     music = H._hp(music, 32) - (1 - db(-3.0)) * H._lp(H._hp(music, 32), 90)    # less sub, so the low-mids carry it
 
     vo = voices()
@@ -334,18 +441,70 @@ def build():
         mid = x - low - high
         return low * (1 - 0.35 * env) + mid * (1 - depth_mid * env) + high * (1 - 0.6 * env)
 
-    music = carve(music * swell, 0.88)
-    ref = music[:, int(S("r2") * SR):int(E("r5") * SR)]
+    if ORIG:
+        music = carve(music * swell, 0.88)
+        ref = music[:, int(S("r2") * SR):int(E("r5") * SR)]
+    else:
+        # the first pass's level reference, so lifting the score under the voices does not turn it down overall
+        ref = carve(music * swell, 0.88)[:, int(S("r2") * SR):int(E("r5") * SR)]
+        ms = music * swell
+        low, high = H._lp(ms, 300), H._hp(ms, 4200)
+        body = H._lp(ms, 1100) - low
+        music = low * (1 - 0.35 * env) + body * (1 - BODY * env) + (ms - low - body - high) * (1 - MID * env) \
+            + high * (1 - 0.6 * env)
+        # the cuts: a fast envelope (10 ms, held ~30 ms each side) ducks them only under an actual word
+        fr = np.convolve(np.abs(vo), np.ones(SR // 100) / (SR // 100), mode="same")
+        fr = np.clip(4 * fr / (np.percentile(fr[fr > 1e-5], 80) + 1e-9), 0, 1)
+        env_f = np.convolve(maximum_filter1d(fr, size=int(0.065 * SR)), np.ones(SR // 66) / (SR // 66), mode="same")
+        compr = widen(reverb(comp.x, 0.1, 0.6), 0.5)
+        music = music + (compr + H._hp(H._lp(compr, 5000), 2000) * (db(4.0) - 1)) * (1 - 0.92 * env_f)
     g_mu = db(-20.0) / (np.sqrt((ref ** 2).mean()) + 1e-12)
-    mix = music * g_mu + vo_st
+    music = music * g_mu
+    if not ORIG:
+        music = unmask(music, vo)                                           # keyed by the words, not their room
+    mix = music + vo_st
     mix = loudness(mix, -14.0)
     tail = int(0.25 * SR)
     mix[:, -tail:] *= np.linspace(1, 0, tail) ** 2
-    STEMS.update(music=music * g_mu, vo=vo_st)
+    STEMS.update(music=music, vo=vo_st)
     return mix
 
 
 STEMS = {}
+
+
+def unmask(music, voice, floor_db=-24.0):
+    """Spectral sidechain. Per third-octave band and ~11 ms frame, hold the music under the voices wherever they have
+    energy in that band (UNMASK dB in the body, 6 dB more in the 1-5 kHz band that carries the consonants, less in the
+    bass and the air), and leave it alone everywhere else: the beat plays at full body around and between the words,
+    and the words always clear it. Gains attack within a frame and release over ~40 ms, smoothed across neighbouring
+    bands. The cuts in the breaths are left alone."""
+    nper, hop = 2048, 512
+    f, _, V = signal.stft(voice, SR, nperseg=nper, noverlap=nper - hop)
+    _, _, M = signal.stft(music, SR, nperseg=nper, noverlap=nper - hop)
+    pv, pm = np.abs(V) ** 2, (np.abs(M) ** 2).mean(axis=0)
+    centres = 125 * 2 ** (np.arange(20) / 3)                                  # 125 Hz ... 10 kHz
+    lo, hi = centres * 2 ** (-1 / 6), centres * 2 ** (1 / 6)
+    vb = np.stack([pv[(f >= a) & (f < b)].sum(0) for a, b in zip(lo, hi)])
+    mb = np.stack([pm[(f >= a) & (f < b)].sum(0) for a, b in zip(lo, hi)])
+    vb = np.maximum(vb, np.concatenate([vb[:, 1:], vb[:, -1:]], axis=1))       # one frame of look-ahead
+    rel = np.exp(-hop / SR / 0.04)
+    for t in range(1, vb.shape[1]):                                           # release ~40 ms: a word's tail
+        vb[:, t] = np.maximum(vb[:, t], vb[:, t - 1] * rel)
+    margin = np.select([centres < 250, centres < 1000, centres <= 5000], [UNMASK - 8.0, UNMASK, UNMASK + 6.0],
+                       UNMASK - 2.0)[:, None]                                 # the bass barely matters to the words
+    tot = vb.sum(0)
+    speaking = tot > 10 ** (-3.0) * np.percentile(tot, 99)                    # the words, not the breaths between
+    relevant = (vb > vb.max(0, keepdims=True) * 10 ** (-3.5)) & speaking   # bands within 35 dB of the voice's peak
+    g = np.where(relevant, 10 * np.log10(np.clip(vb * 10 ** (-margin / 10) / (mb + 1e-20), 10 ** (floor_db / 10), 1.0)), 0.0)
+    g = 0.25 * np.vstack([g[:1], g[:-1]]) + 0.5 * g + 0.25 * np.vstack([g[1:], g[-1:]])     # no sharp spectral holes
+    gb = np.interp(np.log2(np.maximum(f, 1.0)), np.log2(centres), np.arange(20))   # each bin's place between bands
+    i0 = np.clip(np.floor(gb).astype(int), 0, 18)
+    w = np.clip(gb - i0, 0, 1)[:, None]
+    gbin = g[i0] * (1 - w) + g[i0 + 1] * w
+    gbin *= np.clip((f - 60) / 65, 0, 1)[:, None]                             # nothing below ~60 Hz, full from 125 Hz
+    _, y = signal.istft(M * 10 ** (gbin / 20)[None], SR, nperseg=nper, noverlap=nper - hop)
+    return y[:, :music.shape[1]]
 
 
 def loudness(x, target):
