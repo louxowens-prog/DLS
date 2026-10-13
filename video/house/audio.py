@@ -10,6 +10,14 @@ Arrangement (read off the edit):
 Every transition gets a hit; every scare gets a scare hit; the cat's meow comes back whenever its eyes turn red.
 The chatbot's voice is a sugary whisper with an echo; everything is set to -14 LUFS, true peak under -1.5 dBTP.
 Writes build/audio.wav (48 kHz stereo).
+
+Second pass (the default; HS_ORIG=1 rebuilds the first delivery bit for bit): pronunciation fixes (the fixed
+readings, script.SAY, come in through the timeline), and a mix where the sweet band and the piano theme still read on
+a phone under the narrator, and no scare lands on a word. The first mix carved the music ~22 dB out of the speech
+band whenever anyone talked (on a phone the band sat ~19 dB under the narrator) while the scare hits, on their own
+bus, were never carved at all: three of them buried words ("The study...", "You try to leave", "They put you...").
+Now a spectral sidechain holds the music and the hits under the voices only in the bands they share, and leaves
+them at full force in every gap and silence.
 """
 import os
 import wave
@@ -23,6 +31,11 @@ from edit import EDIT, first
 from script import AI, DOC, NAR
 from timeline import TL
 from voice import SR as VSR
+
+ORIG = os.environ.get("HS_ORIG") == "1"          # HS_ORIG=1 rebuilds the mix exactly as first delivered
+BODY = 0.0             # how deep the music's 300 Hz - 1.1 kHz body is ducked under the voices (first pass: 0.92)
+MID = 0.4              # and its 1.1 - 4.2 kHz consonant band (first pass: 0.92); the sidechain does the rest
+UNMASK = 9.0           # dB the music and hits are held under the voices in each band they share (+6 dB in 1-5 kHz)
 
 SR = P.SR
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -443,7 +456,8 @@ def build():
     music = music * dead
     music = signal.lfilter(*signal.butter(2, 35 / (SR / 2), "high"), music)
 
-    vo = reverb(voices(), 0.06, 0.5)
+    vo_dry = voices()
+    vo = reverb(vo_dry, 0.06, 0.5)
     from scipy.ndimage import maximum_filter1d
     raw = np.convolve(np.abs(vo.mean(axis=0)), np.ones(SR // 20) / (SR // 20), mode="same")
     raw = np.clip(raw / (np.percentile(raw[raw > 1e-5], 80) + 1e-9), 0, 1)
@@ -457,20 +471,62 @@ def build():
     low = signal.lfilter(*signal.butter(2, 280 / (SR / 2), "low"), music)
     high = signal.lfilter(*signal.butter(2, 4200 / (SR / 2), "high"), music)
     mid = music - low - high
-    music = low * (1 - 0.4 * env) + mid * (1 - 0.92 * env) + high * (1 - 0.65 * env)
-    music = widen(music, 0.7)
-    ref = music[:, int(S("l1") * SR):int(E("w2") * SR)]
+    carved = widen(low * (1 - 0.4 * env) + mid * (1 - 0.92 * env) + high * (1 - 0.65 * env), 0.7)
+    ref = carved[:, int(S("l1") * SR):int(E("w2") * SR)]       # the first pass's level reference, in both passes
     g_mu = db(-23.5) / (np.sqrt((ref ** 2).mean()) + 1e-12)
     hits = reverb(HITBUS[0].x, 0.12, 0.9) * dead
-    mix = music * g_mu + hits * g_mu + vo
+    if ORIG:
+        music = carved
+        mix = music * g_mu + hits * g_mu + vo
+    else:
+        body = signal.lfilter(*signal.butter(2, 1100 / (SR / 2), "low"), music) - low
+        music = widen(low * (1 - 0.4 * env) + body * (1 - BODY * env) + (mid - body) * (1 - MID * env)
+                      + high * (1 - 0.65 * env), 0.7)
+        beds = unmask(music * g_mu + hits * g_mu, vo_dry.mean(axis=0))      # keyed by the words, not their room
+        music, hits = beds / g_mu, np.zeros_like(beds)
+        mix = beds + vo
     mix = loudness(mix, -14.0)
     tail = int(0.4 * SR)
     mix[:, -tail:] *= np.linspace(1, 0, tail) ** 2
-    STEMS.update(music=music * g_mu, vo=vo)
+    STEMS.update(music=music * g_mu + hits * g_mu, vo=vo)
     return mix
 
 
 STEMS = {}
+
+
+def unmask(music, voice, floor_db=-24.0):
+    """Spectral sidechain. Per third-octave band and ~11 ms frame, hold the music under the voices wherever they have
+    energy in that band (UNMASK dB in the body, 6 dB more in the 1-5 kHz band that carries the consonants, less in the
+    bass and the air), and leave it alone everywhere else: the band, the theme and every scare play at full force in
+    the gaps and silences, and the words always clear them. Gains attack within a frame and release over ~40 ms,
+    smoothed across neighbouring bands."""
+    nper, hop = 2048, 512
+    f, _, V = signal.stft(voice, SR, nperseg=nper, noverlap=nper - hop)
+    _, _, M = signal.stft(music, SR, nperseg=nper, noverlap=nper - hop)
+    pv, pm = np.abs(V) ** 2, (np.abs(M) ** 2).mean(axis=0)
+    centres = 125 * 2 ** (np.arange(20) / 3)                                  # 125 Hz ... 10 kHz
+    lo, hi = centres * 2 ** (-1 / 6), centres * 2 ** (1 / 6)
+    vb = np.stack([pv[(f >= a) & (f < b)].sum(0) for a, b in zip(lo, hi)])
+    mb = np.stack([pm[(f >= a) & (f < b)].sum(0) for a, b in zip(lo, hi)])
+    vb = np.maximum(vb, np.concatenate([vb[:, 1:], vb[:, -1:]], axis=1))       # one frame of look-ahead
+    rel = np.exp(-hop / SR / 0.04)
+    for t in range(1, vb.shape[1]):                                           # release ~40 ms: a word's tail
+        vb[:, t] = np.maximum(vb[:, t], vb[:, t - 1] * rel)
+    margin = np.select([centres < 250, centres < 1000, centres <= 5000], [UNMASK - 4.0, UNMASK, UNMASK + 6.0],
+                       UNMASK - 2.0)[:, None]                                 # a kick on a word's onset blurs it too
+    tot = vb.sum(0)
+    speaking = tot > 10 ** (-3.5) * np.percentile(tot, 99)                    # the words, soft consonants included
+    relevant = (vb > vb.max(0, keepdims=True) * 10 ** (-3.5)) & speaking   # bands within 35 dB of the voice's peak
+    g = np.where(relevant, 10 * np.log10(np.clip(vb * 10 ** (-margin / 10) / (mb + 1e-20), 10 ** (floor_db / 10), 1.0)), 0.0)
+    g = 0.25 * np.vstack([g[:1], g[:-1]]) + 0.5 * g + 0.25 * np.vstack([g[1:], g[-1:]])     # no sharp spectral holes
+    gb = np.interp(np.log2(np.maximum(f, 1.0)), np.log2(centres), np.arange(20))   # each bin's place between bands
+    i0 = np.clip(np.floor(gb).astype(int), 0, 18)
+    w = np.clip(gb - i0, 0, 1)[:, None]
+    gbin = g[i0] * (1 - w) + g[i0 + 1] * w
+    gbin *= np.clip((f - 60) / 65, 0, 1)[:, None]                             # nothing below ~60 Hz, full from 125 Hz
+    _, y = signal.istft(M * 10 ** (gbin / 20)[None], SR, nperseg=nper, noverlap=nper - hop)
+    return y[:, :music.shape[1]]
 
 
 def loudness(x, target):

@@ -4,12 +4,14 @@ The film runs at 24 fps; the paper cut-outs move like stop-motion (a new drawing
 import os
 import re
 
-from script import AI, LINES, NAR, VOICES, WRONG_PER_SEC
+import revoice
+from script import AI, LINES, NAR, SAY, VOICES, WRONG_PER_SEC
 from voice import SR, speak, word_times
 
 FPS = 24
 TWOS = 12
 HERE = os.path.dirname(os.path.abspath(__file__))
+ORIG = os.environ.get("HS_ORIG") == "1"          # HS_ORIG=1: the first delivery's readings
 
 PRE = {"c0": 0.7, "p7": 0.9, "p11": 0.9, "e2": 0.9}     # the opening slam, and true silences before the heaviest beats
 SPEED = {"l1": 1.12}                         # the list of kinds of wrong, rattled off a little quicker
@@ -45,6 +47,12 @@ class Timeline:
             v, sp = VOICES[who]
             sp = SPEED.get(key, sp)
             wav = speak(spoken, v, sp)
+            if key in SAY and not ORIG:                  # the fixed reading, on the original's timeline
+                text, sp2, *frm = SAY[key]
+                if "{N}" in text:
+                    text = text.replace("{N}", number_words(self.count_said))
+                keep = next(a for w, a, _ in word_times(spoken, wav) if w == frm[0]) if frm else 0.0
+                wav = revoice.onto(speak(text, v, sp2 or sp), wav, keep)
             d = len(wav) / SR
             words = word_times(spoken, wav)
             self.lines[key] = dict(start=t, end=t + d, wav=wav, spoken=spoken, caption=(caption or spoken).replace("|", ""),

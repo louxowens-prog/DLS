@@ -95,3 +95,33 @@ LINES = [
      "At one in a hundred,| while you watched this,| about {n} confident wrong answers went out.", 0.35),
     ("e2", AI, "Trust me.", None, 0.6),
 ]
+
+# What the voices read where the spoken text above trips them up (second pass; the captions keep the text above, timed
+# to the new reading). The dots in "A.I." reach the model as sentence ends ("caught a, I, invented material"); "about
+# his salt" ran together into "about assault", so the narrator takes a beat before "his salt"; "He said a chatbot" was
+# heard as "He set a chatbot"; an unstressed "in" read as "and" ("the chloride and salt", "one answer and a hundred"),
+# so it is spelled "inn" to keep its vowel (and set off by commas in "one answer, inn a hundred,"); years are read
+# the way people say them; "documents it misreads" came out as "documents at mysteries", and the past-tense t of
+# "watched this" was lost under any music ("while you watch this"), so a breath after "watched" lets it land.
+# timeline.py places each new reading on the original's timeline phrase by phrase (revoice.py).
+# Entries: key -> (text, speed or None for the line's own[, the word from which to re-voice: the original reading is
+# kept up to it]).
+SAY = {
+    "c0": ("He asked a chatbot about... his salt. Three months later: a psychiatric hold.", None),
+    "h3": ("AI can simply be wrong. And it sounds just as sure as when it's right.", None),
+    "l1": ("Made-up facts, fake quotes, wrong math, invented court cases, bad medical advice, fake history, broken code, "
+           "citations to nowhere, documents itt mis-reads.", None, "documents"),
+    "c2": ("Judges have now caught AI-invented material in more than two thousand cases. And counting.", None),
+    "p2": ("You want to eat healthier. You've read that the chloride inn salt is bad for you. So you ask a chatbot what "
+           "to replace it with.", None),
+    "p11": ("Remember the man at the very start? This isn't a story. It happened to him: a sixty-year-old man with no "
+            "history of mental illness. His doctors published it in twenty twenty-five.", None),
+    "p12": ("He said, a chatbot suggested it. So his doctors asked it themselves. It offered bromide too, with no health "
+            "warning.", None),
+    "s2": ("An AI can give the same wrong answer to millions of people, at once.", None),
+    "s4": ("If only one answer, inn a hundred, were wrong, that's twenty-five million wrong answers a day. Almost three "
+           "hundred every second.", None),
+    "r1": ("The twenty twenty-six International AI Safety Report flags made-up information, flawed code, and misleading "
+           "medical advice as problems happening now.", None),
+    "e1": ("At one in a hundred, while you watched, this, about {N} confident wrong answers went out.", None),
+}
