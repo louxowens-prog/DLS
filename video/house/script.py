@@ -100,10 +100,11 @@ LINES = [
 # to the new reading). The dots in "A.I." reach the model as sentence ends ("caught a, I, invented material"); "about
 # his salt" ran together into "about assault", so the narrator takes a beat before "his salt"; "He said a chatbot" was
 # heard as "He set a chatbot"; an unstressed "in" read as "and" ("the chloride and salt", "one answer and a hundred"),
-# so it is spelled "inn" to keep its vowel (and set off by commas in "one answer, inn a hundred,"); years are read
-# the way people say them; "documents it misreads" came out as "documents at mysteries", and the past-tense t of
-# "watched this" was lost under any music ("while you watch this"), so a breath after "watched" lets it land.
-# timeline.py places each new reading on the original's timeline phrase by phrase (revoice.py).
+# so it is spelled "inn" to keep its vowel and set off by commas ("the chloride, inn salt,", "one answer, inn a
+# hundred,"; without them it still slipped back to "and" once encoded); years are read the way people say them;
+# "documents it misreads" came out as "documents at mysteries"; and the past-tense t of "watched this" was lost under
+# any music ("while you watch this"), so a breath after "watched" lets it land. timeline.py places each new reading on
+# the original's timeline phrase by phrase (revoice.py).
 # Entries: key -> (text, speed or None for the line's own[, the word from which to re-voice: the original reading is
 # kept up to it]).
 SAY = {
@@ -112,8 +113,8 @@ SAY = {
     "l1": ("Made-up facts, fake quotes, wrong math, invented court cases, bad medical advice, fake history, broken code, "
            "citations to nowhere, documents itt mis-reads.", None, "documents"),
     "c2": ("Judges have now caught AI-invented material in more than two thousand cases. And counting.", None),
-    "p2": ("You want to eat healthier. You've read that the chloride inn salt is bad for you. So you ask a chatbot what "
-           "to replace it with.", None),
+    "p2": ("You want to eat healthier. You've read that the chloride, inn salt, is bad for you. So you ask a chatbot "
+           "what to replace it with.", None),
     "p11": ("Remember the man at the very start? This isn't a story. It happened to him: a sixty-year-old man with no "
             "history of mental illness. His doctors published it in twenty twenty-five.", None),
     "p12": ("He said, a chatbot suggested it. So his doctors asked it themselves. It offered bromide too, with no health "
