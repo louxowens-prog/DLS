@@ -111,6 +111,19 @@ LYRIC_SHOWN = {        # how the lyric reads on screen when it differs from what
     "ninety-nine point nine, and we buried them all!": "99.9, and we buried them all!",
 }
 
+# What the narrator reads where the spoken text above trips the voice up (second pass; the captions and lyrics keep the
+# text above, timed to the new reading). "Then Papa bought a machine" ran together into "then pop a bottom machine",
+# so the article is stressed ("bought A machine"); "four times as big" came out as "four times is big"; and
+# "Twenty-eight soldiers" was heard as "twentieth soldiers". timeline.py places each new reading on the original's
+# timeline phrase by phrase (revoice.py).
+# Entries: key -> (text, speed or None for the line's own[, the word from which to re-voice: the original reading is
+# kept up to it]).
+SAY = {
+    "b1": ("Then Papa bought a-machine. Ten million claims a year, on Grandpa's rules. All of them.", None),
+    "d3": ("Pay it all back. Plus a penalty four times as-big. Plus interest.", None, "Plus"),
+    "f5b": ("Twenty eight soldiers died.", None),
+}
+
 # The motif: the family guestbook, where every claim is logged. One red X on page one; at the end it is a mountain.
 CLAIMS_PER_YEAR = 10_000_000
 DECISIONS = 1_000_000_000

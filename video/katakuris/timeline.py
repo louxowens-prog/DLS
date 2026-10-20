@@ -4,11 +4,13 @@ The film runs at 24 fps; the claymation moves on twos (12 new positions a second
 import math
 import os
 
-from script import LINES, NAR, SONG, SONGS, VOICES, LYRIC_SHOWN
+import revoice
+from script import LINES, NAR, SAY, SONG, SONGS, VOICES, LYRIC_SHOWN
 from voice import SR, speak, word_times
 
 FPS = 24
 HERE = os.path.dirname(os.path.abspath(__file__))
+ORIG = os.environ.get("KK_ORIG") == "1"          # KK_ORIG=1: the first delivery's readings
 
 PRE = {"c0": 0.6, "b2": 0.45, "a1": 1.15, "b1": 1.15, "d1": 1.1, "f1": 1.4, "g1": 1.2,        # room for a chapter card
        "d5": 1.65, "e1": 2.8, "f3": 1.5, "g2": 0.5,                        # true dead air before the heaviest beats
@@ -32,6 +34,10 @@ class Timeline:
     def _line(self, key, who, spoken, caption, t, song=None, shown=None):
         v, sp = VOICES[who]
         wav = speak(spoken, v, sp)
+        if key in SAY and not ORIG:                      # the fixed reading, on the original's timeline
+            text, sp2, *frm = SAY[key]
+            keep = next(a for w, a, _ in word_times(spoken, wav) if w == frm[0]) if frm else 0.0
+            wav = revoice.onto(speak(text, v, sp2 or sp), wav, keep)
         d = len(wav) / SR
         words = word_times(spoken, wav)
         self.lines[key] = dict(start=t, end=t + d, wav=wav, spoken=spoken, who=who, voice=v, song=song,

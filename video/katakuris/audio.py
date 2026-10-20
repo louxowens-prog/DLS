@@ -10,6 +10,13 @@ Beds (read off the edit):
   disaster the sitcom bed keeps smiling under the four disasters, with a drone and the effects
 Every transition and every scare gets a hit; scare hits go on their own band-limited bus, hot; the music drops away
 under them. True dead air (every bus cut) three times. The crow caws whenever a small error becomes a big one.
+
+Second pass (the default; KK_ORIG=1 rebuilds the first delivery bit for bit): pronunciation fixes (the fixed
+readings, script.SAY, come in through the timeline), and a mix where the band keeps playing under her: the first mix
+carved the music ~20 dB out of the speech band whenever anyone spoke or sang (on a phone the songs sat 9-17 dB under
+the half-spoken lyrics), and still let the flood's thunder and squelches, and the Geiger counter, sit on her words
+("Not one era", "software head box"). Now a spectral sidechain holds the music and the effects under the voices
+only in the bands they share, and leaves them at full force in every gap.
 """
 import os
 import wave
@@ -18,11 +25,18 @@ import numpy as np
 from scipy import signal
 
 import kayo as P
-from cues import C, ls
+from cues import C, Wx, ls
 from edit import EDIT, HIT_CUTS, first
 from script import MACH, MAMA, NAR, SONGS
 from timeline import TL
 from voice import SR as VSR
+
+ORIG = os.environ.get("KK_ORIG") == "1"          # KK_ORIG=1 rebuilds the mix exactly as first delivered
+BODY = 0.0             # how deep the music's 280 Hz - 1.1 kHz body is ducked under the voices (first pass: 0.9, 0.65 in songs)
+MID = 0.4              # and its 1.1 - 4.2 kHz consonant band (first pass: as the body); the sidechain does the rest
+UNMASK = 9.0           # dB the music is held under the voices in each band they share (+6 dB in 1-5 kHz)
+SONG_RELAX = 3.0       # dB less under the sung lines: the lyrics are on screen, and a musical number should sound like one
+RELEASE = 0.04         # s: how long the sidechain holds after a word (a word's tail)
 
 SR = P.SR
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -236,7 +250,8 @@ def arrangement(bus, lead, choir, hz):
     band(bus, None, None, "sitcom", f("plane"), f("card6"), 112, 0.5, drums=True)
     hz.add(P.drone(f("card6") - f("plane"), root=28, seed=5), f("plane"), 0.8)
     # the build into the finale
-    bus.add(P.snare_roll(S("s4") - f("rule2") - 0.1, 0.8), f("rule2") + 0.1, 0.5)
+    roll = f("rule2") + 0.1 if ORIG else Wx("g1", "The") - 0.15       # second pass: after "So here's the rule."
+    bus.add(P.snare_roll(S("s4") - roll, 0.8), roll, 0.5)
     bus.add(P.cymbal(1.0, S("s4") - f("rule2"), swell=True), f("rule2"), 0.6)
     # the payoff and the end
     hz.add(wide(P.rumble, f("end") - E("s4"), seed=6), E("s4"), 1.0)
@@ -552,7 +567,8 @@ def build():
     dead = np.convolve(dead, np.ones(int(0.015 * SR)) / int(0.015 * SR), "same")
     music = music * dead
 
-    vo = reverb(voices(), 0.06, 0.5)
+    vo_dry = voices()
+    vo = reverb(vo_dry, 0.06, 0.5)
     from scipy.ndimage import maximum_filter1d
     raw = np.convolve(np.abs(vo.mean(axis=0)), np.ones(SR // 20) / (SR // 20), mode="same")
     raw = np.clip(raw / (np.percentile(raw[raw > 1e-5], 80) + 1e-9), 0, 1)
@@ -572,16 +588,25 @@ def build():
     high = signal.lfilter(*signal.butter(2, 4200 / (SR / 2), "high"), music)
     mid = music - low - high
     k_mid = 0.9 - 0.25 * insong                                          # sung lines carve a little less
-    music = low * (1 - 0.4 * env) + mid * (1 - k_mid * env) + high * (1 - 0.6 * env)
+    carved = low * (1 - 0.4 * env) + mid * (1 - k_mid * env) + high * (1 - 0.6 * env)
     duck = np.zeros(N)                                                   # ...but under every sung line the band steps back:
     for sk, dd in (("s1", -3.0), ("s2", -8.0), ("s3", -3.0), ("s4", -3.5)):   # the duet furthest, so the machine is heard
         for l in TL.songs[sk]["lines"]:
             duck[int((TL.s(l["key"]) - 0.1) * SR):int((TL.e(l["key"]) + 0.15) * SR)] = 1 - db(dd)
     duck = np.convolve(duck, np.ones(SR // 8) / (SR // 8), "same")
-    music = music * (1 - duck)
-    music = mono_safe(widen(music, 1.15))
-    ref = music[:, int(S("a1") * SR):int(E("b1") * SR)]
+    carved = mono_safe(widen(carved * (1 - duck), 1.15))
+    ref = carved[:, int(S("a1") * SR):int(E("b1") * SR)]               # the first pass's level reference, in both passes
     g_mu = db(-23.0) / (np.sqrt((ref ** 2).mean()) + 1e-12)
+    if ORIG:
+        music = carved
+    else:                                                                # a light carve; the sidechain does the rest
+        body = signal.lfilter(*signal.butter(2, 1100 / (SR / 2), "low"), music) - low
+        music = low * (1 - 0.4 * env) + body * (1 - BODY * env) + (mid - body) * (1 - MID * env) + high * (1 - 0.6 * env)
+        sung = np.zeros(N)
+        for Sg in TL.songs.values():
+            for l in Sg["lines"]:
+                sung[int((TL.s(l["key"]) - 0.1) * SR):int((TL.e(l["key"]) + 0.15) * SR)] = 1.0
+        music = unmask(mono_safe(widen(music, 1.15)) * g_mu, vo_dry.mean(axis=0), sung * SONG_RELAX) / g_mu   # keyed by the words
     vad = np.convolve(np.abs(vo.mean(axis=0)), np.ones(int(0.015 * SR)) / int(0.015 * SR), mode="same")
     vad = np.clip(vad / (np.percentile(vad[vad > 1e-5], 70) + 1e-9), 0, 1)
     vad = maximum_filter1d(vad, size=int(0.09 * SR), origin=-int(0.02 * SR))
@@ -610,6 +635,42 @@ def build():
 
 
 STEMS = {}
+
+
+def unmask(music, voice, relax=None, floor_db=-24.0):
+    """Spectral sidechain. Per third-octave band and ~11 ms frame, hold the music under the voices wherever they have
+    energy in that band (UNMASK dB in the body, 6 dB more in the 1-5 kHz band that carries the consonants, less in the
+    bass and the air), and leave it alone everywhere else: the band, the songs and every effect play at full force in
+    the gaps, and the words always clear them. Gains attack within a frame and release over RELEASE, smoothed across
+    neighbouring bands. `relax` (dB, per sample) eases the margin where it is set."""
+    nper, hop = 2048, 512
+    f, _, V = signal.stft(voice, SR, nperseg=nper, noverlap=nper - hop)
+    _, _, M = signal.stft(music, SR, nperseg=nper, noverlap=nper - hop)
+    pv, pm = np.abs(V) ** 2, (np.abs(M) ** 2).mean(axis=0)
+    centres = 125 * 2 ** (np.arange(20) / 3)                                  # 125 Hz ... 10 kHz
+    lo, hi = centres * 2 ** (-1 / 6), centres * 2 ** (1 / 6)
+    vb = np.stack([pv[(f >= a) & (f < b)].sum(0) for a, b in zip(lo, hi)])
+    mb = np.stack([pm[(f >= a) & (f < b)].sum(0) for a, b in zip(lo, hi)])
+    vb = np.maximum(vb, np.concatenate([vb[:, 1:], vb[:, -1:]], axis=1))       # one frame of look-ahead
+    rel = np.exp(-hop / SR / RELEASE)
+    for t in range(1, vb.shape[1]):                                           # the release: a word's tail
+        vb[:, t] = np.maximum(vb[:, t], vb[:, t - 1] * rel)
+    margin = np.select([centres < 250, centres < 1000, centres <= 5000], [UNMASK - 4.0, UNMASK, UNMASK + 6.0],
+                       UNMASK - 2.0)[:, None]                                 # a kick on a word's onset blurs it too
+    if relax is not None:
+        margin = margin - relax[np.minimum(np.arange(vb.shape[1]) * hop, len(relax) - 1)][None, :]
+    tot = vb.sum(0)
+    speaking = tot > 10 ** (-3.5) * np.percentile(tot, 99)                    # the words, soft consonants included
+    relevant = (vb > vb.max(0, keepdims=True) * 10 ** (-3.5)) & speaking   # bands within 35 dB of the voice's peak
+    g = np.where(relevant, 10 * np.log10(np.clip(vb * 10 ** (-margin / 10) / (mb + 1e-20), 10 ** (floor_db / 10), 1.0)), 0.0)
+    g = 0.25 * np.vstack([g[:1], g[:-1]]) + 0.5 * g + 0.25 * np.vstack([g[1:], g[-1:]])     # no sharp spectral holes
+    gb = np.interp(np.log2(np.maximum(f, 1.0)), np.log2(centres), np.arange(20))   # each bin's place between bands
+    i0 = np.clip(np.floor(gb).astype(int), 0, 18)
+    w = np.clip(gb - i0, 0, 1)[:, None]
+    gbin = g[i0] * (1 - w) + g[i0 + 1] * w
+    gbin *= np.clip((f - 60) / 65, 0, 1)[:, None]                             # nothing below ~60 Hz, full from 125 Hz
+    _, y = signal.istft(M * 10 ** (gbin / 20)[None], SR, nperseg=nper, noverlap=nper - hop)
+    return y[:, :music.shape[1]]
 
 
 CEIL, SPEECH_CEIL = -1.9, -9.2
