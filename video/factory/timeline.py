@@ -3,11 +3,13 @@ The film runs at 24 fps."""
 import math
 import os
 
-from script import LINES, NAR, PITCH, SONG, SONGS, SPEED, VOICES, LYRIC_SHOWN
+import revoice
+from script import LINES, NAR, PITCH, SAY, SONG, SONGS, SPEED, VOICES, LYRIC_SHOWN
 from voice import SR, speak_fx, word_times
 
 FPS = 24
 HERE = os.path.dirname(os.path.abspath(__file__))
+ORIG = os.environ.get("WF_ORIG") == "1"          # WF_ORIG=1: the first delivery's readings
 
 PRE = {"a1": 0.5, "n1": 0.5, "g1": 0.8, "h1": 0.4, "h2": 0.4, "h3": 0.4, "h4": 0.4, "t1a": 1.2,
        "p1": 0.4, "x1": 0.5, "y1": 0.5}            # room for a transition, a reveal or a machine to start
@@ -29,10 +31,16 @@ class Timeline:
 
     def _line(self, key, who, spoken, caption, t, song=None, shown=None):
         v, sp, pt = VOICES[who]
-        wav = speak_fx(spoken, v, SPEED.get(key, sp), PITCH.get(key, pt))
+        sp, pt = SPEED.get(key, sp), PITCH.get(key, pt)
+        wav = speak_fx(spoken, v, sp, pt)
+        said = spoken
+        if key in SAY and not ORIG:                      # the fixed reading, on the original's timeline
+            said, sp2, *frm = SAY[key]
+            keep = next(a for w, a, _ in word_times(spoken, wav) if w == frm[0]) if frm else 0.0
+            wav = revoice.onto(speak_fx(said, v, sp2 or sp, pt), wav, keep)
         d = len(wav) / SR
         words = word_times(spoken, wav)
-        self.lines[key] = dict(start=t, end=t + d, wav=wav, spoken=spoken, who=who, voice=v, song=song,
+        self.lines[key] = dict(start=t, end=t + d, wav=wav, spoken=spoken, said=said, who=who, voice=v, song=song,
                                caption=(caption or spoken).replace("|", ""), breaks=caption or spoken,
                                shown=shown or spoken, words=[(w, t + a, t + b) for w, a, b in words])
         self.order.append(key)

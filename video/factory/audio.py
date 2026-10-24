@@ -14,6 +14,13 @@ Cues (read off the edit):
   the end     warm strings, the ballad's tune on celesta and piano; a music box plays it out
 Three true silences (every bus cut): the door, the end of the tunnel, the host's outburst.
 A warm, slightly vintage mix: tape saturation, a gentle top-end roll-off, a wow on the strings, moderate width.
+
+Second pass (the default; WF_ORIG=1 rebuilds the first delivery bit for bit): pronunciation fixes (the fixed readings,
+script.SAY, come in through the timeline); the workers' chorus lined up behind the lead syllable by syllable (each
+little voice time-warped onto the lead, at half the level and less than half the spread: four voices merely stretched
+to the lead's length smeared every answer line, and the refrain "the thinking's up to you" was heard as "I think I can
+do it"); and, on top of the first pass's balance, a spectral sidechain that clears each word's own bands, so no
+marimba, woodblock or machine lands on a consonant.
 """
 import os
 import wave
@@ -22,11 +29,17 @@ import numpy as np
 from scipy import signal
 
 import orch as P
+import revoice
 from cues import C, ls
 from edit import EDIT, first
 from script import ANN, DOCTOR, FARMER, HOST, MIRROR, NAR, SONGS, STUDENT, WORKERS
 from timeline import TL
 from voice import SR as VSR
+
+ORIG = os.environ.get("WF_ORIG") == "1"          # WF_ORIG=1 rebuilds the mix exactly as first delivered
+CHORUS = (0.5, 0.4)    # the little voices behind the lead in the chants: level and spread, as fractions of the first pass's
+UNMASK = 9.0           # dB the music is held under the voices in each band they share (+6 dB in 1-5 kHz)
+RELEASE = 0.04         # s: how long the sidechain holds after a word (a word's tail)
 
 SR = P.SR
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -326,10 +339,18 @@ def voices():
             sig = np.zeros((2, len(up) + int(0.06 * SR)))
             sig[:, :len(up)] += np.stack([up, up]) * (np.sqrt(0.5) * 1.1 if answer else 1.0)
             for v, sp, pt, dl, g, pan in others:
-                w = speak_fx(L["spoken"], v, sp, pt).astype(np.float64)
-                w = signal.resample_poly(w, SR, VSR)
-                w = signal.resample(w, len(up))                          # matched to the lead's length, so they land together
+                if ORIG:
+                    w = speak_fx(L["spoken"], v, sp, pt).astype(np.float64)
+                    w = signal.resample_poly(w, SR, VSR)
+                    w = signal.resample(w, len(up))                      # matched to the lead's length, so they land together
+                else:                                                    # each little voice follows the lead syllable by syllable
+                    w = speak_fx(L["said"], v, sp, pt).astype(np.float64)
+                    lead = L["wav"].astype(np.float64)
+                    w = revoice.wsola(w, *revoice.time_map(w, lead), len(lead))
+                    w = signal.resample_poly(w, SR, VSR)[:len(up)]
                 w = w * np.sqrt((up ** 2).mean()) / (np.sqrt((w ** 2).mean()) + 1e-12)
+                if not ORIG:
+                    g, dl = g * CHORUS[0], dl * CHORUS[1]
                 o = int(dl * SR)
                 sig[0, o:o + len(w)] += w * g * np.sqrt(1 - pan) * 1.1
                 sig[1, o:o + len(w)] += w * g * np.sqrt(pan) * 1.1
@@ -407,7 +428,8 @@ def build():
     dead = np.convolve(dead, np.ones(int(0.015 * SR)) / int(0.015 * SR), "same")
     music = music * dead
 
-    vo = presence(reverb(voices(), 0.07, 0.6), 3000, 2.5) * dead         # echoes don't ring into the silences
+    vo_dry = voices()
+    vo = presence(reverb(vo_dry, 0.07, 0.6), 3000, 2.5) * dead          # echoes don't ring into the silences
     from scipy.ndimage import maximum_filter1d
     raw = np.convolve(np.abs(vo.mean(axis=0)), np.ones(SR // 20) / (SR // 20), mode="same")
     raw = np.clip(raw / (np.percentile(raw[raw > 1e-5], 80) + 1e-9), 0, 1)
@@ -425,11 +447,12 @@ def build():
     high = signal.lfilter(*signal.butter(2, 4200 / (SR / 2), "high"), music)
     mid = music - low - high
     k_mid = 0.85 - 0.3 * insong
-    music = low * (1 - 0.35 * env) + mid * (1 - k_mid * env) + high * (1 - 0.5 * env)
-    music = mono_safe(music)
-    ref = music[:, int(f("town") * SR):int(f("news1") * SR)]
+    carved = mono_safe(low * (1 - 0.35 * env) + mid * (1 - k_mid * env) + high * (1 - 0.5 * env))
+    ref = carved[:, int(f("town") * SR):int(f("news1") * SR)]
     g_mu = db(-21.0) / (np.sqrt((ref ** 2).mean()) + 1e-12)
-    music = music * g_mu
+    music = carved * g_mu
+    if not ORIG:                     # the same balance, and a spectral sidechain that clears each word's own bands of it
+        music = unmask(music, vo_dry.mean(axis=0))
     # ride the music under every line: speech >= 13 dB clear of it (in the speech band), sung lines >= 8 dB
     band = lambda x: signal.sosfilt(signal.butter(2, [300 / (SR / 2), 4000 / (SR / 2)], "band", output="sos"), x.mean(axis=0))
     bm, bv = band(music), band(vo)
@@ -468,6 +491,42 @@ def build():
 
 
 STEMS = {}
+
+
+def unmask(music, voice, floor_db=-24.0):
+    """Spectral sidechain. Per third-octave band and ~11 ms frame, hold the music under the voices wherever they have
+    energy in that band (UNMASK dB in the body, 6 dB more in the 1-5 kHz band that carries the consonants, less in the
+    bass and the air), and leave it alone everywhere else: the orchestra, the songs and every machine play at full
+    force in the gaps, and the words always clear them. Gains attack within a frame and release over RELEASE, smoothed
+    across neighbouring bands."""
+    nper, hop = 2048, 512
+    f_, _, V = signal.stft(voice, SR, nperseg=nper, noverlap=nper - hop)
+    _, _, M = signal.stft(music, SR, nperseg=nper, noverlap=nper - hop)
+    pv, pm = np.abs(V) ** 2, (np.abs(M) ** 2).mean(axis=0)
+    centres = 125 * 2 ** (np.arange(20) / 3)                                  # 125 Hz ... 10 kHz
+    lo, hi = centres * 2 ** (-1 / 6), centres * 2 ** (1 / 6)
+    vb = np.stack([pv[(f_ >= a) & (f_ < b)].sum(0) for a, b in zip(lo, hi)])
+    mb = np.stack([pm[(f_ >= a) & (f_ < b)].sum(0) for a, b in zip(lo, hi)])
+    vb = np.maximum(vb, np.concatenate([vb[:, 1:], vb[:, -1:]], axis=1))       # one frame of look-ahead
+    rel = np.exp(-hop / SR / RELEASE)
+    for t in range(1, vb.shape[1]):                                           # the release: a word's tail
+        vb[:, t] = np.maximum(vb[:, t], vb[:, t - 1] * rel)
+    margin = np.select([centres < 250, centres < 1000, centres <= 5000], [UNMASK - 4.0, UNMASK, UNMASK + 6.0],
+                       UNMASK - 2.0)[:, None]                                 # a kick on a word's onset blurs it too
+    tot = vb.sum(0)
+    speaking = tot > 10 ** (-3.5) * np.percentile(tot, 99)                    # the words, soft consonants included
+    relevant = (vb > vb.max(0, keepdims=True) * 10 ** (-3.5)) & speaking   # bands within 35 dB of the voice's peak
+    g = np.where(relevant, 10 * np.log10(np.clip(vb * 10 ** (-margin / 10) / (mb + 1e-20), 10 ** (floor_db / 10), 1.0)), 0.0)
+    g = 0.25 * np.vstack([g[:1], g[:-1]]) + 0.5 * g + 0.25 * np.vstack([g[1:], g[-1:]])     # no sharp spectral holes
+    gb = np.interp(np.log2(np.maximum(f_, 1.0)), np.log2(centres), np.arange(20))  # each bin's place between bands
+    i0 = np.clip(np.floor(gb).astype(int), 0, 18)
+    w = np.clip(gb - i0, 0, 1)[:, None]
+    gbin = g[i0] * (1 - w) + g[i0 + 1] * w
+    gbin *= np.clip((f_ - 60) / 65, 0, 1)[:, None]                            # nothing below ~60 Hz, full from 125 Hz
+    _, y = signal.istft(M * 10 ** (gbin / 20)[None], SR, nperseg=nper, noverlap=nper - hop)
+    return y[:, :music.shape[1]]
+
+
 CEIL = -1.8
 
 

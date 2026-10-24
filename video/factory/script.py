@@ -146,6 +146,29 @@ SONGS = {
 }
 LYRIC_SHOWN = {}
 
+# What the voices read where the spoken text above trips them up (second pass; the captions and lyrics keep the text
+# above, timed to the new reading). Heard by speech recognition in the mix: "Riders take forty percent less time" (the
+# flapped t of "writers"), "goes entangled", "the sixth that matter", "Mero, just tell me", "the true is a true is a
+# true" (the tunnel at full speed), "You question my machines", and in the workers' chant "If you never once checked",
+# "You'll be asked am I", "so a small world train too". A slower take squeezed back into the same time keeps its
+# consonants; a comma keeps two words apart. timeline.py places each new reading on the original's timeline phrase by
+# phrase (revoice.py). Entries: key -> (text, speed or None for the line's own[, the word from which to re-voice: the
+# original reading is kept up to it]).
+SAY = {
+    "n2": ("On tasks it's good at, consultants do forty percent better work! Write-ers take forty percent less time! "
+           "And beginners gain the most!", None, "Writers"),
+    "r1": ("Your dad's letter goes in, tangled, and comes out in plain words. It explains again, simpler, until you get "
+           "it.", None),
+    "r2": ("Fifty studies on his condition go in. Out come the six, that matter, with a flag where two disagree.", None,
+           "Out"),
+    "k3": ("Mir-ror! Just tell me I'm right.", None),
+    "t1c": ("Iz it true? Iz it true? Iz it true? Iz it true?", 1.3),
+    "x1": ("You questioned, my machines! You argued with them! You checked every single drop!", None),
+    "w2_0": ("She, never once checked,", None),
+    "w3_0": ("He only asked, 'Am I right?'", 0.8),
+    "w3_1": ("so his, small world shrank too!", None),
+}
+
 # the thirteen uses, grouped by room (shown on each room's door plaque)
 ROOMS = {
     1: ("THE UNTANGLER", ["explain unfamiliar subjects", "translate jargon"]),
