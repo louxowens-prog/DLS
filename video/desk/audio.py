@@ -3,6 +3,12 @@
 Each chapter builds layer by layer and stops dead: a hard cut to true silence before every chapter card (then a
 temple bell under the card), and before the final image. Voices sit well clear of the music (a ride per line).
 Loudness -14 LUFS, true peak under -1.5 dBTP.
+
+Second pass (the default; DESK_ORIG=1 rebuilds the first delivery bit for bit): two fixed readings (script.SAY, through
+the timeline), and no duck or per-line ride: those held the music 14 dB under every line in every register, so under
+her voice the stage scenes, the present and the memories all sat at the same level, and the score only woke in the
+gaps. Now a spectral sidechain clears each word's own bands and leaves the rest of the score alone, so the registers
+keep their levels under her: the ostinato forward on the stage, thinner in the present.
 """
 import os
 import wave
@@ -17,6 +23,10 @@ from edit import EDIT, first
 from script import CLOCK, NAR, TEACHER, TUTOR
 from timeline import TL
 from voice import SR as VSR
+
+ORIG = os.environ.get("DESK_ORIG") == "1"        # DESK_ORIG=1 rebuilds the mix exactly as first delivered
+UNMASK = 9.0           # dB the music is held under the voices in each band they share (+6 dB in 1-5 kHz)
+RELEASE = 0.04         # s: how long the sidechain holds after a word (a word's tail)
 
 SR = O.SR
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -304,7 +314,8 @@ def build():
     k = int(0.012 * SR)
     dead = np.convolve(dead, np.ones(k) / k, "same")
     music = music * dead
-    vo = presence(reverb(voices(), 0.1, 0.5), 3000, 2.0) * dead
+    vo_dry = voices()
+    vo = presence(reverb(vo_dry, 0.1, 0.5), 3000, 2.0) * dead
     # a steady duck under speech (slow, so it never pumps), then a ride so each line sits 13 dB clear
     from scipy.ndimage import maximum_filter1d
     raw = np.convolve(np.abs(vo.mean(axis=0)), np.ones(SR // 20) / (SR // 20), mode="same")
@@ -314,21 +325,24 @@ def build():
     low = signal.lfilter(*signal.butter(2, 250 / (SR / 2), "low"), music)
     high = signal.lfilter(*signal.butter(2, 4500 / (SR / 2), "high"), music)
     mid = music - low - high
-    music = low * (1 - 0.3 * env) + mid * (1 - 0.6 * env) + high * (1 - 0.35 * env)
-    music = mono_safe(music, max_ratio=1.0)
+    carved = mono_safe(low * (1 - 0.3 * env) + mid * (1 - 0.6 * env) + high * (1 - 0.35 * env), max_ratio=1.0)
     shape = np.zeros(N)                                                  # memory hushed, the stage swelling
     for i, (t0, name, reg, tr) in enumerate(EDIT):
         t1 = EDIT[i + 1][0] if i + 1 < len(EDIT) else TL.total
         shape[int(t0 * SR):int(t1 * SR)] = {"memory": -5.0, "present": -1.5, "fiction": 2.5, "card": 0.0}[reg] + (1.5 if name == "final" else 0.0)
     k = int(0.25 * SR)
     shape = np.convolve(np.pad(shape, k, mode="edge"), np.ones(k) / k, "same")[k:-k]
-    music = music * db(shape)[None]
-    ref = music[:, int(f("prince") * SR):int(f("aph1") * SR)] / db(2.5)
-    music = music * db(-19.0) / (np.sqrt((ref ** 2).mean()) + 1e-12)
+    carved = carved * db(shape)[None]
+    ref = carved[:, int(f("prince") * SR):int(f("aph1") * SR)] / db(2.5)  # the first pass's level reference, in both
+    g_mu = db(-19.0) / (np.sqrt((ref ** 2).mean()) + 1e-12)
+    if ORIG:
+        music = carved * g_mu
+    else:                  # no duck and no ride: the registers keep their levels under her, and a spectral sidechain
+        music = unmask(mono_safe(music, max_ratio=1.0) * db(shape)[None] * g_mu, vo_dry.mean(axis=0))   # clears the words
     band = lambda x: signal.sosfilt(signal.butter(2, [300 / (SR / 2), 4000 / (SR / 2)], "band", output="sos"), x.mean(axis=0))
     bm, bv = band(music), band(vo)
     ride = np.ones(N)
-    for key in TL.order:
+    for key in (TL.order if ORIG else []):
         L = TL.lines[key]
         a, b = int(L["start"] * SR), int(L["end"] * SR)
         rv = np.sqrt((bv[a:b] ** 2).mean()) + 1e-12
@@ -363,6 +377,42 @@ def build():
 
 
 STEMS = {}
+
+
+def unmask(music, voice, floor_db=-24.0):
+    """Spectral sidechain. Per third-octave band and ~11 ms frame, hold the music under the voices wherever they have
+    energy in that band (UNMASK dB in the body, 6 dB more in the 1-5 kHz band that carries the consonants, less in the
+    bass and the air), and leave it alone everywhere else: the ostinato keeps each register's level and plays at full
+    force in the gaps, and the words always clear it. Gains attack within a frame and release over RELEASE, smoothed
+    across neighbouring bands."""
+    nper, hop = 2048, 512
+    f_, _, V = signal.stft(voice, SR, nperseg=nper, noverlap=nper - hop)
+    _, _, M = signal.stft(music, SR, nperseg=nper, noverlap=nper - hop)
+    pv, pm = np.abs(V) ** 2, (np.abs(M) ** 2).mean(axis=0)
+    centres = 125 * 2 ** (np.arange(20) / 3)                                  # 125 Hz ... 10 kHz
+    lo, hi = centres * 2 ** (-1 / 6), centres * 2 ** (1 / 6)
+    vb = np.stack([pv[(f_ >= a) & (f_ < b)].sum(0) for a, b in zip(lo, hi)])
+    mb = np.stack([pm[(f_ >= a) & (f_ < b)].sum(0) for a, b in zip(lo, hi)])
+    vb = np.maximum(vb, np.concatenate([vb[:, 1:], vb[:, -1:]], axis=1))       # one frame of look-ahead
+    rel = np.exp(-hop / SR / RELEASE)
+    for t in range(1, vb.shape[1]):                                           # the release: a word's tail
+        vb[:, t] = np.maximum(vb[:, t], vb[:, t - 1] * rel)
+    margin = np.select([centres < 250, centres < 1000, centres <= 5000], [UNMASK - 4.0, UNMASK, UNMASK + 6.0],
+                       UNMASK - 2.0)[:, None]                                 # a cello on a word's onset blurs it too
+    tot = vb.sum(0)
+    speaking = tot > 10 ** (-3.5) * np.percentile(tot, 99)                    # the words, soft consonants included
+    relevant = (vb > vb.max(0, keepdims=True) * 10 ** (-3.5)) & speaking   # bands within 35 dB of the voice's peak
+    g = np.where(relevant, 10 * np.log10(np.clip(vb * 10 ** (-margin / 10) / (mb + 1e-20), 10 ** (floor_db / 10), 1.0)), 0.0)
+    g = 0.25 * np.vstack([g[:1], g[:-1]]) + 0.5 * g + 0.25 * np.vstack([g[1:], g[-1:]])     # no sharp spectral holes
+    gb = np.interp(np.log2(np.maximum(f_, 1.0)), np.log2(centres), np.arange(20))  # each bin's place between bands
+    i0 = np.clip(np.floor(gb).astype(int), 0, 18)
+    w = np.clip(gb - i0, 0, 1)[:, None]
+    gbin = g[i0] * (1 - w) + g[i0 + 1] * w
+    gbin *= np.clip((f_ - 60) / 65, 0, 1)[:, None]                            # nothing below ~60 Hz, full from 125 Hz
+    _, y = signal.istft(M * 10 ** (gbin / 20)[None], SR, nperseg=nper, noverlap=nper - hop)
+    return y[:, :music.shape[1]]
+
+
 CEIL = -1.6
 
 

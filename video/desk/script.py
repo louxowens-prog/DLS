@@ -105,6 +105,18 @@ LINES = [
 SONGS = {}
 LYRIC_SHOWN = {}
 
+# What the voices read where the spoken text above trips them up (second pass; the captions keep the text above, timed
+# to the new reading). Heard by speech recognition: "did better in practice, than seventeen percent worse" (an
+# unstressed "then" turns the sentence round), and the clock's "Nine o'clocky" (the full stop made the voice breathe
+# out an extra vowel). timeline.py places each new reading on the original's timeline phrase by phrase (revoice.py).
+# Entries: key -> (text, speed or None for the line's own[, the word from which to re-voice: the original reading is
+# kept up to it]).
+SAY = {
+    "d2": ("In one study, high-school students with a plain chatbot did better in practice, then, seventeen percent worse "
+           "on the exam without it.", None),
+    "e5": ("Nine o'clock", None),
+}
+
 # the thirteen things a tutor can do, in the order the film shows them: (line, word it lands on, label)
 USES = [
     ("b3", "odometer", "ADAPTS TO WHAT YOU LOVE"),

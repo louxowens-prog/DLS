@@ -3,13 +3,15 @@ The film runs at 24 fps."""
 import math
 import os
 
-from script import CHAPTERS, LINES, NAR, PITCH, SONGS, SPEED, VOICES, LYRIC_SHOWN
+import revoice
+from script import CHAPTERS, LINES, NAR, PITCH, SAY, SONGS, SPEED, VOICES, LYRIC_SHOWN
 
 SONG = "SONG"
 from voice import SR, speak_fx, word_times
 
 FPS = 24
 HERE = os.path.dirname(os.path.abspath(__file__))
+ORIG = os.environ.get("DESK_ORIG") == "1"        # DESK_ORIG=1: the first delivery's readings
 
 PRE = {c[3]: 2.5 for c in CHAPTERS}                 # room for the chapter card between chapters
 PRE.update({"a3": 0.2, "a5": 0.3, "d5": 0.3, "e8": 0.3, "a7": 0.5, "b12": 0.5, "d7": 0.5, "e9": 0.3})
@@ -31,7 +33,12 @@ class Timeline:
 
     def _line(self, key, who, spoken, caption, t, song=None, shown=None):
         v, sp, pt = VOICES[who]
-        wav = speak_fx(spoken, v, SPEED.get(key, sp), PITCH.get(key, pt))
+        sp, pt = SPEED.get(key, sp), PITCH.get(key, pt)
+        wav = speak_fx(spoken, v, sp, pt)
+        if key in SAY and not ORIG:                      # the fixed reading, on the original's timeline
+            said, sp2, *frm = SAY[key]
+            keep = next(a for w, a, _ in word_times(spoken, wav) if w == frm[0]) if frm else 0.0
+            wav = revoice.onto(speak_fx(said, v, sp2 or sp, pt), wav, keep)
         d = len(wav) / SR
         words = word_times(spoken, wav)
         self.lines[key] = dict(start=t, end=t + d, wav=wav, spoken=spoken, who=who, voice=v, song=song,
