@@ -134,6 +134,28 @@ SONGS = {
 }
 LYRIC_SHOWN = {}
 
+# Second pass: fixed readings - key: (what the voice says, speed or None[, the word to re-voice from]). The captions, the
+# lyrics on screen and the timing stay the first delivery's: timeline.py places each new reading on the original's
+# timeline phrase by phrase (revoice.py). The gang chorus is re-voiced too (voice.gang: the six voices in step).
+# ZONE_ORIG=1 rebuilds the first delivery. The phonemizer reads "Mae" as "Mee" and, after "May's", "record" as the
+# verb; "read" (past) as "reed"; "diagnoses" as the verb ("diagno-zez"). At the Emcee's patter speed an unstressed "her"
+# loses its h ("her resting" is heard as "arresting") and "a speck" runs together ("inspect"): a stressed spelling, read
+# a little slower and fitted back into the same beats. In the gang: "eyes see" ran into "I see"; the commas between the
+# "fine"s ended each one in a "d".
+SAY = {
+    "r2": ("Maye, fifty-six. Ten years of blood tests, every one basically fine. Then a computer red all ten at once.", None),
+    "r4": ("Follow the glasses, Maye!", None),
+    "c1": ("Now, Maye's record. Ten years, one number at a time, and each one looked fine. She felt fine too.", None),
+    "f1": ("Maye's colonoscopy. She's asleep for this part.", None),
+    "g1": ("Back through the door, Maye!", None),
+    "b1": ("Symptoms, pills, lab results, old diag-noh-seez, genes, and the medical literature.", None, "lab"),
+    "s1_1": ("A shadow on a lung, uh-speck the size of rice,", 1.05),
+    "s1_3": ("Two pairs of eyes, see twice!", None),
+    "s3_0": ("Hur blood count slipped a little every year,", 1.05),
+    "s3_3": ("Hur resting pulse crept up a beat or two.", 1.05),
+    "s3_4": ("One at a time: fine fine fine!", None),
+}
+
 # on-screen fact plates inside the songs (song, lyric line index, lines, source)
 PLATES = {   # headline only; the full citations are on the end card and in FACTCHECK.md
     ("s4", 1): (["SEPSIS ALERTS", "acted on within 3 h:", "~1/5 fewer deaths"], "observational · TREWS, Nature Medicine 2022"),

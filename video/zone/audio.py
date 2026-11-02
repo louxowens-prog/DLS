@@ -4,8 +4,17 @@ The real world sounds normal: a quiet kitchen, a clock, birds, a street. Through
 fast and echoey: a hot-jazz / ska / new-wave house band that never quite stops, a cartoon effect on every hit.
 Two hard stops into silence, played as gags: after the rooster's false alarm, and in the tunnel before the flag.
 Voices always sit well clear of the music (a slow duck plus a ride per line). Loudness -14 LUFS.
+
+Second pass (the default; ZONE_ORIG=1 rebuilds the first delivery bit for bit): the fixed readings and the gang chorus
+in step (timeline.py, script.SAY, voice.gang), and a band that never quite stops. The first pass held the whole band
+down from 0.7 s before every word to 0.3 s after it and rode it 14 dB under each line, so it hardly came back up
+between the lyric lines, and a hit on a key word still buried it ("roughly in half" was heard as "roughly a hundred").
+Now a spectral sidechain (unmask) clears each word's own bands of the music, at the first pass's level, the band dips
+for a moment on every pickup (pickups), and it plays at full force everywhere else; under the closing call to action
+("Ask about colon screening") the horns lay out and the band plays a little softer.
 """
 import os
+import re
 import wave
 
 import numpy as np
@@ -19,10 +28,15 @@ from edit import EDIT, first, nxt
 from script import CHORUS, DOC, EMCEE, EYE, MAE, OCTO
 from timeline import TL
 from voice import SR as VSR
-from voice import speak_fx
+from voice import gang, speak_fx
 
 SR = O.SR
 HERE = os.path.dirname(os.path.abspath(__file__))
+ORIG = os.environ.get("ZONE_ORIG") == "1"        # ZONE_ORIG=1 rebuilds the mix exactly as first delivered
+UNMASK = 12.0          # dB the music is held under the voices in each band they share (+6 dB in 1-5 kHz)
+RELEASE = 0.04         # s: how long the sidechain holds after a word (a word's tail)
+PICKUP = (9.0, 0.2, 0.2, 0.2)   # the band's dip on every pickup: dB, s before the phrase, s held into it, s back up
+CLOSING = 3.0          # dB the band plays softer under the closing call to action (g4, g5)
 N = int((TL.total + 0.6) * SR)
 S, E = TL.s, TL.e
 f = first
@@ -56,7 +70,7 @@ class Bus:
 
 
 def tts(text, voice, speed=1.0, pitch=0.0):
-    w = speak_fx(text, voice, speed, pitch)
+    w = gang(text, speed) if voice == "chorus" and not ORIG else speak_fx(text, voice, speed, pitch)
     return signal.resample_poly(w.astype(np.float64), SR, VSR)
 
 
@@ -229,7 +243,12 @@ def score(mus, amb, fx):
     # ---------------------------------------------------------------- the curtain call
     tcur = f("curtain")
     Bd.fanfare(mus, tcur, 1.0, key=58)
-    Bd.groove(mus, tcur + 0.4, f("end"), "bigband", 196, energy=lambda t: 0.55, level=0.8)
+    if ORIG:
+        Bd.groove(mus, tcur + 0.4, f("end"), "bigband", 196, energy=lambda t: 0.55, level=0.8)
+    else:                            # the horns lay out under the Emcee's closing lines and shout in the gaps
+        talk = [(S(k) - 0.15, E(k) + 0.05) for k in ("g4", "g5")]
+        Bd.groove(mus, tcur + 0.4, f("end"), "bigband", 196, level=0.8,
+                  energy=lambda t: 0.35 if any(a <= t <= b for a, b in talk) else 0.55)
     amb.add(wide(O_applause, f("end") - tcur + 2.0, amp=0.6), tcur + 0.2, 1.0)
     mus.add(tts("Look twice!", "chorus"), tcur + 0.7, 0.8)
     Bd.button(mus, f("end"), 1.0, key=58)
@@ -295,6 +314,7 @@ def voices():
         j = min(N, i + sig.shape[1])
         zone = in_zone(L["start"] + 0.1)
         (wet if zone else dry)[:, i:j] += sig[:, : j - i]
+    STEMS["vo_key"] = dry + wet                                         # the sidechain's key: the words, not their echo
     return dry + reverb(wet, 0.22, 1.1, seed=5)
 
 
@@ -343,14 +363,22 @@ def build():
     low = signal.lfilter(*signal.butter(2, 250 / (SR / 2), "low"), music)
     high = signal.lfilter(*signal.butter(2, 4500 / (SR / 2), "high"), music)
     mid = music - low - high
-    music = low * (1 - 0.3 * env) + mid * (1 - 0.6 * env) + high * (1 - 0.35 * env)
-    music = mono_safe(music, max_ratio=1.0)
-    ref = music[:, int(TL.songs["s1"]["start"] * SR):int(TL.songs["s1"]["end"] * SR)]
-    music = music * db(-18.0) / (np.sqrt((ref ** 2).mean()) + 1e-12)
+    carved = low * (1 - 0.3 * env) + mid * (1 - 0.6 * env) + high * (1 - 0.35 * env)
+    carved = mono_safe(carved, max_ratio=1.0)
+    ref = carved[:, int(TL.songs["s1"]["start"] * SR):int(TL.songs["s1"]["end"] * SR)]
+    if ORIG:
+        music = carved * db(-18.0) / (np.sqrt((ref ** 2).mean()) + 1e-12)
+    else:                            # the first pass's level, and a spectral sidechain instead of the duck and the ride
+        g_mu = db(-18.0) / (np.sqrt((ref ** 2).mean()) + 1e-12)
+        music = unmask(mono_safe(music, max_ratio=1.0) * g_mu, presence(STEMS["vo_key"], 3000, 2.5).mean(axis=0))
+        close = np.zeros(N)
+        close[int((S("g4") - 0.2) * SR):int((E("g5") + 0.1) * SR)] = -CLOSING
+        from scipy.ndimage import uniform_filter1d
+        music = music * db(pickups() + uniform_filter1d(close, int(0.3 * SR), mode="nearest"))[None]
     band = lambda x: signal.sosfilt(signal.butter(2, [300 / (SR / 2), 4000 / (SR / 2)], "band", output="sos"), x.mean(axis=0))
     bm, bv = band(music), band(vo)
     ride = np.ones(N)
-    for key in TL.order:
+    for key in (TL.order if ORIG else []):
         L = TL.lines[key]
         a, b = int(L["start"] * SR), int(L["end"] * SR)
         rv = np.sqrt((bv[a:b] ** 2).mean()) + 1e-12
@@ -379,6 +407,58 @@ def build():
 
 STEMS = {}
 CEIL = -1.6
+
+
+def pickups():
+    """The band leaves room on every pickup: a dip of PICKUP[0] dB from PICKUP[1] s before each phrase a voice starts
+    (a line's first word, and every word after a pause mark), held PICKUP[2] s into it, then back up over PICKUP[3] s.
+    A fill, a pop or a woodblock just before a word otherwise swallows its first consonant ("pills" heard as "hills"),
+    which the sidechain, acting only once the word sounds, cannot prevent. Returns the gain in dB."""
+    d, before, hold, back = PICKUP
+    g = np.zeros(N)
+    for key in TL.order:
+        ws = TL.lines[key]["words"]
+        for i, (w, t, _) in enumerate(ws):
+            if i == 0 or re.search(r"[,.;:?!…—]$", ws[i - 1][0]):
+                a, b, c = int((t - before) * SR), int((t + hold) * SR), int((t + hold + back) * SR)
+                g[a:b] = np.minimum(g[a:b], -d)
+                g[b:c] = np.minimum(g[b:c], np.linspace(-d, 0, c - b))
+    k = int(0.03 * SR)
+    return np.convolve(np.pad(g, k, mode="edge"), np.ones(k) / k, "same")[k:-k]
+
+
+def unmask(music, voice, floor_db=-24.0):
+    """Spectral sidechain. Per third-octave band and ~11 ms frame, hold the music under the voices wherever they have
+    energy in that band (UNMASK dB in the body, 6 dB more in the 1-5 kHz band that carries the consonants, less in the
+    bass and the air), and leave it alone everywhere else: the band keeps its level and plays at full force between
+    the words, and the words always clear it. Gains attack within a frame and release over RELEASE, smoothed across
+    neighbouring bands."""
+    nper, hop = 2048, 512
+    f_, _, V = signal.stft(voice, SR, nperseg=nper, noverlap=nper - hop)
+    _, _, M = signal.stft(music, SR, nperseg=nper, noverlap=nper - hop)
+    pv, pm = np.abs(V) ** 2, (np.abs(M) ** 2).mean(axis=0)
+    centres = 125 * 2 ** (np.arange(20) / 3)                                  # 125 Hz ... 10 kHz
+    lo, hi = centres * 2 ** (-1 / 6), centres * 2 ** (1 / 6)
+    vb = np.stack([pv[(f_ >= a) & (f_ < b)].sum(0) for a, b in zip(lo, hi)])
+    mb = np.stack([pm[(f_ >= a) & (f_ < b)].sum(0) for a, b in zip(lo, hi)])
+    vb = np.maximum(vb, np.concatenate([vb[:, 1:], vb[:, -1:]], axis=1))       # one frame of look-ahead
+    rel = np.exp(-hop / SR / RELEASE)
+    for t in range(1, vb.shape[1]):                                           # the release: a word's tail
+        vb[:, t] = np.maximum(vb[:, t], vb[:, t - 1] * rel)
+    margin = np.select([centres < 250, centres < 1000, centres <= 5000], [UNMASK - 4.0, UNMASK, UNMASK + 6.0],
+                       UNMASK - 2.0)[:, None]
+    tot = vb.sum(0)
+    speaking = tot > 10 ** (-3.5) * np.percentile(tot, 99)                    # the words, soft consonants included
+    relevant = (vb > vb.max(0, keepdims=True) * 10 ** (-3.5)) & speaking      # bands within 35 dB of the voice's peak
+    g = np.where(relevant, 10 * np.log10(np.clip(vb * 10 ** (-margin / 10) / (mb + 1e-20), 10 ** (floor_db / 10), 1.0)), 0.0)
+    g = 0.25 * np.vstack([g[:1], g[:-1]]) + 0.5 * g + 0.25 * np.vstack([g[1:], g[-1:]])     # no sharp spectral holes
+    gb = np.interp(np.log2(np.maximum(f_, 1.0)), np.log2(centres), np.arange(20))  # each bin's place between bands
+    i0 = np.clip(np.floor(gb).astype(int), 0, 18)
+    w = np.clip(gb - i0, 0, 1)[:, None]
+    gbin = g[i0] * (1 - w) + g[i0 + 1] * w
+    gbin *= np.clip((f_ - 60) / 65, 0, 1)[:, None]                            # nothing below ~60 Hz, full from 125 Hz
+    _, y = signal.istft(M * 10 ** (gbin / 20)[None], SR, nperseg=nper, noverlap=nper - hop)
+    return y[:, :music.shape[1]]
 
 
 def loudness(x, target):

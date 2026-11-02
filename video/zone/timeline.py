@@ -3,10 +3,13 @@ The film runs at 24 fps."""
 import math
 import os
 
-from script import CHAPTERS, LINES, PITCH, SONGS, SPEED, VOICES, LYRIC_SHOWN
+import revoice
+from script import CHAPTERS, LINES, PITCH, SAY, SONGS, SPEED, VOICES, LYRIC_SHOWN
 
 SONG = "SONG"
-from voice import SR, speak_fx, word_times
+from voice import SR, gang, speak_fx, word_times
+
+ORIG = os.environ.get("ZONE_ORIG") == "1"        # ZONE_ORIG=1: the first delivery's readings
 
 FPS = 24
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -31,10 +34,17 @@ class Timeline:
 
     def _line(self, key, who, spoken, caption, t, song=None, shown=None):
         v, sp, pt = VOICES[who]
-        wav = speak_fx(spoken, v, SPEED.get(key, sp), PITCH.get(key, pt))
-        d = len(wav) / SR
+        sp, pt = SPEED.get(key, sp), PITCH.get(key, pt)
+        wav = speak_fx(spoken, v, sp, pt)
         words = word_times(spoken, wav)
-        self.lines[key] = dict(start=t, end=t + d, wav=wav, spoken=spoken, who=who, voice=v, song=song,
+        said = spoken
+        if not ORIG and (key in SAY or v == "chorus"):   # the fixed reading (and the aligned gang), on the original's timeline
+            said, sp2, *frm = SAY.get(key, (spoken, None))
+            keep = next(a for w, a, _ in words if w == frm[0]) if frm else 0.0
+            new = gang(said, sp2 or sp) if v == "chorus" else speak_fx(said, v, sp2 or sp, pt)
+            wav = revoice.onto(new, wav, keep)           # same length and phrase onsets: the first reading's word
+        d = len(wav) / SR                                 # timing (captions, cues, the bouncing ball) still holds
+        self.lines[key] = dict(start=t, end=t + d, wav=wav, spoken=spoken, said=said, who=who, voice=v, song=song,
                                caption=(caption or spoken).replace("|", ""), breaks=caption or spoken,
                                shown=shown or spoken, words=[(w, t + a, t + b) for w, a, b in words])
         self.order.append(key)

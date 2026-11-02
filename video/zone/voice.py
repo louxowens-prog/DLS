@@ -74,6 +74,27 @@ def chorus(text, speed=1.0):
     return (out * 0.09 / (np.sqrt((out ** 2).mean()) + 1e-9)).astype(np.float32)
 
 
+def gang(text, speed=1.0):
+    """The gang shout, second pass: the same six voices at the same speeds, but each one follows the median voice
+    syllable by syllable (time-warped onto it with revoice), so the words land together and read as words instead of
+    smearing into each other; then a few ms apart and summed, as in chorus()."""
+    import revoice
+    lens = {v: len(speak(text, v, speed)) for v, _ in GANG}
+    target = sorted(lens.values())[len(lens) // 2]
+    lead_v = min(lens, key=lambda v: abs(lens[v] - target))
+    ws = {}
+    for v, _ in GANG:
+        w = speak(text, v, round(speed * lens[v] / target, 3)).astype(np.float64)
+        ws[v] = w / (np.sqrt((w ** 2).mean()) + 1e-9)
+    parts = []
+    for i, (v, _) in enumerate(GANG):
+        w = ws[v] if v == lead_v else revoice.wsola(ws[v], *revoice.time_map(ws[v], ws[lead_v]), len(ws[lead_v]))
+        parts.append(np.concatenate([np.zeros(int(SR * 0.006 * i)), w]))
+    n = max(len(p) for p in parts)
+    out = sum(np.pad(p, (0, n - len(p))) for p in parts) / len(parts)
+    return (out * 0.09 / (np.sqrt((out ** 2).mean()) + 1e-9)).astype(np.float32)
+
+
 def speak_fx(text, voice="af_heart", speed=1.0, pitch=0.0):
     """speak(), then shift up by `pitch` semitones by resampling (faster and higher, like a tape sped up)."""
     wav = chorus(text, speed) if voice == "chorus" else speak(text, voice, speed)
