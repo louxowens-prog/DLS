@@ -5,6 +5,13 @@ The score lives in extremes: a lullaby and a drone under the night, then the who
 (after the title; before the hidden door; when her heart stops) and five jump-scare stings (the phone on the floor,
 the man who turns, the reflection, her own body, the phone that lights up by itself). Voices always sit well clear of
 the music (a slow duck plus a ride per line). Loudness -14 LUFS.
+
+Second pass (the default; HUNDRED_ORIG=1 rebuilds the first delivery bit for bit): fixed readings (script.SAY), and the
+same night, crash-ins and stings, with a spectral sidechain (unmask) on the stings and the crash-ins: the ride held
+each line clear of the night on average, but a sting landing on a word (the whispered "Unlikely", "her own room") and
+the door's crash-in under the reveal still buried it. Now each word's own bands are cleared of the sting or the band on
+top of it, and everything else keeps its force; the night is untouched. The ringback that rang on over "What's your
+emergency?" is gone.
 """
 import os
 import wave
@@ -23,6 +30,10 @@ from voice import SR as VSR
 
 SR = O.SR
 HERE = os.path.dirname(os.path.abspath(__file__))
+ORIG = os.environ.get("HUNDRED_ORIG") == "1"        # HUNDRED_ORIG=1 rebuilds the mix exactly as first delivered
+UNMASK = 9.0           # dB a crash-in is held under the voices in each band they share (+6 dB in 1-5 kHz; stings 6 dB more)
+RELEASE = 0.04         # s: how long the sidechain holds after a word (a word's tail)
+DEEP = -40.0           # dB it may cut: a sting or a crash-in can be 30 dB over a whisper in the top octaves
 N_ = int((TL.total + 0.6) * SR)
 f = first
 
@@ -74,6 +85,10 @@ def heartbeats(bus, t0, t1, bpm0, bpm1=None, amp=1.0, pan=0.5):
 
 
 CR = None                                        # the crash-ins: their own bus, driven hard
+# The seeds of Nora's five breaths and the three lock clicks. They were hash(name) % 40 / % 50, but Python salts str
+# hash() differently on every run, so the soundtrack could not be rebuilt; these are the ones the first delivery drew
+# (recovered by matching its soundtrack), so every build now reproduces it.
+SEEDS = {"nb1": 12, "clutch": 25, "nb2": 17, "nb3": 2, "nb4": 24, "h1": 42, "h2": 47, "h3": 16}
 
 
 def score(mus, amb, fx):
@@ -198,7 +213,7 @@ def score(mus, amb, fx):
     for nm, bpm in (("nb1", 104), ("clutch", 110), ("nb2", 116), ("nb3", 124), ("nb4", 130)):
         tb_ = f(nm)
         heartbeats(fx, tb_, nxt(nm), bpm, bpm, 1.3)
-        fx.add(P.breath(1.3, 1.3, seed=hash(nm) % 40, shaky=1.0), tb_ + 0.05, 1.0)
+        fx.add(P.breath(1.3, 1.3, seed=SEEDS[nm], shaky=1.0), tb_ + 0.05, 1.0)
     # ---------------------------------------------------------------- ROOM 99: mirrors
     tm = f("mirrors")
     mus.add(P.drone(C["sting3"] - tm, 33, 0.9, seed=10, sweep=0.2), tm, 1.0)
@@ -217,7 +232,7 @@ def score(mus, amb, fx):
     # ---------------------------------------------------------------- the hidden door: the paradox
     th = S("h1") - 0.25
     for k in ("h1", "h2", "h3"):
-        fx.add(P.lock_click(1.0, seed=hash(k) % 50), S(k) - 0.1, 1.0, pan=0.5)
+        fx.add(P.lock_click(1.0, seed=SEEDS[k]), S(k) - 0.1, 1.0, pan=0.5)
     mus.add(P.drone(C["door_open"] - th, 33, 1.0, seed=13, sweep=0.1), th, 1.0)
     mus.add(P.shepard(C["door_open"] - th, 1.0), th, 1.0)
     heartbeats(fx, th, C["door_open"], 100, 132, 0.8)
@@ -252,7 +267,8 @@ def score(mus, amb, fx):
     td = f("dial")
     for k, dg in enumerate("911"):
         fx.add(P.dtmf(dg, 0.16, 1.0), td + 0.1 + k * 0.22, 1.0, pan=0.55)
-    fx.add(P.ringback(0.8, 1.0), td + 0.8, 1.0, pan=0.55)
+    if ORIG:                                     # it rang on after the dispatcher answered, over "What's your emergency?"
+        fx.add(P.ringback(0.8, 1.0), td + 0.8, 1.0, pan=0.55)
     # dawn: the siren, then birds and the lullaby in a major key
     tdw = C["siren"]
     fx.add(O.siren(3.0, 0.8), tdw - 0.3, 1.0, pan=0.6)
@@ -389,6 +405,8 @@ def build():
     seg = cr[:, int(C["title"] * SR):int(C["dead1"] * SR)]
     cr = cr * db(-1.5) / (np.sqrt((seg ** 2).mean()) + 1e-12)
     cr = signal.sosfilt(signal.butter(2, 12000 / (SR / 2), "low", output="sos"), cr, axis=1)
+    if not ORIG:                                 # and so does the crash-in under the reveal
+        cr = unmask(cr, vo.mean(axis=0), floor_db=DEEP)
     music = music + cr
     band = lambda x: signal.sosfilt(signal.butter(2, [300 / (SR / 2), 4000 / (SR / 2)], "band", output="sos"), x.mean(axis=0))
     bm, bv = band(music), band(vo)
@@ -423,7 +441,10 @@ def build():
     dip = np.convolve(np.pad(dip, k, mode="edge"), np.ones(k) / k, "same")[k:-k]
     music = music * dip[None]
     stg_x = signal.sosfilt(signal.butter(4, 9000 / (SR / 2), "low", output="sos"), stg.x, axis=1)   # no fizz for the codec to overshoot on
-    mix = (music + vo + reverb(stg_x, 0.2, 1.4, seed=9)) * dead[None]                # the silences are total: no tails
+    stg_w = reverb(stg_x, 0.2, 1.4, seed=9)
+    if not ORIG:                                 # a sting that lands on a word gives way (its echo too), in that word's bands only
+        stg_w = unmask(stg_w, vo.mean(axis=0), floor_db=DEEP, um=UNMASK + 6.0, rel_db=50.0)    # a whisper's top end too
+    mix = (music + vo + stg_w) * dead[None]                                         # the silences are total: no tails
     mix = signal.sosfilt(signal.butter(4, 30 / (SR / 2), "high", output="sos"), mix, axis=1)
     mix = signal.sosfilt(signal.butter(2, 15000 / (SR / 2), "low", output="sos"), mix, axis=1)
     mix = loudness(mix, -14.0)
@@ -435,7 +456,40 @@ def build():
 
 
 STEMS = {}
-CEIL = -1.8
+CEIL = -1.8 if ORIG else -2.0     # the second pass's crash-ins came out of the codec a hair hotter: AAC true peak under -1 dBTP
+
+
+def unmask(music, voice, floor_db=-24.0, um=None, rel_db=35.0):
+    """Spectral sidechain. Per third-octave band and ~11 ms frame, hold the music under the voices wherever they have
+    energy in that band (UNMASK dB in the body, 6 dB more in the 1-5 kHz band that carries the consonants, less in the
+    bass and the air), and leave it alone everywhere else. Gains attack within a frame and release over RELEASE,
+    smoothed across neighbouring bands."""
+    nper, hop = 2048, 512
+    f_, _, V = signal.stft(voice, SR, nperseg=nper, noverlap=nper - hop)
+    _, _, M = signal.stft(music, SR, nperseg=nper, noverlap=nper - hop)
+    pv, pm = np.abs(V) ** 2, (np.abs(M) ** 2).mean(axis=0)
+    centres = 125 * 2 ** (np.arange(20) / 3)                                  # 125 Hz ... 10 kHz
+    lo, hi = centres * 2 ** (-1 / 6), centres * 2 ** (1 / 6)
+    vb = np.stack([pv[(f_ >= a) & (f_ < b)].sum(0) for a, b in zip(lo, hi)])
+    mb = np.stack([pm[(f_ >= a) & (f_ < b)].sum(0) for a, b in zip(lo, hi)])
+    vb = np.maximum(vb, np.concatenate([vb[:, 1:], vb[:, -1:]], axis=1))       # one frame of look-ahead
+    rel = np.exp(-hop / SR / RELEASE)
+    for t in range(1, vb.shape[1]):                                           # the release: a word's tail
+        vb[:, t] = np.maximum(vb[:, t], vb[:, t - 1] * rel)
+    um = UNMASK if um is None else um
+    margin = np.select([centres < 250, centres < 1000, centres <= 5000], [um - 4.0, um, um + 6.0], um - 2.0)[:, None]
+    tot = vb.sum(0)
+    speaking = tot > 10 ** (-3.5) * np.percentile(tot, 99)                    # the words, soft consonants included
+    relevant = (vb > vb.max(0, keepdims=True) * 10 ** (-rel_db / 10)) & speaking   # bands within rel_db of the voice's peak
+    g = np.where(relevant, 10 * np.log10(np.clip(vb * 10 ** (-margin / 10) / (mb + 1e-20), 10 ** (floor_db / 10), 1.0)), 0.0)
+    g = 0.25 * np.vstack([g[:1], g[:-1]]) + 0.5 * g + 0.25 * np.vstack([g[1:], g[-1:]])     # no sharp spectral holes
+    gb = np.interp(np.log2(np.maximum(f_, 1.0)), np.log2(centres), np.arange(20))  # each bin's place between bands
+    i0 = np.clip(np.floor(gb).astype(int), 0, 18)
+    w = np.clip(gb - i0, 0, 1)[:, None]
+    gbin = g[i0] * (1 - w) + g[i0 + 1] * w
+    gbin *= np.clip((f_ - 60) / 65, 0, 1)[:, None]                            # nothing below ~60 Hz, full from 125 Hz
+    _, y = signal.istft(M * 10 ** (gbin / 20)[None], SR, nperseg=nper, noverlap=nper - hop)
+    return y[:, :music.shape[1]]
 
 
 def loudness(x, target):

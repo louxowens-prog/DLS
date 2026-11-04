@@ -2,8 +2,11 @@
 The film runs at 24 fps."""
 import os
 
-from script import LINES, PITCH, SPEED, VOICES, W
+import revoice
+from script import LINES, PITCH, SAY, SPEED, VOICES, W
 from voice import SR, speak_fx, whisper, word_times
+
+ORIG = os.environ.get("HUNDRED_ORIG") == "1"        # HUNDRED_ORIG=1: the first delivery's readings
 
 FPS = 24
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -39,11 +42,17 @@ class Timeline:
 
     def _line(self, key, who, spoken, caption, t):
         v, sp, pt = VOICES[who]
-        wav = speak_fx(spoken, v, SPEED.get(key, sp), PITCH.get(key, pt))
+        sp, pt = SPEED.get(key, sp), PITCH.get(key, pt)
+        wav = speak_fx(spoken, v, sp, pt)
         if who == W:
             wav = whisper(wav)
-        d = len(wav) / SR
         words = word_times(spoken, wav)
+        if key in SAY and not ORIG:                     # the fixed reading, on the original's timeline phrase by phrase:
+            said, sp2, *frm = SAY[key]                  # same length and phrase onsets, so the first reading's word
+            keep = next(a for w, a, _ in words if w == frm[0]) if frm else 0.0      # timing (captions, cues) holds
+            new = speak_fx(said, v, sp2 or sp, pt)
+            wav = revoice.onto(whisper(new) if who == W else new, wav, keep)
+        d = len(wav) / SR
         self.lines[key] = dict(start=t, end=t + d, wav=wav, spoken=spoken, who=who, voice=v,
                                caption=(caption or spoken).replace("|", ""), breaks=caption or spoken,
                                shown=spoken, words=[(w, t + a, t + b) for w, a, b in words])

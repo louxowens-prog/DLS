@@ -35,6 +35,27 @@ VOICES = {
 }
 SPEED, PITCH = {"r5": 1.2, "e2": 1.28, "o3": 1.2, "r6": 1.22, "b4": 1.2, "g5": 1.2, "m1": 1.2, "h2": 1.12, "h3": 1.12, "p2": 1.25, "m3": 1.35, "r7": 1.2}, {}                     # r5: "competence" must not blur into "confidence"
 
+# Second pass: fixed readings - key: (what the voice says, speed or None[, the word to re-voice from]). The captions and
+# the timing stay the first delivery's: timeline.py places each new reading on the original's timeline phrase by phrase
+# (revoice.py). HUNDRED_ORIG=1 rebuilds the first delivery. The narrator's breathy blend, at her pace, starts some lines
+# so softly that the first sound goes: "She did" was heard as "He did", "Now" as "How", "Nora" as "or", "It" not at
+# all; a stressed spelling or a slightly slower reading, fitted back into the same time, brings it back. Years are said
+# the way a narrator says them ("twenty twenty-three", not "two thousand twenty-three", which was heard as 2003). "Inn"
+# keeps an unstressed opening "In" (it was lost, or heard as "And"). Down the phone line the dispatcher's reduced
+# "What's" was heard as "with"; stressed, it holds.
+SAY = {
+    "o3": ("It had been right ninety-nine times.", 1.05),
+    "r3": ("Nora asks, hoping. And these machines tend to agree with you.", 1.2),
+    "x1": ("Shee did exactly what it said. She rested.", None),
+    "d1": ("Now. The same night. The same pain. The same calm answer.", 1.2),
+    "b3": ("In twenty twenty-three, two New York lawyers cited six court cases ChatGPT had made up. Fined five thousand dollars.", 1.2),
+    "g4": ("Inn twenty twenty-four, Americans reported losing five point seven billion dollars to investment scams.", 1.2),
+    "r6": ("Inn one study, people trusted low-accuracy AI medical advice like a doctor's, and would follow it.", None),
+    "h4": ("Inn simulator studies, the more reliable the system, the more people trusted it, and the more of its failures "
+           "they missed.", None),
+    "d3": ("Nine-one-one. Whut's your emergency?", None),
+}
+
 # rooms: (key of the first line, colour name, door number or None)
 ROOMS = [("r1", "red", None), ("b1", "blue", "97"), ("g1", "green", "98"), ("m1", "magenta", "99"), ("h6", "blaze", "100")]
 
